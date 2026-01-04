@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescriptions - HealingNet</title>
+    <meta name="description" content="View and manage your prescriptions and medications">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Dashboard Styles -->
+    <link rel="stylesheet" href="healingnet-dashboard.css">
+</head>
+<body>
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+        <i data-lucide="menu"></i>
+    </button>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-icon">
+                <i data-lucide="heart"></i>
+            </div>
+            <div class="logo-text">
+                <h1>HealingNet</h1>
+                <p>Patient Portal</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="healingnet-dashboard.html" class="nav-item">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            <!-- Appointments Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-item nav-dropdown-toggle">
+                    <i data-lucide="calendar"></i>
+                    <span>Appointments</span>
+                    <i data-lucide="chevron-down" class="dropdown-arrow"></i>
+                </button>
+                <div class="nav-dropdown-menu">
+                    <a href="appointments-queue.html" class="nav-dropdown-item">
+                        <i data-lucide="clock"></i>
+                        <span>Queue (Pending)</span>
+                    </a>
+                    <a href="appointments-accepted.html" class="nav-dropdown-item">
+                        <i data-lucide="check-circle"></i>
+                        <span>Accepted</span>
+                    </a>
+                </div>
+            </div>
+            <a href="medical-records.html" class="nav-item">
+                <i data-lucide="file-text"></i>
+                <span>Medical Records</span>
+            </a>
+            <a href="prescriptions.html" class="nav-item active">
+                <i data-lucide="pill"></i>
+                <span>Prescriptions</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i data-lucide="test-tube"></i>
+                <span>Lab Results</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i data-lucide="stethoscope"></i>
+                <span>Find Doctors</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i data-lucide="video"></i>
+                <span>Teleconsultation</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i data-lucide="message-square"></i>
+                <span>Messages</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i data-lucide="star"></i>
+                <span>Reviews</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="#" class="nav-item">
+                <i data-lucide="settings"></i>
+                <span>Settings</span>
+            </a>
+            <a href="#" class="nav-item logout">
+                <i data-lucide="log-out"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-search">
+                <i data-lucide="search"></i>
+                <input type="text" placeholder="Search prescriptions...">
+            </div>
+            <div class="header-actions">
+                <div class="dropdown">
+                    <button class="icon-btn notification-btn">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                </div>
+                <div class="dropdown">
+                    <button class="profile-btn">
+                        <div class="avatar">AO</div>
+                        <div class="profile-info">
+                            <span class="profile-name">Adaora Okonkwo</span>
+                            <span class="profile-role">Patient</span>
+                        </div>
+                        <i data-lucide="chevron-down"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Prescriptions</h1>
+                    <p>View and manage your medications</p>
+                </div>
+                <button class="btn btn-primary">
+                    <i data-lucide="refresh-cw"></i>
+                    Request Refill
+                </button>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="stats-grid stats-grid-3">
+                <div class="stat-card gradient-success">
+                    <i data-lucide="pill" class="stat-icon"></i>
+                    <div class="stat-content">
+                        <p class="stat-label">Active Prescriptions</p>
+                        <h3 class="stat-value">5</h3>
+                    </div>
+                </div>
+                <div class="stat-card gradient-info">
+                    <i data-lucide="refresh-cw" class="stat-icon"></i>
+                    <div class="stat-content">
+                        <p class="stat-label">Refills Available</p>
+                        <h3 class="stat-value">2</h3>
+                    </div>
+                </div>
+                <div class="stat-card gradient-warning">
+                    <i data-lucide="clock" class="stat-icon"></i>
+                    <div class="stat-content">
+                        <p class="stat-label">Expiring Soon</p>
+                        <h3 class="stat-value">1</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="tab-container">
+                <button class="tab-btn active" data-filter="all">All</button>
+                <button class="tab-btn" data-filter="active">Active</button>
+                <button class="tab-btn" data-filter="completed">Completed</button>
+                <button class="tab-btn" data-filter="cancelled">Cancelled</button>
+            </div>
+
+            <!-- Prescriptions List -->
+            <div class="prescriptions-page-list">
+                <!-- Prescription 1 - Active -->
+                <div class="prescription-page-card" data-status="active">
+                    <div class="prescription-page-header">
+                        <div class="prescription-drug-icon">
+                            <i data-lucide="pill"></i>
+                        </div>
+                        <div class="prescription-main-info">
+                            <div class="prescription-title-row">
+                                <h3>Amoxicillin</h3>
+                                <span class="status-badge active">Active</span>
+                            </div>
+                            <p class="prescription-diagnosis">Diagnosis: Bacterial Throat Infection</p>
+                        </div>
+                    </div>
+                    <div class="prescription-page-body">
+                        <div class="prescription-details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Dosage</span>
+                                <span class="detail-value">500mg</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Frequency</span>
+                                <span class="detail-value">3 times daily</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Duration</span>
+                                <span class="detail-value">7 days</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Route</span>
+                                <span class="detail-value">Oral</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Quantity</span>
+                                <span class="detail-value">21 capsules</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Refill</span>
+                                <span class="detail-value refill-yes"><i data-lucide="check-circle"></i> Allowed</span>
+                            </div>
+                        </div>
+                        <div class="prescription-notes">
+                            <i data-lucide="alert-circle"></i>
+                            <span>Take with food. Complete the full course even if symptoms improve.</span>
+                        </div>
+                        <div class="prescription-meta">
+                            <span class="meta-item"><i data-lucide="user"></i> Dr. Chidi Adebayo</span>
+                            <span class="meta-item"><i data-lucide="calendar"></i> Dec 28, 2025</span>
+                        </div>
+                    </div>
+                    <div class="prescription-page-actions">
+                        <button class="btn btn-outline btn-sm">
+                            <i data-lucide="download"></i> Download
+                        </button>
+                        <button class="btn btn-primary btn-sm">
+                            <i data-lucide="refresh-cw"></i> Request Refill
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Prescription 2 - Active -->
+                <div class="prescription-page-card" data-status="active">
+                    <div class="prescription-page-header">
+                        <div class="prescription-drug-icon">
+                            <i data-lucide="pill"></i>
+                        </div>
+                        <div class="prescription-main-info">
+                            <div class="prescription-title-row">
+                                <h3>Lisinopril</h3>
+                                <span class="status-badge active">Active</span>
+                            </div>
+                            <p class="prescription-diagnosis">Diagnosis: Hypertension (Stage 1)</p>
+                        </div>
+                    </div>
+                    <div class="prescription-page-body">
+                        <div class="prescription-details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Dosage</span>
+                                <span class="detail-value">10mg</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Frequency</span>
+                                <span class="detail-value">Once daily</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Duration</span>
+                                <span class="detail-value">30 days</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Route</span>
+                                <span class="detail-value">Oral</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Quantity</span>
+                                <span class="detail-value">30 tablets</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Refill</span>
+                                <span class="detail-value refill-yes"><i data-lucide="check-circle"></i> Allowed</span>
+                            </div>
+                        </div>
+                        <div class="prescription-notes">
+                            <i data-lucide="alert-circle"></i>
+                            <span>Take in the morning. Monitor blood pressure regularly.</span>
+                        </div>
+                        <div class="prescription-meta">
+                            <span class="meta-item"><i data-lucide="user"></i> Dr. Ngozi Okonkwo</span>
+                            <span class="meta-item"><i data-lucide="calendar"></i> Dec 15, 2025</span>
+                        </div>
+                    </div>
+                    <div class="prescription-page-actions">
+                        <button class="btn btn-outline btn-sm">
+                            <i data-lucide="download"></i> Download
+                        </button>
+                        <button class="btn btn-primary btn-sm">
+                            <i data-lucide="refresh-cw"></i> Request Refill
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Prescription 3 - Active -->
+                <div class="prescription-page-card" data-status="active">
+                    <div class="prescription-page-header">
+                        <div class="prescription-drug-icon">
+                            <i data-lucide="pill"></i>
+                        </div>
+                        <div class="prescription-main-info">
+                            <div class="prescription-title-row">
+                                <h3>Hydrocortisone Cream 1%</h3>
+                                <span class="status-badge active">Active</span>
+                            </div>
+                            <p class="prescription-diagnosis">Diagnosis: Contact Dermatitis</p>
+                        </div>
+                    </div>
+                    <div class="prescription-page-body">
+                        <div class="prescription-details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Dosage</span>
+                                <span class="detail-value">Thin layer</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Frequency</span>
+                                <span class="detail-value">Twice daily</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Duration</span>
+                                <span class="detail-value">14 days</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Route</span>
+                                <span class="detail-value">Topical</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Quantity</span>
+                                <span class="detail-value">1 tube (30g)</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Refill</span>
+                                <span class="detail-value refill-no"><i data-lucide="x-circle"></i> Not Allowed</span>
+                            </div>
+                        </div>
+                        <div class="prescription-notes">
+                            <i data-lucide="alert-circle"></i>
+                            <span>Apply to affected areas only. Avoid contact with eyes.</span>
+                        </div>
+                        <div class="prescription-meta">
+                            <span class="meta-item"><i data-lucide="user"></i> Dr. Emeka Agu</span>
+                            <span class="meta-item"><i data-lucide="calendar"></i> Dec 02, 2025</span>
+                        </div>
+                    </div>
+                    <div class="prescription-page-actions">
+                        <button class="btn btn-outline btn-sm">
+                            <i data-lucide="download"></i> Download
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Prescription 4 - Completed -->
+                <div class="prescription-page-card" data-status="completed">
+                    <div class="prescription-page-header">
+                        <div class="prescription-drug-icon completed">
+                            <i data-lucide="pill"></i>
+                        </div>
+                        <div class="prescription-main-info">
+                            <div class="prescription-title-row">
+                                <h3>Ibuprofen</h3>
+                                <span class="status-badge completed">Completed</span>
+                            </div>
+                            <p class="prescription-diagnosis">Diagnosis: Muscle Pain</p>
+                        </div>
+                    </div>
+                    <div class="prescription-page-body">
+                        <div class="prescription-details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Dosage</span>
+                                <span class="detail-value">400mg</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Frequency</span>
+                                <span class="detail-value">As needed</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Duration</span>
+                                <span class="detail-value">5 days</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Route</span>
+                                <span class="detail-value">Oral</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Quantity</span>
+                                <span class="detail-value">15 tablets</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Refill</span>
+                                <span class="detail-value refill-no"><i data-lucide="x-circle"></i> Not Allowed</span>
+                            </div>
+                        </div>
+                        <div class="prescription-meta">
+                            <span class="meta-item"><i data-lucide="user"></i> Dr. Chidi Adebayo</span>
+                            <span class="meta-item"><i data-lucide="calendar"></i> Nov 10, 2025</span>
+                        </div>
+                    </div>
+                    <div class="prescription-page-actions">
+                        <button class="btn btn-outline btn-sm">
+                            <i data-lucide="download"></i> Download
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Prescription 5 - Cancelled -->
+                <div class="prescription-page-card" data-status="cancelled">
+                    <div class="prescription-page-header">
+                        <div class="prescription-drug-icon cancelled">
+                            <i data-lucide="pill"></i>
+                        </div>
+                        <div class="prescription-main-info">
+                            <div class="prescription-title-row">
+                                <h3>Metformin</h3>
+                                <span class="status-badge cancelled">Cancelled</span>
+                            </div>
+                            <p class="prescription-diagnosis">Diagnosis: Pre-diabetes Monitoring</p>
+                        </div>
+                    </div>
+                    <div class="prescription-page-body">
+                        <div class="prescription-details-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Dosage</span>
+                                <span class="detail-value">500mg</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Frequency</span>
+                                <span class="detail-value">Twice daily</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Duration</span>
+                                <span class="detail-value">30 days</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Route</span>
+                                <span class="detail-value">Oral</span>
+                            </div>
+                        </div>
+                        <div class="prescription-notes warning">
+                            <i data-lucide="x-circle"></i>
+                            <span>Cancelled: Blood sugar levels normalized with diet changes.</span>
+                        </div>
+                        <div class="prescription-meta">
+                            <span class="meta-item"><i data-lucide="user"></i> Dr. Chidi Adebayo</span>
+                            <span class="meta-item"><i data-lucide="calendar"></i> Oct 20, 2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        mobileMenuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('show');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('show');
+        });
+
+        // Sidebar nav dropdown toggle
+        document.querySelectorAll('.nav-dropdown-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdown = btn.parentElement;
+                dropdown.classList.toggle('open');
+            });
+        });
+
+        // Tab filter functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const prescriptionCards = document.querySelectorAll('.prescription-page-card');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update active tab
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const filter = btn.dataset.filter;
+
+                // Filter cards
+                prescriptionCards.forEach(card => {
+                    if (filter === 'all' || card.dataset.status === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

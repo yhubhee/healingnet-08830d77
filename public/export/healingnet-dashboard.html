@@ -43,15 +43,29 @@
                 <i data-lucide="layout-dashboard"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="#" class="nav-item">
-                <i data-lucide="calendar"></i>
-                <span>Appointments</span>
-            </a>
-            <a href="#" class="nav-item">
+            <!-- Appointments Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-item nav-dropdown-toggle">
+                    <i data-lucide="calendar"></i>
+                    <span>Appointments</span>
+                    <i data-lucide="chevron-down" class="dropdown-arrow"></i>
+                </button>
+                <div class="nav-dropdown-menu">
+                    <a href="appointments-queue.html" class="nav-dropdown-item">
+                        <i data-lucide="clock"></i>
+                        <span>Queue (Pending)</span>
+                    </a>
+                    <a href="appointments-accepted.html" class="nav-dropdown-item">
+                        <i data-lucide="check-circle"></i>
+                        <span>Accepted</span>
+                    </a>
+                </div>
+            </div>
+            <a href="medical-records.html" class="nav-item">
                 <i data-lucide="file-text"></i>
                 <span>Medical Records</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="prescriptions.html" class="nav-item">
                 <i data-lucide="pill"></i>
                 <span>Prescriptions</span>
             </a>
@@ -520,14 +534,23 @@
             sidebarOverlay.classList.remove('show');
         });
 
-        // Dropdown toggle
+        // Sidebar nav dropdown toggle
+        document.querySelectorAll('.nav-dropdown-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdown = btn.parentElement;
+                dropdown.classList.toggle('open');
+            });
+        });
+
+        // Header dropdown toggle
         document.querySelectorAll('.dropdown > button').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const dropdown = btn.parentElement;
                 const isOpen = dropdown.classList.contains('open');
                 
-                // Close all dropdowns
+                // Close all header dropdowns
                 document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
                 
                 // Toggle current
@@ -535,7 +558,7 @@
             });
         });
 
-        // Close dropdowns when clicking outside
+        // Close header dropdowns when clicking outside
         document.addEventListener('click', () => {
             document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
         });
