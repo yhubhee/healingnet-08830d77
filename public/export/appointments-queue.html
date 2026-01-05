@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Queue - HealingNet</title>
+    <link rel="stylesheet" href="healingnet-dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">
+                    <i data-lucide="heart"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>HealingNet</h1>
+                    <span>Patient Portal</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="healingnet-dashboard.html" class="nav-item">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+                <div class="nav-item-dropdown">
+                    <a href="#" class="nav-item has-dropdown active">
+                        <i data-lucide="calendar"></i>
+                        <span>Appointments</span>
+                        <i data-lucide="chevron-down" class="dropdown-arrow"></i>
+                    </a>
+                    <div class="dropdown-menu show">
+                        <a href="appointments-queue.html" class="dropdown-item active">Queue (Pending)</a>
+                        <a href="appointments-accepted.html" class="dropdown-item">Accepted</a>
+                    </div>
+                </div>
+                <a href="medical-records.html" class="nav-item">
+                    <i data-lucide="file-text"></i>
+                    <span>Medical Records</span>
+                </a>
+                <a href="prescriptions.html" class="nav-item">
+                    <i data-lucide="pill"></i>
+                    <span>Prescriptions</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="test-tube"></i>
+                    <span>Lab Results</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="stethoscope"></i>
+                    <span>Find Doctors</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="video"></i>
+                    <span>Teleconsultation</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="message-square"></i>
+                    <span>Messages</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i data-lucide="star"></i>
+                    <span>Reviews</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="#" class="nav-item">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="#" class="nav-item logout">
+                    <i data-lucide="log-out"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <button class="mobile-menu-btn">
+                    <i data-lucide="menu"></i>
+                </button>
+
+                <div class="search-container">
+                    <i data-lucide="search"></i>
+                    <input type="text" placeholder="Search appointments...">
+                </div>
+
+                <div class="header-actions">
+                    <button class="icon-btn">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                    <div class="user-menu">
+                        <div class="avatar">
+                            <span>JD</span>
+                        </div>
+                        <div class="user-info">
+                            <span class="user-name">John Doe</span>
+                            <span class="user-role">Patient</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <div class="page-header">
+                    <div class="page-title-section">
+                        <h1 class="page-title">Appointment Queue</h1>
+                        <p class="page-subtitle">Pending appointments awaiting doctor approval</p>
+                    </div>
+                    <button class="btn-primary">
+                        <i data-lucide="plus"></i>
+                        Book Appointment
+                    </button>
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">All Pending</button>
+                    <button class="filter-tab" data-filter="virtual">Virtual</button>
+                    <button class="filter-tab" data-filter="in_person">In-Person</button>
+                    <button class="filter-tab" data-filter="home_visit">Home Visit</button>
+                </div>
+
+                <!-- Appointments List -->
+                <div class="appointments-list">
+                    <!-- Appointment Card 1 -->
+                    <div class="appointment-card-full" data-type="virtual">
+                        <div class="appointment-card-header">
+                            <div class="doctor-info">
+                                <div class="avatar avatar-lg">
+                                    <span>DS</span>
+                                </div>
+                                <div class="doctor-details">
+                                    <h3>Dr. Sarah Johnson</h3>
+                                    <p>Cardiologist</p>
+                                </div>
+                            </div>
+                            <div class="appointment-status">
+                                <span class="status-badge status-pending">Pending Approval</span>
+                            </div>
+                        </div>
+                        <div class="appointment-card-body">
+                            <div class="appointment-info-grid">
+                                <div class="info-item">
+                                    <i data-lucide="calendar"></i>
+                                    <div>
+                                        <span class="info-label">Date</span>
+                                        <span class="info-value">January 15, 2026</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i data-lucide="clock"></i>
+                                    <div>
+                                        <span class="info-label">Time</span>
+                                        <span class="info-value">10:00 AM - 10:30 AM</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i data-lucide="video"></i>
+                                    <div>
+                                        <span class="info-label">Type</span>
+                                        <span class="info-value">Virtual Consultation</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i data-lucide="credit-card"></i>
+                                    <div>
+                                        <span class="info-label">Fee</span>
+                                        <span class="info-value">$150.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="appointment-reason">
+                                <span class="info-label">Reason for Visit</span>
+                                <p>Regular checkup and blood pressure monitoring. Have been experiencing occasional chest discomfort.</p>
+                            </div>
+                        </div>
+                        <div class="appointment-card-footer">
+                            <span class="payment-status payment-pending">
+                                <i data-lucide="clock"></i>
+                                Payment Pending
+                            </span>
+                            <div class="appointment-actions">
+                                <button class="btn-outline btn-sm">
+                                    <i data-lucide="edit"></i>
+                                    Reschedule
+                                </button>
+                                <button class="btn-danger btn-sm">
+                                    <i data-lucide="x"></i>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Card 2 -->
+                    <div class="appointment-card-full" data-type="in_person">
+                        <div class="appointment-card-header">
+                            <div class="doctor-info">
+                                <div class="avatar avatar-lg">
+                                    <span>MP</span>
+                                </div>
+                                <div class="doctor-details">
+                                    <h3>Dr. Michael Patel</h3>
+                                    <p>General Practitioner</p>
+                                </div>
+                            </div>
+                            <div class="appointment-status">
+                                <span class="status-badge status-pending">Pending Approval</span>
+                            </div>
+                        </div>
+                        <div class="appointment-card-body">
+                            <div class="appointment-info-grid">
+                                <div class="info-item">
+                                    <i data-lucide="calendar"></i>
+                                    <div>
+                                        <span class="info-label">Date</span>
+                                        <span class="info-value">January 18, 2026</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i data-lucide="clock"></i>
+                                    <div>
+                                        <span class="info-label">Time</span>
+                                        <span class="info-value">2:30 PM - 3:00 PM</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i data-lucide="building-2"></i>
+                                    <div>
+                                        <span class="info-label">Type</span>
+                                        <span class="info-value">In-Person Visit</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i data-lucide="credit-card"></i>
+                                    <div>
+                                        <span class="info-label">Fee</span>
+                                        <span class="info-value">$200.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="appointment-reason">
+                                <span class="info-label">Reason for Visit</span>
+                                <p>Annual physical examination and vaccination update.</p>
+                            </div>
+                        </div>
+                        <div class="appointment-card-footer">
+                            <span class="payment-status payment-pending">
+                                <i data-lucide="clock"></i>
+                                Payment Pending
+                            </span>
+                            <div class="appointment-actions">
+                                <button class="btn-outline btn-sm">
+                                    <i data-lucide="edit"></i>
+                                    Reschedule
+                                </button>
+                                <button class="btn-danger btn-sm">
+                                    <i data-lucide="x"></i>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Card 3 -->
+                    <div class="appointment-card-full" data-type="home_visit">
+                        <div class="appointment-card-header">
+                            <div class="doctor-info">
+                                <div class="avatar avatar-lg">
+                                    <span>EW</span>
+                                </div>
+                                <div class="doctor-details">
+                                    <h3>Dr. Emily Watson</h3>
+                                    <p>Geriatric Specialist</p>
+                                </div>
+                            </div>
+                            <div class="appointment-status">
+                                <span class="status-badge status-pending">Pending Approval</span>
+                            </div>
+                        </div>
+                        <div class="appointment-card-body">
+                            <div class="appointment-info-grid">
+                                <div class="info-item">
+                                    <i data-lucide="calendar"></i>
+                                    <div>
+                                        <span class="info-label">Date</span>
+                                        <span class="info-value">January 20, 2026</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i data-lucide="clock"></i>
+                                    <div>
+                                        <span class="info-label">Time</span>
+                                        <span class="info-value">9:00 AM - 10:00 AM</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i data-lucide="home"></i>
+                                    <div>
+                                        <span class="info-label">Type</span>
+                                        <span class="info-value">Home Visit</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i data-lucide="credit-card"></i>
+                                    <div>
+                                        <span class="info-label">Fee</span>
+                                        <span class="info-value">$350.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="appointment-reason">
+                                <span class="info-label">Reason for Visit</span>
+                                <p>Elderly care assessment and medication review for mobility-impaired patient.</p>
+                            </div>
+                            <div class="appointment-notes">
+                                <span class="info-label">Notes</span>
+                                <p>Patient requires wheelchair accessibility. Please bring portable blood pressure monitor.</p>
+                            </div>
+                        </div>
+                        <div class="appointment-card-footer">
+                            <span class="payment-status payment-pending">
+                                <i data-lucide="clock"></i>
+                                Payment Pending
+                            </span>
+                            <div class="appointment-actions">
+                                <button class="btn-outline btn-sm">
+                                    <i data-lucide="edit"></i>
+                                    Reschedule
+                                </button>
+                                <button class="btn-danger btn-sm">
+                                    <i data-lucide="x"></i>
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const sidebar = document.querySelector('.sidebar');
+
+        mobileMenuBtn?.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // Dropdown toggle
+        document.querySelectorAll('.has-dropdown').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const parent = item.closest('.nav-item-dropdown');
+                parent.classList.toggle('open');
+                const menu = parent.querySelector('.dropdown-menu');
+                menu.classList.toggle('show');
+            });
+        });
+
+        // Filter tabs
+        const filterTabs = document.querySelectorAll('.filter-tab');
+        const appointmentCards = document.querySelectorAll('.appointment-card-full');
+
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                filterTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const filter = tab.dataset.filter;
+
+                appointmentCards.forEach(card => {
+                    if (filter === 'all' || card.dataset.type === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
