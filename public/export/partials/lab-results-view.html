@@ -1,0 +1,462 @@
+<!-- Patient Laboratory Results View -->
+<div class="page-header">
+    <div class="page-header-content">
+        <h1><i data-lucide="test-tubes"></i> Laboratory Results</h1>
+        <p>View your test results and health markers</p>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="content-section lab-filter-section">
+    <div class="filter-row">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All Results</button>
+            <button class="filter-tab" data-filter="recent">Last 30 Days</button>
+            <button class="filter-tab" data-filter="abnormal">Abnormal Only</button>
+        </div>
+        <div class="filter-actions">
+            <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="text" placeholder="Search tests..." id="labSearchInput">
+            </div>
+            <button class="btn btn-outline">
+                <i data-lucide="download"></i> Download PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Results List -->
+<div class="lab-results-list" id="labResultsList">
+    <!-- Lab Result Card 1 -->
+    <div class="lab-result-card" data-date="2026-01-02">
+        <div class="lab-result-header">
+            <div class="lab-result-info">
+                <div class="lab-date">
+                    <i data-lucide="calendar"></i>
+                    <span>January 2, 2026</span>
+                </div>
+                <div class="lab-doctor">
+                    <i data-lucide="stethoscope"></i>
+                    <span>Dr. Chidi Adebayo</span>
+                </div>
+            </div>
+            <div class="lab-result-status">
+                <span class="status-badge completed">Completed</span>
+                <button class="btn btn-icon expand-btn">
+                    <i data-lucide="chevron-down"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="lab-result-summary">
+            <div class="summary-item">
+                <span class="summary-label">Tests Performed</span>
+                <span class="summary-value">12</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Normal</span>
+                <span class="summary-value success">10</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Abnormal</span>
+                <span class="summary-value warning">2</span>
+            </div>
+        </div>
+
+        <div class="lab-result-details">
+            <!-- Hematology Section -->
+            <div class="test-category-section">
+                <h4><i data-lucide="droplets"></i> Hematology</h4>
+                <div class="test-results-grid">
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">White Blood Cell Count (WBC)</span>
+                            <span class="test-reference">Ref: 4,500-11,000 cells/µL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">7,200</span>
+                            <span class="unit">cells/µL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Red Blood Cell Count (RBC)</span>
+                            <span class="test-reference">Ref: 4.5-5.5 million cells/µL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">4.8</span>
+                            <span class="unit">million cells/µL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Hemoglobin (Hgb)</span>
+                            <span class="test-reference">Ref: 12.0-16.0 g/dL</span>
+                        </div>
+                        <div class="test-value low">
+                            <span class="value">11.2</span>
+                            <span class="unit">g/dL</span>
+                            <span class="flag-badge low">Low</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Platelet Count</span>
+                            <span class="test-reference">Ref: 150,000-400,000 cells/µL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">245,000</span>
+                            <span class="unit">cells/µL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metabolic Panel -->
+            <div class="test-category-section">
+                <h4><i data-lucide="flask-conical"></i> Metabolic & Chemistry Panel</h4>
+                <div class="test-results-grid">
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Fasting Blood Glucose</span>
+                            <span class="test-reference">Ref: 70-100 mg/dL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">92</span>
+                            <span class="unit">mg/dL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">HbA1c</span>
+                            <span class="test-reference">Ref: < 5.7%</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">5.4</span>
+                            <span class="unit">%</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Sodium (Na)</span>
+                            <span class="test-reference">Ref: 136-145 mEq/L</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">140</span>
+                            <span class="unit">mEq/L</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Potassium (K)</span>
+                            <span class="test-reference">Ref: 3.5-5.0 mEq/L</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">4.2</span>
+                            <span class="unit">mEq/L</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lipid Panel -->
+            <div class="test-category-section">
+                <h4><i data-lucide="heart"></i> Lipid Panel</h4>
+                <div class="test-results-grid">
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Total Cholesterol</span>
+                            <span class="test-reference">Ref: < 200 mg/dL</span>
+                        </div>
+                        <div class="test-value high">
+                            <span class="value">215</span>
+                            <span class="unit">mg/dL</span>
+                            <span class="flag-badge high">High</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">LDL Cholesterol</span>
+                            <span class="test-reference">Ref: < 100 mg/dL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">98</span>
+                            <span class="unit">mg/dL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">HDL Cholesterol</span>
+                            <span class="test-reference">Ref: > 50 mg/dL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">58</span>
+                            <span class="unit">mg/dL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Triglycerides</span>
+                            <span class="test-reference">Ref: < 150 mg/dL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">128</span>
+                            <span class="unit">mg/dL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinical Notes -->
+            <div class="clinical-notes-display">
+                <h4><i data-lucide="file-text"></i> Doctor's Notes</h4>
+                <p>Overall results are satisfactory. Hemoglobin is slightly below normal range - recommend iron-rich foods and follow-up in 3 months. Total cholesterol slightly elevated - dietary modifications advised.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lab Result Card 2 -->
+    <div class="lab-result-card" data-date="2025-10-15">
+        <div class="lab-result-header">
+            <div class="lab-result-info">
+                <div class="lab-date">
+                    <i data-lucide="calendar"></i>
+                    <span>October 15, 2025</span>
+                </div>
+                <div class="lab-doctor">
+                    <i data-lucide="stethoscope"></i>
+                    <span>Dr. Ngozi Okonkwo</span>
+                </div>
+            </div>
+            <div class="lab-result-status">
+                <span class="status-badge completed">Completed</span>
+                <button class="btn btn-icon expand-btn">
+                    <i data-lucide="chevron-down"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="lab-result-summary">
+            <div class="summary-item">
+                <span class="summary-label">Tests Performed</span>
+                <span class="summary-value">8</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Normal</span>
+                <span class="summary-value success">8</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Abnormal</span>
+                <span class="summary-value">0</span>
+            </div>
+        </div>
+
+        <div class="lab-result-details">
+            <!-- Liver Function -->
+            <div class="test-category-section">
+                <h4><i data-lucide="scan"></i> Liver Function</h4>
+                <div class="test-results-grid">
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">ALT (SGPT)</span>
+                            <span class="test-reference">Ref: 7-56 U/L</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">28</span>
+                            <span class="unit">U/L</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">AST (SGOT)</span>
+                            <span class="test-reference">Ref: 10-40 U/L</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">22</span>
+                            <span class="unit">U/L</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Total Bilirubin</span>
+                            <span class="test-reference">Ref: 0.1-1.2 mg/dL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">0.8</span>
+                            <span class="unit">mg/dL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Albumin</span>
+                            <span class="test-reference">Ref: 3.5-5.5 g/dL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">4.2</span>
+                            <span class="unit">g/dL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kidney Function -->
+            <div class="test-category-section">
+                <h4><i data-lucide="bean"></i> Kidney Function</h4>
+                <div class="test-results-grid">
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Blood Urea Nitrogen (BUN)</span>
+                            <span class="test-reference">Ref: 7-20 mg/dL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">14</span>
+                            <span class="unit">mg/dL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Creatinine</span>
+                            <span class="test-reference">Ref: 0.6-1.1 mg/dL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">0.9</span>
+                            <span class="unit">mg/dL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">eGFR</span>
+                            <span class="test-reference">Ref: > 90 mL/min/1.73m²</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">105</span>
+                            <span class="unit">mL/min/1.73m²</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                    <div class="test-result-item">
+                        <div class="test-info">
+                            <span class="test-name">Uric Acid</span>
+                            <span class="test-reference">Ref: 2.5-6.2 mg/dL</span>
+                        </div>
+                        <div class="test-value normal">
+                            <span class="value">4.8</span>
+                            <span class="unit">mg/dL</span>
+                            <span class="flag-badge normal">Normal</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clinical Notes -->
+            <div class="clinical-notes-display">
+                <h4><i data-lucide="file-text"></i> Doctor's Notes</h4>
+                <p>All liver and kidney function tests within normal limits. Continue current lifestyle and dietary habits. Annual follow-up recommended.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lab Result Card 3 - Pending -->
+    <div class="lab-result-card pending" data-date="2026-01-05">
+        <div class="lab-result-header">
+            <div class="lab-result-info">
+                <div class="lab-date">
+                    <i data-lucide="calendar"></i>
+                    <span>January 5, 2026</span>
+                </div>
+                <div class="lab-doctor">
+                    <i data-lucide="stethoscope"></i>
+                    <span>Dr. Emeka Agu</span>
+                </div>
+            </div>
+            <div class="lab-result-status">
+                <span class="status-badge pending">Pending</span>
+            </div>
+        </div>
+        
+        <div class="lab-result-summary">
+            <div class="summary-item">
+                <span class="summary-label">Tests Ordered</span>
+                <span class="summary-value">6</span>
+            </div>
+            <div class="summary-item pending-message">
+                <i data-lucide="clock"></i>
+                <span>Results expected within 24-48 hours</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    // Initialize icons
+    lucide.createIcons();
+
+    // Expand/collapse functionality
+    document.querySelectorAll('.expand-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const card = this.closest('.lab-result-card');
+            card.classList.toggle('expanded');
+        });
+    });
+
+    // Filter tabs
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.dataset.filter;
+            filterResults(filter);
+        });
+    });
+
+    function filterResults(filter) {
+        const cards = document.querySelectorAll('.lab-result-card');
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        cards.forEach(card => {
+            const dateStr = card.dataset.date;
+            const date = new Date(dateStr);
+            
+            if (filter === 'all') {
+                card.style.display = 'block';
+            } else if (filter === 'recent') {
+                card.style.display = date >= thirtyDaysAgo ? 'block' : 'none';
+            } else if (filter === 'abnormal') {
+                const hasAbnormal = card.querySelector('.flag-badge.low, .flag-badge.high, .flag-badge.critical');
+                card.style.display = hasAbnormal ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Search functionality
+    document.getElementById('labSearchInput').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const cards = document.querySelectorAll('.lab-result-card');
+
+        cards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.display = text.includes(searchTerm) ? 'block' : 'none';
+        });
+    });
+})();
+</script>

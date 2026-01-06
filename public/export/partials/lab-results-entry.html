@@ -1,0 +1,586 @@
+<!-- Laboratory Results Entry Form -->
+<div class="page-header">
+    <div class="page-header-content">
+        <h1><i data-lucide="flask-conical"></i> Laboratory Results Entry</h1>
+        <p>Record and submit patient laboratory test results</p>
+    </div>
+</div>
+
+<!-- Patient Information Section -->
+<div class="content-section lab-patient-info">
+    <h2><i data-lucide="user"></i> Patient Information</h2>
+    <div class="patient-info-grid">
+        <div class="form-group">
+            <label for="patientSelect">Patient Name</label>
+            <select id="patientSelect" class="form-control">
+                <option value="">Select Patient...</option>
+                <option value="1" data-id="PAT-2026-0001">Adaora Okonkwo</option>
+                <option value="2" data-id="PAT-2026-0002">Chinedu Eze</option>
+                <option value="3" data-id="PAT-2026-0003">Fatima Bello</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="patientId">Patient ID</label>
+            <input type="text" id="patientId" class="form-control" readonly placeholder="Auto-filled">
+        </div>
+        <div class="form-group">
+            <label for="sampleDate">Date of Sample Collection</label>
+            <input type="date" id="sampleDate" class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="entryDate">Date of Result Entry</label>
+            <input type="date" id="entryDate" class="form-control">
+        </div>
+    </div>
+</div>
+
+<!-- Predefined Laboratory Tests -->
+<div class="content-section lab-tests-section">
+    <div class="section-header">
+        <h2><i data-lucide="test-tubes"></i> Laboratory Tests</h2>
+        <div class="category-filter">
+            <select id="categoryFilter" class="form-control">
+                <option value="all">All Categories</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Test Categories Accordion -->
+    <div class="lab-categories-accordion" id="labCategoriesAccordion">
+        <!-- Categories will be dynamically populated -->
+    </div>
+</div>
+
+<!-- Custom Test Entry -->
+<div class="content-section custom-tests-section">
+    <div class="section-header">
+        <h2><i data-lucide="plus-circle"></i> Custom Tests</h2>
+        <button type="button" class="btn btn-outline" id="addCustomTestBtn">
+            <i data-lucide="plus"></i> Add Custom Test
+        </button>
+    </div>
+    <div class="custom-tests-container" id="customTestsContainer">
+        <!-- Custom tests will be added here dynamically -->
+        <div class="empty-state" id="noCustomTests">
+            <i data-lucide="beaker"></i>
+            <p>No custom tests added. Click the button above to add one.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Clinical Notes -->
+<div class="content-section clinical-notes-section">
+    <h2><i data-lucide="file-text"></i> Clinical Notes</h2>
+    <div class="form-group">
+        <label for="clinicalNotes">Doctor/Lab Scientist Remarks (Optional)</label>
+        <textarea id="clinicalNotes" class="form-control" rows="4" placeholder="Enter any additional observations, recommendations, or notes..."></textarea>
+    </div>
+</div>
+
+<!-- Submission Controls -->
+<div class="form-actions">
+    <button type="button" class="btn btn-secondary" id="cancelBtn">
+        <i data-lucide="x"></i> Cancel
+    </button>
+    <button type="button" class="btn btn-outline" id="saveDraftBtn">
+        <i data-lucide="save"></i> Save as Draft
+    </button>
+    <button type="button" class="btn btn-primary" id="submitResultsBtn">
+        <i data-lucide="send"></i> Submit Results
+    </button>
+</div>
+
+<!-- Custom Test Row Template -->
+<template id="customTestTemplate">
+    <div class="custom-test-row">
+        <div class="custom-test-grid">
+            <div class="form-group">
+                <label>Test Name</label>
+                <input type="text" class="form-control custom-test-name" placeholder="e.g., Specialized Marker">
+            </div>
+            <div class="form-group">
+                <label>Parameter/Analyte</label>
+                <input type="text" class="form-control custom-parameter" placeholder="e.g., Concentration">
+            </div>
+            <div class="form-group">
+                <label>Result Value</label>
+                <input type="text" class="form-control custom-result" placeholder="Enter value">
+            </div>
+            <div class="form-group">
+                <label>Unit</label>
+                <input type="text" class="form-control custom-unit" placeholder="e.g., mg/dL">
+            </div>
+            <div class="form-group">
+                <label>Reference Range</label>
+                <input type="text" class="form-control custom-reference" placeholder="e.g., 0-100">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <input type="text" class="form-control custom-notes" placeholder="Optional comments">
+            </div>
+        </div>
+        <button type="button" class="btn btn-icon btn-danger remove-custom-test">
+            <i data-lucide="trash-2"></i>
+        </button>
+    </div>
+</template>
+
+<script>
+(function() {
+    // JSON-based Laboratory Test Definitions
+    const labTestDefinitions = {
+        "hematology": {
+            name: "Hematology",
+            icon: "droplets",
+            tests: [
+                { id: "cbc_wbc", name: "White Blood Cell Count (WBC)", unit: "cells/µL", reference: "4,500-11,000", type: "numeric" },
+                { id: "cbc_rbc", name: "Red Blood Cell Count (RBC)", unit: "million cells/µL", reference: "4.5-5.5 (M) / 4.0-5.0 (F)", type: "numeric" },
+                { id: "cbc_hgb", name: "Hemoglobin (Hgb)", unit: "g/dL", reference: "13.5-17.5 (M) / 12.0-16.0 (F)", type: "numeric" },
+                { id: "cbc_hct", name: "Hematocrit (Hct)", unit: "%", reference: "38-50 (M) / 36-44 (F)", type: "numeric" },
+                { id: "cbc_plt", name: "Platelet Count", unit: "cells/µL", reference: "150,000-400,000", type: "numeric" },
+                { id: "cbc_mcv", name: "Mean Corpuscular Volume (MCV)", unit: "fL", reference: "80-100", type: "numeric" },
+                { id: "cbc_mch", name: "Mean Corpuscular Hemoglobin (MCH)", unit: "pg", reference: "27-33", type: "numeric" },
+                { id: "cbc_mchc", name: "MCHC", unit: "g/dL", reference: "32-36", type: "numeric" },
+                { id: "esr", name: "Erythrocyte Sedimentation Rate (ESR)", unit: "mm/hr", reference: "0-20 (M) / 0-30 (F)", type: "numeric" }
+            ]
+        },
+        "metabolic": {
+            name: "Metabolic & Chemistry Panels",
+            icon: "flask-conical",
+            tests: [
+                { id: "glucose_fasting", name: "Fasting Blood Glucose", unit: "mg/dL", reference: "70-100", type: "numeric" },
+                { id: "glucose_random", name: "Random Blood Glucose", unit: "mg/dL", reference: "< 140", type: "numeric" },
+                { id: "hba1c", name: "HbA1c (Glycated Hemoglobin)", unit: "%", reference: "< 5.7", type: "numeric" },
+                { id: "sodium", name: "Sodium (Na)", unit: "mEq/L", reference: "136-145", type: "numeric" },
+                { id: "potassium", name: "Potassium (K)", unit: "mEq/L", reference: "3.5-5.0", type: "numeric" },
+                { id: "chloride", name: "Chloride (Cl)", unit: "mEq/L", reference: "98-106", type: "numeric" },
+                { id: "bicarbonate", name: "Bicarbonate (CO2)", unit: "mEq/L", reference: "23-29", type: "numeric" },
+                { id: "calcium", name: "Calcium (Ca)", unit: "mg/dL", reference: "8.5-10.5", type: "numeric" },
+                { id: "magnesium", name: "Magnesium (Mg)", unit: "mg/dL", reference: "1.7-2.2", type: "numeric" },
+                { id: "phosphorus", name: "Phosphorus", unit: "mg/dL", reference: "2.5-4.5", type: "numeric" }
+            ]
+        },
+        "endocrine": {
+            name: "Endocrine & Hormonal",
+            icon: "activity",
+            tests: [
+                { id: "tsh", name: "Thyroid Stimulating Hormone (TSH)", unit: "mIU/L", reference: "0.4-4.0", type: "numeric" },
+                { id: "t3", name: "Triiodothyronine (T3)", unit: "ng/dL", reference: "80-200", type: "numeric" },
+                { id: "t4", name: "Thyroxine (T4)", unit: "µg/dL", reference: "4.5-12.0", type: "numeric" },
+                { id: "free_t4", name: "Free T4", unit: "ng/dL", reference: "0.8-1.8", type: "numeric" },
+                { id: "cortisol", name: "Cortisol (Morning)", unit: "µg/dL", reference: "6-23", type: "numeric" },
+                { id: "testosterone", name: "Testosterone", unit: "ng/dL", reference: "300-1000 (M) / 15-70 (F)", type: "numeric" },
+                { id: "estradiol", name: "Estradiol", unit: "pg/mL", reference: "Varies by cycle", type: "numeric" },
+                { id: "progesterone", name: "Progesterone", unit: "ng/mL", reference: "Varies by cycle", type: "numeric" },
+                { id: "prolactin", name: "Prolactin", unit: "ng/mL", reference: "2-18 (M) / 2-29 (F)", type: "numeric" },
+                { id: "fsh", name: "Follicle Stimulating Hormone (FSH)", unit: "mIU/mL", reference: "Varies", type: "numeric" },
+                { id: "lh", name: "Luteinizing Hormone (LH)", unit: "mIU/mL", reference: "Varies", type: "numeric" }
+            ]
+        },
+        "lipid": {
+            name: "Lipid & Cardiovascular",
+            icon: "heart",
+            tests: [
+                { id: "cholesterol_total", name: "Total Cholesterol", unit: "mg/dL", reference: "< 200", type: "numeric" },
+                { id: "ldl", name: "LDL Cholesterol", unit: "mg/dL", reference: "< 100", type: "numeric" },
+                { id: "hdl", name: "HDL Cholesterol", unit: "mg/dL", reference: "> 40 (M) / > 50 (F)", type: "numeric" },
+                { id: "triglycerides", name: "Triglycerides", unit: "mg/dL", reference: "< 150", type: "numeric" },
+                { id: "vldl", name: "VLDL Cholesterol", unit: "mg/dL", reference: "5-40", type: "numeric" }
+            ]
+        },
+        "liver": {
+            name: "Liver Function",
+            icon: "scan",
+            tests: [
+                { id: "alt", name: "ALT (SGPT)", unit: "U/L", reference: "7-56", type: "numeric" },
+                { id: "ast", name: "AST (SGOT)", unit: "U/L", reference: "10-40", type: "numeric" },
+                { id: "alp", name: "Alkaline Phosphatase (ALP)", unit: "U/L", reference: "44-147", type: "numeric" },
+                { id: "ggt", name: "Gamma-GT (GGT)", unit: "U/L", reference: "9-48", type: "numeric" },
+                { id: "bilirubin_total", name: "Total Bilirubin", unit: "mg/dL", reference: "0.1-1.2", type: "numeric" },
+                { id: "bilirubin_direct", name: "Direct Bilirubin", unit: "mg/dL", reference: "0.0-0.3", type: "numeric" },
+                { id: "albumin", name: "Albumin", unit: "g/dL", reference: "3.5-5.5", type: "numeric" },
+                { id: "total_protein", name: "Total Protein", unit: "g/dL", reference: "6.0-8.3", type: "numeric" }
+            ]
+        },
+        "kidney": {
+            name: "Kidney & Renal",
+            icon: "bean",
+            tests: [
+                { id: "bun", name: "Blood Urea Nitrogen (BUN)", unit: "mg/dL", reference: "7-20", type: "numeric" },
+                { id: "creatinine", name: "Creatinine", unit: "mg/dL", reference: "0.7-1.3 (M) / 0.6-1.1 (F)", type: "numeric" },
+                { id: "egfr", name: "eGFR", unit: "mL/min/1.73m²", reference: "> 90", type: "numeric" },
+                { id: "uric_acid", name: "Uric Acid", unit: "mg/dL", reference: "3.5-7.2 (M) / 2.5-6.2 (F)", type: "numeric" },
+                { id: "bun_creat_ratio", name: "BUN/Creatinine Ratio", unit: "", reference: "10-20", type: "numeric" }
+            ]
+        },
+        "urinalysis": {
+            name: "Urinalysis",
+            icon: "droplet",
+            tests: [
+                { id: "urine_color", name: "Color", unit: "", reference: "Pale Yellow to Amber", type: "text" },
+                { id: "urine_clarity", name: "Clarity", unit: "", reference: "Clear", type: "text" },
+                { id: "urine_ph", name: "pH", unit: "", reference: "4.5-8.0", type: "numeric" },
+                { id: "urine_sg", name: "Specific Gravity", unit: "", reference: "1.005-1.030", type: "numeric" },
+                { id: "urine_protein", name: "Protein", unit: "", reference: "Negative", type: "text" },
+                { id: "urine_glucose", name: "Glucose", unit: "", reference: "Negative", type: "text" },
+                { id: "urine_ketones", name: "Ketones", unit: "", reference: "Negative", type: "text" },
+                { id: "urine_blood", name: "Blood", unit: "", reference: "Negative", type: "text" },
+                { id: "urine_leukocytes", name: "Leukocyte Esterase", unit: "", reference: "Negative", type: "text" },
+                { id: "urine_nitrites", name: "Nitrites", unit: "", reference: "Negative", type: "text" }
+            ]
+        },
+        "infection": {
+            name: "Infection & Microbiology",
+            icon: "bug",
+            tests: [
+                { id: "malaria_rdt", name: "Malaria RDT", unit: "", reference: "Negative", type: "text" },
+                { id: "malaria_mp", name: "Malaria Parasite (MP)", unit: "", reference: "Not Seen", type: "text" },
+                { id: "hiv_screening", name: "HIV 1/2 Antibody", unit: "", reference: "Non-Reactive", type: "text" },
+                { id: "hbsag", name: "Hepatitis B Surface Antigen (HBsAg)", unit: "", reference: "Non-Reactive", type: "text" },
+                { id: "hcv", name: "Hepatitis C Antibody (Anti-HCV)", unit: "", reference: "Non-Reactive", type: "text" },
+                { id: "vdrl", name: "VDRL/RPR (Syphilis)", unit: "", reference: "Non-Reactive", type: "text" },
+                { id: "widal", name: "Widal Test", unit: "", reference: "< 1:80", type: "text" },
+                { id: "blood_culture", name: "Blood Culture", unit: "", reference: "No Growth", type: "text" },
+                { id: "urine_culture", name: "Urine Culture", unit: "", reference: "No Significant Growth", type: "text" }
+            ]
+        },
+        "vitamin": {
+            name: "Vitamin & Mineral",
+            icon: "sun",
+            tests: [
+                { id: "vitamin_d", name: "Vitamin D (25-OH)", unit: "ng/mL", reference: "30-100", type: "numeric" },
+                { id: "vitamin_b12", name: "Vitamin B12", unit: "pg/mL", reference: "200-900", type: "numeric" },
+                { id: "folate", name: "Folate (Folic Acid)", unit: "ng/mL", reference: "2.7-17.0", type: "numeric" },
+                { id: "iron", name: "Serum Iron", unit: "µg/dL", reference: "60-170", type: "numeric" },
+                { id: "ferritin", name: "Ferritin", unit: "ng/mL", reference: "12-300 (M) / 12-150 (F)", type: "numeric" },
+                { id: "tibc", name: "Total Iron Binding Capacity (TIBC)", unit: "µg/dL", reference: "250-370", type: "numeric" },
+                { id: "transferrin_sat", name: "Transferrin Saturation", unit: "%", reference: "20-50", type: "numeric" }
+            ]
+        },
+        "inflammatory": {
+            name: "Inflammatory & Autoimmune",
+            icon: "shield",
+            tests: [
+                { id: "crp", name: "C-Reactive Protein (CRP)", unit: "mg/L", reference: "< 3.0", type: "numeric" },
+                { id: "hscrp", name: "High-Sensitivity CRP (hs-CRP)", unit: "mg/L", reference: "< 1.0", type: "numeric" },
+                { id: "rf", name: "Rheumatoid Factor (RF)", unit: "IU/mL", reference: "< 14", type: "numeric" },
+                { id: "ana", name: "Antinuclear Antibody (ANA)", unit: "", reference: "Negative", type: "text" },
+                { id: "anti_ccp", name: "Anti-CCP Antibody", unit: "U/mL", reference: "< 20", type: "numeric" }
+            ]
+        },
+        "cardiac": {
+            name: "Cardiac Markers",
+            icon: "heart-pulse",
+            tests: [
+                { id: "troponin_i", name: "Troponin I", unit: "ng/mL", reference: "< 0.04", type: "numeric" },
+                { id: "troponin_t", name: "Troponin T", unit: "ng/mL", reference: "< 0.01", type: "numeric" },
+                { id: "ck_mb", name: "CK-MB", unit: "ng/mL", reference: "< 5.0", type: "numeric" },
+                { id: "bnp", name: "BNP", unit: "pg/mL", reference: "< 100", type: "numeric" },
+                { id: "nt_probnp", name: "NT-proBNP", unit: "pg/mL", reference: "< 125 (< 75 yrs) / < 450 (≥ 75 yrs)", type: "numeric" },
+                { id: "d_dimer", name: "D-Dimer", unit: "ng/mL", reference: "< 500", type: "numeric" }
+            ]
+        }
+    };
+
+    // State
+    let selectedTests = {};
+    let customTestCount = 0;
+
+    // Initialize
+    function init() {
+        populateCategoryFilter();
+        renderTestCategories();
+        bindEvents();
+        setDefaultDates();
+        lucide.createIcons();
+    }
+
+    function setDefaultDates() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('sampleDate').value = today;
+        document.getElementById('entryDate').value = today;
+    }
+
+    function populateCategoryFilter() {
+        const filter = document.getElementById('categoryFilter');
+        Object.keys(labTestDefinitions).forEach(key => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = labTestDefinitions[key].name;
+            filter.appendChild(option);
+        });
+    }
+
+    function renderTestCategories() {
+        const accordion = document.getElementById('labCategoriesAccordion');
+        accordion.innerHTML = '';
+
+        Object.keys(labTestDefinitions).forEach((categoryKey, index) => {
+            const category = labTestDefinitions[categoryKey];
+            const categoryEl = document.createElement('div');
+            categoryEl.className = 'lab-category';
+            categoryEl.dataset.category = categoryKey;
+
+            categoryEl.innerHTML = `
+                <div class="lab-category-header" data-toggle="${categoryKey}">
+                    <div class="category-title">
+                        <i data-lucide="${category.icon}"></i>
+                        <span>${category.name}</span>
+                        <span class="test-count">${category.tests.length} tests</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="toggle-icon"></i>
+                </div>
+                <div class="lab-category-content" id="content-${categoryKey}">
+                    <table class="lab-tests-table">
+                        <thead>
+                            <tr>
+                                <th class="col-select"></th>
+                                <th class="col-test">Test Name</th>
+                                <th class="col-result">Result</th>
+                                <th class="col-unit">Unit</th>
+                                <th class="col-reference">Reference Range</th>
+                                <th class="col-flag">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${category.tests.map(test => renderTestRow(categoryKey, test)).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            accordion.appendChild(categoryEl);
+        });
+
+        lucide.createIcons();
+    }
+
+    function renderTestRow(categoryKey, test) {
+        return `
+            <tr class="test-row" data-test-id="${test.id}">
+                <td class="col-select">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" class="test-checkbox" data-category="${categoryKey}" data-test-id="${test.id}">
+                        <span class="checkmark"></span>
+                    </label>
+                </td>
+                <td class="col-test">${test.name}</td>
+                <td class="col-result">
+                    <input type="${test.type === 'numeric' ? 'number' : 'text'}" 
+                           class="form-control result-input" 
+                           data-test-id="${test.id}"
+                           data-type="${test.type}"
+                           placeholder="Enter result"
+                           step="any"
+                           disabled>
+                </td>
+                <td class="col-unit">
+                    <input type="text" class="form-control unit-input" value="${test.unit}" data-test-id="${test.id}">
+                </td>
+                <td class="col-reference">
+                    <span class="reference-range">${test.reference}</span>
+                </td>
+                <td class="col-flag">
+                    <select class="form-control flag-select" data-test-id="${test.id}" disabled>
+                        <option value="">--</option>
+                        <option value="low">Low</option>
+                        <option value="normal">Normal</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                </td>
+            </tr>
+        `;
+    }
+
+    function bindEvents() {
+        // Patient selection
+        document.getElementById('patientSelect').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            document.getElementById('patientId').value = selectedOption.dataset.id || '';
+        });
+
+        // Category filter
+        document.getElementById('categoryFilter').addEventListener('change', function() {
+            const value = this.value;
+            document.querySelectorAll('.lab-category').forEach(cat => {
+                if (value === 'all' || cat.dataset.category === value) {
+                    cat.style.display = 'block';
+                } else {
+                    cat.style.display = 'none';
+                }
+            });
+        });
+
+        // Category accordion toggle
+        document.addEventListener('click', function(e) {
+            const header = e.target.closest('.lab-category-header');
+            if (header) {
+                const category = header.closest('.lab-category');
+                category.classList.toggle('open');
+            }
+        });
+
+        // Test checkbox toggle
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('test-checkbox')) {
+                const row = e.target.closest('.test-row');
+                const resultInput = row.querySelector('.result-input');
+                const flagSelect = row.querySelector('.flag-select');
+                
+                if (e.target.checked) {
+                    resultInput.disabled = false;
+                    flagSelect.disabled = false;
+                    row.classList.add('selected');
+                } else {
+                    resultInput.disabled = true;
+                    resultInput.value = '';
+                    flagSelect.disabled = true;
+                    flagSelect.value = '';
+                    row.classList.remove('selected');
+                }
+            }
+        });
+
+        // Add custom test
+        document.getElementById('addCustomTestBtn').addEventListener('click', addCustomTest);
+
+        // Remove custom test
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-custom-test')) {
+                const row = e.target.closest('.custom-test-row');
+                row.remove();
+                customTestCount--;
+                toggleEmptyState();
+            }
+        });
+
+        // Form submission
+        document.getElementById('submitResultsBtn').addEventListener('click', submitResults);
+        document.getElementById('saveDraftBtn').addEventListener('click', saveDraft);
+        document.getElementById('cancelBtn').addEventListener('click', cancelEntry);
+    }
+
+    function addCustomTest() {
+        const template = document.getElementById('customTestTemplate');
+        const container = document.getElementById('customTestsContainer');
+        const emptyState = document.getElementById('noCustomTests');
+        
+        if (emptyState) emptyState.style.display = 'none';
+        
+        const clone = template.content.cloneNode(true);
+        container.appendChild(clone);
+        customTestCount++;
+        
+        lucide.createIcons();
+    }
+
+    function toggleEmptyState() {
+        const emptyState = document.getElementById('noCustomTests');
+        if (emptyState) {
+            emptyState.style.display = customTestCount === 0 ? 'flex' : 'none';
+        }
+    }
+
+    function collectFormData() {
+        const patientId = document.getElementById('patientId').value;
+        const patientName = document.getElementById('patientSelect').options[document.getElementById('patientSelect').selectedIndex].text;
+        const sampleDate = document.getElementById('sampleDate').value;
+        const entryDate = document.getElementById('entryDate').value;
+        const clinicalNotes = document.getElementById('clinicalNotes').value;
+
+        // Collect selected predefined tests
+        const predefinedTests = [];
+        document.querySelectorAll('.test-checkbox:checked').forEach(checkbox => {
+            const row = checkbox.closest('.test-row');
+            const testId = checkbox.dataset.testId;
+            const category = checkbox.dataset.category;
+            const testDef = labTestDefinitions[category].tests.find(t => t.id === testId);
+            
+            predefinedTests.push({
+                testId: testId,
+                category: category,
+                name: testDef.name,
+                result: row.querySelector('.result-input').value,
+                unit: row.querySelector('.unit-input').value,
+                reference: testDef.reference,
+                flag: row.querySelector('.flag-select').value
+            });
+        });
+
+        // Collect custom tests
+        const customTests = [];
+        document.querySelectorAll('.custom-test-row').forEach(row => {
+            customTests.push({
+                name: row.querySelector('.custom-test-name').value,
+                parameter: row.querySelector('.custom-parameter').value,
+                result: row.querySelector('.custom-result').value,
+                unit: row.querySelector('.custom-unit').value,
+                reference: row.querySelector('.custom-reference').value,
+                notes: row.querySelector('.custom-notes').value
+            });
+        });
+
+        return {
+            patientId,
+            patientName,
+            sampleDate,
+            entryDate,
+            predefinedTests,
+            customTests,
+            clinicalNotes
+        };
+    }
+
+    function validateForm() {
+        const patientId = document.getElementById('patientId').value;
+        const sampleDate = document.getElementById('sampleDate').value;
+        
+        if (!patientId) {
+            alert('Please select a patient.');
+            return false;
+        }
+        if (!sampleDate) {
+            alert('Please enter the sample collection date.');
+            return false;
+        }
+
+        // Check if at least one test is selected
+        const hasTests = document.querySelectorAll('.test-checkbox:checked').length > 0 || 
+                         document.querySelectorAll('.custom-test-row').length > 0;
+        
+        if (!hasTests) {
+            alert('Please select at least one test or add a custom test.');
+            return false;
+        }
+
+        return true;
+    }
+
+    function submitResults() {
+        if (!validateForm()) return;
+        
+        const data = collectFormData();
+        console.log('Submitting lab results:', data);
+        
+        // Here you would send to your backend
+        alert('Lab results submitted successfully!');
+    }
+
+    function saveDraft() {
+        const data = collectFormData();
+        console.log('Saving draft:', data);
+        alert('Draft saved successfully!');
+    }
+
+    function cancelEntry() {
+        if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
+            // Navigate back or reset form
+            location.reload();
+        }
+    }
+
+    // Initialize on load
+    init();
+})();
+</script>
