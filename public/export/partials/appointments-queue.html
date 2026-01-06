@@ -1,0 +1,254 @@
+<!-- Appointments Queue Partial (AJAX) -->
+<div class="page-header">
+    <div class="page-title">
+        <h1>Appointment Queue</h1>
+        <p>Pending appointments awaiting doctor approval</p>
+    </div>
+    <button class="btn btn-primary">
+        <i data-lucide="plus"></i>
+        Book Appointment
+    </button>
+</div>
+
+<!-- Filter Tabs -->
+<div class="tab-container">
+    <button class="tab-btn active" data-filter="all">All Pending</button>
+    <button class="tab-btn" data-filter="virtual">Virtual</button>
+    <button class="tab-btn" data-filter="in_person">In-Person</button>
+    <button class="tab-btn" data-filter="home_visit">Home Visit</button>
+</div>
+
+<!-- Appointments List -->
+<div class="appointments-page-list">
+    <!-- Appointment Card 1 -->
+    <div class="appointment-page-card" data-type="virtual">
+        <div class="appointment-page-header">
+            <div class="doctor-info">
+                <div class="avatar avatar-lg">DS</div>
+                <div class="doctor-details">
+                    <h3>Dr. Sarah Johnson</h3>
+                    <p>Cardiologist</p>
+                </div>
+            </div>
+            <div class="appointment-status">
+                <span class="status-badge pending">Pending Approval</span>
+            </div>
+        </div>
+        <div class="appointment-page-body">
+            <div class="appointment-info-grid">
+                <div class="info-item">
+                    <i data-lucide="calendar"></i>
+                    <div>
+                        <span class="info-label">Date</span>
+                        <span class="info-value">January 15, 2026</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="clock"></i>
+                    <div>
+                        <span class="info-label">Time</span>
+                        <span class="info-value">10:00 AM - 10:30 AM</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="video"></i>
+                    <div>
+                        <span class="info-label">Type</span>
+                        <span class="info-value">Virtual Consultation</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="credit-card"></i>
+                    <div>
+                        <span class="info-label">Fee</span>
+                        <span class="info-value">₦25,000.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="appointment-reason">
+                <span class="info-label">Reason for Visit</span>
+                <p>Regular checkup and blood pressure monitoring. Have been experiencing occasional chest discomfort.</p>
+            </div>
+        </div>
+        <div class="appointment-page-footer">
+            <span class="payment-status pending">
+                <i data-lucide="clock"></i>
+                Payment Pending
+            </span>
+            <div class="appointment-actions">
+                <button class="btn btn-outline btn-sm">
+                    <i data-lucide="edit"></i>
+                    Reschedule
+                </button>
+                <button class="btn btn-danger btn-sm">
+                    <i data-lucide="x"></i>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Card 2 -->
+    <div class="appointment-page-card" data-type="in_person">
+        <div class="appointment-page-header">
+            <div class="doctor-info">
+                <div class="avatar avatar-lg">MP</div>
+                <div class="doctor-details">
+                    <h3>Dr. Michael Patel</h3>
+                    <p>General Practitioner</p>
+                </div>
+            </div>
+            <div class="appointment-status">
+                <span class="status-badge pending">Pending Approval</span>
+            </div>
+        </div>
+        <div class="appointment-page-body">
+            <div class="appointment-info-grid">
+                <div class="info-item">
+                    <i data-lucide="calendar"></i>
+                    <div>
+                        <span class="info-label">Date</span>
+                        <span class="info-value">January 18, 2026</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="clock"></i>
+                    <div>
+                        <span class="info-label">Time</span>
+                        <span class="info-value">2:30 PM - 3:00 PM</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="building-2"></i>
+                    <div>
+                        <span class="info-label">Type</span>
+                        <span class="info-value">In-Person Visit</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="credit-card"></i>
+                    <div>
+                        <span class="info-label">Fee</span>
+                        <span class="info-value">₦35,000.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="appointment-reason">
+                <span class="info-label">Reason for Visit</span>
+                <p>Annual physical examination and vaccination update.</p>
+            </div>
+        </div>
+        <div class="appointment-page-footer">
+            <span class="payment-status pending">
+                <i data-lucide="clock"></i>
+                Payment Pending
+            </span>
+            <div class="appointment-actions">
+                <button class="btn btn-outline btn-sm">
+                    <i data-lucide="edit"></i>
+                    Reschedule
+                </button>
+                <button class="btn btn-danger btn-sm">
+                    <i data-lucide="x"></i>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Card 3 -->
+    <div class="appointment-page-card" data-type="home_visit">
+        <div class="appointment-page-header">
+            <div class="doctor-info">
+                <div class="avatar avatar-lg">EW</div>
+                <div class="doctor-details">
+                    <h3>Dr. Emily Watson</h3>
+                    <p>Geriatric Specialist</p>
+                </div>
+            </div>
+            <div class="appointment-status">
+                <span class="status-badge pending">Pending Approval</span>
+            </div>
+        </div>
+        <div class="appointment-page-body">
+            <div class="appointment-info-grid">
+                <div class="info-item">
+                    <i data-lucide="calendar"></i>
+                    <div>
+                        <span class="info-label">Date</span>
+                        <span class="info-value">January 20, 2026</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="clock"></i>
+                    <div>
+                        <span class="info-label">Time</span>
+                        <span class="info-value">9:00 AM - 10:00 AM</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="home"></i>
+                    <div>
+                        <span class="info-label">Type</span>
+                        <span class="info-value">Home Visit</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="credit-card"></i>
+                    <div>
+                        <span class="info-label">Fee</span>
+                        <span class="info-value">₦50,000.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="appointment-reason">
+                <span class="info-label">Reason for Visit</span>
+                <p>Elderly care assessment and medication review for mobility-impaired patient.</p>
+            </div>
+            <div class="appointment-notes">
+                <span class="info-label">Notes</span>
+                <p>Patient requires wheelchair accessibility. Please bring portable blood pressure monitor.</p>
+            </div>
+        </div>
+        <div class="appointment-page-footer">
+            <span class="payment-status pending">
+                <i data-lucide="clock"></i>
+                Payment Pending
+            </span>
+            <div class="appointment-actions">
+                <button class="btn btn-outline btn-sm">
+                    <i data-lucide="edit"></i>
+                    Reschedule
+                </button>
+                <button class="btn btn-danger btn-sm">
+                    <i data-lucide="x"></i>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Reinitialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    // Filter tabs functionality
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            document.querySelectorAll('.appointment-page-card').forEach(card => {
+                if (filter === 'all' || card.getAttribute('data-type') === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
