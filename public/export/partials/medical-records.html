@@ -1,0 +1,336 @@
+<!-- Medical Records Partial (AJAX) -->
+<div class="page-header">
+    <div class="page-title">
+        <h1>Medical Records</h1>
+        <p>View your complete medical history and visit records</p>
+    </div>
+    <button class="btn btn-primary">
+        <i data-lucide="download"></i>
+        Export All
+    </button>
+</div>
+
+<!-- Summary Stats -->
+<div class="stats-grid stats-grid-3">
+    <div class="stat-card gradient-info">
+        <i data-lucide="file-text" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Total Records</p>
+            <h3 class="stat-value">12</h3>
+        </div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="calendar-check" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Completed Visits</p>
+            <h3 class="stat-value">10</h3>
+        </div>
+    </div>
+    <div class="stat-card gradient-primary">
+        <i data-lucide="user-check" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Doctors Seen</p>
+            <h3 class="stat-value">5</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Records List -->
+<div class="content-section">
+    <div class="section-header">
+        <h2>Visit History</h2>
+        <div class="filter-group">
+            <select class="filter-select" id="recordsFilter">
+                <option value="">All Types</option>
+                <option value="virtual">Virtual</option>
+                <option value="in_person">In-Person</option>
+                <option value="home_visit">Home Visit</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="records-list">
+        <!-- Record 1 -->
+        <div class="record-card" data-type="virtual">
+            <div class="record-header">
+                <div class="record-date">
+                    <span class="date-day">28</span>
+                    <span class="date-month">Dec</span>
+                    <span class="date-year">2025</span>
+                </div>
+                <div class="record-info">
+                    <div class="record-title">
+                        <h4>General Checkup</h4>
+                        <span class="visit-type-badge virtual">
+                            <i data-lucide="video"></i> Virtual
+                        </span>
+                    </div>
+                    <p class="record-doctor">Dr. Chidi Adebayo - General Practitioner</p>
+                    <p class="record-complaint">Chief Complaint: Routine annual checkup and blood pressure monitoring</p>
+                </div>
+                <button class="btn btn-outline btn-sm expand-btn">
+                    <i data-lucide="chevron-down"></i>
+                </button>
+            </div>
+            <div class="record-details">
+                <!-- Vitals -->
+                <div class="details-section">
+                    <h5>Vitals</h5>
+                    <div class="vitals-grid">
+                        <div class="vital-item">
+                            <i data-lucide="thermometer"></i>
+                            <span class="vital-label">Temp</span>
+                            <span class="vital-value">36.8°C</span>
+                        </div>
+                        <div class="vital-item">
+                            <i data-lucide="activity"></i>
+                            <span class="vital-label">BP</span>
+                            <span class="vital-value">120/80</span>
+                        </div>
+                        <div class="vital-item">
+                            <i data-lucide="heart"></i>
+                            <span class="vital-label">Heart Rate</span>
+                            <span class="vital-value">72 bpm</span>
+                        </div>
+                        <div class="vital-item">
+                            <i data-lucide="wind"></i>
+                            <span class="vital-label">SpO2</span>
+                            <span class="vital-value">98%</span>
+                        </div>
+                        <div class="vital-item">
+                            <i data-lucide="scale"></i>
+                            <span class="vital-label">Weight</span>
+                            <span class="vital-value">68 kg</span>
+                        </div>
+                        <div class="vital-item">
+                            <i data-lucide="ruler"></i>
+                            <span class="vital-label">Height</span>
+                            <span class="vital-value">165 cm</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Diagnosis & Plan -->
+                <div class="details-section">
+                    <h5>Diagnosis</h5>
+                    <p>Healthy individual with well-controlled blood pressure. No acute concerns.</p>
+                </div>
+                <div class="details-section">
+                    <h5>Clinical Findings</h5>
+                    <p>General appearance good. Cardiovascular exam normal. Lungs clear bilaterally.</p>
+                </div>
+                <div class="details-section">
+                    <h5>Plan & Advice</h5>
+                    <p>Continue current medications. Maintain healthy diet and regular exercise. Follow up in 6 months.</p>
+                </div>
+                <!-- Actions -->
+                <div class="record-actions">
+                    <button class="btn btn-outline btn-sm">
+                        <i data-lucide="download"></i> Download PDF
+                    </button>
+                    <button class="btn btn-outline btn-sm">
+                        <i data-lucide="file-text"></i> View Prescriptions
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Record 2 -->
+        <div class="record-card" data-type="in_person">
+            <div class="record-header">
+                <div class="record-date">
+                    <span class="date-day">15</span>
+                    <span class="date-month">Dec</span>
+                    <span class="date-year">2025</span>
+                </div>
+                <div class="record-info">
+                    <div class="record-title">
+                        <h4>Cardiology Consultation</h4>
+                        <span class="visit-type-badge in-person">
+                            <i data-lucide="map-pin"></i> In-Person
+                        </span>
+                    </div>
+                    <p class="record-doctor">Dr. Ngozi Okonkwo - Cardiologist</p>
+                    <p class="record-complaint">Chief Complaint: Follow-up for hypertension management</p>
+                </div>
+                <button class="btn btn-outline btn-sm expand-btn">
+                    <i data-lucide="chevron-down"></i>
+                </button>
+            </div>
+            <div class="record-details">
+                <div class="details-section">
+                    <h5>Vitals</h5>
+                    <div class="vitals-grid">
+                        <div class="vital-item">
+                            <i data-lucide="activity"></i>
+                            <span class="vital-label">BP</span>
+                            <span class="vital-value">135/85</span>
+                        </div>
+                        <div class="vital-item">
+                            <i data-lucide="heart"></i>
+                            <span class="vital-label">Heart Rate</span>
+                            <span class="vital-value">78 bpm</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="details-section">
+                    <h5>Diagnosis</h5>
+                    <p>Stage 1 Hypertension - improving with current medication regimen.</p>
+                </div>
+                <div class="details-section">
+                    <h5>Lab Tests Ordered</h5>
+                    <p>Lipid panel, Renal function test, ECG scheduled for next visit.</p>
+                </div>
+                <div class="details-section">
+                    <h5>Plan & Advice</h5>
+                    <p>Continue Lisinopril 10mg daily. Reduce sodium intake. Monitor BP at home twice weekly.</p>
+                </div>
+                <div class="details-section">
+                    <h5>Follow-up</h5>
+                    <p class="follow-up-date"><i data-lucide="calendar"></i> January 15, 2026</p>
+                </div>
+                <div class="record-actions">
+                    <button class="btn btn-outline btn-sm">
+                        <i data-lucide="download"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Record 3 -->
+        <div class="record-card" data-type="virtual">
+            <div class="record-header">
+                <div class="record-date">
+                    <span class="date-day">02</span>
+                    <span class="date-month">Dec</span>
+                    <span class="date-year">2025</span>
+                </div>
+                <div class="record-info">
+                    <div class="record-title">
+                        <h4>Skin Consultation</h4>
+                        <span class="visit-type-badge virtual">
+                            <i data-lucide="video"></i> Virtual
+                        </span>
+                    </div>
+                    <p class="record-doctor">Dr. Emeka Agu - Dermatologist</p>
+                    <p class="record-complaint">Chief Complaint: Recurring skin rash on forearms</p>
+                </div>
+                <button class="btn btn-outline btn-sm expand-btn">
+                    <i data-lucide="chevron-down"></i>
+                </button>
+            </div>
+            <div class="record-details">
+                <div class="details-section">
+                    <h5>Clinical Findings</h5>
+                    <p>Erythematous papular rash on bilateral forearms. No vesicles or pustules. Mild pruritus reported.</p>
+                </div>
+                <div class="details-section">
+                    <h5>Diagnosis</h5>
+                    <p>Contact Dermatitis - likely triggered by new laundry detergent.</p>
+                </div>
+                <div class="details-section">
+                    <h5>Plan & Advice</h5>
+                    <p>Switch to hypoallergenic detergent. Apply Hydrocortisone cream twice daily. Avoid scratching.</p>
+                </div>
+                <div class="record-actions">
+                    <button class="btn btn-outline btn-sm">
+                        <i data-lucide="download"></i> Download PDF
+                    </button>
+                    <button class="btn btn-outline btn-sm">
+                        <i data-lucide="file-text"></i> View Prescriptions
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Record 4 -->
+        <div class="record-card" data-type="home_visit">
+            <div class="record-header">
+                <div class="record-date">
+                    <span class="date-day">10</span>
+                    <span class="date-month">Nov</span>
+                    <span class="date-year">2025</span>
+                </div>
+                <div class="record-info">
+                    <div class="record-title">
+                        <h4>Home Care Assessment</h4>
+                        <span class="visit-type-badge home-visit">
+                            <i data-lucide="home"></i> Home Visit
+                        </span>
+                    </div>
+                    <p class="record-doctor">Dr. Emily Watson - Geriatric Specialist</p>
+                    <p class="record-complaint">Chief Complaint: Mobility assessment and fall prevention</p>
+                </div>
+                <button class="btn btn-outline btn-sm expand-btn">
+                    <i data-lucide="chevron-down"></i>
+                </button>
+            </div>
+            <div class="record-details">
+                <div class="details-section">
+                    <h5>Vitals</h5>
+                    <div class="vitals-grid">
+                        <div class="vital-item">
+                            <i data-lucide="activity"></i>
+                            <span class="vital-label">BP</span>
+                            <span class="vital-value">130/82</span>
+                        </div>
+                        <div class="vital-item">
+                            <i data-lucide="heart"></i>
+                            <span class="vital-label">Heart Rate</span>
+                            <span class="vital-value">68 bpm</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="details-section">
+                    <h5>Clinical Findings</h5>
+                    <p>Gait assessment shows mild unsteadiness. Balance test satisfactory. Home environment reviewed for hazards.</p>
+                </div>
+                <div class="details-section">
+                    <h5>Plan & Advice</h5>
+                    <p>Recommended installation of grab bars in bathroom. Physical therapy referral. Walking aid assessment.</p>
+                </div>
+                <div class="record-actions">
+                    <button class="btn btn-outline btn-sm">
+                        <i data-lucide="download"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Reinitialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    // Expand/collapse record details
+    document.querySelectorAll('.expand-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const card = this.closest('.record-card');
+            card.classList.toggle('expanded');
+            const icon = this.querySelector('i');
+            if (card.classList.contains('expanded')) {
+                icon.setAttribute('data-lucide', 'chevron-up');
+            } else {
+                icon.setAttribute('data-lucide', 'chevron-down');
+            }
+            lucide.createIcons();
+        });
+    });
+
+    // Filter select functionality
+    const filterSelect = document.getElementById('recordsFilter');
+    if (filterSelect) {
+        filterSelect.addEventListener('change', function() {
+            const filter = this.value;
+            document.querySelectorAll('.record-card').forEach(card => {
+                if (!filter || card.getAttribute('data-type') === filter) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+</script>

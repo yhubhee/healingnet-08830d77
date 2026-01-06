@@ -2011,3 +2011,609 @@ button {
         flex-wrap: wrap;
     }
 }
+
+/* ============================================
+   AJAX Partial Page Styles
+   ============================================ */
+
+/* Page Header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-title h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.page-title p {
+    color: var(--muted-foreground);
+    font-size: 0.9375rem;
+}
+
+/* Stats Grid */
+.stats-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .stats-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Tab Container */
+.tab-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 0.625rem 1.25rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted-foreground);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background: var(--sidebar-accent);
+    color: var(--foreground);
+}
+
+.tab-btn.active {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border-color: var(--primary);
+}
+
+/* Appointments Page List */
+.appointments-page-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.appointment-page-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.appointment-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.appointment-page-body {
+    padding: 1.25rem;
+}
+
+.appointment-page-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid var(--border);
+}
+
+/* Prescriptions Page List */
+.prescriptions-page-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.prescription-page-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.prescription-page-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.prescription-drug-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--gradient-success);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.prescription-drug-icon i {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+.prescription-drug-icon.completed {
+    background: var(--gradient-info);
+}
+
+.prescription-drug-icon.cancelled {
+    background: var(--gradient-danger);
+}
+
+.prescription-main-info {
+    flex: 1;
+}
+
+.prescription-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.prescription-title-row h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.prescription-diagnosis {
+    font-size: 0.875rem;
+    color: var(--muted-foreground);
+}
+
+.prescription-page-body {
+    padding: 1.25rem;
+}
+
+.prescription-details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .prescription-details-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+.detail-value.refill-yes {
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.detail-value.refill-yes i {
+    width: 14px;
+    height: 14px;
+}
+
+.detail-value.refill-no {
+    color: var(--destructive);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.detail-value.refill-no i {
+    width: 14px;
+    height: 14px;
+}
+
+.prescription-notes {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    background: rgba(234, 179, 8, 0.1);
+    border: 1px solid rgba(234, 179, 8, 0.2);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.prescription-notes i {
+    width: 18px;
+    height: 18px;
+    color: #eab308;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.prescription-notes span {
+    font-size: 0.875rem;
+    color: var(--foreground);
+    line-height: 1.5;
+}
+
+.prescription-notes.cancelled-reason {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.prescription-notes.cancelled-reason i {
+    color: #ef4444;
+}
+
+.prescription-meta {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+}
+
+.meta-item i {
+    width: 14px;
+    height: 14px;
+}
+
+.prescription-page-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid var(--border);
+}
+
+/* Records List */
+.records-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.record-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.record-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.record-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 72px;
+    background: var(--gradient-primary);
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.date-day {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+}
+
+.date-month {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+}
+
+.date-year {
+    font-size: 0.6875rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.record-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.record-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.record-title h4 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.visit-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.visit-type-badge i {
+    width: 12px;
+    height: 12px;
+}
+
+.visit-type-badge.virtual {
+    background: rgba(34, 211, 238, 0.15);
+    color: #22d3ee;
+}
+
+.visit-type-badge.in-person {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+}
+
+.visit-type-badge.home-visit {
+    background: rgba(251, 146, 60, 0.15);
+    color: #fb923c;
+}
+
+.record-doctor {
+    font-size: 0.875rem;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+}
+
+.record-complaint {
+    font-size: 0.8125rem;
+    color: var(--muted-foreground);
+}
+
+.expand-btn {
+    flex-shrink: 0;
+}
+
+.record-details {
+    display: none;
+    padding: 1.25rem;
+    border-top: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.record-card.expanded .record-details {
+    display: block;
+}
+
+.details-section {
+    margin-bottom: 1.25rem;
+}
+
+.details-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.details-section h5 {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.details-section p {
+    font-size: 0.9375rem;
+    color: var(--foreground);
+    line-height: 1.6;
+}
+
+.vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+}
+
+.vital-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.vital-item i {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+}
+
+.vital-label {
+    font-size: 0.6875rem;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+}
+
+.vital-value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+.follow-up-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--warning);
+    font-weight: 500;
+}
+
+.follow-up-date i {
+    width: 16px;
+    height: 16px;
+}
+
+.record-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+/* Filter Select */
+.filter-group {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.filter-select {
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--foreground);
+    font-size: 0.875rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Status Badge Variants */
+.status-badge.today {
+    background: rgba(251, 146, 60, 0.15);
+    color: #fb923c;
+}
+
+/* Payment Status Variants */
+.payment-status.pending {
+    color: #eab308;
+}
+
+.payment-status.paid {
+    color: #22c55e;
+}
+
+/* Appointment Info Grid */
+.appointment-info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .appointment-info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.info-item i {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.info-item > div {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--foreground);
+}
+
+/* Responsive for page footer */
+@media (max-width: 640px) {
+    .appointment-page-footer,
+    .prescription-page-actions {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .appointment-page-footer .appointment-actions {
+        justify-content: center;
+    }
+    
+    .page-header {
+        flex-direction: column;
+    }
+}

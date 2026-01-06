@@ -1,0 +1,328 @@
+<!-- Accepted Appointments Partial (AJAX) -->
+<div class="page-header">
+    <div class="page-title">
+        <h1>Accepted Appointments</h1>
+        <p>Confirmed appointments ready for consultation</p>
+    </div>
+    <button class="btn btn-primary">
+        <i data-lucide="plus"></i>
+        Book Appointment
+    </button>
+</div>
+
+<!-- Filter Tabs -->
+<div class="tab-container">
+    <button class="tab-btn active" data-filter="all">All Accepted</button>
+    <button class="tab-btn" data-filter="upcoming">Upcoming</button>
+    <button class="tab-btn" data-filter="today">Today</button>
+    <button class="tab-btn" data-filter="completed">Completed</button>
+</div>
+
+<!-- Appointments List -->
+<div class="appointments-page-list">
+    <!-- Appointment Card 1 - Today -->
+    <div class="appointment-page-card" data-filter="today upcoming">
+        <div class="appointment-page-header">
+            <div class="doctor-info">
+                <div class="avatar avatar-lg gradient-success">RK</div>
+                <div class="doctor-details">
+                    <h3>Dr. Rachel Kim</h3>
+                    <p>Dermatologist</p>
+                </div>
+            </div>
+            <div class="appointment-status">
+                <span class="status-badge approved">Approved</span>
+                <span class="status-badge today">Today</span>
+            </div>
+        </div>
+        <div class="appointment-page-body">
+            <div class="appointment-info-grid">
+                <div class="info-item">
+                    <i data-lucide="calendar"></i>
+                    <div>
+                        <span class="info-label">Date</span>
+                        <span class="info-value">January 6, 2026</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="clock"></i>
+                    <div>
+                        <span class="info-label">Time</span>
+                        <span class="info-value">3:00 PM - 3:30 PM</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="video"></i>
+                    <div>
+                        <span class="info-label">Type</span>
+                        <span class="info-value">Virtual Consultation</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="credit-card"></i>
+                    <div>
+                        <span class="info-label">Fee</span>
+                        <span class="info-value">₦20,000.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="appointment-reason">
+                <span class="info-label">Reason for Visit</span>
+                <p>Skin rash evaluation and follow-up on previous treatment.</p>
+            </div>
+        </div>
+        <div class="appointment-page-footer">
+            <span class="payment-status paid">
+                <i data-lucide="check-circle"></i>
+                Payment Completed
+            </span>
+            <div class="appointment-actions">
+                <button class="btn btn-primary btn-sm">
+                    <i data-lucide="video"></i>
+                    Join Call
+                </button>
+                <button class="btn btn-outline btn-sm">
+                    <i data-lucide="message-square"></i>
+                    Message
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Card 2 - Upcoming -->
+    <div class="appointment-page-card" data-filter="upcoming">
+        <div class="appointment-page-header">
+            <div class="doctor-info">
+                <div class="avatar avatar-lg">AH</div>
+                <div class="doctor-details">
+                    <h3>Dr. Ahmed Hassan</h3>
+                    <p>Orthopedic Surgeon</p>
+                </div>
+            </div>
+            <div class="appointment-status">
+                <span class="status-badge approved">Approved</span>
+            </div>
+        </div>
+        <div class="appointment-page-body">
+            <div class="appointment-info-grid">
+                <div class="info-item">
+                    <i data-lucide="calendar"></i>
+                    <div>
+                        <span class="info-label">Date</span>
+                        <span class="info-value">January 10, 2026</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="clock"></i>
+                    <div>
+                        <span class="info-label">Time</span>
+                        <span class="info-value">11:00 AM - 11:45 AM</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="building-2"></i>
+                    <div>
+                        <span class="info-label">Type</span>
+                        <span class="info-value">In-Person Visit</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="credit-card"></i>
+                    <div>
+                        <span class="info-label">Fee</span>
+                        <span class="info-value">₦40,000.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="appointment-reason">
+                <span class="info-label">Reason for Visit</span>
+                <p>Follow-up on knee surgery recovery and physical therapy progress evaluation.</p>
+            </div>
+            <div class="appointment-location">
+                <span class="info-label">Location</span>
+                <p><i data-lucide="map-pin"></i> HealthCare Center, 456 Medical Drive, Suite 302</p>
+            </div>
+        </div>
+        <div class="appointment-page-footer">
+            <span class="payment-status paid">
+                <i data-lucide="check-circle"></i>
+                Payment Completed
+            </span>
+            <div class="appointment-actions">
+                <button class="btn btn-outline btn-sm">
+                    <i data-lucide="navigation"></i>
+                    Get Directions
+                </button>
+                <button class="btn btn-outline btn-sm">
+                    <i data-lucide="edit"></i>
+                    Reschedule
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Card 3 - Completed -->
+    <div class="appointment-page-card" data-filter="completed">
+        <div class="appointment-page-header">
+            <div class="doctor-info">
+                <div class="avatar avatar-lg">LM</div>
+                <div class="doctor-details">
+                    <h3>Dr. Lisa Martinez</h3>
+                    <p>Psychiatrist</p>
+                </div>
+            </div>
+            <div class="appointment-status">
+                <span class="status-badge completed">Completed</span>
+            </div>
+        </div>
+        <div class="appointment-page-body">
+            <div class="appointment-info-grid">
+                <div class="info-item">
+                    <i data-lucide="calendar"></i>
+                    <div>
+                        <span class="info-label">Date</span>
+                        <span class="info-value">December 28, 2025</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="clock"></i>
+                    <div>
+                        <span class="info-label">Duration</span>
+                        <span class="info-value">45 minutes</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="video"></i>
+                    <div>
+                        <span class="info-label">Type</span>
+                        <span class="info-value">Virtual Consultation</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="credit-card"></i>
+                    <div>
+                        <span class="info-label">Fee</span>
+                        <span class="info-value">₦30,000.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="appointment-reason">
+                <span class="info-label">Reason for Visit</span>
+                <p>Monthly therapy session and medication management review.</p>
+            </div>
+        </div>
+        <div class="appointment-page-footer">
+            <span class="payment-status paid">
+                <i data-lucide="check-circle"></i>
+                Payment Completed
+            </span>
+            <div class="appointment-actions">
+                <button class="btn btn-outline btn-sm">
+                    <i data-lucide="file-text"></i>
+                    View Notes
+                </button>
+                <button class="btn btn-outline btn-sm">
+                    <i data-lucide="star"></i>
+                    Leave Review
+                </button>
+                <button class="btn btn-primary btn-sm">
+                    <i data-lucide="repeat"></i>
+                    Book Again
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Card 4 - Completed -->
+    <div class="appointment-page-card" data-filter="completed">
+        <div class="appointment-page-header">
+            <div class="doctor-info">
+                <div class="avatar avatar-lg">CA</div>
+                <div class="doctor-details">
+                    <h3>Dr. Chidi Adebayo</h3>
+                    <p>General Practitioner</p>
+                </div>
+            </div>
+            <div class="appointment-status">
+                <span class="status-badge completed">Completed</span>
+            </div>
+        </div>
+        <div class="appointment-page-body">
+            <div class="appointment-info-grid">
+                <div class="info-item">
+                    <i data-lucide="calendar"></i>
+                    <div>
+                        <span class="info-label">Date</span>
+                        <span class="info-value">December 20, 2025</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="clock"></i>
+                    <div>
+                        <span class="info-label">Duration</span>
+                        <span class="info-value">30 minutes</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="video"></i>
+                    <div>
+                        <span class="info-label">Type</span>
+                        <span class="info-value">Virtual Consultation</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i data-lucide="credit-card"></i>
+                    <div>
+                        <span class="info-label">Fee</span>
+                        <span class="info-value">₦15,000.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="appointment-reason">
+                <span class="info-label">Reason for Visit</span>
+                <p>General checkup and prescription renewal.</p>
+            </div>
+        </div>
+        <div class="appointment-page-footer">
+            <span class="payment-status paid">
+                <i data-lucide="check-circle"></i>
+                Payment Completed
+            </span>
+            <div class="appointment-actions">
+                <button class="btn btn-outline btn-sm">
+                    <i data-lucide="file-text"></i>
+                    View Notes
+                </button>
+                <button class="btn btn-primary btn-sm">
+                    <i data-lucide="repeat"></i>
+                    Book Again
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Reinitialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    // Filter tabs functionality
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            document.querySelectorAll('.appointment-page-card').forEach(card => {
+                const cardFilters = card.getAttribute('data-filter') || '';
+                if (filter === 'all' || cardFilters.includes(filter)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
