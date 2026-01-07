@@ -39,7 +39,7 @@
         </div>
 
         <nav class="sidebar-nav">
-            <a href="#" class="nav-item active">
+            <a href="#" class="nav-item active load-content" data-url="/patients/dashboard">
                 <i data-lucide="layout-dashboard"></i>
                 <span>Dashboard</span>
             </a>
@@ -51,28 +51,42 @@
                     <i data-lucide="chevron-down" class="dropdown-arrow"></i>
                 </button>
                 <div class="nav-dropdown-menu">
-                    <a href="appointments-queue.html" class="nav-dropdown-item">
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/patients/appointments-queue">
                         <i data-lucide="clock"></i>
                         <span>Queue (Pending)</span>
                     </a>
-                    <a href="appointments-accepted.html" class="nav-dropdown-item">
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/patients/appointments-accepted">
                         <i data-lucide="check-circle"></i>
                         <span>Accepted</span>
                     </a>
                 </div>
             </div>
-            <a href="medical-records.html" class="nav-item">
+            <a href="#" class="nav-item load-content" data-url="/patients/medical_records">
                 <i data-lucide="file-text"></i>
                 <span>Medical Records</span>
             </a>
-            <a href="prescriptions.html" class="nav-item">
+            <a href="#" class="nav-item load-content" data-url="/patients/prescriptions">
                 <i data-lucide="pill"></i>
                 <span>Prescriptions</span>
             </a>
-            <a href="#" class="nav-item">
-                <i data-lucide="test-tube"></i>
-                <span>Lab Results</span>
-            </a>
+            <!-- Lab Results Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-item nav-dropdown-toggle">
+                    <i data-lucide="test-tube"></i>
+                    <span>Lab Results</span>
+                    <i data-lucide="chevron-down" class="dropdown-arrow"></i>
+                </button>
+                <div class="nav-dropdown-menu">
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/patients/lab-results">
+                        <i data-lucide="file-text"></i>
+                        <span>View Results</span>
+                    </a>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/patients/lab-results-entry">
+                        <i data-lucide="edit"></i>
+                        <span>Entry Form</span>
+                    </a>
+                </div>
+            </div>
             <a href="#" class="nav-item">
                 <i data-lucide="stethoscope"></i>
                 <span>Find Doctors</span>
@@ -96,7 +110,7 @@
                 <i data-lucide="settings"></i>
                 <span>Settings</span>
             </a>
-            <a href="#" class="nav-item logout">
+            <a href="/patients/logout" class="nav-item logout">
                 <i data-lucide="log-out"></i>
                 <span>Logout</span>
             </a>
@@ -117,29 +131,42 @@
                 <div class="dropdown">
                     <button class="icon-btn notification-btn">
                         <i data-lucide="bell"></i>
-                        <span class="notification-badge">3</span>
+                        <span class="notification-badge" id="notificationCount">5</span>
                     </button>
                     <div class="dropdown-menu notification-menu">
                         <div class="dropdown-header">
                             <span>Notifications</span>
-                            <span class="badge">3 new</span>
+                            <span class="badge" id="notificationBadge">5 new</span>
                         </div>
                         <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item notification-item">
-                            <p class="notification-title">Appointment Reminder</p>
-                            <p class="notification-text">Your appointment with Dr. Adebayo is tomorrow at 10:00 AM</p>
-                            <span class="notification-time">2 hours ago</span>
-                        </a>
-                        <a href="#" class="dropdown-item notification-item">
-                            <p class="notification-title">Lab Results Ready</p>
-                            <p class="notification-text">Your blood test results are now available</p>
-                            <span class="notification-time">5 hours ago</span>
-                        </a>
-                        <a href="#" class="dropdown-item notification-item">
-                            <p class="notification-title">Prescription Renewed</p>
-                            <p class="notification-text">Dr. Okonkwo has renewed your medication</p>
-                            <span class="notification-time">1 day ago</span>
-                        </a>
+                        <!-- Notification items will be populated dynamically -->
+                        <div id="notificationList">
+                            <a href="#" class="dropdown-item notification-item">
+                                <p class="notification-title">Appointment Approved</p>
+                                <p class="notification-text">Dr. Chukwuemeka Obiora has approved your appointment for Jan 10</p>
+                                <span class="notification-time">1 hour ago</span>
+                            </a>
+                            <a href="#" class="dropdown-item notification-item">
+                                <p class="notification-title">Lab Results Ready</p>
+                                <p class="notification-text">Your Complete Blood Count results are now available</p>
+                                <span class="notification-time">3 hours ago</span>
+                            </a>
+                            <a href="#" class="dropdown-item notification-item">
+                                <p class="notification-title">Prescription Refill Reminder</p>
+                                <p class="notification-text">Your Metformin prescription expires in 5 days</p>
+                                <span class="notification-time">6 hours ago</span>
+                            </a>
+                            <a href="#" class="dropdown-item notification-item unread">
+                                <p class="notification-title">New Message</p>
+                                <p class="notification-text">Dr. Adaeze Nwosu sent you a message</p>
+                                <span class="notification-time">1 day ago</span>
+                            </a>
+                            <a href="#" class="dropdown-item notification-item">
+                                <p class="notification-title">Payment Confirmed</p>
+                                <p class="notification-text">₦15,000 payment received for consultation</p>
+                                <span class="notification-time">2 days ago</span>
+                            </a>
+                        </div>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item view-all">View all notifications</a>
                     </div>
@@ -148,36 +175,99 @@
                 <!-- Profile -->
                 <div class="dropdown">
                     <button class="profile-btn">
-                        <div class="avatar">AO</div>
+                        <!-- Profile image or initials -->
+                        <div class="avatar" id="userAvatar">OC</div>
                         <div class="profile-info">
-                            <span class="profile-name">Adaora Okonkwo</span>
+                            <span class="profile-name" id="userName">Oluwaseun Chukwu</span>
                             <span class="profile-role">Patient</span>
                         </div>
                         <i data-lucide="chevron-down"></i>
                     </button>
                     <div class="dropdown-menu profile-menu">
-                        <div class="dropdown-header">My Account</div>
+                        <div class="dropdown-header">
+                            <div class="profile-header-info">
+                                <span class="patient-id">ID: PAT-2024-0847</span>
+                                <span class="blood-type">Blood: O+</span>
+                                <span class="genotype">Genotype: AA</span>
+                            </div>
+                        </div>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item">
                             <i data-lucide="user"></i>
-                            Profile
+                            My Profile
                         </a>
-                        <a href="#" class="dropdown-item">Settings</a>
-                        <a href="#" class="dropdown-item">Help & Support</a>
+                        <a href="#" class="dropdown-item">
+                            <i data-lucide="shield"></i>
+                            Medical Info
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i data-lucide="credit-card"></i>
+                            Insurance & Billing
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i data-lucide="settings"></i>
+                            Settings
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i data-lucide="help-circle"></i>
+                            Help & Support
+                        </a>
                         <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item logout-item">Log out</a>
+                        <a href="/patients/logout" class="dropdown-item logout-item">
+                            <i data-lucide="log-out"></i>
+                            Log out
+                        </a>
                     </div>
                 </div>
             </div>
         </header>
 
         <!-- Main Content Area -->
-        <main class="main-content">
+        <main class="main-content" id="mainContent">
             <!-- Welcome Section -->
             <div class="welcome-section">
                 <div class="welcome-text">
-                    <h1>Welcome back, Adaora!</h1>
+                    <h1>Welcome back, <span id="welcomeName">Oluwaseun</span>!</h1>
                     <p>Here's an overview of your health dashboard</p>
+                </div>
+                <div class="welcome-info">
+                    <span class="last-login"><i data-lucide="clock"></i> Last login: Jan 6, 2026 at 2:34 PM</span>
+                </div>
+            </div>
+
+            <!-- Patient Quick Info Card -->
+            <div class="patient-info-card">
+                <div class="patient-info-header">
+                    <div class="patient-avatar-large">
+                        <div class="avatar-lg" id="patientAvatarLg">OC</div>
+                        <span class="status-indicator online"></span>
+                    </div>
+                    <div class="patient-details">
+                        <h3 id="patientFullName">Oluwaseun Chukwu</h3>
+                        <p class="patient-meta">
+                            <span><i data-lucide="mail"></i> oluwaseun.chukwu@email.com</span>
+                            <span><i data-lucide="phone"></i> +234 803 456 7890</span>
+                        </p>
+                        <div class="patient-tags">
+                            <span class="tag blood-type"><i data-lucide="droplets"></i> O+</span>
+                            <span class="tag genotype">AA</span>
+                            <span class="tag insurance"><i data-lucide="shield-check"></i> NHIS</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="patient-conditions">
+                    <div class="condition-item">
+                        <span class="condition-label">Medical Conditions:</span>
+                        <span class="condition-value">Hypertension (controlled), Type 2 Diabetes</span>
+                    </div>
+                    <div class="condition-item">
+                        <span class="condition-label">Allergies:</span>
+                        <span class="condition-value">Penicillin, Sulfa drugs</span>
+                    </div>
+                    <div class="condition-item">
+                        <span class="condition-label">Current Medications:</span>
+                        <span class="condition-value">Lisinopril 10mg, Metformin 500mg</span>
+                    </div>
                 </div>
             </div>
 
@@ -187,32 +277,32 @@
                     <i data-lucide="calendar" class="stat-icon"></i>
                     <div class="stat-content">
                         <p class="stat-label">Upcoming Appointments</p>
-                        <h3 class="stat-value">3</h3>
-                        <p class="stat-subtitle">Next: Jan 5, 2026</p>
+                        <h3 class="stat-value" id="upcomingAppointmentsCount">4</h3>
+                        <p class="stat-subtitle">Next: <span id="nextAppointmentDate">Jan 10, 2026</span></p>
                     </div>
                 </div>
                 <div class="stat-card gradient-success">
                     <i data-lucide="pill" class="stat-icon"></i>
                     <div class="stat-content">
                         <p class="stat-label">Active Prescriptions</p>
-                        <h3 class="stat-value">5</h3>
-                        <p class="stat-subtitle">2 refills available</p>
+                        <h3 class="stat-value" id="activePrescriptionsCount">6</h3>
+                        <p class="stat-subtitle"><span id="refillsAvailable">3</span> refills available</p>
                     </div>
                 </div>
                 <div class="stat-card gradient-warning">
                     <i data-lucide="test-tube" class="stat-icon"></i>
                     <div class="stat-content">
                         <p class="stat-label">Pending Lab Results</p>
-                        <h3 class="stat-value">2</h3>
-                        <p class="stat-subtitle">Expected: Jan 6</p>
+                        <h3 class="stat-value" id="pendingLabsCount">3</h3>
+                        <p class="stat-subtitle">Expected: <span id="labResultsDate">Jan 8</span></p>
                     </div>
                 </div>
                 <div class="stat-card gradient-danger">
                     <i data-lucide="message-square" class="stat-icon"></i>
                     <div class="stat-content">
                         <p class="stat-label">Unread Messages</p>
-                        <h3 class="stat-value">4</h3>
-                        <p class="stat-subtitle">From 2 doctors</p>
+                        <h3 class="stat-value" id="unreadMessagesCount">7</h3>
+                        <p class="stat-subtitle">From <span id="messageDoctorsCount">3</span> doctors</p>
                     </div>
                 </div>
             </div>
@@ -223,30 +313,37 @@
                 <div class="content-section appointments-section">
                     <div class="section-header">
                         <h2>Upcoming Appointments</h2>
-                        <a href="#" class="link-btn">View All</a>
+                        <a href="#" class="link-btn load-content" data-url="/patients/appointments-queue">View All</a>
                     </div>
-                    <div class="appointments-list">
-                        <!-- Appointment Card 1 -->
-                        <div class="appointment-card">
+                    <div class="appointments-list" id="appointmentsList">
+                        <!-- Appointment Card 1 - Approved Virtual -->
+                        <div class="appointment-card" data-appointment-id="1">
                             <div class="appointment-header">
                                 <div class="doctor-info">
-                                    <div class="avatar">DA</div>
+                                    <div class="avatar">CO</div>
                                     <div>
-                                        <h4>Dr. Chidi Adebayo</h4>
-                                        <p>General Practitioner</p>
+                                        <h4>Dr. Chukwuemeka Obiora</h4>
+                                        <p>Internal Medicine</p>
                                     </div>
                                 </div>
-                                <button class="icon-btn">
+                                <button class="icon-btn" data-dropdown-toggle>
                                     <i data-lucide="more-vertical"></i>
                                 </button>
                             </div>
                             <div class="appointment-details">
-                                <span><i data-lucide="calendar"></i> Jan 5, 2026</span>
-                                <span><i data-lucide="clock"></i> 10:00 AM</span>
+                                <span><i data-lucide="calendar"></i> Jan 10, 2026</span>
+                                <span><i data-lucide="clock"></i> 09:00 AM - 09:30 AM</span>
                                 <span><i data-lucide="video"></i> Virtual</span>
                             </div>
+                            <div class="appointment-reason">
+                                <i data-lucide="clipboard"></i>
+                                <span>Follow-up for hypertension management</span>
+                            </div>
                             <div class="appointment-footer">
-                                <span class="status-badge approved">Approved</span>
+                                <div class="appointment-status">
+                                    <span class="status-badge approved">Approved</span>
+                                    <span class="payment-badge paid"><i data-lucide="check-circle"></i> Paid - ₦15,000</span>
+                                </div>
                                 <button class="btn btn-primary btn-sm">
                                     <i data-lucide="video"></i>
                                     Join Call
@@ -254,55 +351,96 @@
                             </div>
                         </div>
 
-                        <!-- Appointment Card 2 -->
-                        <div class="appointment-card">
+                        <!-- Appointment Card 2 - Pending In-Person -->
+                        <div class="appointment-card" data-appointment-id="2">
                             <div class="appointment-header">
                                 <div class="doctor-info">
-                                    <div class="avatar">NO</div>
+                                    <div class="avatar">AN</div>
                                     <div>
-                                        <h4>Dr. Ngozi Okonkwo</h4>
-                                        <p>Cardiologist</p>
+                                        <h4>Dr. Adaeze Nwosu</h4>
+                                        <p>Endocrinologist</p>
                                     </div>
                                 </div>
-                                <button class="icon-btn">
-                                    <i data-lucide="more-vertical"></i>
-                                </button>
-                            </div>
-                            <div class="appointment-details">
-                                <span><i data-lucide="calendar"></i> Jan 8, 2026</span>
-                                <span><i data-lucide="clock"></i> 2:30 PM</span>
-                                <span><i data-lucide="map-pin"></i> In-Person</span>
-                            </div>
-                            <div class="appointment-footer">
-                                <span class="status-badge pending">Pending</span>
-                            </div>
-                        </div>
-
-                        <!-- Appointment Card 3 -->
-                        <div class="appointment-card">
-                            <div class="appointment-header">
-                                <div class="doctor-info">
-                                    <div class="avatar">EA</div>
-                                    <div>
-                                        <h4>Dr. Emeka Agu</h4>
-                                        <p>Dermatologist</p>
-                                    </div>
-                                </div>
-                                <button class="icon-btn">
+                                <button class="icon-btn" data-dropdown-toggle>
                                     <i data-lucide="more-vertical"></i>
                                 </button>
                             </div>
                             <div class="appointment-details">
                                 <span><i data-lucide="calendar"></i> Jan 12, 2026</span>
-                                <span><i data-lucide="clock"></i> 11:00 AM</span>
-                                <span><i data-lucide="video"></i> Virtual</span>
+                                <span><i data-lucide="clock"></i> 11:00 AM - 11:45 AM</span>
+                                <span><i data-lucide="map-pin"></i> In-Person</span>
+                            </div>
+                            <div class="appointment-reason">
+                                <i data-lucide="clipboard"></i>
+                                <span>Diabetes checkup and HbA1c review</span>
                             </div>
                             <div class="appointment-footer">
-                                <span class="status-badge approved">Approved</span>
-                                <button class="btn btn-primary btn-sm">
-                                    <i data-lucide="video"></i>
-                                    Join Call
+                                <div class="appointment-status">
+                                    <span class="status-badge pending">Pending Approval</span>
+                                    <span class="payment-badge pending"><i data-lucide="clock"></i> ₦25,000 pending</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Appointment Card 3 - Approved Home Visit -->
+                        <div class="appointment-card" data-appointment-id="3">
+                            <div class="appointment-header">
+                                <div class="doctor-info">
+                                    <div class="avatar">EU</div>
+                                    <div>
+                                        <h4>Dr. Emeka Uzodinma</h4>
+                                        <p>General Practitioner</p>
+                                    </div>
+                                </div>
+                                <button class="icon-btn" data-dropdown-toggle>
+                                    <i data-lucide="more-vertical"></i>
                                 </button>
+                            </div>
+                            <div class="appointment-details">
+                                <span><i data-lucide="calendar"></i> Jan 15, 2026</span>
+                                <span><i data-lucide="clock"></i> 03:00 PM - 04:00 PM</span>
+                                <span><i data-lucide="home"></i> Home Visit</span>
+                            </div>
+                            <div class="appointment-reason">
+                                <i data-lucide="clipboard"></i>
+                                <span>Routine wellness check and vitals</span>
+                            </div>
+                            <div class="appointment-footer">
+                                <div class="appointment-status">
+                                    <span class="status-badge approved">Approved</span>
+                                    <span class="payment-badge paid"><i data-lucide="check-circle"></i> Paid - ₦35,000</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Appointment Card 4 - Virtual Pending -->
+                        <div class="appointment-card" data-appointment-id="4">
+                            <div class="appointment-header">
+                                <div class="doctor-info">
+                                    <div class="avatar">IF</div>
+                                    <div>
+                                        <h4>Dr. Ifeoma Fasanya</h4>
+                                        <p>Cardiologist</p>
+                                    </div>
+                                </div>
+                                <button class="icon-btn" data-dropdown-toggle>
+                                    <i data-lucide="more-vertical"></i>
+                                </button>
+                            </div>
+                            <div class="appointment-details">
+                                <span><i data-lucide="calendar"></i> Jan 18, 2026</span>
+                                <span><i data-lucide="clock"></i> 10:30 AM - 11:00 AM</span>
+                                <span><i data-lucide="video"></i> Virtual</span>
+                            </div>
+                            <div class="appointment-reason">
+                                <i data-lucide="clipboard"></i>
+                                <span>ECG review and heart health assessment</span>
+                            </div>
+                            <div class="appointment-footer">
+                                <div class="appointment-status">
+                                    <span class="status-badge pending">Pending Approval</span>
+                                    <span class="payment-badge pending"><i data-lucide="clock"></i> ₦20,000 pending</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -312,31 +450,33 @@
                 <div class="content-section prescriptions-section">
                     <div class="section-header">
                         <h2>Active Prescriptions</h2>
-                        <a href="#" class="link-btn">View All</a>
+                        <a href="#" class="link-btn load-content" data-url="/patients/prescriptions">View All</a>
                     </div>
-                    <div class="prescriptions-list">
-                        <!-- Prescription Card 1 -->
-                        <div class="prescription-card">
+                    <div class="prescriptions-list" id="prescriptionsList">
+                        <!-- Prescription Card 1 - Oral Medication -->
+                        <div class="prescription-card" data-prescription-id="1">
                             <div class="prescription-icon">
                                 <i data-lucide="pill"></i>
                             </div>
                             <div class="prescription-content">
                                 <div class="prescription-header">
-                                    <h4>Amoxicillin</h4>
+                                    <h4>Metformin</h4>
                                     <span class="status-badge active">Active</span>
                                 </div>
                                 <p class="prescription-dosage">500mg</p>
-                                <p class="prescription-frequency">3 times daily for 7 days</p>
-                                <p class="prescription-doctor">Prescribed by Dr. Adebayo</p>
+                                <p class="prescription-frequency">Twice daily with meals for 30 days</p>
+                                <p class="prescription-route"><i data-lucide="circle"></i> Oral</p>
+                                <p class="prescription-diagnosis">Diagnosis: Type 2 Diabetes Mellitus</p>
+                                <p class="prescription-doctor">Prescribed by Dr. Adaeze Nwosu</p>
                                 <div class="prescription-tags">
-                                    <span class="tag refill"><i data-lucide="refresh-cw"></i> Refill Available</span>
-                                    <span class="tag warning"><i data-lucide="alert-circle"></i> Take with food</span>
+                                    <span class="tag refill"><i data-lucide="refresh-cw"></i> Refill Allowed (2 remaining)</span>
+                                    <span class="tag info"><i data-lucide="info"></i> Take with food to reduce GI upset</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Prescription Card 2 -->
-                        <div class="prescription-card">
+                        <!-- Prescription Card 2 - Blood Pressure Medication -->
+                        <div class="prescription-card" data-prescription-id="2">
                             <div class="prescription-icon">
                                 <i data-lucide="pill"></i>
                             </div>
@@ -346,10 +486,57 @@
                                     <span class="status-badge active">Active</span>
                                 </div>
                                 <p class="prescription-dosage">10mg</p>
-                                <p class="prescription-frequency">Once daily for 30 days</p>
-                                <p class="prescription-doctor">Prescribed by Dr. Okonkwo</p>
+                                <p class="prescription-frequency">Once daily in the morning for 30 days</p>
+                                <p class="prescription-route"><i data-lucide="circle"></i> Oral</p>
+                                <p class="prescription-diagnosis">Diagnosis: Essential Hypertension</p>
+                                <p class="prescription-doctor">Prescribed by Dr. Chukwuemeka Obiora</p>
                                 <div class="prescription-tags">
-                                    <span class="tag refill"><i data-lucide="refresh-cw"></i> Refill Available</span>
+                                    <span class="tag refill"><i data-lucide="refresh-cw"></i> Refill Allowed (1 remaining)</span>
+                                    <span class="tag warning"><i data-lucide="alert-circle"></i> Monitor for dry cough</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prescription Card 3 - Cholesterol -->
+                        <div class="prescription-card" data-prescription-id="3">
+                            <div class="prescription-icon">
+                                <i data-lucide="pill"></i>
+                            </div>
+                            <div class="prescription-content">
+                                <div class="prescription-header">
+                                    <h4>Atorvastatin</h4>
+                                    <span class="status-badge active">Active</span>
+                                </div>
+                                <p class="prescription-dosage">20mg</p>
+                                <p class="prescription-frequency">Once daily at bedtime for 30 days</p>
+                                <p class="prescription-route"><i data-lucide="circle"></i> Oral</p>
+                                <p class="prescription-diagnosis">Diagnosis: Hyperlipidemia</p>
+                                <p class="prescription-doctor">Prescribed by Dr. Ifeoma Fasanya</p>
+                                <div class="prescription-tags">
+                                    <span class="tag no-refill"><i data-lucide="x-circle"></i> No Refill</span>
+                                    <span class="tag info"><i data-lucide="moon"></i> Take at night for best effect</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prescription Card 4 - Antibiotic -->
+                        <div class="prescription-card" data-prescription-id="4">
+                            <div class="prescription-icon">
+                                <i data-lucide="pill"></i>
+                            </div>
+                            <div class="prescription-content">
+                                <div class="prescription-header">
+                                    <h4>Azithromycin</h4>
+                                    <span class="status-badge active">Active</span>
+                                </div>
+                                <p class="prescription-dosage">250mg</p>
+                                <p class="prescription-frequency">Once daily for 5 days</p>
+                                <p class="prescription-route"><i data-lucide="circle"></i> Oral</p>
+                                <p class="prescription-diagnosis">Diagnosis: Upper Respiratory Tract Infection</p>
+                                <p class="prescription-doctor">Prescribed by Dr. Emeka Uzodinma</p>
+                                <div class="prescription-tags">
+                                    <span class="tag no-refill"><i data-lucide="x-circle"></i> No Refill</span>
+                                    <span class="tag warning"><i data-lucide="alert-triangle"></i> Complete full course</span>
                                 </div>
                             </div>
                         </div>
@@ -373,7 +560,7 @@
                             <span class="action-label">Symptom Checker</span>
                             <span class="action-desc">Check your symptoms</span>
                         </button>
-                        <button class="quick-action-btn info">
+                        <button class="quick-action-btn info load-content" data-url="/patients/medical_records">
                             <i data-lucide="file-search"></i>
                             <span class="action-label">View Records</span>
                             <span class="action-desc">Access medical history</span>
@@ -383,7 +570,7 @@
                             <span class="action-label">Refill Request</span>
                             <span class="action-desc">Request medication refill</span>
                         </button>
-                        <button class="quick-action-btn danger">
+                        <button class="quick-action-btn danger load-content" data-url="/patients/lab-results">
                             <i data-lucide="test-tube"></i>
                             <span class="action-label">Lab Results</span>
                             <span class="action-desc">Check test results</span>
@@ -399,43 +586,57 @@
                 <!-- Health Metrics -->
                 <div class="content-section health-metrics-section">
                     <h2>Health Metrics</h2>
-                    <p class="metrics-updated">Last updated: January 2, 2026</p>
+                    <p class="metrics-updated">Last updated: January 5, 2026</p>
                     <div class="metrics-list">
                         <div class="metric-item">
                             <div class="metric-header">
                                 <span class="metric-label"><i data-lucide="activity"></i> Blood Pressure</span>
-                                <span class="metric-value success">120/80 mmHg</span>
+                                <span class="metric-value success">128/82 mmHg</span>
                             </div>
                             <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 75%;"></div>
+                                <div class="progress-fill success" style="width: 78%;"></div>
                             </div>
+                            <span class="metric-status">Within target range</span>
                         </div>
                         <div class="metric-item">
                             <div class="metric-header">
                                 <span class="metric-label"><i data-lucide="heart"></i> Heart Rate</span>
-                                <span class="metric-value success">72 bpm</span>
+                                <span class="metric-value success">76 bpm</span>
                             </div>
                             <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 70%;"></div>
+                                <div class="progress-fill success" style="width: 72%;"></div>
                             </div>
+                            <span class="metric-status">Normal resting rate</span>
                         </div>
                         <div class="metric-item">
                             <div class="metric-header">
-                                <span class="metric-label"><i data-lucide="droplets"></i> Blood Sugar</span>
-                                <span class="metric-value success">98 mg/dL</span>
+                                <span class="metric-label"><i data-lucide="droplets"></i> Fasting Blood Sugar</span>
+                                <span class="metric-value warning">118 mg/dL</span>
                             </div>
                             <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 65%;"></div>
+                                <div class="progress-fill warning" style="width: 68%;"></div>
                             </div>
+                            <span class="metric-status">Slightly elevated - monitor closely</span>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-header">
+                                <span class="metric-label"><i data-lucide="thermometer"></i> HbA1c</span>
+                                <span class="metric-value warning">6.8%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill warning" style="width: 65%;"></div>
+                            </div>
+                            <span class="metric-status">Pre-diabetic range - under control</span>
                         </div>
                         <div class="metric-item">
                             <div class="metric-header">
                                 <span class="metric-label"><i data-lucide="scale"></i> BMI</span>
-                                <span class="metric-value success">24.5</span>
+                                <span class="metric-value success">26.2</span>
                             </div>
                             <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 80%;"></div>
+                                <div class="progress-fill success" style="width: 75%;"></div>
                             </div>
+                            <span class="metric-status">Overweight - lifestyle modifications recommended</span>
                         </div>
                     </div>
                 </div>
@@ -443,48 +644,48 @@
                 <!-- Recent Activity -->
                 <div class="content-section activity-section">
                     <h2>Recent Activity</h2>
-                    <div class="activity-list">
+                    <div class="activity-list" id="activityList">
                         <div class="activity-item">
-                            <div class="activity-icon">
-                                <i data-lucide="calendar"></i>
+                            <div class="activity-icon success">
+                                <i data-lucide="check-circle"></i>
                             </div>
                             <div class="activity-content">
                                 <div class="activity-header">
-                                    <h4>Appointment Confirmed</h4>
+                                    <h4>Appointment Approved</h4>
                                     <i data-lucide="check-circle" class="status-icon success"></i>
                                 </div>
-                                <p>Dr. Adebayo on Jan 5, 2026</p>
-                                <span class="activity-time">2 hours ago</span>
+                                <p>Dr. Chukwuemeka Obiora approved your appointment for Jan 10, 2026</p>
+                                <span class="activity-time">1 hour ago</span>
                             </div>
                         </div>
                         <div class="activity-item">
-                            <div class="activity-icon">
+                            <div class="activity-icon info">
+                                <i data-lucide="test-tube"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <h4>Lab Results Available</h4>
+                                    <i data-lucide="file-text" class="status-icon info"></i>
+                                </div>
+                                <p>Complete Blood Count and Lipid Panel results ready for review</p>
+                                <span class="activity-time">3 hours ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon warning">
                                 <i data-lucide="pill"></i>
                             </div>
                             <div class="activity-content">
                                 <div class="activity-header">
-                                    <h4>New Prescription</h4>
-                                    <i data-lucide="file-text" class="status-icon info"></i>
+                                    <h4>Prescription Renewed</h4>
+                                    <i data-lucide="refresh-cw" class="status-icon warning"></i>
                                 </div>
-                                <p>Amoxicillin 500mg added</p>
-                                <span class="activity-time">5 hours ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i data-lucide="file-text"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h4>Medical Record Updated</h4>
-                                    <i data-lucide="check-circle" class="status-icon success"></i>
-                                </div>
-                                <p>Blood test results added</p>
+                                <p>Metformin 500mg renewed by Dr. Adaeze Nwosu - Qty: 60 tablets</p>
                                 <span class="activity-time">1 day ago</span>
                             </div>
                         </div>
                         <div class="activity-item">
-                            <div class="activity-icon">
+                            <div class="activity-icon success">
                                 <i data-lucide="video"></i>
                             </div>
                             <div class="activity-content">
@@ -492,23 +693,62 @@
                                     <h4>Teleconsultation Completed</h4>
                                     <i data-lucide="check-circle" class="status-icon success"></i>
                                 </div>
-                                <p>30 min session with Dr. Okonkwo</p>
+                                <p>45-minute session with Dr. Emeka Uzodinma - General checkup</p>
                                 <span class="activity-time">2 days ago</span>
                             </div>
                         </div>
                         <div class="activity-item">
-                            <div class="activity-icon">
-                                <i data-lucide="calendar"></i>
+                            <div class="activity-icon primary">
+                                <i data-lucide="credit-card"></i>
                             </div>
                             <div class="activity-content">
                                 <div class="activity-header">
-                                    <h4>Appointment Reminder</h4>
-                                    <i data-lucide="alert-circle" class="status-icon warning"></i>
+                                    <h4>Payment Successful</h4>
+                                    <i data-lucide="check-circle" class="status-icon success"></i>
                                 </div>
-                                <p>Follow-up due in 7 days</p>
+                                <p>₦15,000 paid for consultation with Dr. Chukwuemeka Obiora</p>
                                 <span class="activity-time">3 days ago</span>
                             </div>
                         </div>
+                        <div class="activity-item">
+                            <div class="activity-icon info">
+                                <i data-lucide="message-square"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <h4>New Message Received</h4>
+                                    <i data-lucide="mail" class="status-icon info"></i>
+                                </div>
+                                <p>Dr. Ifeoma Fasanya sent follow-up instructions for your ECG</p>
+                                <span class="activity-time">4 days ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Contact Section -->
+            <div class="emergency-section">
+                <div class="emergency-card">
+                    <div class="emergency-header">
+                        <i data-lucide="phone-call"></i>
+                        <h3>Emergency Contact</h3>
+                    </div>
+                    <div class="emergency-details">
+                        <p><strong>Name:</strong> <span id="emergencyName">Adaora Chukwu</span></p>
+                        <p><strong>Phone:</strong> <span id="emergencyPhone">+234 802 345 6789</span></p>
+                        <p><strong>Relationship:</strong> <span id="emergencyRelationship">Spouse</span></p>
+                    </div>
+                </div>
+                <div class="insurance-card">
+                    <div class="insurance-header">
+                        <i data-lucide="shield-check"></i>
+                        <h3>Insurance Information</h3>
+                    </div>
+                    <div class="insurance-details">
+                        <p><strong>Provider:</strong> <span id="insuranceProvider">NHIS - National Health Insurance Scheme</span></p>
+                        <p><strong>Policy No:</strong> <span id="insuranceNumber">NHIS-2024-847291</span></p>
+                        <p><strong>Status:</strong> <span class="status-badge active">Active</span></p>
                     </div>
                 </div>
             </div>
@@ -561,6 +801,99 @@
         // Close header dropdowns when clicking outside
         document.addEventListener('click', () => {
             document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
+        });
+
+        // AJAX Content Loading
+        const mainContent = document.getElementById('mainContent');
+        const defaultMainContent = mainContent.innerHTML;
+
+        function showLoader() {
+            mainContent.style.opacity = "0.3";
+            mainContent.style.pointerEvents = "none";
+            mainContent.innerHTML = `
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <p>Loading...</p>
+                </div>
+            `;
+        }
+
+        function fadeIn() {
+            mainContent.style.opacity = "0";
+            mainContent.style.pointerEvents = "auto";
+            setTimeout(() => {
+                mainContent.style.transition = "opacity 0.4s ease-in-out";
+                mainContent.style.opacity = "1";
+            }, 50);
+        }
+
+        function executeInlineScripts(container) {
+            container.querySelectorAll("script:not([src])").forEach(oldScript => {
+                const newScript = document.createElement("script");
+                newScript.textContent = oldScript.textContent;
+                document.body.appendChild(newScript);
+                document.body.removeChild(newScript);
+            });
+        }
+
+        // Update active nav item
+        function setActiveNavItem(url) {
+            document.querySelectorAll('.nav-item, .nav-dropdown-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const activeItem = document.querySelector(`[data-url="${url}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+        }
+
+        document.body.addEventListener("click", async (event) => {
+            const link = event.target.closest(".load-content");
+            if (!link) return;
+
+            event.preventDefault();
+            const url = link.getAttribute("data-url");
+
+            // Close mobile sidebar
+            if (window.innerWidth <= 991) {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('show');
+            }
+
+            // Update active state
+            setActiveNavItem(url);
+
+            // If dashboard root is requested
+            if (url === "/patients/dashboard") {
+                mainContent.innerHTML = defaultMainContent;
+                fadeIn();
+                lucide.createIcons();
+                return;
+            }
+
+            try {
+                showLoader();
+                const response = await fetch(url);
+                const html = await response.text();
+
+                mainContent.innerHTML = html;
+                executeInlineScripts(mainContent);
+                fadeIn();
+                lucide.createIcons();
+
+            } catch (err) {
+                console.error("Load error:", err);
+                mainContent.innerHTML = `
+                    <div class="error-container">
+                        <i data-lucide="alert-circle"></i>
+                        <h3>Could not load page</h3>
+                        <p>Please try again or contact support if the problem persists.</p>
+                        <button class="btn btn-primary" onclick="location.reload()">Reload Page</button>
+                    </div>
+                `;
+                fadeIn();
+                lucide.createIcons();
+            }
         });
     </script>
 </body>
