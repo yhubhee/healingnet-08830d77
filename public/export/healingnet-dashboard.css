@@ -5016,3 +5016,247 @@ textarea.form-control {
         justify-content: center;
     }
 }
+
+/* ========================================
+   EDIT PROFILE PAGE STYLES
+   ======================================== */
+
+.edit-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #e2e8f0;
+}
+
+.form-group label .required {
+    color: #ef4444;
+    margin-left: 0.25rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem 1rem;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+    border-radius: 0.5rem;
+    color: #f1f5f9;
+    font-size: 0.9375rem;
+    transition: all 0.2s ease;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #64748b;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #0891b2;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.form-group select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+.form-group select option {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Password Input */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    width: 100%;
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: color 0.2s ease;
+}
+
+.password-toggle:hover {
+    color: #0891b2;
+}
+
+.password-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(8, 145, 178, 0.1);
+    border-radius: 0.5rem;
+    border-left: 3px solid #0891b2;
+}
+
+.password-hint i {
+    color: #0891b2;
+}
+
+/* Avatar Upload */
+.avatar-upload-btn {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.4);
+}
+
+.avatar-upload-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(8, 145, 178, 0.5);
+}
+
+.avatar-upload-btn i {
+    color: white;
+    font-size: 1rem;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(100, 116, 139, 0.2);
+    margin-top: 0.5rem;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(8, 145, 178, 0.4);
+}
+
+.btn-secondary {
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(100, 116, 139, 0.3);
+    color: #e2e8f0;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #0891b2;
+    border: 1px solid #0891b2;
+}
+
+.btn-outline:hover {
+    background: rgba(8, 145, 178, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-group.full-width {
+        grid-column: 1;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .profile-header-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .profile-header-actions button {
+        flex: 1;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}
