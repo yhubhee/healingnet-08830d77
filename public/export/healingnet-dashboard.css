@@ -999,6 +999,17 @@ button {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
+}
+
+.bottom-grid > .content-section {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.quick-actions-section {
+    min-width: 0;
+    overflow: hidden;
 }
 
 @media (min-width: 1024px) {
