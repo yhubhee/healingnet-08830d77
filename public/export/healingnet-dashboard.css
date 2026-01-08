@@ -318,6 +318,14 @@ button {
 .main-wrapper {
     margin-left: var(--sidebar-width);
     min-height: 100vh;
+    width: calc(100% - var(--sidebar-width));
+    overflow-x: hidden;
+}
+
+@media (max-width: 991px) {
+    .main-wrapper {
+        width: 100%;
+    }
 }
 
 /* -------------------- Header -------------------- */
@@ -988,11 +996,27 @@ button {
     display: grid;
     grid-template-columns: 1fr;
     gap: 24px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 @media (min-width: 1024px) {
     .bottom-grid {
         grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Health Metrics Grid (for expanded metrics) */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+@media (min-width: 640px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
