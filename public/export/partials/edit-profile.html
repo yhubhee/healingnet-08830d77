@@ -1,0 +1,322 @@
+<div class="profile-page">
+    <div class="profile-header">
+        <div class="profile-avatar-section">
+            <div class="profile-avatar-large">
+                <img src="/api/patients/profile-image" alt="Profile" id="profile-preview">
+                <label class="avatar-upload-btn" for="profile-upload">
+                    <i class="fas fa-camera"></i>
+                </label>
+                <input type="file" id="profile-upload" accept="image/*" hidden>
+            </div>
+            <div class="profile-header-info">
+                <h1 class="profile-name">Edit Profile</h1>
+                <p class="profile-subtitle">Update your personal and medical information</p>
+            </div>
+        </div>
+        <div class="profile-header-actions">
+            <button type="button" class="btn-secondary load-content" data-url="/export/partials/patient-profile.html">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" form="edit-profile-form" class="btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </div>
+
+    <form id="edit-profile-form" class="edit-profile-form">
+        <!-- Personal Information Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <i class="fas fa-user section-icon"></i>
+                <h2 class="section-title">Personal Information</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="firstname">First Name <span class="required">*</span></label>
+                    <input type="text" id="firstname" name="firstname" value="Adaeze" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastname">Last Name <span class="required">*</span></label>
+                    <input type="text" id="lastname" name="lastname" value="Okonkwo" required>
+                </div>
+                <div class="form-group">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender">
+                        <option value="">Select Gender</option>
+                        <option value="female" selected>Female</option>
+                        <option value="male">Male</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date_of_birth">Date of Birth</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" value="1992-03-15">
+                </div>
+                <div class="form-group">
+                    <label for="national_id">National ID (NIN)</label>
+                    <input type="text" id="national_id" name="national_id" value="12345678901" placeholder="Enter your NIN">
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" value="45 Marina Road, Victoria Island, Lagos" placeholder="Enter your address">
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <i class="fas fa-address-book section-icon"></i>
+                <h2 class="section-title">Contact Information</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="email">Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" value="adaeze.okonkwo@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number <span class="required">*</span></label>
+                    <input type="tel" id="phone" name="phone" value="+234 803 456 7890" required>
+                </div>
+                <div class="form-group">
+                    <label for="reminder_channel">Preferred Reminder Channel</label>
+                    <select id="reminder_channel" name="reminder_channel">
+                        <option value="email" selected>Email</option>
+                        <option value="sms">SMS</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical Information Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <i class="fas fa-heartbeat section-icon"></i>
+                <h2 class="section-title">Medical Information</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="blood_type">Blood Type</label>
+                    <select id="blood_type" name="blood_type">
+                        <option value="">Select Blood Type</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+" selected>O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="genotype">Genotype</label>
+                    <select id="genotype" name="genotype">
+                        <option value="">Select Genotype</option>
+                        <option value="AA" selected>AA</option>
+                        <option value="AS">AS</option>
+                        <option value="SS">SS</option>
+                        <option value="AC">AC</option>
+                        <option value="SC">SC</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="symptoms">Current Symptoms / Complaints</label>
+                    <textarea id="symptoms" name="symptoms" rows="3" placeholder="Describe any current symptoms or complaints">Occasional headaches, mild fatigue</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="medical_conditions">Medical Conditions</label>
+                    <textarea id="medical_conditions" name="medical_conditions" rows="3" placeholder="e.g., Hypertension, Diabetes, Asthma">Type 2 Diabetes (controlled), Mild Hypertension</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="allergies">Allergies</label>
+                    <textarea id="allergies" name="allergies" rows="2" placeholder="List any drug or food allergies">Penicillin, Shellfish</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="medications">Current Medications</label>
+                    <textarea id="medications" name="medications" rows="3" placeholder="List long-term medications you're currently taking">Metformin 500mg (twice daily), Lisinopril 10mg (once daily)</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="chronic_conditions">Chronic Conditions</label>
+                    <textarea id="chronic_conditions" name="chronic_conditions" rows="2" placeholder="e.g., Sickle cell, HIV, Epilepsy">None</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="surgical_history">Surgical History</label>
+                    <textarea id="surgical_history" name="surgical_history" rows="2" placeholder="List any previous surgeries">Appendectomy (2015)</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="family_medical_history">Family Medical History</label>
+                    <textarea id="family_medical_history" name="family_medical_history" rows="3" placeholder="e.g., Father - Heart disease, Mother - Diabetes">Father: Hypertension, Heart Disease; Mother: Type 2 Diabetes; Grandmother: Breast Cancer</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="lifestyle_factors">Lifestyle Factors</label>
+                    <textarea id="lifestyle_factors" name="lifestyle_factors" rows="2" placeholder="e.g., Smoking status, alcohol consumption, exercise habits">Non-smoker, Occasional alcohol (social), Walks 30 mins daily</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="immunization_history">Immunization History</label>
+                    <textarea id="immunization_history" name="immunization_history" rows="2" placeholder="List vaccinations received">COVID-19 (Pfizer, 2 doses), Hepatitis B, Yellow Fever, Tetanus (2022)</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Contact Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <i class="fas fa-phone-alt section-icon"></i>
+                <h2 class="section-title">Emergency Contact</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="emergency_contact_name">Contact Name</label>
+                    <input type="text" id="emergency_contact_name" name="emergency_contact_name" value="Chukwuemeka Okonkwo" placeholder="Full name">
+                </div>
+                <div class="form-group">
+                    <label for="emergency_contact_phone">Contact Phone</label>
+                    <input type="tel" id="emergency_contact_phone" name="emergency_contact_phone" value="+234 805 123 4567" placeholder="Phone number">
+                </div>
+                <div class="form-group">
+                    <label for="emergency_contact_relationship">Relationship</label>
+                    <select id="emergency_contact_relationship" name="emergency_contact_relationship">
+                        <option value="">Select Relationship</option>
+                        <option value="spouse" selected>Spouse</option>
+                        <option value="parent">Parent</option>
+                        <option value="sibling">Sibling</option>
+                        <option value="child">Child</option>
+                        <option value="friend">Friend</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="emergency_contact_information">Additional Information</label>
+                    <textarea id="emergency_contact_information" name="emergency_contact_information" rows="2" placeholder="Any additional emergency contact details">Works at Lagos University Teaching Hospital. Available 24/7.</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insurance Information Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <i class="fas fa-shield-alt section-icon"></i>
+                <h2 class="section-title">Insurance Information</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="insurance_provider">Insurance Provider</label>
+                    <input type="text" id="insurance_provider" name="insurance_provider" value="Hygeia HMO" placeholder="Enter insurance provider">
+                </div>
+                <div class="form-group">
+                    <label for="insurance_number">Policy Number</label>
+                    <input type="text" id="insurance_number" name="insurance_number" value="HYG-2024-78543" placeholder="Enter policy number">
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Settings Section -->
+        <div class="profile-section">
+            <div class="section-header">
+                <i class="fas fa-lock section-icon"></i>
+                <h2 class="section-title">Change Password</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="current_password" name="current_password" placeholder="Enter current password">
+                        <button type="button" class="password-toggle" data-target="current_password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="new_password" name="new_password" placeholder="Enter new password">
+                        <button type="button" class="password-toggle" data-target="new_password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm new password">
+                        <button type="button" class="password-toggle" data-target="confirm_password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <p class="password-hint">
+                <i class="fas fa-info-circle"></i>
+                Leave password fields empty if you don't want to change your password.
+            </p>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <button type="button" class="btn-secondary load-content" data-url="/export/partials/patient-profile.html">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="reset" class="btn-outline">
+                <i class="fas fa-undo"></i> Reset Changes
+            </button>
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Password toggle functionality
+document.querySelectorAll('.password-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const input = document.getElementById(targetId);
+        const icon = this.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    });
+});
+
+// Profile image preview
+document.getElementById('profile-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('profile-preview').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Form submission
+document.getElementById('edit-profile-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validate passwords match if changing password
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (newPassword && newPassword !== confirmPassword) {
+        alert('New passwords do not match!');
+        return;
+    }
+    
+    // Collect form data
+    const formData = new FormData(this);
+    
+    // TODO: Submit to backend
+    console.log('Form submitted:', Object.fromEntries(formData));
+    alert('Profile updated successfully!');
+});
+</script>
