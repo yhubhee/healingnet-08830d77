@@ -5295,3 +5295,534 @@ textarea.form-control {
         justify-content: center;
     }
 }
+
+/* ========================================
+   SETTINGS PAGE STYLES
+   ======================================== */
+
+.settings-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.settings-page .page-header {
+    margin-bottom: 2rem;
+}
+
+.settings-page .page-title h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.settings-page .page-title h1 i {
+    width: 28px;
+    height: 28px;
+    color: var(--primary);
+}
+
+.settings-page .page-title p {
+    color: var(--muted-foreground);
+    font-size: 0.9375rem;
+}
+
+.settings-content-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.settings-section-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.settings-section-card .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.settings-section-card .section-header h2 {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    flex: 1;
+}
+
+.settings-section-card .section-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-section-card .section-icon i {
+    width: 18px;
+    height: 18px;
+}
+
+.settings-section-card .section-icon.security {
+    background: var(--gradient-primary);
+    color: white;
+}
+
+.settings-section-card .section-icon.notifications {
+    background: var(--gradient-warning);
+    color: white;
+}
+
+.settings-section-card .section-icon.privacy {
+    background: var(--gradient-danger);
+    color: white;
+}
+
+.settings-section-card .section-icon.appearance {
+    background: var(--gradient-info);
+    color: white;
+}
+
+.settings-section-card .section-icon.data {
+    background: var(--gradient-success);
+    color: white;
+}
+
+.settings-section-card .section-icon.support {
+    background: linear-gradient(135deg, hsl(280, 70%, 45%) 0%, hsl(280, 70%, 60%) 100%);
+    color: white;
+}
+
+.settings-section-card .section-content {
+    padding: 1rem;
+}
+
+.settings-section-card .setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--muted);
+    border-radius: 0.5rem;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+}
+
+.settings-section-card .setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.settings-section-card .setting-item.warning {
+    background: hsl(0 70% 50% / 0.08);
+    border: 1px solid hsl(0 70% 50% / 0.2);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border);
+    border-radius: 26px;
+    transition: 0.3s;
+}
+
+.toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(22px);
+}
+
+/* Select Wrapper */
+.select-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-width: 160px;
+}
+
+.select-wrapper select {
+    width: 100%;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    color: var(--foreground);
+    appearance: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.select-wrapper select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px hsl(186 82% 47% / 0.2);
+}
+
+.select-wrapper select option {
+    background: var(--card);
+    color: var(--foreground);
+}
+
+.select-wrapper > i {
+    position: absolute;
+    right: 0.75rem;
+    pointer-events: none;
+    width: 14px;
+    height: 14px;
+    color: var(--muted-foreground);
+}
+
+/* Theme Selector */
+.theme-selector {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--background);
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+}
+
+.theme-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--muted-foreground);
+    transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+    color: var(--foreground);
+    background: var(--muted);
+}
+
+.theme-btn.active {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.theme-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+/* Text Size Selector */
+.text-size-selector {
+    display: flex;
+    gap: 0.25rem;
+    background: var(--background);
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+}
+
+.text-size-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--muted-foreground);
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.text-size-btn:first-child {
+    font-size: 0.75rem;
+}
+
+.text-size-btn:nth-child(2) {
+    font-size: 1rem;
+}
+
+.text-size-btn:last-child {
+    font-size: 1.25rem;
+}
+
+.text-size-btn:hover {
+    color: var(--foreground);
+    background: var(--muted);
+}
+
+.text-size-btn.active {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+/* Version Badge */
+.version-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    background: hsl(var(--success) / 0.15);
+    color: hsl(var(--success));
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Settings Footer */
+.settings-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    width: 90%;
+    max-width: 480px;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.show .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.125rem;
+}
+
+.modal-header h3 i {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: var(--muted);
+    color: var(--foreground);
+}
+
+.modal-close i {
+    width: 18px;
+    height: 18px;
+}
+
+.modal-content form {
+    padding: 1.5rem;
+}
+
+.modal-content .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.modal-content .form-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.modal-content .form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
+}
+
+.modal-content .password-input-wrapper input {
+    width: 100%;
+    padding: 0.75rem 3rem 0.75rem 1rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    color: var(--foreground);
+    font-size: 0.9375rem;
+}
+
+.modal-content .password-input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px hsl(186 82% 47% / 0.2);
+}
+
+/* Password Strength */
+.password-strength {
+    margin-top: 0.5rem;
+}
+
+.strength-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-text {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+/* Settings Page Responsive */
+@media (max-width: 1024px) {
+    .settings-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 576px) {
+    .settings-section-card .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .toggle-switch,
+    .select-wrapper,
+    .theme-selector,
+    .text-size-selector,
+    .setting-action-btn {
+        align-self: stretch;
+    }
+    
+    .select-wrapper {
+        width: 100%;
+    }
+    
+    .select-wrapper select {
+        width: 100%;
+    }
+    
+    .theme-selector,
+    .text-size-selector {
+        justify-content: center;
+    }
+    
+    .setting-action-btn {
+        justify-content: center;
+    }
+    
+    .settings-footer {
+        flex-direction: column;
+    }
+    
+    .settings-footer button {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .modal-actions button {
+        width: 100%;
+        justify-content: center;
+    }
+}
