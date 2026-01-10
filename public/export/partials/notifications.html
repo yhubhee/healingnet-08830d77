@@ -1,0 +1,440 @@
+<!-- Notifications Page -->
+<div class="notifications-page">
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i data-lucide="bell"></i> Notifications</h1>
+            <p>Stay updated with your health activities and alerts</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline" id="markAllReadBtn">
+                <i data-lucide="check-check"></i>
+                Mark All as Read
+            </button>
+            <button class="btn btn-outline" id="notificationSettingsBtn">
+                <i data-lucide="settings"></i>
+                Settings
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Filters -->
+    <div class="notification-filters">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">
+                All
+                <span class="filter-count">24</span>
+            </button>
+            <button class="filter-tab" data-filter="unread">
+                Unread
+                <span class="filter-count">8</span>
+            </button>
+            <button class="filter-tab" data-filter="appointments">
+                <i data-lucide="calendar"></i>
+                Appointments
+            </button>
+            <button class="filter-tab" data-filter="prescriptions">
+                <i data-lucide="pill"></i>
+                Prescriptions
+            </button>
+            <button class="filter-tab" data-filter="lab-results">
+                <i data-lucide="test-tube"></i>
+                Lab Results
+            </button>
+            <button class="filter-tab" data-filter="messages">
+                <i data-lucide="message-square"></i>
+                Messages
+            </button>
+        </div>
+        <div class="filter-search">
+            <i data-lucide="search"></i>
+            <input type="text" placeholder="Search notifications..." id="notificationSearch">
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notifications-container">
+        <!-- Today's Notifications -->
+        <div class="notification-group">
+            <h3 class="group-title">Today</h3>
+            
+            <div class="notification-item unread" data-type="appointments">
+                <div class="notification-icon appointment">
+                    <i data-lucide="calendar-check"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Appointment Reminder</h4>
+                        <span class="notification-time">2 hours ago</span>
+                    </div>
+                    <p>Your appointment with <strong>Dr. Chukwuemeka Obiora</strong> is scheduled for tomorrow at <strong>10:00 AM</strong>. Please arrive 15 minutes early.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">View Details</button>
+                        <button class="btn btn-sm btn-outline">Reschedule</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item unread" data-type="lab-results">
+                <div class="notification-icon lab-result">
+                    <i data-lucide="test-tube"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Lab Results Ready</h4>
+                        <span class="notification-time">5 hours ago</span>
+                    </div>
+                    <p>Your <strong>Complete Blood Count (CBC)</strong> and <strong>Lipid Panel</strong> results are now available for review.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">View Results</button>
+                        <button class="btn btn-sm btn-outline">Download PDF</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item unread" data-type="messages">
+                <div class="notification-icon message">
+                    <i data-lucide="message-square"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>New Message from Dr. Adaeze Nwosu</h4>
+                        <span class="notification-time">6 hours ago</span>
+                    </div>
+                    <p>"Hello, I wanted to follow up on your recent consultation. Please remember to take your medication as prescribed and..."</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">Reply</button>
+                        <button class="btn btn-sm btn-outline">View Conversation</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Yesterday's Notifications -->
+        <div class="notification-group">
+            <h3 class="group-title">Yesterday</h3>
+
+            <div class="notification-item" data-type="prescriptions">
+                <div class="notification-icon prescription">
+                    <i data-lucide="pill"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Prescription Renewed</h4>
+                        <span class="notification-time">1 day ago</span>
+                    </div>
+                    <p>Your prescription for <strong>Metformin 500mg</strong> has been renewed by <strong>Dr. Adaeze Nwosu</strong>. Quantity: 60 tablets.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">View Prescription</button>
+                        <button class="btn btn-sm btn-outline">Find Pharmacy</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item unread" data-type="appointments">
+                <div class="notification-icon appointment success">
+                    <i data-lucide="check-circle"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Appointment Approved</h4>
+                        <span class="notification-time">1 day ago</span>
+                    </div>
+                    <p><strong>Dr. Emeka Uzodinma</strong> has approved your appointment request for <strong>January 15, 2026 at 2:30 PM</strong>.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">Add to Calendar</button>
+                        <button class="btn btn-sm btn-outline">View Details</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item" data-type="system">
+                <div class="notification-icon system">
+                    <i data-lucide="shield-check"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Security Alert</h4>
+                        <span class="notification-time">1 day ago</span>
+                    </div>
+                    <p>A new device was used to sign in to your account. If this wasn't you, please secure your account immediately.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">Review Activity</button>
+                        <button class="btn btn-sm btn-outline">Secure Account</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- This Week's Notifications -->
+        <div class="notification-group">
+            <h3 class="group-title">This Week</h3>
+
+            <div class="notification-item" data-type="appointments">
+                <div class="notification-icon appointment">
+                    <i data-lucide="video"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Teleconsultation Completed</h4>
+                        <span class="notification-time">2 days ago</span>
+                    </div>
+                    <p>Your 45-minute teleconsultation with <strong>Dr. Ifeoma Fasanya</strong> has been completed. Session notes are now available.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">View Notes</button>
+                        <button class="btn btn-sm btn-outline">Rate Experience</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item" data-type="billing">
+                <div class="notification-icon billing">
+                    <i data-lucide="credit-card"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Payment Successful</h4>
+                        <span class="notification-time">3 days ago</span>
+                    </div>
+                    <p>Your payment of <strong>₦15,000</strong> for consultation with <strong>Dr. Chukwuemeka Obiora</strong> was successful.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">View Receipt</button>
+                        <button class="btn btn-sm btn-outline">Download Invoice</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item unread" data-type="prescriptions">
+                <div class="notification-icon prescription warning">
+                    <i data-lucide="alert-triangle"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Prescription Expiring Soon</h4>
+                        <span class="notification-time">3 days ago</span>
+                    </div>
+                    <p>Your prescription for <strong>Lisinopril 10mg</strong> will expire in <strong>5 days</strong>. Request a refill to avoid interruption.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">Request Refill</button>
+                        <button class="btn btn-sm btn-outline">Contact Doctor</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item" data-type="lab-results">
+                <div class="notification-icon lab-result">
+                    <i data-lucide="file-text"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Lab Report Downloaded</h4>
+                        <span class="notification-time">4 days ago</span>
+                    </div>
+                    <p>Your <strong>Thyroid Panel</strong> report has been downloaded successfully.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-outline">View Report</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item" data-type="messages">
+                <div class="notification-icon message">
+                    <i data-lucide="mail"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Message Read</h4>
+                        <span class="notification-time">5 days ago</span>
+                    </div>
+                    <p><strong>Dr. Obiora</strong> has read your message regarding follow-up care instructions.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-outline">View Conversation</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Earlier Notifications -->
+        <div class="notification-group">
+            <h3 class="group-title">Earlier</h3>
+
+            <div class="notification-item" data-type="system">
+                <div class="notification-icon system info">
+                    <i data-lucide="info"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Profile Updated</h4>
+                        <span class="notification-time">1 week ago</span>
+                    </div>
+                    <p>Your profile information has been updated successfully. Emergency contact details have been saved.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-outline">View Profile</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item" data-type="appointments">
+                <div class="notification-icon appointment">
+                    <i data-lucide="calendar-x"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Appointment Cancelled</h4>
+                        <span class="notification-time">1 week ago</span>
+                    </div>
+                    <p>Your appointment with <strong>Dr. Ngozi Okafor</strong> on January 3, 2026 has been cancelled at your request.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">Book New Appointment</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="notification-item" data-type="billing">
+                <div class="notification-icon billing">
+                    <i data-lucide="receipt"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <h4>Invoice Generated</h4>
+                        <span class="notification-time">2 weeks ago</span>
+                    </div>
+                    <p>Invoice <strong>#INV-2026-0042</strong> for ₦25,000 has been generated for your recent medical services.</p>
+                    <div class="notification-actions">
+                        <button class="btn btn-sm btn-primary">Pay Now</button>
+                        <button class="btn btn-sm btn-outline">View Invoice</button>
+                    </div>
+                </div>
+                <button class="notification-dismiss" title="Dismiss">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Load More -->
+        <div class="load-more-container">
+            <button class="btn btn-outline load-more-btn" id="loadMoreNotifications">
+                <i data-lucide="chevron-down"></i>
+                Load More Notifications
+            </button>
+        </div>
+    </div>
+
+    <!-- Empty State (hidden by default) -->
+    <div class="notifications-empty" style="display: none;">
+        <div class="empty-icon">
+            <i data-lucide="bell-off"></i>
+        </div>
+        <h3>No Notifications</h3>
+        <p>You're all caught up! Check back later for new updates.</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    // Filter tabs functionality
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const notificationItems = document.querySelectorAll('.notification-item');
+
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Update active tab
+            filterTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            const filter = this.dataset.filter;
+
+            notificationItems.forEach(item => {
+                if (filter === 'all') {
+                    item.style.display = 'flex';
+                } else if (filter === 'unread') {
+                    item.style.display = item.classList.contains('unread') ? 'flex' : 'none';
+                } else {
+                    item.style.display = item.dataset.type === filter ? 'flex' : 'none';
+                }
+            });
+        });
+    });
+
+    // Search functionality
+    const searchInput = document.getElementById('notificationSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            notificationItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? 'flex' : 'none';
+            });
+        });
+    }
+
+    // Mark all as read
+    const markAllReadBtn = document.getElementById('markAllReadBtn');
+    if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', function() {
+            notificationItems.forEach(item => {
+                item.classList.remove('unread');
+            });
+            // Update unread count
+            const unreadCount = document.querySelector('.filter-tab[data-filter="unread"] .filter-count');
+            if (unreadCount) {
+                unreadCount.textContent = '0';
+            }
+        });
+    }
+
+    // Dismiss notification
+    const dismissBtns = document.querySelectorAll('.notification-dismiss');
+    dismissBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const item = this.closest('.notification-item');
+            item.style.animation = 'slideOut 0.3s ease forwards';
+            setTimeout(() => item.remove(), 300);
+        });
+    });
+});
+</script>
