@@ -1,0 +1,760 @@
+<!-- Book Appointment - AI Triage & Doctor Booking -->
+<div class="book-appointment-page">
+
+    <!-- Page Header -->
+    <div class="page-header-bar">
+        <div class="page-header-left">
+            <h1><i data-lucide="calendar-plus"></i> Book Appointment</h1>
+            <p>Our AI triage will guide you to the right specialist</p>
+        </div>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="triage-progress">
+        <div class="triage-step active" data-step="1">
+            <div class="step-circle">1</div>
+            <span class="step-label">Symptoms</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="triage-step" data-step="2">
+            <div class="step-circle">2</div>
+            <span class="step-label">Assessment</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="triage-step" data-step="3">
+            <div class="step-circle">3</div>
+            <span class="step-label">Doctors</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="triage-step" data-step="4">
+            <div class="step-circle">4</div>
+            <span class="step-label">Booking</span>
+        </div>
+    </div>
+
+    <!-- ==================== STEP 1: Symptom Input ==================== -->
+    <div class="triage-panel active" id="triageStep1">
+        <div class="triage-card">
+            <div class="triage-card-header">
+                <div class="ai-badge"><i data-lucide="bot"></i> AI Triage Assistant</div>
+                <h2>Tell us what's going on</h2>
+                <p>Describe your symptoms and our AI will help find the right doctor for you.</p>
+            </div>
+
+            <!-- Chat-style Triage -->
+            <div class="triage-chat" id="triageChat">
+                <div class="chat-bubble ai">
+                    <div class="chat-avatar"><i data-lucide="bot"></i></div>
+                    <div class="chat-message">
+                        <p>Hello! I'm your AI health assistant. I'll ask you a few questions to understand your symptoms and recommend the best specialist.</p>
+                        <p><strong>What is your main symptom or concern today?</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Symptom Quick Select -->
+            <div class="symptom-quick-select">
+                <p class="quick-select-label">Common symptoms:</p>
+                <div class="symptom-chips">
+                    <button class="symptom-chip" data-symptom="headache"><i data-lucide="brain"></i> Headache</button>
+                    <button class="symptom-chip" data-symptom="fever"><i data-lucide="thermometer"></i> Fever</button>
+                    <button class="symptom-chip" data-symptom="chest-pain"><i data-lucide="heart"></i> Chest Pain</button>
+                    <button class="symptom-chip" data-symptom="stomach"><i data-lucide="heart"></i> Stomach Ache</button>
+                    <button class="symptom-chip" data-symptom="cough"><i data-lucide="wind"></i> Cough</button>
+                    <button class="symptom-chip" data-symptom="back-pain"><i data-lucide="bone"></i> Back Pain</button>
+                    <button class="symptom-chip" data-symptom="skin"><i data-lucide="scan"></i> Skin Rash</button>
+                    <button class="symptom-chip" data-symptom="fatigue"><i data-lucide="battery-low"></i> Fatigue</button>
+                    <button class="symptom-chip" data-symptom="breathing"><i data-lucide="wind"></i> Difficulty Breathing</button>
+                    <button class="symptom-chip" data-symptom="joint-pain"><i data-lucide="bone"></i> Joint Pain</button>
+                    <button class="symptom-chip" data-symptom="eye"><i data-lucide="eye"></i> Eye Problems</button>
+                    <button class="symptom-chip" data-symptom="ear"><i data-lucide="ear"></i> Ear Pain</button>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="triage-input-bar">
+                <input type="text" id="symptomInput" placeholder="Type your symptom or concern..." autocomplete="off">
+                <button class="btn-send" id="sendSymptom"><i data-lucide="send"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== STEP 2: Follow-up Assessment ==================== -->
+    <div class="triage-panel" id="triageStep2">
+        <div class="triage-card">
+            <div class="triage-card-header">
+                <div class="ai-badge"><i data-lucide="bot"></i> AI Assessment</div>
+                <h2>Follow-up Questions</h2>
+                <p>Help us narrow down the best specialist for you.</p>
+            </div>
+
+            <div class="triage-chat" id="assessmentChat">
+                <!-- AI follow-up questions will appear here -->
+            </div>
+
+            <!-- Assessment Questions (rendered dynamically) -->
+            <div class="assessment-questions" id="assessmentQuestions">
+
+                <!-- Duration -->
+                <div class="assessment-group" id="qDuration">
+                    <label class="assessment-label"><i data-lucide="clock"></i> How long have you had this symptom?</label>
+                    <div class="assessment-options">
+                        <button class="assessment-option" data-answer="today">Today</button>
+                        <button class="assessment-option" data-answer="few-days">A few days</button>
+                        <button class="assessment-option" data-answer="week">About a week</button>
+                        <button class="assessment-option" data-answer="weeks">2+ weeks</button>
+                        <button class="assessment-option" data-answer="month">Over a month</button>
+                    </div>
+                </div>
+
+                <!-- Severity -->
+                <div class="assessment-group hidden" id="qSeverity">
+                    <label class="assessment-label"><i data-lucide="gauge"></i> How severe is your symptom?</label>
+                    <div class="severity-scale">
+                        <button class="severity-btn mild" data-severity="1">1</button>
+                        <button class="severity-btn mild" data-severity="2">2</button>
+                        <button class="severity-btn mild" data-severity="3">3</button>
+                        <button class="severity-btn moderate" data-severity="4">4</button>
+                        <button class="severity-btn moderate" data-severity="5">5</button>
+                        <button class="severity-btn moderate" data-severity="6">6</button>
+                        <button class="severity-btn severe" data-severity="7">7</button>
+                        <button class="severity-btn severe" data-severity="8">8</button>
+                        <button class="severity-btn critical" data-severity="9">9</button>
+                        <button class="severity-btn critical" data-severity="10">10</button>
+                    </div>
+                    <div class="severity-labels">
+                        <span>Mild</span>
+                        <span>Moderate</span>
+                        <span>Severe</span>
+                        <span>Emergency</span>
+                    </div>
+                </div>
+
+                <!-- Previous Treatment -->
+                <div class="assessment-group hidden" id="qPrevTreatment">
+                    <label class="assessment-label"><i data-lucide="pill"></i> Have you taken any medication for this?</label>
+                    <div class="assessment-options">
+                        <button class="assessment-option" data-answer="none">No medication</button>
+                        <button class="assessment-option" data-answer="otc">Over-the-counter meds</button>
+                        <button class="assessment-option" data-answer="prescribed">Prescribed medication</button>
+                        <button class="assessment-option" data-answer="herbal">Herbal/Traditional</button>
+                    </div>
+                </div>
+
+                <!-- Existing Conditions -->
+                <div class="assessment-group hidden" id="qConditions">
+                    <label class="assessment-label"><i data-lucide="clipboard-list"></i> Do you have any existing medical conditions?</label>
+                    <div class="condition-checkboxes">
+                        <label class="condition-check"><input type="checkbox" value="diabetes"> Diabetes</label>
+                        <label class="condition-check"><input type="checkbox" value="hypertension"> Hypertension</label>
+                        <label class="condition-check"><input type="checkbox" value="asthma"> Asthma</label>
+                        <label class="condition-check"><input type="checkbox" value="heart-disease"> Heart Disease</label>
+                        <label class="condition-check"><input type="checkbox" value="none"> None</label>
+                    </div>
+                </div>
+
+                <!-- Additional Notes -->
+                <div class="assessment-group hidden" id="qNotes">
+                    <label class="assessment-label"><i data-lucide="file-text"></i> Any additional information?</label>
+                    <textarea class="assessment-textarea" placeholder="E.g. allergies, recent travel, family history..." rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="triage-actions">
+                <button class="btn btn-outline" onclick="goToStep(1)"><i data-lucide="arrow-left"></i> Back</button>
+                <button class="btn btn-primary" id="runTriageBtn"><i data-lucide="brain"></i> Analyze & Find Doctors</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== STEP 3: Doctor Results ==================== -->
+    <div class="triage-panel" id="triageStep3">
+        <div class="triage-card">
+            <!-- AI Summary -->
+            <div class="triage-summary">
+                <div class="summary-icon"><i data-lucide="clipboard-check"></i></div>
+                <div class="summary-content">
+                    <h3>AI Triage Summary</h3>
+                    <p id="triageSummaryText">Based on your symptoms (headache, fever, fatigue lasting a few days with moderate severity), we recommend seeing a <strong>General Practitioner</strong> or <strong>Internal Medicine</strong> specialist.</p>
+                    <div class="urgency-indicator moderate">
+                        <i data-lucide="alert-triangle"></i>
+                        <span>Urgency Level: <strong>Moderate</strong> — Schedule within 2-3 days</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visit Type Toggle -->
+            <div class="visit-type-toggle">
+                <h3>How would you like to see the doctor?</h3>
+                <div class="toggle-buttons">
+                    <button class="toggle-btn active" data-type="in_person" id="btnInPerson">
+                        <i data-lucide="building-2"></i>
+                        <span>In-Person</span>
+                        <small>Visit a clinic near you</small>
+                    </button>
+                    <button class="toggle-btn" data-type="virtual" id="btnVirtual">
+                        <i data-lucide="video"></i>
+                        <span>Virtual</span>
+                        <small>Video consultation</small>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Location Bar (In-Person only) -->
+            <div class="location-bar" id="locationBar">
+                <div class="location-input-group">
+                    <i data-lucide="map-pin"></i>
+                    <input type="text" id="locationInput" placeholder="Enter your location or use GPS..." value="Lagos, Nigeria">
+                    <button class="btn-gps" id="useGpsBtn"><i data-lucide="locate"></i> Use GPS</button>
+                </div>
+                <p class="location-hint">Doctors sorted by proximity to your location</p>
+            </div>
+
+            <!-- Filters -->
+            <div class="doctor-filters">
+                <div class="filter-group">
+                    <select class="filter-select" id="filterSpecialty">
+                        <option value="">All Specialties</option>
+                        <option value="general" selected>General Practice</option>
+                        <option value="internal">Internal Medicine</option>
+                        <option value="cardiology">Cardiology</option>
+                        <option value="dermatology">Dermatology</option>
+                        <option value="neurology">Neurology</option>
+                        <option value="orthopedics">Orthopedics</option>
+                        <option value="pediatrics">Pediatrics</option>
+                        <option value="ent">ENT</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select class="filter-select" id="filterAvailability">
+                        <option value="">Any Availability</option>
+                        <option value="today">Available Today</option>
+                        <option value="tomorrow">Available Tomorrow</option>
+                        <option value="week">This Week</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <select class="filter-select" id="filterGender">
+                        <option value="">Any Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Doctor Results List -->
+            <div class="doctor-results" id="doctorResults">
+
+                <!-- Doctor Card 1 - Closest -->
+                <div class="doctor-result-card recommended" data-doctor-id="1">
+                    <div class="recommended-badge"><i data-lucide="sparkles"></i> AI Recommended</div>
+                    <div class="doctor-result-top">
+                        <div class="doctor-avatar">
+                            <img src="/img/avatar.jpg" alt="Dr. Chukwuemeka Obiora">
+                            <span class="online-dot"></span>
+                        </div>
+                        <div class="doctor-details">
+                            <h4>Dr. Chukwuemeka Obiora</h4>
+                            <p class="doctor-specialty">General Practitioner</p>
+                            <div class="doctor-rating">
+                                <div class="stars">
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-half"></i>
+                                </div>
+                                <span>4.8 (234 reviews)</span>
+                            </div>
+                        </div>
+                        <div class="doctor-fee">
+                            <span class="fee-amount">₦8,000</span>
+                            <span class="fee-label">Consultation</span>
+                        </div>
+                    </div>
+                    <div class="doctor-result-meta">
+                        <span class="meta-item location"><i data-lucide="map-pin"></i> Lekki Medical Centre <strong class="distance">· 2.3 km</strong></span>
+                        <span class="meta-item"><i data-lucide="clock"></i> Next: <strong>Today, 2:00 PM</strong></span>
+                        <span class="meta-item"><i data-lucide="briefcase"></i> 12 yrs experience</span>
+                    </div>
+                    <div class="doctor-result-tags">
+                        <span class="doc-tag"><i data-lucide="video"></i> Virtual Available</span>
+                        <span class="doc-tag"><i data-lucide="languages"></i> English, Igbo, Yoruba</span>
+                    </div>
+                    <div class="doctor-result-actions">
+                        <button class="btn btn-outline btn-sm view-profile-btn">View Profile</button>
+                        <button class="btn btn-primary btn-sm book-doctor-btn" data-doctor-id="1">Book Appointment</button>
+                    </div>
+                </div>
+
+                <!-- Doctor Card 2 -->
+                <div class="doctor-result-card" data-doctor-id="2">
+                    <div class="doctor-result-top">
+                        <div class="doctor-avatar">
+                            <img src="/img/avatar.jpg" alt="Dr. Adaeze Nwosu">
+                        </div>
+                        <div class="doctor-details">
+                            <h4>Dr. Adaeze Nwosu</h4>
+                            <p class="doctor-specialty">Internal Medicine</p>
+                            <div class="doctor-rating">
+                                <div class="stars">
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                </div>
+                                <span>4.9 (189 reviews)</span>
+                            </div>
+                        </div>
+                        <div class="doctor-fee">
+                            <span class="fee-amount">₦12,000</span>
+                            <span class="fee-label">Consultation</span>
+                        </div>
+                    </div>
+                    <div class="doctor-result-meta">
+                        <span class="meta-item location"><i data-lucide="map-pin"></i> Victoria Island Clinic <strong class="distance">· 5.1 km</strong></span>
+                        <span class="meta-item"><i data-lucide="clock"></i> Next: <strong>Tomorrow, 9:00 AM</strong></span>
+                        <span class="meta-item"><i data-lucide="briefcase"></i> 18 yrs experience</span>
+                    </div>
+                    <div class="doctor-result-tags">
+                        <span class="doc-tag"><i data-lucide="video"></i> Virtual Available</span>
+                        <span class="doc-tag"><i data-lucide="languages"></i> English, Igbo</span>
+                    </div>
+                    <div class="doctor-result-actions">
+                        <button class="btn btn-outline btn-sm view-profile-btn">View Profile</button>
+                        <button class="btn btn-primary btn-sm book-doctor-btn" data-doctor-id="2">Book Appointment</button>
+                    </div>
+                </div>
+
+                <!-- Doctor Card 3 -->
+                <div class="doctor-result-card" data-doctor-id="3">
+                    <div class="doctor-result-top">
+                        <div class="doctor-avatar">
+                            <img src="/img/avatar.jpg" alt="Dr. Emeka Uzodinma">
+                        </div>
+                        <div class="doctor-details">
+                            <h4>Dr. Emeka Uzodinma</h4>
+                            <p class="doctor-specialty">General Practitioner</p>
+                            <div class="doctor-rating">
+                                <div class="stars">
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star"></i>
+                                </div>
+                                <span>4.5 (142 reviews)</span>
+                            </div>
+                        </div>
+                        <div class="doctor-fee">
+                            <span class="fee-amount">₦6,500</span>
+                            <span class="fee-label">Consultation</span>
+                        </div>
+                    </div>
+                    <div class="doctor-result-meta">
+                        <span class="meta-item location"><i data-lucide="map-pin"></i> Surulere General Hospital <strong class="distance">· 8.7 km</strong></span>
+                        <span class="meta-item"><i data-lucide="clock"></i> Next: <strong>Tomorrow, 11:30 AM</strong></span>
+                        <span class="meta-item"><i data-lucide="briefcase"></i> 8 yrs experience</span>
+                    </div>
+                    <div class="doctor-result-tags">
+                        <span class="doc-tag"><i data-lucide="building-2"></i> In-Person Only</span>
+                        <span class="doc-tag"><i data-lucide="languages"></i> English, Igbo</span>
+                    </div>
+                    <div class="doctor-result-actions">
+                        <button class="btn btn-outline btn-sm view-profile-btn">View Profile</button>
+                        <button class="btn btn-primary btn-sm book-doctor-btn" data-doctor-id="3">Book Appointment</button>
+                    </div>
+                </div>
+
+                <!-- Doctor Card 4 -->
+                <div class="doctor-result-card" data-doctor-id="4">
+                    <div class="doctor-result-top">
+                        <div class="doctor-avatar">
+                            <img src="/img/avatar.jpg" alt="Dr. Ifeoma Fasanya">
+                        </div>
+                        <div class="doctor-details">
+                            <h4>Dr. Ifeoma Fasanya</h4>
+                            <p class="doctor-specialty">Internal Medicine</p>
+                            <div class="doctor-rating">
+                                <div class="stars">
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-filled"></i>
+                                    <i data-lucide="star" class="star-half"></i>
+                                </div>
+                                <span>4.7 (98 reviews)</span>
+                            </div>
+                        </div>
+                        <div class="doctor-fee">
+                            <span class="fee-amount">₦10,000</span>
+                            <span class="fee-label">Consultation</span>
+                        </div>
+                    </div>
+                    <div class="doctor-result-meta">
+                        <span class="meta-item location"><i data-lucide="map-pin"></i> Ikeja Medical Hub <strong class="distance">· 14.2 km</strong></span>
+                        <span class="meta-item"><i data-lucide="clock"></i> Next: <strong>Jan 8, 3:00 PM</strong></span>
+                        <span class="meta-item"><i data-lucide="briefcase"></i> 15 yrs experience</span>
+                    </div>
+                    <div class="doctor-result-tags">
+                        <span class="doc-tag"><i data-lucide="video"></i> Virtual Available</span>
+                        <span class="doc-tag"><i data-lucide="languages"></i> English, Yoruba</span>
+                    </div>
+                    <div class="doctor-result-actions">
+                        <button class="btn btn-outline btn-sm view-profile-btn">View Profile</button>
+                        <button class="btn btn-primary btn-sm book-doctor-btn" data-doctor-id="4">Book Appointment</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="triage-actions">
+                <button class="btn btn-outline" onclick="goToStep(2)"><i data-lucide="arrow-left"></i> Back</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== STEP 4: Booking Confirmation ==================== -->
+    <div class="triage-panel" id="triageStep4">
+        <div class="triage-card">
+            <div class="triage-card-header">
+                <h2><i data-lucide="calendar-check"></i> Confirm Your Appointment</h2>
+                <p>Review the details and pick a time slot.</p>
+            </div>
+
+            <!-- Selected Doctor Summary -->
+            <div class="booking-doctor-summary" id="bookingDoctorSummary">
+                <div class="doctor-avatar">
+                    <img src="/img/avatar.jpg" alt="Doctor" id="bookingDoctorImg">
+                </div>
+                <div class="booking-doctor-info">
+                    <h3 id="bookingDoctorName">Dr. Chukwuemeka Obiora</h3>
+                    <p id="bookingDoctorSpecialty">General Practitioner</p>
+                    <p id="bookingDoctorLocation"><i data-lucide="map-pin"></i> Lekki Medical Centre · 2.3 km</p>
+                </div>
+                <div class="booking-type-badge" id="bookingTypeBadge">
+                    <i data-lucide="building-2"></i> In-Person
+                </div>
+            </div>
+
+            <!-- Date & Time Selection -->
+            <div class="booking-datetime">
+                <div class="booking-date-section">
+                    <h4><i data-lucide="calendar"></i> Select Date</h4>
+                    <div class="date-picker-grid" id="datePickerGrid">
+                        <button class="date-option today" data-date="2026-01-05">
+                            <span class="date-day">Mon</span>
+                            <span class="date-num">5</span>
+                            <span class="date-month">Jan</span>
+                            <span class="slot-count">3 slots</span>
+                        </button>
+                        <button class="date-option" data-date="2026-01-06">
+                            <span class="date-day">Tue</span>
+                            <span class="date-num">6</span>
+                            <span class="date-month">Jan</span>
+                            <span class="slot-count">5 slots</span>
+                        </button>
+                        <button class="date-option" data-date="2026-01-07">
+                            <span class="date-day">Wed</span>
+                            <span class="date-num">7</span>
+                            <span class="date-month">Jan</span>
+                            <span class="slot-count">2 slots</span>
+                        </button>
+                        <button class="date-option" data-date="2026-01-08">
+                            <span class="date-day">Thu</span>
+                            <span class="date-num">8</span>
+                            <span class="date-month">Jan</span>
+                            <span class="slot-count">4 slots</span>
+                        </button>
+                        <button class="date-option" data-date="2026-01-09">
+                            <span class="date-day">Fri</span>
+                            <span class="date-num">9</span>
+                            <span class="date-month">Jan</span>
+                            <span class="slot-count">6 slots</span>
+                        </button>
+                        <button class="date-option" data-date="2026-01-10">
+                            <span class="date-day">Sat</span>
+                            <span class="date-num">10</span>
+                            <span class="date-month">Jan</span>
+                            <span class="slot-count">1 slot</span>
+                        </button>
+                        <button class="date-option disabled" data-date="2026-01-11">
+                            <span class="date-day">Sun</span>
+                            <span class="date-num">11</span>
+                            <span class="date-month">Jan</span>
+                            <span class="slot-count">Closed</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="booking-time-section">
+                    <h4><i data-lucide="clock"></i> Select Time</h4>
+                    <div class="time-period">
+                        <h5>Morning</h5>
+                        <div class="time-slots-grid">
+                            <button class="time-slot" data-time="08:00">8:00 AM</button>
+                            <button class="time-slot" data-time="09:00">9:00 AM</button>
+                            <button class="time-slot unavailable" data-time="10:00">10:00 AM</button>
+                            <button class="time-slot" data-time="11:00">11:00 AM</button>
+                        </div>
+                    </div>
+                    <div class="time-period">
+                        <h5>Afternoon</h5>
+                        <div class="time-slots-grid">
+                            <button class="time-slot" data-time="12:00">12:00 PM</button>
+                            <button class="time-slot" data-time="13:00">1:00 PM</button>
+                            <button class="time-slot" data-time="14:00">2:00 PM</button>
+                            <button class="time-slot unavailable" data-time="15:00">3:00 PM</button>
+                            <button class="time-slot" data-time="16:00">4:00 PM</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reason for Visit -->
+            <div class="booking-reason">
+                <h4><i data-lucide="message-square"></i> Reason for Visit</h4>
+                <textarea class="booking-textarea" id="bookingReason" placeholder="Brief description of your complaint (auto-filled from triage)..." rows="3">Experiencing headache, fever, and fatigue for a few days. Moderate severity. No prior medication taken.</textarea>
+            </div>
+
+            <!-- Booking Summary -->
+            <div class="booking-summary-card">
+                <h4>Booking Summary</h4>
+                <div class="summary-rows">
+                    <div class="summary-row">
+                        <span>Doctor</span>
+                        <strong id="summaryDoctor">Dr. Chukwuemeka Obiora</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Specialty</span>
+                        <strong id="summarySpecialty">General Practitioner</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Visit Type</span>
+                        <strong id="summaryType">In-Person</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Location</span>
+                        <strong id="summaryLocation">Lekki Medical Centre</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Date</span>
+                        <strong id="summaryDate">—</strong>
+                    </div>
+                    <div class="summary-row">
+                        <span>Time</span>
+                        <strong id="summaryTime">—</strong>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Consultation Fee</span>
+                        <strong id="summaryFee">₦8,000</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="triage-actions">
+                <button class="btn btn-outline" onclick="goToStep(3)"><i data-lucide="arrow-left"></i> Back</button>
+                <button class="btn btn-primary btn-lg" id="confirmBookingBtn"><i data-lucide="check-circle"></i> Confirm Appointment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SUCCESS MODAL ==================== -->
+    <div class="booking-success-overlay hidden" id="bookingSuccessOverlay">
+        <div class="booking-success-modal">
+            <div class="success-animation">
+                <div class="success-circle">
+                    <i data-lucide="check"></i>
+                </div>
+            </div>
+            <h2>Appointment Booked!</h2>
+            <p>Your appointment request has been sent. You'll receive a confirmation once the doctor approves.</p>
+            <div class="success-details">
+                <div class="success-row">
+                    <i data-lucide="user"></i>
+                    <span id="successDoctor">Dr. Chukwuemeka Obiora</span>
+                </div>
+                <div class="success-row">
+                    <i data-lucide="calendar"></i>
+                    <span id="successDate">Monday, January 5, 2026</span>
+                </div>
+                <div class="success-row">
+                    <i data-lucide="clock"></i>
+                    <span id="successTime">2:00 PM</span>
+                </div>
+                <div class="success-row">
+                    <i data-lucide="map-pin"></i>
+                    <span id="successLocation">Lekki Medical Centre</span>
+                </div>
+            </div>
+            <div class="success-actions">
+                <button class="btn btn-outline load-content" data-url="/patients/appointments_queue">View Appointments</button>
+                <button class="btn btn-primary load-content" data-url="/patients/dashboard">Back to Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Book Appointment JavaScript -->
+<script>
+// ===== Step Navigation =====
+function goToStep(step) {
+    document.querySelectorAll('.triage-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.triage-step').forEach(s => {
+        const sNum = parseInt(s.dataset.step);
+        s.classList.remove('active', 'completed');
+        if (sNum < step) s.classList.add('completed');
+        if (sNum === step) s.classList.add('active');
+    });
+    document.getElementById('triageStep' + step).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== Step 1: Symptom Input =====
+document.querySelectorAll('.symptom-chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+        this.classList.toggle('selected');
+        const input = document.getElementById('symptomInput');
+        const selected = [...document.querySelectorAll('.symptom-chip.selected')].map(c => c.textContent.trim());
+        input.value = selected.join(', ');
+    });
+});
+
+document.getElementById('sendSymptom').addEventListener('click', function() {
+    const input = document.getElementById('symptomInput');
+    if (!input.value.trim()) return;
+    
+    // Add user bubble
+    const chat = document.getElementById('triageChat');
+    chat.innerHTML += `
+        <div class="chat-bubble user">
+            <div class="chat-message"><p>${input.value}</p></div>
+        </div>
+        <div class="chat-bubble ai">
+            <div class="chat-avatar"><i data-lucide="bot"></i></div>
+            <div class="chat-message">
+                <p>I see. Let me ask a few follow-up questions about <strong>${input.value}</strong> to better assess your situation.</p>
+            </div>
+        </div>
+    `;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    
+    setTimeout(() => goToStep(2), 1000);
+});
+
+document.getElementById('symptomInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') document.getElementById('sendSymptom').click();
+});
+
+// ===== Step 2: Assessment =====
+let assessmentStep = 0;
+const assessmentGroups = ['qDuration', 'qSeverity', 'qPrevTreatment', 'qConditions', 'qNotes'];
+
+document.querySelectorAll('.assessment-option, .severity-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const parent = this.closest('.assessment-group');
+        parent.querySelectorAll('.assessment-option, .severity-btn').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+        
+        // Show next question
+        assessmentStep++;
+        if (assessmentStep < assessmentGroups.length) {
+            document.getElementById(assessmentGroups[assessmentStep]).classList.remove('hidden');
+            document.getElementById(assessmentGroups[assessmentStep]).scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+});
+
+document.getElementById('runTriageBtn').addEventListener('click', function() {
+    this.innerHTML = '<i data-lucide="loader" class="spin"></i> Analyzing symptoms...';
+    this.disabled = true;
+    setTimeout(() => {
+        this.innerHTML = '<i data-lucide="brain"></i> Analyze & Find Doctors';
+        this.disabled = false;
+        goToStep(3);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, 2000);
+});
+
+// ===== Step 3: Visit Type Toggle =====
+document.getElementById('btnInPerson').addEventListener('click', function() {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('locationBar').style.display = 'block';
+    document.querySelectorAll('.distance').forEach(d => d.style.display = 'inline');
+});
+
+document.getElementById('btnVirtual').addEventListener('click', function() {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('locationBar').style.display = 'none';
+    document.querySelectorAll('.distance').forEach(d => d.style.display = 'none');
+});
+
+// ===== Step 3: Book Doctor =====
+document.querySelectorAll('.book-doctor-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const card = this.closest('.doctor-result-card');
+        const name = card.querySelector('.doctor-details h4').textContent;
+        const specialty = card.querySelector('.doctor-specialty').textContent;
+        const location = card.querySelector('.meta-item.location').textContent.trim();
+        const fee = card.querySelector('.fee-amount').textContent;
+        
+        document.getElementById('bookingDoctorName').textContent = name;
+        document.getElementById('bookingDoctorSpecialty').textContent = specialty;
+        document.getElementById('bookingDoctorLocation').innerHTML = '<i data-lucide="map-pin"></i> ' + location;
+        document.getElementById('summaryDoctor').textContent = name;
+        document.getElementById('summarySpecialty').textContent = specialty;
+        document.getElementById('summaryLocation').textContent = location;
+        document.getElementById('summaryFee').textContent = fee;
+        
+        const isVirtual = document.getElementById('btnVirtual').classList.contains('active');
+        document.getElementById('bookingTypeBadge').innerHTML = isVirtual 
+            ? '<i data-lucide="video"></i> Virtual' 
+            : '<i data-lucide="building-2"></i> In-Person';
+        document.getElementById('summaryType').textContent = isVirtual ? 'Virtual' : 'In-Person';
+        
+        goToStep(4);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+});
+
+// ===== Step 4: Date & Time Selection =====
+document.querySelectorAll('.date-option:not(.disabled)').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.date-option').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+        const dateText = this.querySelector('.date-day').textContent + ', ' + 
+                         this.querySelector('.date-month').textContent + ' ' + 
+                         this.querySelector('.date-num').textContent;
+        document.getElementById('summaryDate').textContent = dateText;
+    });
+});
+
+document.querySelectorAll('.time-slot:not(.unavailable)').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+        document.getElementById('summaryTime').textContent = this.textContent;
+    });
+});
+
+// ===== Step 4: Confirm Booking =====
+document.getElementById('confirmBookingBtn').addEventListener('click', function() {
+    const date = document.getElementById('summaryDate').textContent;
+    const time = document.getElementById('summaryTime').textContent;
+    if (date === '—' || time === '—') {
+        alert('Please select a date and time.');
+        return;
+    }
+    
+    document.getElementById('successDoctor').textContent = document.getElementById('summaryDoctor').textContent;
+    document.getElementById('successDate').textContent = date;
+    document.getElementById('successTime').textContent = time;
+    document.getElementById('successLocation').textContent = document.getElementById('summaryLocation').textContent;
+    
+    document.getElementById('bookingSuccessOverlay').classList.remove('hidden');
+});
+</script>
