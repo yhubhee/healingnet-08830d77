@@ -6327,3 +6327,1334 @@ textarea.form-control {
         display: inline;
     }
 }
+
+/* ============================================
+   Book Appointment - AI Triage & Booking
+   ============================================ */
+
+.book-appointment-page {
+    animation: fadeIn 0.3s ease;
+}
+
+/* --- Progress Steps --- */
+.triage-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.triage-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--muted);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--muted-foreground);
+    transition: all 0.3s ease;
+}
+
+.triage-step.active .step-circle {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: 0 0 20px hsla(186, 82%, 47%, 0.4);
+}
+
+.triage-step.completed .step-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: var(--success-foreground);
+}
+
+.step-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    transition: color 0.3s;
+}
+
+.triage-step.active .step-label {
+    color: var(--primary);
+}
+
+.triage-step.completed .step-label {
+    color: var(--success);
+}
+
+.step-connector {
+    width: 60px;
+    height: 2px;
+    background: var(--border);
+    margin: 0 0.5rem;
+    margin-bottom: 1.5rem;
+    transition: background 0.3s;
+}
+
+.triage-step.completed + .step-connector,
+.step-connector:has(+ .triage-step.active) {
+    background: var(--primary);
+}
+
+/* --- Triage Panels --- */
+.triage-panel {
+    display: none;
+}
+
+.triage-panel.active {
+    display: block;
+    animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.triage-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+}
+
+.triage-card-header {
+    margin-bottom: 1.5rem;
+}
+
+.triage-card-header h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--foreground);
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.triage-card-header p {
+    color: var(--muted-foreground);
+    font-size: 0.95rem;
+}
+
+.ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    background: hsla(186, 82%, 47%, 0.15);
+    color: var(--primary);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.ai-badge i {
+    width: 16px;
+    height: 16px;
+}
+
+/* --- Chat Bubbles --- */
+.triage-chat {
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background: hsla(222, 47%, 8%, 0.5);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.chat-bubble {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 85%;
+}
+
+.chat-bubble.ai {
+    align-self: flex-start;
+}
+
+.chat-bubble.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.chat-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: hsla(186, 82%, 47%, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.chat-avatar i {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+}
+
+.chat-message {
+    background: var(--muted);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+}
+
+.chat-bubble.user .chat-message {
+    background: hsla(186, 82%, 47%, 0.15);
+    border-color: hsla(186, 82%, 47%, 0.3);
+}
+
+.chat-message p {
+    color: var(--foreground);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.4rem;
+}
+
+.chat-message p:last-child {
+    margin-bottom: 0;
+}
+
+/* --- Symptom Quick Select --- */
+.symptom-quick-select {
+    margin-bottom: 1rem;
+}
+
+.quick-select-label {
+    font-size: 0.85rem;
+    color: var(--muted-foreground);
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.symptom-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.symptom-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--foreground);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.symptom-chip i {
+    width: 14px;
+    height: 14px;
+}
+
+.symptom-chip:hover {
+    border-color: var(--primary);
+    background: hsla(186, 82%, 47%, 0.1);
+}
+
+.symptom-chip.selected {
+    background: hsla(186, 82%, 47%, 0.2);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* --- Chat Input Bar --- */
+.triage-input-bar {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.5rem;
+}
+
+.triage-input-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--foreground);
+    font-size: 0.95rem;
+    padding: 0.5rem;
+}
+
+.triage-input-bar input::placeholder {
+    color: var(--muted-foreground);
+}
+
+.btn-send {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--primary);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-send i {
+    width: 18px;
+    height: 18px;
+    color: var(--primary-foreground);
+}
+
+.btn-send:hover {
+    filter: brightness(1.15);
+    transform: scale(1.05);
+}
+
+/* --- Assessment Questions --- */
+.assessment-questions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.assessment-group {
+    animation: slideUp 0.3s ease;
+}
+
+.assessment-group.hidden {
+    display: none;
+}
+
+.assessment-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 0.75rem;
+}
+
+.assessment-label i {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+}
+
+.assessment-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.assessment-option {
+    padding: 0.6rem 1.2rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--foreground);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.assessment-option:hover {
+    border-color: var(--primary);
+    background: hsla(186, 82%, 47%, 0.1);
+}
+
+.assessment-option.selected {
+    background: hsla(186, 82%, 47%, 0.2);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* --- Severity Scale --- */
+.severity-scale {
+    display: flex;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+}
+
+.severity-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--muted);
+    color: var(--foreground);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.severity-btn.mild:hover, .severity-btn.mild.selected {
+    background: hsla(160, 84%, 39%, 0.3);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.severity-btn.moderate:hover, .severity-btn.moderate.selected {
+    background: hsla(38, 92%, 50%, 0.3);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+.severity-btn.severe:hover, .severity-btn.severe.selected {
+    background: hsla(0, 84%, 60%, 0.3);
+    border-color: var(--destructive);
+    color: var(--destructive);
+}
+
+.severity-btn.critical:hover, .severity-btn.critical.selected {
+    background: hsla(0, 84%, 40%, 0.4);
+    border-color: hsl(0, 84%, 50%);
+    color: hsl(0, 84%, 60%);
+}
+
+.severity-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+}
+
+/* --- Condition Checkboxes --- */
+.condition-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.condition-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--foreground);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.condition-check:hover {
+    border-color: var(--primary);
+}
+
+.condition-check input[type="checkbox"] {
+    accent-color: var(--primary);
+}
+
+.assessment-textarea {
+    width: 100%;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: var(--foreground);
+    font-size: 0.9rem;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.assessment-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* --- Triage Actions --- */
+.triage-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.btn-lg {
+    padding: 0.75rem 2rem !important;
+    font-size: 1rem !important;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- Triage Summary --- */
+.triage-summary {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: hsla(186, 82%, 47%, 0.08);
+    border: 1px solid hsla(186, 82%, 47%, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.summary-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: hsla(186, 82%, 47%, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.summary-icon i {
+    width: 24px;
+    height: 24px;
+    color: var(--primary);
+}
+
+.summary-content h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--foreground);
+    margin-bottom: 0.35rem;
+}
+
+.summary-content p {
+    font-size: 0.9rem;
+    color: var(--muted-foreground);
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+
+.urgency-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.urgency-indicator i {
+    width: 16px;
+    height: 16px;
+}
+
+.urgency-indicator.low {
+    background: hsla(160, 84%, 39%, 0.15);
+    color: var(--success);
+}
+
+.urgency-indicator.moderate {
+    background: hsla(38, 92%, 50%, 0.15);
+    color: var(--warning);
+}
+
+.urgency-indicator.high {
+    background: hsla(0, 84%, 60%, 0.15);
+    color: var(--destructive);
+}
+
+/* --- Visit Type Toggle --- */
+.visit-type-toggle {
+    margin-bottom: 1.5rem;
+}
+
+.visit-type-toggle h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--foreground);
+    margin-bottom: 1rem;
+}
+
+.toggle-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.toggle-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    background: var(--muted);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.toggle-btn i {
+    width: 28px;
+    height: 28px;
+    color: var(--muted-foreground);
+}
+
+.toggle-btn span {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--foreground);
+}
+
+.toggle-btn small {
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+}
+
+.toggle-btn:hover {
+    border-color: var(--primary);
+}
+
+.toggle-btn.active {
+    border-color: var(--primary);
+    background: hsla(186, 82%, 47%, 0.1);
+}
+
+.toggle-btn.active i {
+    color: var(--primary);
+}
+
+/* --- Location Bar --- */
+.location-bar {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: hsla(186, 82%, 47%, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.location-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+}
+
+.location-input-group > i {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.location-input-group input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--foreground);
+    font-size: 0.9rem;
+}
+
+.btn-gps {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    background: hsla(186, 82%, 47%, 0.15);
+    border: 1px solid hsla(186, 82%, 47%, 0.3);
+    border-radius: 6px;
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btn-gps i {
+    width: 14px;
+    height: 14px;
+}
+
+.btn-gps:hover {
+    background: hsla(186, 82%, 47%, 0.25);
+}
+
+.location-hint {
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+    margin-top: 0.5rem;
+}
+
+/* --- Doctor Filters --- */
+.doctor-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-select {
+    padding: 0.5rem 0.75rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--foreground);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* --- Doctor Result Cards --- */
+.doctor-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.doctor-result-card {
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.doctor-result-card:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px hsla(0, 0%, 0%, 0.3);
+}
+
+.doctor-result-card.recommended {
+    border-color: hsla(186, 82%, 47%, 0.4);
+    background: hsla(186, 82%, 47%, 0.05);
+}
+
+.recommended-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.75rem;
+    background: hsla(186, 82%, 47%, 0.2);
+    color: var(--primary);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.recommended-badge i {
+    width: 14px;
+    height: 14px;
+}
+
+.doctor-result-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.doctor-avatar {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.doctor-avatar img {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.online-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 2px solid var(--card);
+}
+
+.doctor-details {
+    flex: 1;
+}
+
+.doctor-details h4 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--foreground);
+    margin-bottom: 0.15rem;
+}
+
+.doctor-specialty {
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.doctor-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stars {
+    display: flex;
+    gap: 2px;
+}
+
+.stars i {
+    width: 14px;
+    height: 14px;
+}
+
+.star-filled {
+    color: hsl(38, 92%, 50%);
+    fill: hsl(38, 92%, 50%);
+}
+
+.star-half {
+    color: hsl(38, 92%, 50%);
+}
+
+.doctor-rating span {
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+}
+
+.doctor-fee {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.fee-amount {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.fee-label {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+}
+
+.doctor-result-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--muted-foreground);
+}
+
+.meta-item i {
+    width: 14px;
+    height: 14px;
+}
+
+.meta-item .distance {
+    color: var(--primary);
+}
+
+.doctor-result-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.doc-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    background: hsla(217, 33%, 22%, 0.8);
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: var(--muted-foreground);
+}
+
+.doc-tag i {
+    width: 12px;
+    height: 12px;
+}
+
+.doctor-result-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+/* --- Step 4: Booking --- */
+.booking-doctor-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.booking-doctor-summary .doctor-avatar img {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+}
+
+.booking-doctor-info h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--foreground);
+}
+
+.booking-doctor-info p {
+    font-size: 0.9rem;
+    color: var(--muted-foreground);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.booking-doctor-info p i {
+    width: 14px;
+    height: 14px;
+}
+
+.booking-type-badge {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    background: hsla(186, 82%, 47%, 0.15);
+    border-radius: 8px;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.booking-type-badge i {
+    width: 18px;
+    height: 18px;
+}
+
+/* --- Date & Time Picker --- */
+.booking-datetime {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.booking-date-section h4,
+.booking-time-section h4,
+.booking-reason h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--foreground);
+    margin-bottom: 1rem;
+}
+
+.booking-date-section h4 i,
+.booking-time-section h4 i,
+.booking-reason h4 i {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+}
+
+.date-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem;
+}
+
+.date-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.75rem 0.5rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.date-option:hover:not(.disabled) {
+    border-color: var(--primary);
+}
+
+.date-option.selected {
+    background: hsla(186, 82%, 47%, 0.2);
+    border-color: var(--primary);
+}
+
+.date-option.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.date-day {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+    font-weight: 600;
+}
+
+.date-num {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--foreground);
+}
+
+.date-option.selected .date-num {
+    color: var(--primary);
+}
+
+.date-month {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+}
+
+.slot-count {
+    font-size: 0.7rem;
+    color: var(--primary);
+    font-weight: 600;
+    margin-top: 0.15rem;
+}
+
+.date-option.disabled .slot-count {
+    color: var(--muted-foreground);
+}
+
+.time-period {
+    margin-bottom: 1rem;
+}
+
+.time-period h5 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    margin-bottom: 0.5rem;
+}
+
+.time-slots-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.time-slot {
+    padding: 0.5rem 1rem;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--foreground);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.time-slot:hover:not(.unavailable) {
+    border-color: var(--primary);
+}
+
+.time-slot.selected {
+    background: hsla(186, 82%, 47%, 0.2);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.time-slot.unavailable {
+    opacity: 0.35;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* --- Booking Reason --- */
+.booking-reason {
+    margin-bottom: 1.5rem;
+}
+
+.booking-textarea {
+    width: 100%;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: var(--foreground);
+    font-size: 0.9rem;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.booking-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* --- Booking Summary --- */
+.booking-summary-card {
+    background: hsla(186, 82%, 47%, 0.05);
+    border: 1px solid hsla(186, 82%, 47%, 0.2);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.booking-summary-card h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--foreground);
+    margin-bottom: 1rem;
+}
+
+.summary-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    font-size: 0.9rem;
+}
+
+.summary-row span {
+    color: var(--muted-foreground);
+}
+
+.summary-row strong {
+    color: var(--foreground);
+}
+
+.summary-row.total {
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+    margin-top: 0.35rem;
+}
+
+.summary-row.total strong {
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+/* --- Success Modal --- */
+.booking-success-overlay {
+    position: fixed;
+    inset: 0;
+    background: hsla(222, 47%, 5%, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.booking-success-overlay.hidden {
+    display: none;
+}
+
+.booking-success-modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 440px;
+    width: 90%;
+    text-align: center;
+    animation: slideUp 0.4s ease;
+}
+
+.success-animation {
+    margin-bottom: 1.5rem;
+}
+
+.success-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: hsla(160, 84%, 39%, 0.2);
+    border: 3px solid var(--success);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: scaleIn 0.5s ease;
+}
+
+@keyframes scaleIn {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.success-circle i {
+    width: 36px;
+    height: 36px;
+    color: var(--success);
+}
+
+.booking-success-modal h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--foreground);
+    margin-bottom: 0.5rem;
+}
+
+.booking-success-modal > p {
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.success-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: var(--muted);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.success-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--foreground);
+}
+
+.success-row i {
+    width: 18px;
+    height: 18px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.success-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+    .triage-progress {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .step-connector {
+        width: 30px;
+    }
+    
+    .triage-card {
+        padding: 1.25rem;
+    }
+    
+    .chat-bubble {
+        max-width: 95%;
+    }
+    
+    .booking-datetime {
+        grid-template-columns: 1fr;
+    }
+    
+    .booking-doctor-summary {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .booking-type-badge {
+        margin-left: 0;
+    }
+    
+    .doctor-result-top {
+        flex-direction: column;
+    }
+    
+    .doctor-fee {
+        text-align: left;
+    }
+    
+    .toggle-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .success-actions {
+        flex-direction: column;
+    }
+    
+    .doctor-result-actions {
+        flex-direction: column;
+    }
+    
+    .severity-scale {
+        flex-wrap: wrap;
+    }
+    
+    .date-picker-grid {
+        grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    }
+}
