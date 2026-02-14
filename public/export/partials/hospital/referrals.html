@@ -1,0 +1,75 @@
+<!-- Hospital Referrals Section -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Patient Referrals</h1>
+        <p>Incoming and outgoing referrals — track patient transfers and specialist consultations</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card gradient-primary">
+        <i data-lucide="share-2" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Total Referrals</p><h3 class="stat-value">47</h3></div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="arrow-down-left" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Incoming</p><h3 class="stat-value">28</h3></div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="arrow-up-right" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Outgoing</p><h3 class="stat-value">19</h3></div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="check-circle" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Completed</p><h3 class="stat-value">35</h3></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="emr-tabs" style="margin-bottom:1.25rem;">
+    <button class="emr-tab active">All</button>
+    <button class="emr-tab">Incoming</button>
+    <button class="emr-tab">Outgoing</button>
+    <button class="emr-tab">Pending</button>
+</div>
+
+<!-- Referrals List -->
+<div class="emr-entry">
+    <div class="emr-entry-header">
+        <div>
+            <h4><i data-lucide="arrow-down-left" style="width:16px;height:16px;color:var(--primary);display:inline;"></i> Incoming: Amara Obi → Cardiology</h4>
+            <span class="emr-entry-type">Internal Referral</span>
+        </div>
+        <span class="entry-date">10 Feb 2026</span>
+    </div>
+    <p><strong>From:</strong> Dr. Obiora (General Practice) → <strong>To:</strong> Dr. Ogunlade (Cardiology)<br>
+    <strong>Reason:</strong> Persistent elevated BP, intermittent chest discomfort. Needs cardiac workup.</p>
+    <div style="margin-top:0.75rem;"><span class="queue-status status-in-consultation">In Progress</span></div>
+</div>
+
+<div class="emr-entry">
+    <div class="emr-entry-header">
+        <div>
+            <h4><i data-lucide="arrow-up-right" style="width:16px;height:16px;color:var(--warning);display:inline;"></i> Outgoing: Yusuf Bello → Oncology</h4>
+            <span class="emr-entry-type">External Referral</span>
+        </div>
+        <span class="entry-date">05 Feb 2026</span>
+    </div>
+    <p><strong>From:</strong> Dr. Obiora (General Practice) → <strong>To:</strong> Dr. Blessing Igwe (Oncologist, National Hospital Abuja)<br>
+    <strong>Reason:</strong> Suspicious mass found on abdominal ultrasound. Requires oncology evaluation and biopsy.</p>
+    <div style="margin-top:0.75rem;"><span class="status-badge pending">Awaiting Appointment</span></div>
+</div>
+
+<div class="emr-entry">
+    <div class="emr-entry-header">
+        <div>
+            <h4><i data-lucide="arrow-down-left" style="width:16px;height:16px;color:var(--primary);display:inline;"></i> Incoming: Ngozi Eze → Orthopedics</h4>
+            <span class="emr-entry-type">External Referral</span>
+        </div>
+        <span class="entry-date">01 Feb 2026</span>
+    </div>
+    <p><strong>From:</strong> Ikoyi Medical Center → <strong>To:</strong> Dr. Ahmed (Orthopedic Surgery)<br>
+    <strong>Reason:</strong> ACL tear confirmed on MRI. Referred for surgical management.</p>
+    <div style="margin-top:0.75rem;"><span class="queue-status status-checked-in">Completed</span></div>
+</div>

@@ -1,0 +1,79 @@
+<!-- Hospital Insurance / HMO Section -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Insurance & HMO</h1>
+        <p>Manage insurance claims, HMO partnerships, and patient coverage verification</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card gradient-primary">
+        <i data-lucide="shield-check" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Insured Patients</p><h3 class="stat-value">578</h3></div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="check-circle" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Claims Approved</p><h3 class="stat-value">₦4.2M</h3></div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="clock" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Pending Claims</p><h3 class="stat-value">₦1.8M</h3></div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="building" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">HMO Partners</p><h3 class="stat-value">6</h3></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="emr-tabs" style="margin-bottom:1.25rem;">
+    <button class="emr-tab active">Claims</button>
+    <button class="emr-tab">HMO Partners</button>
+    <button class="emr-tab">Verification</button>
+</div>
+
+<!-- Claims Table -->
+<div style="overflow-x:auto;">
+    <table class="billing-table">
+        <thead><tr><th>Patient</th><th>Provider</th><th>Service</th><th>Amount</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><strong>Amara Obi</strong></td>
+                <td>NHIS</td>
+                <td>Cardiology Consultation + ECG</td>
+                <td>₦45,000</td>
+                <td>14 Feb 2026</td>
+                <td><span class="status-badge paid-badge">Approved</span></td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>
+            <tr>
+                <td><strong>Emeka Nwankwo</strong></td>
+                <td>Hygeia HMO</td>
+                <td>Hernia Repair Surgery</td>
+                <td>₦850,000</td>
+                <td>12 Feb 2026</td>
+                <td><span class="status-badge pending">Pending Review</span></td>
+                <td><button class="btn btn-sm btn-outline">Follow Up</button></td>
+            </tr>
+            <tr>
+                <td><strong>Yusuf Bello</strong></td>
+                <td>AXA Mansard</td>
+                <td>Lab Panel + Consultation</td>
+                <td>₦38,000</td>
+                <td>10 Feb 2026</td>
+                <td><span class="status-badge paid-badge">Approved</span></td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>
+            <tr>
+                <td><strong>Fatima Abdullahi</strong></td>
+                <td>NHIS</td>
+                <td>Pediatric Consultation</td>
+                <td>₦15,000</td>
+                <td>08 Feb 2026</td>
+                <td><span class="queue-status" style="background:hsl(0,84%,60%,0.15);color:var(--destructive);">Rejected</span></td>
+                <td><button class="btn btn-sm btn-primary">Appeal</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

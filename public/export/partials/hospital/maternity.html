@@ -1,0 +1,86 @@
+<!-- Hospital Maternity Section -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Maternity Ward</h1>
+        <p>Antenatal care, deliveries, postnatal follow-ups, and birth records</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card gradient-primary">
+        <i data-lucide="baby" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Active ANC Patients</p><h3 class="stat-value">34</h3></div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="heart" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Deliveries This Month</p><h3 class="stat-value">12</h3></div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="alert-triangle" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">High-Risk</p><h3 class="stat-value">5</h3></div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="calendar-check" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Postnatal Follow-ups</p><h3 class="stat-value">8</h3></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="emr-tabs" style="margin-bottom:1.25rem;">
+    <button class="emr-tab active">ANC Register</button>
+    <button class="emr-tab">Delivery Log</button>
+    <button class="emr-tab">Postnatal</button>
+    <button class="emr-tab">Birth Records</button>
+</div>
+
+<!-- ANC Table -->
+<div style="overflow-x:auto;">
+    <table class="queue-table">
+        <thead><tr><th>Patient</th><th>Gestational Age</th><th>EDD</th><th>Risk Level</th><th>Next Visit</th><th>Assigned Doctor</th><th>Actions</th></tr></thead>
+        <tbody>
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">CU</div>
+                        <div><strong>Chidinma Uche</strong><br><small style="color:var(--muted-foreground)">F • 29yrs</small></div>
+                    </div>
+                </td>
+                <td><strong>28 weeks</strong></td>
+                <td>15 May 2026</td>
+                <td><span style="color:var(--success);font-weight:600;">Low</span></td>
+                <td>21 Feb 2026</td>
+                <td>Dr. Kuti</td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">HA</div>
+                        <div><strong>Hauwa Abubakar</strong><br><small style="color:var(--muted-foreground)">F • 35yrs</small></div>
+                    </div>
+                </td>
+                <td><strong>36 weeks</strong></td>
+                <td>10 Mar 2026</td>
+                <td><span style="color:var(--destructive);font-weight:600;">High</span></td>
+                <td>17 Feb 2026</td>
+                <td>Dr. Ogunlade</td>
+                <td><button class="btn btn-sm btn-primary">Urgent</button></td>
+            </tr>
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">BO</div>
+                        <div><strong>Bimpe Olatunji</strong><br><small style="color:var(--muted-foreground)">F • 24yrs</small></div>
+                    </div>
+                </td>
+                <td><strong>16 weeks</strong></td>
+                <td>28 Jul 2026</td>
+                <td><span style="color:var(--success);font-weight:600;">Low</span></td>
+                <td>28 Feb 2026</td>
+                <td>Dr. Kuti</td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
