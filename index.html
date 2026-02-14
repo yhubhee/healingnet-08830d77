@@ -36,12 +36,64 @@
                 <span>Dashboard</span>
             </a>
 
-            <!-- Patient Queue -->
-            <a href="#" class="nav-item load-content" data-url="/export/partials/hospital/queue.html">
-                <i data-lucide="users"></i>
-                <span>Patient Queue</span>
-                <span class="nav-badge">12</span>
-            </a>
+            <!-- Patients Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-item nav-dropdown-toggle">
+                    <i data-lucide="users"></i>
+                    <span>Patients</span>
+                    <span class="nav-badge">12</span>
+                    <i data-lucide="chevron-down" class="dropdown-arrow"></i>
+                </button>
+                <div class="nav-dropdown-menu">
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/patients-list.html">
+                        <i data-lucide="list"></i>
+                        <span>All Patients</span>
+                    </a>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/queue.html">
+                        <i data-lucide="clock"></i>
+                        <span>Patient Queue</span>
+                    </a>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/maternity.html">
+                        <i data-lucide="baby"></i>
+                        <span>Maternity</span>
+                    </a>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/surgery.html">
+                        <i data-lucide="scissors"></i>
+                        <span>Surgery</span>
+                    </a>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/referrals.html">
+                        <i data-lucide="share-2"></i>
+                        <span>Referrals</span>
+                    </a>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/insurance.html">
+                        <i data-lucide="shield-check"></i>
+                        <span>Insurance / HMO</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Medical Services Dropdown -->
+            <div class="nav-dropdown">
+                <button class="nav-item nav-dropdown-toggle">
+                    <i data-lucide="stethoscope"></i>
+                    <span>Services</span>
+                    <i data-lucide="chevron-down" class="dropdown-arrow"></i>
+                </button>
+                <div class="nav-dropdown-menu">
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/medical-officers.html">
+                        <i data-lucide="user-cog"></i>
+                        <span>Medical Officers</span>
+                    </a>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/lab.html">
+                        <i data-lucide="microscope"></i>
+                        <span>Laboratory</span>
+                    </a>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/pharmacy.html">
+                        <i data-lucide="pill"></i>
+                        <span>Pharmacy</span>
+                    </a>
+                </div>
+            </div>
 
             <!-- Doctors Dropdown -->
             <div class="nav-dropdown">

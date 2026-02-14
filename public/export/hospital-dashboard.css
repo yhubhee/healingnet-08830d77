@@ -777,6 +777,55 @@
     margin-left: auto;
 }
 
+/* ---- Patient Details ---- */
+.detail-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid hsl(217, 33%, 20%);
+    font-size: 0.88rem;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: var(--muted-foreground);
+    font-size: 0.82rem;
+    min-width: 140px;
+}
+
+.patient-tab-content {
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.patients-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* ---- Status Completed ---- */
+.status-completed {
+    background: hsl(217, 33%, 26%, 0.3);
+    color: var(--muted-foreground);
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
     .doctor-cards-grid {
@@ -802,5 +851,15 @@
     .queue-table th,
     .queue-table td {
         padding: 0.5rem;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
     }
 }

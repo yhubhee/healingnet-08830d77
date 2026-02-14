@@ -1,0 +1,89 @@
+<!-- Hospital Surgery Section -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Surgery Department</h1>
+        <p>Scheduled procedures, operating theatre management, and surgical records</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card gradient-primary">
+        <i data-lucide="scissors" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Scheduled Today</p><h3 class="stat-value">4</h3></div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="check-circle" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Completed This Week</p><h3 class="stat-value">11</h3></div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="clock" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Pending Approvals</p><h3 class="stat-value">3</h3></div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="bed" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Post-Op Monitoring</p><h3 class="stat-value">6</h3></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="emr-tabs" style="margin-bottom:1.25rem;">
+    <button class="emr-tab active">Today's Schedule</button>
+    <button class="emr-tab">Upcoming</button>
+    <button class="emr-tab">Post-Op</button>
+    <button class="emr-tab">Surgical History</button>
+</div>
+
+<!-- Surgery Schedule -->
+<div style="overflow-x:auto;">
+    <table class="queue-table">
+        <thead><tr><th>Time</th><th>Patient</th><th>Procedure</th><th>Surgeon</th><th>Theatre</th><th>Anaesthesia</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><strong>08:00</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">EN</div>
+                        <div><strong>Emeka Nwankwo</strong><br><small style="color:var(--muted-foreground)">M • 52yrs</small></div>
+                    </div>
+                </td>
+                <td>Hernia Repair (Inguinal)</td>
+                <td>Dr. Ahmed</td>
+                <td>OT-1</td>
+                <td>General</td>
+                <td><span class="queue-status status-in-consultation">In Progress</span></td>
+                <td><button class="btn btn-sm btn-outline">Monitor</button></td>
+            </tr>
+            <tr>
+                <td><strong>10:30</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">OA</div>
+                        <div><strong>Oluwaseun Adeyemi</strong><br><small style="color:var(--muted-foreground)">F • 41yrs</small></div>
+                    </div>
+                </td>
+                <td>Cholecystectomy (Laparoscopic)</td>
+                <td>Dr. Ahmed</td>
+                <td>OT-2</td>
+                <td>General</td>
+                <td><span class="queue-status status-waiting">Prep</span></td>
+                <td><button class="btn btn-sm btn-primary">Begin</button></td>
+            </tr>
+            <tr>
+                <td><strong>14:00</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">IA</div>
+                        <div><strong>Ibrahim Aliyu</strong><br><small style="color:var(--muted-foreground)">M • 67yrs</small></div>
+                    </div>
+                </td>
+                <td>Cataract Surgery (Phaco)</td>
+                <td>Dr. Ogunlade</td>
+                <td>OT-1</td>
+                <td>Local</td>
+                <td><span class="queue-status status-checked-in">Scheduled</span></td>
+                <td><button class="btn btn-sm btn-outline">Details</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

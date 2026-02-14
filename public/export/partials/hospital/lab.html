@@ -1,0 +1,109 @@
+<!-- Hospital Laboratory Section -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Laboratory</h1>
+        <p>Test orders, results management, sample tracking, and lab analytics</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card gradient-primary">
+        <i data-lucide="microscope" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Tests Today</p><h3 class="stat-value">26</h3></div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="clock" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Pending</p><h3 class="stat-value">8</h3></div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="flask-conical" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">In Progress</p><h3 class="stat-value">5</h3></div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="check-circle" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Completed</p><h3 class="stat-value">13</h3></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="emr-tabs" style="margin-bottom:1.25rem;">
+    <button class="emr-tab active">Pending Orders</button>
+    <button class="emr-tab">In Progress</button>
+    <button class="emr-tab">Completed</button>
+    <button class="emr-tab">Sample Tracking</button>
+    <button class="emr-tab">Categories</button>
+</div>
+
+<!-- Orders Table -->
+<div style="overflow-x:auto;">
+    <table class="queue-table">
+        <thead><tr><th>Order #</th><th>Patient</th><th>Test(s)</th><th>Category</th><th>Sample</th><th>Priority</th><th>Ordered By</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><strong>LAB-4021</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <div class="avatar" style="width:28px;height:28px;font-size:0.65rem;">AO</div>
+                        <strong>Amara Obi</strong>
+                    </div>
+                </td>
+                <td>Full Blood Count, Lipid Panel</td>
+                <td>Hematology / Metabolic</td>
+                <td>Blood</td>
+                <td><span style="color:var(--destructive);font-weight:600;">Stat</span></td>
+                <td>Dr. Ogunlade</td>
+                <td><span class="queue-status status-waiting">Pending</span></td>
+                <td><button class="btn btn-sm btn-primary">Collect</button></td>
+            </tr>
+            <tr>
+                <td><strong>LAB-4020</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <div class="avatar" style="width:28px;height:28px;font-size:0.65rem;">YB</div>
+                        <strong>Yusuf Bello</strong>
+                    </div>
+                </td>
+                <td>Liver Function Test</td>
+                <td>Metabolic</td>
+                <td>Blood</td>
+                <td><span style="color:var(--foreground);">Routine</span></td>
+                <td>Dr. Obiora</td>
+                <td><span class="queue-status status-in-consultation">In Progress</span></td>
+                <td><button class="btn btn-sm btn-outline">Results</button></td>
+            </tr>
+            <tr>
+                <td><strong>LAB-4019</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <div class="avatar" style="width:28px;height:28px;font-size:0.65rem;">NE</div>
+                        <strong>Ngozi Eze</strong>
+                    </div>
+                </td>
+                <td>Urinalysis, Culture & Sensitivity</td>
+                <td>Microbiology</td>
+                <td>Urine</td>
+                <td><span style="color:var(--warning);font-weight:600;">Urgent</span></td>
+                <td>Dr. Ahmed</td>
+                <td><span class="queue-status status-waiting">Pending</span></td>
+                <td><button class="btn btn-sm btn-primary">Collect</button></td>
+            </tr>
+            <tr>
+                <td><strong>LAB-4018</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <div class="avatar" style="width:28px;height:28px;font-size:0.65rem;">FA</div>
+                        <strong>Fatima Abdullahi</strong>
+                    </div>
+                </td>
+                <td>Malaria RDT, Widal Test</td>
+                <td>Microbiology</td>
+                <td>Blood</td>
+                <td><span style="color:var(--foreground);">Routine</span></td>
+                <td>Dr. Anyanwu</td>
+                <td><span class="queue-status status-completed">Completed</span></td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>

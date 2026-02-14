@@ -1,5 +1,6 @@
 -- HealingNet Hospital Module Schema (MySQL)
--- Run after schema.sql
+-- Run after schema.sql (which contains patients, doctors, appointments, etc.)
+-- This schema extends the core with hospital-specific tables
 
 USE healingnet;
 
@@ -14,13 +15,13 @@ CREATE TABLE IF NOT EXISTS hospital_staff (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
-    role ENUM('admin', 'receptionist', 'nurse', 'lab_tech', 'pharmacist', 'manager') DEFAULT 'receptionist',
+    role ENUM('admin', 'receptionist', 'nurse', 'lab_tech', 'pharmacist', 'manager', 'medical_officer') DEFAULT 'receptionist',
+    department VARCHAR(100),
     profile_image VARCHAR(500),
     is_active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (hospital_id) REFERENCES hospitals(id) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- ==========================================
@@ -40,8 +41,7 @@ CREATE TABLE IF NOT EXISTS hospital_doctors (
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (hospital_id) REFERENCES hospitals(id) ON DELETE CASCADE,
-    FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE,
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id) ON DELETE CASCADE,
     UNIQUE KEY unique_hospital_doctor (hospital_id, doctor_id)
 );
 
@@ -61,8 +61,7 @@ CREATE TABLE IF NOT EXISTS doctor_marketplace (
     bio_for_marketplace TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE,
-    FOREIGN KEY (home_hospital_id) REFERENCES hospitals(id) ON DELETE SET NULL
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id) ON DELETE CASCADE
 );
 
 -- ==========================================
@@ -88,9 +87,8 @@ CREATE TABLE IF NOT EXISTS consultation_requests (
     revenue_split_doctor DECIMAL(5, 2) DEFAULT 70.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (requesting_hospital_id) REFERENCES hospitals(id) ON DELETE CASCADE,
-    FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE,
-    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id) ON DELETE CASCADE,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE
 );
 
 -- ==========================================
@@ -115,14 +113,13 @@ CREATE TABLE IF NOT EXISTS patient_checkins (
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (hospital_id) REFERENCES hospitals(id) ON DELETE CASCADE,
-    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
-    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
-    FOREIGN KEY (assigned_doctor_id) REFERENCES doctors(id) ON DELETE SET NULL
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id) ON DELETE SET NULL,
+    FOREIGN KEY (assigned_doctor_id) REFERENCES doctors(doctor_id) ON DELETE SET NULL
 );
 
 -- ==========================================
--- BILLING & REVENUE
+-- HOSPITAL BILLING & REVENUE
 -- ==========================================
 CREATE TABLE IF NOT EXISTS hospital_billing (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -131,7 +128,7 @@ CREATE TABLE IF NOT EXISTS hospital_billing (
     appointment_id INT,
     consultation_request_id INT,
     checkin_id INT,
-    billing_type ENUM('consultation', 'procedure', 'lab', 'pharmacy', 'external_consultation', 'teleconsultation') NOT NULL,
+    billing_type ENUM('consultation', 'procedure', 'lab', 'pharmacy', 'external_consultation', 'teleconsultation', 'surgery', 'maternity', 'imaging') NOT NULL,
     description VARCHAR(255),
     amount DECIMAL(12, 2) NOT NULL,
     discount DECIMAL(12, 2) DEFAULT 0.00,
@@ -141,12 +138,12 @@ CREATE TABLE IF NOT EXISTS hospital_billing (
     payment_method ENUM('cash', 'card', 'transfer', 'insurance', 'hmo') DEFAULT 'cash',
     insurance_provider VARCHAR(200),
     insurance_policy_number VARCHAR(100),
+    insurance_claim_status ENUM('not_submitted', 'submitted', 'approved', 'rejected', 'appealed') DEFAULT 'not_submitted',
     paid_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (hospital_id) REFERENCES hospitals(id) ON DELETE CASCADE,
-    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
-    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(appointment_id) ON DELETE SET NULL,
     FOREIGN KEY (consultation_request_id) REFERENCES consultation_requests(id) ON DELETE SET NULL,
     FOREIGN KEY (checkin_id) REFERENCES patient_checkins(id) ON DELETE SET NULL
 );
@@ -160,7 +157,7 @@ CREATE TABLE IF NOT EXISTS emr_entries (
     patient_id INT NOT NULL,
     doctor_id INT,
     checkin_id INT,
-    entry_type ENUM('consultation_note', 'vitals', 'diagnosis', 'procedure', 'lab_order', 'lab_result', 'imaging', 'referral', 'discharge_summary') NOT NULL,
+    entry_type ENUM('consultation_note', 'vitals', 'diagnosis', 'procedure', 'lab_order', 'lab_result', 'imaging', 'referral', 'discharge_summary', 'surgery_note', 'antenatal', 'delivery', 'postnatal') NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT,
     structured_data JSON,
@@ -168,10 +165,166 @@ CREATE TABLE IF NOT EXISTS emr_entries (
     is_confidential BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (hospital_id) REFERENCES hospitals(id) ON DELETE CASCADE,
-    FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
-    FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE SET NULL,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id) ON DELETE SET NULL,
     FOREIGN KEY (checkin_id) REFERENCES patient_checkins(id) ON DELETE SET NULL
+);
+
+-- ==========================================
+-- MATERNITY RECORDS
+-- ==========================================
+CREATE TABLE IF NOT EXISTS maternity_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    doctor_id INT,
+    lmp_date DATE,
+    edd DATE,
+    gestational_age_weeks INT,
+    gravida INT DEFAULT 1,
+    para INT DEFAULT 0,
+    risk_level ENUM('low', 'moderate', 'high') DEFAULT 'low',
+    blood_group VARCHAR(5),
+    genotype VARCHAR(10),
+    hiv_status ENUM('positive', 'negative', 'unknown') DEFAULT 'unknown',
+    hepatitis_b ENUM('positive', 'negative', 'unknown') DEFAULT 'unknown',
+    status ENUM('anc_registered', 'active_anc', 'labour', 'delivered', 'postnatal', 'discharged') DEFAULT 'anc_registered',
+    delivery_date DATETIME NULL,
+    delivery_type ENUM('normal', 'caesarean', 'assisted', 'vacuum') NULL,
+    baby_weight DECIMAL(4,2) NULL,
+    baby_gender ENUM('male', 'female') NULL,
+    apgar_score VARCHAR(10) NULL,
+    complications TEXT NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id) ON DELETE SET NULL
+);
+
+-- ==========================================
+-- SURGERY RECORDS
+-- ==========================================
+CREATE TABLE IF NOT EXISTS surgery_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    surgeon_id INT NOT NULL,
+    anaesthetist_id INT NULL,
+    procedure_name VARCHAR(255) NOT NULL,
+    procedure_type ENUM('elective', 'emergency', 'day_case') DEFAULT 'elective',
+    theatre_number VARCHAR(20),
+    anaesthesia_type ENUM('general', 'local', 'spinal', 'epidural', 'sedation') DEFAULT 'general',
+    scheduled_date DATE NOT NULL,
+    scheduled_time TIME NOT NULL,
+    actual_start DATETIME NULL,
+    actual_end DATETIME NULL,
+    duration_minutes INT NULL,
+    status ENUM('scheduled', 'prep', 'in_progress', 'recovery', 'completed', 'cancelled', 'postponed') DEFAULT 'scheduled',
+    pre_op_diagnosis TEXT,
+    post_op_diagnosis TEXT,
+    operative_findings TEXT,
+    complications TEXT NULL,
+    blood_loss_ml INT NULL,
+    post_op_instructions TEXT,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (surgeon_id) REFERENCES doctors(doctor_id) ON DELETE CASCADE,
+    FOREIGN KEY (anaesthetist_id) REFERENCES doctors(doctor_id) ON DELETE SET NULL
+);
+
+-- ==========================================
+-- REFERRALS
+-- ==========================================
+CREATE TABLE IF NOT EXISTS hospital_referrals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    referring_doctor_id INT,
+    referred_to_doctor_id INT NULL,
+    referred_to_hospital VARCHAR(255) NULL,
+    referral_type ENUM('internal', 'external_outgoing', 'external_incoming') NOT NULL,
+    specialty VARCHAR(100),
+    reason TEXT NOT NULL,
+    clinical_summary TEXT,
+    urgency ENUM('routine', 'urgent', 'emergency') DEFAULT 'routine',
+    status ENUM('pending', 'accepted', 'in_progress', 'completed', 'declined') DEFAULT 'pending',
+    appointment_date DATE NULL,
+    feedback TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (referring_doctor_id) REFERENCES doctors(doctor_id) ON DELETE SET NULL,
+    FOREIGN KEY (referred_to_doctor_id) REFERENCES doctors(doctor_id) ON DELETE SET NULL
+);
+
+-- ==========================================
+-- INSURANCE CLAIMS (Hospital-side tracking)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS insurance_claims (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    billing_id INT,
+    insurance_provider VARCHAR(200) NOT NULL,
+    policy_number VARCHAR(100),
+    claim_amount DECIMAL(12,2) NOT NULL,
+    approved_amount DECIMAL(12,2) NULL,
+    service_description VARCHAR(255),
+    claim_date DATE NOT NULL,
+    status ENUM('draft', 'submitted', 'under_review', 'approved', 'rejected', 'appealed', 'paid') DEFAULT 'draft',
+    rejection_reason TEXT NULL,
+    paid_date DATE NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (billing_id) REFERENCES hospital_billing(id) ON DELETE SET NULL
+);
+
+-- ==========================================
+-- PHARMACY INVENTORY
+-- ==========================================
+CREATE TABLE IF NOT EXISTS pharmacy_inventory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT NOT NULL,
+    drug_name VARCHAR(200) NOT NULL,
+    generic_name VARCHAR(200),
+    category VARCHAR(100),
+    dosage_form ENUM('tablet', 'capsule', 'syrup', 'injection', 'cream', 'inhaler', 'drops', 'iv_fluid', 'other') DEFAULT 'tablet',
+    strength VARCHAR(100),
+    quantity_in_stock INT DEFAULT 0,
+    reorder_level INT DEFAULT 50,
+    unit_price DECIMAL(10,2),
+    supplier VARCHAR(200),
+    batch_number VARCHAR(100),
+    expiry_date DATE,
+    location VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ==========================================
+-- PHARMACY DISPENSING
+-- ==========================================
+CREATE TABLE IF NOT EXISTS pharmacy_dispensing (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT NOT NULL,
+    patient_id INT NOT NULL,
+    prescription_id INT,
+    drug_id INT,
+    drug_name VARCHAR(200) NOT NULL,
+    dosage VARCHAR(100),
+    quantity_dispensed INT,
+    dispensed_by INT,
+    payment_status ENUM('pending', 'paid', 'insurance', 'waived') DEFAULT 'pending',
+    dispensed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    notes TEXT,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (prescription_id) REFERENCES prescriptions(prescription_id) ON DELETE SET NULL,
+    FOREIGN KEY (drug_id) REFERENCES pharmacy_inventory(id) ON DELETE SET NULL
 );
 
 -- ==========================================
@@ -190,3 +343,10 @@ CREATE INDEX idx_billing_hospital ON hospital_billing(hospital_id);
 CREATE INDEX idx_billing_patient ON hospital_billing(patient_id);
 CREATE INDEX idx_emr_patient ON emr_entries(patient_id);
 CREATE INDEX idx_emr_hospital ON emr_entries(hospital_id);
+CREATE INDEX idx_maternity_patient ON maternity_records(patient_id);
+CREATE INDEX idx_surgery_patient ON surgery_records(patient_id);
+CREATE INDEX idx_surgery_date ON surgery_records(scheduled_date);
+CREATE INDEX idx_referrals_patient ON hospital_referrals(patient_id);
+CREATE INDEX idx_insurance_claims_patient ON insurance_claims(patient_id);
+CREATE INDEX idx_pharmacy_inventory_hospital ON pharmacy_inventory(hospital_id);
+CREATE INDEX idx_pharmacy_dispensing_patient ON pharmacy_dispensing(patient_id);

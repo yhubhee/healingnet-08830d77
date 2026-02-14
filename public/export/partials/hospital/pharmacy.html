@@ -1,0 +1,111 @@
+<!-- Hospital Pharmacy Section -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Pharmacy</h1>
+        <p>Prescription dispensing, drug inventory, and pharmacy operations</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card gradient-primary">
+        <i data-lucide="pill" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Prescriptions Today</p><h3 class="stat-value">34</h3></div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="clock" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Awaiting Dispensing</p><h3 class="stat-value">7</h3></div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="check-circle" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Dispensed</p><h3 class="stat-value">27</h3></div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="alert-triangle" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Low Stock Items</p><h3 class="stat-value">4</h3></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="emr-tabs" style="margin-bottom:1.25rem;">
+    <button class="emr-tab active">Pending Prescriptions</button>
+    <button class="emr-tab">Dispensed</button>
+    <button class="emr-tab">Drug Inventory</button>
+    <button class="emr-tab">Low Stock Alerts</button>
+</div>
+
+<!-- Prescriptions Table -->
+<div style="overflow-x:auto;">
+    <table class="queue-table">
+        <thead><tr><th>Rx #</th><th>Patient</th><th>Drug</th><th>Dosage</th><th>Qty</th><th>Prescribed By</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+            <tr>
+                <td><strong>RX-7801</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <div class="avatar" style="width:28px;height:28px;font-size:0.65rem;">AO</div>
+                        <strong>Amara Obi</strong>
+                    </div>
+                </td>
+                <td>Amlodipine 10mg</td>
+                <td>Once daily</td>
+                <td>30</td>
+                <td>Dr. Ogunlade</td>
+                <td><span class="status-badge paid-badge">Paid</span></td>
+                <td><span class="queue-status status-waiting">Pending</span></td>
+                <td><button class="btn btn-sm btn-primary">Dispense</button></td>
+            </tr>
+            <tr>
+                <td><strong>RX-7800</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <div class="avatar" style="width:28px;height:28px;font-size:0.65rem;">YB</div>
+                        <strong>Yusuf Bello</strong>
+                    </div>
+                </td>
+                <td>Metformin 500mg</td>
+                <td>Twice daily</td>
+                <td>60</td>
+                <td>Dr. Obiora</td>
+                <td><span class="status-badge pending">Unpaid</span></td>
+                <td><span class="queue-status status-waiting">Pending</span></td>
+                <td><button class="btn btn-sm btn-outline">Awaiting Payment</button></td>
+            </tr>
+            <tr>
+                <td><strong>RX-7799</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <div class="avatar" style="width:28px;height:28px;font-size:0.65rem;">FA</div>
+                        <strong>Fatima Abdullahi</strong>
+                    </div>
+                </td>
+                <td>Artemether/Lumefantrine</td>
+                <td>As directed</td>
+                <td>1 pack</td>
+                <td>Dr. Anyanwu</td>
+                <td><span class="status-badge paid-badge">Insurance</span></td>
+                <td><span class="queue-status status-checked-in">Dispensed</span></td>
+                <td><button class="btn btn-sm btn-outline">Done</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Low Stock Alert -->
+<div class="content-section" style="margin-top:1.5rem;">
+    <div class="section-header"><h2>⚠️ Low Stock Alerts</h2></div>
+    <div class="billing-mini-list">
+        <div class="billing-mini-item">
+            <div class="billing-mini-info"><h4>Amlodipine 5mg</h4><p>Remaining: 12 tabs — Reorder level: 50</p></div>
+            <button class="btn btn-sm btn-primary">Reorder</button>
+        </div>
+        <div class="billing-mini-item">
+            <div class="billing-mini-info"><h4>Normal Saline 500ml</h4><p>Remaining: 5 bags — Reorder level: 20</p></div>
+            <button class="btn btn-sm btn-primary">Reorder</button>
+        </div>
+        <div class="billing-mini-item">
+            <div class="billing-mini-info"><h4>Paracetamol 500mg</h4><p>Remaining: 30 tabs — Reorder level: 100</p></div>
+            <button class="btn btn-sm btn-primary">Reorder</button>
+        </div>
+    </div>
+</div>
