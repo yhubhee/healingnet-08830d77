@@ -37,6 +37,15 @@ app.use('/api/triage', require('./routes/triage'));
 app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/notifications', require('./routes/notifications'));
 
+// Hospital routes
+app.use('/api/hospital/auth', require('./routes/hospital/auth'));
+app.use('/api/hospital/doctors', require('./routes/hospital/doctors'));
+app.use('/api/hospital/marketplace', require('./routes/hospital/marketplace'));
+app.use('/api/hospital/queue', require('./routes/hospital/queue'));
+app.use('/api/hospital/emr', require('./routes/hospital/emr'));
+app.use('/api/hospital/billing', require('./routes/hospital/billing'));
+app.use('/api/hospital/analytics', require('./routes/hospital/analytics'));
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

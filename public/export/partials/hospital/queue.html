@@ -1,0 +1,216 @@
+<!-- Hospital Patient Queue Partial -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Patient Queue</h1>
+        <p>Manage today's patient flow — check-ins, wait times, and consultations</p>
+    </div>
+</div>
+
+<!-- Queue Stats -->
+<div class="stats-grid" style="margin-bottom: 1.5rem;">
+    <div class="stat-card gradient-primary">
+        <i data-lucide="users" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Total Today</p>
+            <h3 class="stat-value">42</h3>
+        </div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="clock" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Waiting</p>
+            <h3 class="stat-value">8</h3>
+        </div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="stethoscope" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">In Consultation</p>
+            <h3 class="stat-value">3</h3>
+        </div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="check-circle" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Completed</p>
+            <h3 class="stat-value">31</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Controls -->
+<div class="queue-page-header">
+    <div class="queue-filters">
+        <button class="queue-filter-btn active">All</button>
+        <button class="queue-filter-btn">Waiting</button>
+        <button class="queue-filter-btn">In Consultation</button>
+        <button class="queue-filter-btn">Completed</button>
+        <button class="queue-filter-btn">Pre-booked</button>
+        <button class="queue-filter-btn">Walk-in</button>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('checkinModal').classList.add('show')">
+            <i data-lucide="user-plus"></i> Check In Patient
+        </button>
+        <button class="btn btn-outline btn-sm">
+            <i data-lucide="download"></i> Auto Check-in
+        </button>
+    </div>
+</div>
+
+<!-- Queue Table -->
+<div style="overflow-x: auto;">
+    <table class="queue-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Patient</th>
+                <th>Type</th>
+                <th>Department</th>
+                <th>Doctor</th>
+                <th>Priority</th>
+                <th>Wait Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">AO</div>
+                        <div><strong>Amara Obi</strong><br><small style="color:var(--muted-foreground)">F • 34yrs • O+</small></div>
+                    </div>
+                </td>
+                <td><span class="doctor-type-badge" style="background:hsl(186,82%,47%,0.15);color:var(--primary);">Pre-booked</span></td>
+                <td>Cardiology</td>
+                <td>Dr. Ogunlade</td>
+                <td><span style="color:var(--destructive);font-weight:600;">Emergency</span></td>
+                <td>—</td>
+                <td><span class="queue-status status-in-consultation">In Consultation</span></td>
+                <td><button class="btn btn-sm btn-outline">Complete</button></td>
+            </tr>
+            <tr>
+                <td><strong>2</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">YB</div>
+                        <div><strong>Yusuf Bello</strong><br><small style="color:var(--muted-foreground)">M • 45yrs • A+</small></div>
+                    </div>
+                </td>
+                <td><span class="doctor-type-badge" style="background:hsl(186,82%,47%,0.15);color:var(--primary);">Pre-booked</span></td>
+                <td>General</td>
+                <td>Dr. Obiora</td>
+                <td><span style="color:var(--foreground);">Normal</span></td>
+                <td>25 min</td>
+                <td><span class="queue-status status-waiting">Waiting</span></td>
+                <td><button class="btn btn-sm btn-primary">Call In</button></td>
+            </tr>
+            <tr>
+                <td><strong>3</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">NE</div>
+                        <div><strong>Ngozi Eze</strong><br><small style="color:var(--muted-foreground)">F • 28yrs • B+</small></div>
+                    </div>
+                </td>
+                <td><span class="doctor-type-badge visiting">Walk-in</span></td>
+                <td>Orthopedics</td>
+                <td>Dr. Ahmed</td>
+                <td><span style="color:var(--foreground);">Normal</span></td>
+                <td>15 min</td>
+                <td><span class="queue-status status-checked-in">Checked In</span></td>
+                <td><button class="btn btn-sm btn-primary">Call In</button></td>
+            </tr>
+            <tr>
+                <td><strong>4</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">EN</div>
+                        <div><strong>Emeka Nwankwo</strong><br><small style="color:var(--muted-foreground)">M • 52yrs • AB+</small></div>
+                    </div>
+                </td>
+                <td><span class="doctor-type-badge" style="background:hsl(186,82%,47%,0.15);color:var(--primary);">Pre-booked</span></td>
+                <td>Dermatology</td>
+                <td>Dr. Kuti</td>
+                <td><span style="color:var(--warning);font-weight:600;">Priority</span></td>
+                <td>35 min</td>
+                <td><span class="queue-status status-waiting">Waiting</span></td>
+                <td><button class="btn btn-sm btn-primary">Call In</button></td>
+            </tr>
+            <tr>
+                <td><strong>5</strong></td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">FA</div>
+                        <div><strong>Fatima Abdullahi</strong><br><small style="color:var(--muted-foreground)">F • 8yrs • A-</small></div>
+                    </div>
+                </td>
+                <td><span class="doctor-type-badge visiting">Walk-in</span></td>
+                <td>Pediatrics</td>
+                <td>Unassigned</td>
+                <td><span style="color:var(--foreground);">Normal</span></td>
+                <td>10 min</td>
+                <td><span class="queue-status status-checked-in">Checked In</span></td>
+                <td><button class="btn btn-sm btn-outline">Assign</button></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Check-in Modal -->
+<div class="modal-overlay" id="checkinModal">
+    <div class="modal-content">
+        <h2><i data-lucide="user-plus" style="width:20px;height:20px;display:inline;"></i> Check In Patient</h2>
+        <div class="form-group">
+            <label>Patient ID or Search</label>
+            <input type="text" placeholder="Search by name, email, or phone...">
+        </div>
+        <div class="form-group">
+            <label>Check-in Type</label>
+            <select>
+                <option value="pre_booked">Pre-booked Appointment</option>
+                <option value="walk_in">Walk-in</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Department</label>
+            <select>
+                <option value="">Select Department</option>
+                <option>Cardiology</option>
+                <option>General Practice</option>
+                <option>Orthopedics</option>
+                <option>Pediatrics</option>
+                <option>Dermatology</option>
+                <option>Neurology</option>
+                <option>Oncology</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Priority</label>
+            <select>
+                <option value="normal">Normal</option>
+                <option value="priority">Priority</option>
+                <option value="emergency">Emergency</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Assign Doctor (Optional)</label>
+            <select>
+                <option value="">Auto-assign</option>
+                <option>Dr. Adebayo Ogunlade</option>
+                <option>Dr. Funke Kuti</option>
+                <option>Dr. Sani Ahmed</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <textarea rows="2" placeholder="Any relevant notes..."></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="document.getElementById('checkinModal').classList.remove('show')">Cancel</button>
+            <button class="btn btn-primary">Check In</button>
+        </div>
+    </div>
+</div>

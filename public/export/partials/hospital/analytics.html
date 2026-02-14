@@ -1,0 +1,210 @@
+<!-- Hospital Analytics Partial -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Analytics Dashboard</h1>
+        <p>Hospital performance, patient flow, revenue trends, and doctor utilization</p>
+    </div>
+</div>
+
+<!-- Date Range -->
+<div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;align-items:center;flex-wrap:wrap;">
+    <span style="font-size:0.85rem;color:var(--muted-foreground);">Period:</span>
+    <button class="queue-filter-btn active">Today</button>
+    <button class="queue-filter-btn">This Week</button>
+    <button class="queue-filter-btn">This Month</button>
+    <button class="queue-filter-btn">Last 30 Days</button>
+    <button class="queue-filter-btn">Custom</button>
+</div>
+
+<!-- Key Metrics -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card gradient-primary">
+        <i data-lucide="users" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Total Patients</p>
+            <h3 class="stat-value">1,247</h3>
+            <p class="stat-subtitle">↑ 12% vs last month</p>
+        </div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="credit-card" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Revenue</p>
+            <h3 class="stat-value">₦8.4M</h3>
+            <p class="stat-subtitle">₦6.2M collected</p>
+        </div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="clock" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Avg Wait Time</p>
+            <h3 class="stat-value">22 min</h3>
+            <p class="stat-subtitle">↓ 5 min improvement</p>
+        </div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="video" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">External Consults</p>
+            <h3 class="stat-value">18</h3>
+            <p class="stat-subtitle">₦890K revenue</p>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Grid -->
+<div class="analytics-grid">
+    <!-- Patient Flow -->
+    <div class="analytics-card">
+        <h3><i data-lucide="trending-up" style="width:18px;height:18px;display:inline;"></i> Patient Flow</h3>
+        <div class="analytics-metric">
+            <span class="metric-label">Pre-booked</span>
+            <span class="metric-value">856</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:68%;"></div></div>
+        <div class="analytics-metric" style="margin-top:1rem;">
+            <span class="metric-label">Walk-ins</span>
+            <span class="metric-value">391</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:32%;background:var(--gradient-warning);"></div></div>
+        <div class="analytics-metric" style="margin-top:1rem;">
+            <span class="metric-label">No-shows</span>
+            <span class="metric-value" style="color:var(--destructive);">43</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:3.4%;background:var(--gradient-danger);"></div></div>
+        <div class="analytics-metric" style="margin-top:1rem;">
+            <span class="metric-label">Completion Rate</span>
+            <span class="metric-value" style="color:var(--success);">96.5%</span>
+        </div>
+    </div>
+
+    <!-- Revenue Breakdown -->
+    <div class="analytics-card">
+        <h3><i data-lucide="pie-chart" style="width:18px;height:18px;display:inline;"></i> Revenue Breakdown</h3>
+        <div class="analytics-metric">
+            <span class="metric-label">Consultations</span>
+            <span class="metric-value">₦4.1M</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:49%;"></div></div>
+        <div class="analytics-metric" style="margin-top:1rem;">
+            <span class="metric-label">Lab & Imaging</span>
+            <span class="metric-value">₦2.1M</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:25%;background:var(--gradient-warning);"></div></div>
+        <div class="analytics-metric" style="margin-top:1rem;">
+            <span class="metric-label">Procedures</span>
+            <span class="metric-value">₦1.3M</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:15%;background:var(--gradient-success);"></div></div>
+        <div class="analytics-metric" style="margin-top:1rem;">
+            <span class="metric-label">External Consultations</span>
+            <span class="metric-value">₦890K</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:11%;background:linear-gradient(135deg,hsl(270,60%,40%),hsl(270,60%,60%));"></div></div>
+    </div>
+
+    <!-- Doctor Utilization -->
+    <div class="analytics-card">
+        <h3><i data-lucide="bar-chart" style="width:18px;height:18px;display:inline;"></i> Doctor Utilization</h3>
+        <div class="analytics-metric">
+            <span class="metric-label">Dr. Obiora (GP)</span>
+            <span class="metric-value">142 patients</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:92%;"></div></div>
+        <div class="analytics-metric" style="margin-top:1rem;">
+            <span class="metric-label">Dr. Ogunlade (Cardio)</span>
+            <span class="metric-value">98 patients</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:72%;"></div></div>
+        <div class="analytics-metric" style="margin-top:1rem;">
+            <span class="metric-label">Dr. Kuti (Peds)</span>
+            <span class="metric-value">87 patients</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:64%;background:var(--gradient-success);"></div></div>
+        <div class="analytics-metric" style="margin-top:1rem;">
+            <span class="metric-label">Dr. Ahmed (Ortho, Locum)</span>
+            <span class="metric-value">45 patients</span>
+        </div>
+        <div class="analytics-bar"><div class="analytics-bar-fill" style="width:35%;background:linear-gradient(135deg,hsl(270,60%,40%),hsl(270,60%,60%));"></div></div>
+    </div>
+
+    <!-- Department Stats -->
+    <div class="analytics-card">
+        <h3><i data-lucide="building" style="width:18px;height:18px;display:inline;"></i> Department Performance</h3>
+        <div class="analytics-metric">
+            <span class="metric-label">General Practice</span>
+            <span class="metric-value">425 visits</span>
+        </div>
+        <div class="analytics-metric">
+            <span class="metric-label" style="font-size:0.78rem;">Avg wait: 15 min</span>
+            <span class="metric-value" style="color:var(--success);font-size:0.9rem;">↓ 3 min</span>
+        </div>
+        <div style="height:1px;background:var(--border);margin:0.75rem 0;"></div>
+        <div class="analytics-metric">
+            <span class="metric-label">Cardiology</span>
+            <span class="metric-value">186 visits</span>
+        </div>
+        <div class="analytics-metric">
+            <span class="metric-label" style="font-size:0.78rem;">Avg wait: 28 min</span>
+            <span class="metric-value" style="color:var(--warning);font-size:0.9rem;">↑ 2 min</span>
+        </div>
+        <div style="height:1px;background:var(--border);margin:0.75rem 0;"></div>
+        <div class="analytics-metric">
+            <span class="metric-label">Pediatrics</span>
+            <span class="metric-value">198 visits</span>
+        </div>
+        <div class="analytics-metric">
+            <span class="metric-label" style="font-size:0.78rem;">Avg wait: 20 min</span>
+            <span class="metric-value" style="color:var(--success);font-size:0.9rem;">↓ 1 min</span>
+        </div>
+    </div>
+
+    <!-- External Consultations Impact -->
+    <div class="analytics-card">
+        <h3><i data-lucide="globe" style="width:18px;height:18px;display:inline;"></i> External Consultations Impact</h3>
+        <div class="analytics-metric">
+            <span class="metric-label">Total External Sessions</span>
+            <span class="metric-value">18</span>
+        </div>
+        <div class="analytics-metric" style="margin-top:0.75rem;">
+            <span class="metric-label">Revenue Generated</span>
+            <span class="metric-value" style="color:var(--success);">₦890,000</span>
+        </div>
+        <div class="analytics-metric" style="margin-top:0.75rem;">
+            <span class="metric-label">Hospital Share (30%)</span>
+            <span class="metric-value" style="color:var(--primary);">₦267,000</span>
+        </div>
+        <div class="analytics-metric" style="margin-top:0.75rem;">
+            <span class="metric-label">Specialties Accessed</span>
+            <span class="metric-value">5</span>
+        </div>
+        <div style="margin-top:1rem;padding:0.75rem;background:var(--background);border-radius:var(--radius);">
+            <p style="font-size:0.8rem;color:var(--muted-foreground);">Top requested: Neurosurgery (5), Oncology (4), Nephrology (3), Cardiothoracic (3), Rheumatology (3)</p>
+        </div>
+    </div>
+
+    <!-- Queue Efficiency -->
+    <div class="analytics-card">
+        <h3><i data-lucide="timer" style="width:18px;height:18px;display:inline;"></i> Queue Efficiency</h3>
+        <div class="analytics-metric">
+            <span class="metric-label">Avg Wait Time</span>
+            <span class="metric-value">22 min</span>
+        </div>
+        <div class="analytics-metric" style="margin-top:0.75rem;">
+            <span class="metric-label">Avg Consultation Time</span>
+            <span class="metric-value">18 min</span>
+        </div>
+        <div class="analytics-metric" style="margin-top:0.75rem;">
+            <span class="metric-label">Pre-booked vs Walk-in Ratio</span>
+            <span class="metric-value">69 : 31</span>
+        </div>
+        <div class="analytics-metric" style="margin-top:0.75rem;">
+            <span class="metric-label">Peak Hours</span>
+            <span class="metric-value">9-11 AM</span>
+        </div>
+        <div class="analytics-metric" style="margin-top:0.75rem;">
+            <span class="metric-label">Online Booking Conversion</span>
+            <span class="metric-value" style="color:var(--success);">94%</span>
+        </div>
+    </div>
+</div>

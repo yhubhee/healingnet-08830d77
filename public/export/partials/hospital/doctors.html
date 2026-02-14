@@ -1,0 +1,202 @@
+<!-- Hospital Doctor Management Partial -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Doctor Management</h1>
+        <p>Add, remove, and manage doctors assigned to your hospital</p>
+    </div>
+</div>
+
+<!-- Controls -->
+<div class="doctor-management-header">
+    <div class="queue-filters">
+        <button class="queue-filter-btn active">All (12)</button>
+        <button class="queue-filter-btn">Full-time (8)</button>
+        <button class="queue-filter-btn">Visiting (3)</button>
+        <button class="queue-filter-btn">Locum (1)</button>
+    </div>
+    <button class="btn btn-primary" onclick="document.getElementById('addDoctorModal').classList.add('show')">
+        <i data-lucide="user-plus"></i> Add Doctor
+    </button>
+</div>
+
+<!-- Doctor Cards -->
+<div class="doctor-cards-grid">
+    <div class="doctor-mgmt-card">
+        <div class="doctor-mgmt-header">
+            <div class="avatar">AO</div>
+            <div class="doctor-mgmt-name">
+                <h3>Dr. Adebayo Ogunlade</h3>
+                <p>Cardiologist</p>
+            </div>
+            <span class="doctor-type-badge full-time">Full-time</span>
+        </div>
+        <div class="doctor-mgmt-meta">
+            <span><i data-lucide="award"></i> 15 yrs exp</span>
+            <span><i data-lucide="star"></i> 4.8 rating</span>
+            <span><i data-lucide="users"></i> 8 patients today</span>
+            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
+        </div>
+        <div class="doctor-mgmt-actions">
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-outline btn-sm">Schedule</button>
+            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
+        </div>
+    </div>
+
+    <div class="doctor-mgmt-card">
+        <div class="doctor-mgmt-header">
+            <div class="avatar">OI</div>
+            <div class="doctor-mgmt-name">
+                <h3>Dr. Olumide Ifeanyi</h3>
+                <p>Neurologist</p>
+            </div>
+            <span class="doctor-type-badge visiting">Visiting</span>
+        </div>
+        <div class="doctor-mgmt-meta">
+            <span><i data-lucide="award"></i> 20 yrs exp</span>
+            <span><i data-lucide="star"></i> 4.9 rating</span>
+            <span><i data-lucide="calendar"></i> Mon, Wed, Fri</span>
+            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
+        </div>
+        <div class="doctor-mgmt-actions">
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-outline btn-sm">Schedule</button>
+            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
+        </div>
+    </div>
+
+    <div class="doctor-mgmt-card">
+        <div class="doctor-mgmt-header">
+            <div class="avatar">FK</div>
+            <div class="doctor-mgmt-name">
+                <h3>Dr. Funke Kuti</h3>
+                <p>Pediatrician</p>
+            </div>
+            <span class="doctor-type-badge full-time">Full-time</span>
+        </div>
+        <div class="doctor-mgmt-meta">
+            <span><i data-lucide="award"></i> 10 yrs exp</span>
+            <span><i data-lucide="star"></i> 4.7 rating</span>
+            <span><i data-lucide="users"></i> 5 patients today</span>
+            <span class="doctor-status-dot offline" style="margin-left:auto;"></span>
+        </div>
+        <div class="doctor-mgmt-actions">
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-outline btn-sm">Schedule</button>
+            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
+        </div>
+    </div>
+
+    <div class="doctor-mgmt-card">
+        <div class="doctor-mgmt-header">
+            <div class="avatar">SA</div>
+            <div class="doctor-mgmt-name">
+                <h3>Dr. Sani Ahmed</h3>
+                <p>Orthopedic Surgeon</p>
+            </div>
+            <span class="doctor-type-badge locum">Locum</span>
+        </div>
+        <div class="doctor-mgmt-meta">
+            <span><i data-lucide="award"></i> 8 yrs exp</span>
+            <span><i data-lucide="star"></i> 4.5 rating</span>
+            <span><i data-lucide="calendar"></i> Contract: Feb 1 - Mar 31</span>
+            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
+        </div>
+        <div class="doctor-mgmt-actions">
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-outline btn-sm">Schedule</button>
+            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
+        </div>
+    </div>
+
+    <div class="doctor-mgmt-card">
+        <div class="doctor-mgmt-header">
+            <div class="avatar">CO</div>
+            <div class="doctor-mgmt-name">
+                <h3>Dr. Chukwuemeka Obiora</h3>
+                <p>General Practitioner</p>
+            </div>
+            <span class="doctor-type-badge full-time">Full-time</span>
+        </div>
+        <div class="doctor-mgmt-meta">
+            <span><i data-lucide="award"></i> 12 yrs exp</span>
+            <span><i data-lucide="star"></i> 4.6 rating</span>
+            <span><i data-lucide="users"></i> 10 patients today</span>
+            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
+        </div>
+        <div class="doctor-mgmt-actions">
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-outline btn-sm">Schedule</button>
+            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
+        </div>
+    </div>
+
+    <div class="doctor-mgmt-card">
+        <div class="doctor-mgmt-header">
+            <div class="avatar">AN</div>
+            <div class="doctor-mgmt-name">
+                <h3>Dr. Adaeze Nwosu</h3>
+                <p>Endocrinologist</p>
+            </div>
+            <span class="doctor-type-badge visiting">Visiting</span>
+        </div>
+        <div class="doctor-mgmt-meta">
+            <span><i data-lucide="award"></i> 14 yrs exp</span>
+            <span><i data-lucide="star"></i> 4.8 rating</span>
+            <span><i data-lucide="calendar"></i> Tue, Thu</span>
+            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
+        </div>
+        <div class="doctor-mgmt-actions">
+            <button class="btn btn-outline btn-sm">Edit</button>
+            <button class="btn btn-outline btn-sm">Schedule</button>
+            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add Doctor Modal -->
+<div class="modal-overlay" id="addDoctorModal">
+    <div class="modal-content">
+        <h2><i data-lucide="user-plus" style="width:20px;height:20px;display:inline;"></i> Add Doctor to Hospital</h2>
+        <div class="form-group">
+            <label>Search Doctor (by name or license #)</label>
+            <input type="text" placeholder="Search registered doctors...">
+        </div>
+        <div class="form-group">
+            <label>Employment Type</label>
+            <select>
+                <option value="full_time">Full-time</option>
+                <option value="visiting_consultant">Visiting Consultant</option>
+                <option value="locum">Locum</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Department</label>
+            <input type="text" placeholder="e.g., Cardiology, Pediatrics...">
+        </div>
+        <div class="form-group">
+            <label>Contract Start Date</label>
+            <input type="date">
+        </div>
+        <div class="form-group">
+            <label>Contract End Date (optional)</label>
+            <input type="date">
+        </div>
+        <div class="form-group">
+            <label>Salary / Fee (₦)</label>
+            <input type="number" placeholder="Monthly salary or per-session fee">
+        </div>
+        <div class="form-group">
+            <label>Commission Rate (%)</label>
+            <input type="number" placeholder="e.g., 10" value="0">
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <textarea rows="2" placeholder="Any contract notes..."></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="document.getElementById('addDoctorModal').classList.remove('show')">Cancel</button>
+            <button class="btn btn-primary">Add Doctor</button>
+        </div>
+    </div>
+</div>
