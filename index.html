@@ -4,14 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HealingNet - Patient Dashboard</title>
-    <meta name="description" content="HealingNet Patient Portal - Manage your health, appointments, and medical records">
-
-    <!-- Lucide Icons CDN -->
+    <title>HealingNet - Hospital Dashboard</title>
+    <meta name="description" content="HealingNet Hospital Management - EMR, Telemedicine, and Operations Dashboard">
     <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Dashboard Styles -->
     <link rel="stylesheet" href="/export/healingnet-dashboard.css">
+    <link rel="stylesheet" href="/export/hospital-dashboard.css">
 </head>
 
 <body>
@@ -19,77 +16,83 @@
     <button class="mobile-menu-toggle" id="mobileMenuToggle">
         <i data-lucide="menu"></i>
     </button>
-
-    <!-- Sidebar Overlay (Mobile) -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Sidebar -->
+    <!-- Hospital Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div class="logo-icon">
-                <i data-lucide="heart"></i>
+            <div class="logo-icon" style="background: var(--gradient-info);">
+                <i data-lucide="building-2"></i>
             </div>
             <div class="logo-text">
                 <h1>HealingNet</h1>
-                <p>Patient Portal</p>
+                <p>Hospital Portal</p>
             </div>
         </div>
 
         <nav class="sidebar-nav">
-            <a href="#" class="nav-item active load-content" data-url="/patients/dashboard">
+            <a href="#" class="nav-item active load-content" data-url="/hospital/dashboard">
                 <i data-lucide="layout-dashboard"></i>
                 <span>Dashboard</span>
             </a>
-            <!-- Appointments Dropdown -->
+
+            <!-- Patient Queue -->
+            <a href="#" class="nav-item load-content" data-url="/export/partials/hospital/queue.html">
+                <i data-lucide="users"></i>
+                <span>Patient Queue</span>
+                <span class="nav-badge">12</span>
+            </a>
+
+            <!-- Doctors Dropdown -->
             <div class="nav-dropdown">
                 <button class="nav-item nav-dropdown-toggle">
-                    <i data-lucide="calendar"></i>
-                    <span>Appointments</span>
+                    <i data-lucide="user-check"></i>
+                    <span>Doctors</span>
                     <i data-lucide="chevron-down" class="dropdown-arrow"></i>
                 </button>
                 <div class="nav-dropdown-menu">
-                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/appointments-queue.html">
-                        <i data-lucide="clock"></i>
-                        <span>Queue (Pending)</span>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/doctors.html">
+                        <i data-lucide="list"></i>
+                        <span>Manage Doctors</span>
                     </a>
-                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/appointments-accepted.html">
-                        <i data-lucide="check-circle"></i>
-                        <span>Accepted</span>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/marketplace.html">
+                        <i data-lucide="search"></i>
+                        <span>Doctor Marketplace</span>
+                    </a>
+                    <a href="#" class="nav-dropdown-item load-content" data-url="/export/partials/hospital/consultation-requests.html">
+                        <i data-lucide="send"></i>
+                        <span>Consultation Requests</span>
                     </a>
                 </div>
             </div>
-            <a href="#" class="nav-item load-content" data-url="/export/partials/medical-records.html">
+
+            <!-- EMR -->
+            <a href="#" class="nav-item load-content" data-url="/export/partials/hospital/emr.html">
                 <i data-lucide="file-text"></i>
-                <span>Medical Records</span>
+                <span>EMR Records</span>
             </a>
-            <a href="#" class="nav-item load-content" data-url="/export/partials/prescriptions.html">
-                <i data-lucide="pill"></i>
-                <span>Prescriptions</span>
+
+            <!-- Billing -->
+            <a href="#" class="nav-item load-content" data-url="/export/partials/hospital/billing.html">
+                <i data-lucide="credit-card"></i>
+                <span>Billing & Revenue</span>
             </a>
-            <a href="#" class="nav-item load-content" data-url="/export/partials/lab-results-view.html">
-                <i data-lucide="test-tube"></i>
-                <span>Lab Results</span>
+
+            <!-- Analytics -->
+            <a href="#" class="nav-item load-content" data-url="/export/partials/hospital/analytics.html">
+                <i data-lucide="bar-chart-3"></i>
+                <span>Analytics</span>
             </a>
-            <a href="#" class="nav-item load-content" data-url="/export/partials/book-appointment.html">
-                <i data-lucide="stethoscope"></i>
-                <span>Find Doctors</span>
-            </a>
+
+            <!-- Teleconsultation -->
             <a href="#" class="nav-item">
                 <i data-lucide="video"></i>
                 <span>Teleconsultation</span>
             </a>
-            <a href="#" class="nav-item">
-                <i data-lucide="message-square"></i>
-                <span>Messages</span>
-            </a>
-            <a href="#" class="nav-item">
-                <i data-lucide="star"></i>
-                <span>Reviews</span>
-            </a>
         </nav>
 
         <div class="sidebar-footer">
-            <a href="#" class="nav-item load-content" data-url="/export/partials/settings.html">
+            <a href="#" class="nav-item load-content" data-url="/export/partials/hospital/settings.html">
                 <i data-lucide="settings"></i>
                 <span>Settings</span>
             </a>
@@ -106,61 +109,50 @@
         <header class="header">
             <div class="header-search">
                 <i data-lucide="search"></i>
-                <input type="text" placeholder="Search appointments, doctors, records...">
+                <input type="text" placeholder="Search patients, doctors, records...">
             </div>
-
             <div class="header-actions">
-                <!-- Notifications -->
                 <div class="dropdown">
                     <button class="icon-btn notification-btn">
                         <i data-lucide="bell"></i>
-                        <span class="notification-badge">3</span>
+                        <span class="notification-badge">5</span>
                     </button>
                     <div class="dropdown-menu notification-menu">
                         <div class="dropdown-header">
                             <span>Notifications</span>
-                            <span class="badge">3 new</span>
+                            <span class="badge">5 new</span>
                         </div>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item notification-item">
-                            <p class="notification-title">Appointment Reminder</p>
-                            <p class="notification-text">Your appointment with Dr. Adebayo is tomorrow at 10:00 AM</p>
-                            <span class="notification-time">2 hours ago</span>
+                            <p class="notification-title">New Patient Check-in</p>
+                            <p class="notification-text">Abubakar Musa has checked in for appointment</p>
+                            <span class="notification-time">5 min ago</span>
                         </a>
                         <a href="#" class="dropdown-item notification-item">
-                            <p class="notification-title">Lab Results Ready</p>
-                            <p class="notification-text">Your blood test results are now available</p>
-                            <span class="notification-time">5 hours ago</span>
-                        </a>
-                        <a href="#" class="dropdown-item notification-item">
-                            <p class="notification-title">Prescription Renewed</p>
-                            <p class="notification-text">Dr. Okonkwo has renewed your medication</p>
-                            <span class="notification-time">1 day ago</span>
+                            <p class="notification-title">Consultation Request</p>
+                            <p class="notification-text">Dr. Olumide accepted your consultation request</p>
+                            <span class="notification-time">30 min ago</span>
                         </a>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item view-all">View all notifications</a>
                     </div>
                 </div>
 
-                <!-- Profile -->
                 <div class="dropdown">
                     <button class="profile-btn">
-                        <div class="avatar"><img src="/img/avatar.jpg" alt="Patient's image"></div>
+                        <div class="avatar" style="background: var(--gradient-info);"><i data-lucide="building-2" style="width:18px;height:18px;"></i></div>
                         <div class="profile-info">
-                            <span class="profile-name">Chinedu Okafor</span>
-                            <span class="profile-role">Patient</span>
+                            <span class="profile-name">Lagos General Hospital</span>
+                            <span class="profile-role">Admin</span>
                         </div>
                         <i data-lucide="chevron-down"></i>
                     </button>
                     <div class="dropdown-menu profile-menu">
-                        <div class="dropdown-header">My Account</div>
+                        <div class="dropdown-header">Hospital Account</div>
                         <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item load-content" data-url="/export/partials/patient-profile.html">
-                            <i data-lucide="user"></i>
-                            Profile
-                        </a>
-                        <a href="#" class="dropdown-item load-content" data-url="/export/partials/settings.html">Settings</a>
-                        <a href="#" class="dropdown-item">Help & Support</a>
+                        <a href="#" class="dropdown-item">Hospital Profile</a>
+                        <a href="#" class="dropdown-item">Staff Management</a>
+                        <a href="#" class="dropdown-item load-content" data-url="/export/partials/hospital/settings.html">Settings</a>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item logout-item">Log out</a>
                     </div>
@@ -173,419 +165,242 @@
             <!-- Welcome Section -->
             <div class="welcome-section">
                 <div class="welcome-text">
-                    <h1>Welcome back, Chinedu Okafor!</h1>
-                    <p>Here's an overview of your health dashboard</p>
+                    <h1>Lagos General Hospital</h1>
+                    <p>Hospital Operations Dashboard — Today: <span id="todayDate"></span></p>
                 </div>
             </div>
 
             <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card gradient-primary">
-                    <i data-lucide="calendar" class="stat-icon"></i>
+                    <i data-lucide="users" class="stat-icon"></i>
                     <div class="stat-content">
-                        <p class="stat-label">Upcoming Appointments</p>
-                        <h3 class="stat-value">3</h3>
-                        <p class="stat-subtitle">Next: Jan 10, 2026</p>
+                        <p class="stat-label">Patients Today</p>
+                        <h3 class="stat-value">42</h3>
+                        <p class="stat-subtitle">8 waiting • 3 in consultation</p>
                     </div>
                 </div>
                 <div class="stat-card gradient-success">
-                    <i data-lucide="pill" class="stat-icon"></i>
+                    <i data-lucide="user-check" class="stat-icon"></i>
                     <div class="stat-content">
-                        <p class="stat-label">Active Prescriptions</p>
-                        <h3 class="stat-value">4</h3>
-                        <p class="stat-subtitle">2 refills available</p>
+                        <p class="stat-label">Active Doctors</p>
+                        <h3 class="stat-value">12</h3>
+                        <p class="stat-subtitle">8 full-time • 3 visiting • 1 locum</p>
                     </div>
                 </div>
                 <div class="stat-card gradient-warning">
-                    <i data-lucide="test-tube" class="stat-icon"></i>
+                    <i data-lucide="credit-card" class="stat-icon"></i>
                     <div class="stat-content">
-                        <p class="stat-label">Pending Lab Results</p>
-                        <h3 class="stat-value">5</h3>
-                        <p class="stat-subtitle">Expected: Jan 6</p>
+                        <p class="stat-label">Today's Revenue</p>
+                        <h3 class="stat-value">₦1.2M</h3>
+                        <p class="stat-subtitle">₦850K collected</p>
                     </div>
                 </div>
-                <div class="stat-card gradient-danger">
-                    <i data-lucide="message-square" class="stat-icon"></i>
+                <div class="stat-card gradient-info">
+                    <i data-lucide="video" class="stat-icon"></i>
                     <div class="stat-content">
-                        <p class="stat-label">Unread Messages</p>
-                        <h3 class="stat-value">7</h3>
-                        <p class="stat-subtitle">From 3 Doctors</p>
+                        <p class="stat-label">External Consults</p>
+                        <h3 class="stat-value">3</h3>
+                        <p class="stat-subtitle">2 pending • 1 active</p>
                     </div>
                 </div>
             </div>
 
             <!-- Main Grid -->
             <div class="content-grid">
-                <!-- Appointments Section -->
-                <div class="content-section appointments-section">
+                <!-- Live Queue -->
+                <div class="content-section">
                     <div class="section-header">
-                        <h2>Upcoming Appointments</h2>
-                        <a href="#" class="link-btn">View All</a>
+                        <h2>Live Patient Queue</h2>
+                        <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/queue.html">View All</a>
                     </div>
-                    <div class="appointments-list">
-                        <div class="appointments-list" id="appointmentsList">
-                            <div class="appointment-card appointment-item">
-                                <div class="appointment-header">
-                                    <div class="doctor-info">
-                                        <div class="avatar">AO</div>
-                                        <div>
-                                            <h4>Dr. Adebayo Ogunlade</h4>
-                                            <p>Cardiologist</p>
-                                        </div>
-                                    </div>
-                                    <button class="icon-btn"><i data-lucide="more-vertical"></i></button>
-                                </div>
-                                <div class="appointment-details">
-                                    <span><i data-lucide="calendar"></i> Jan 10, 2026</span>
-                                    <span><i data-lucide="clock"></i> 10:00 AM</span>
-                                    <span><i data-lucide="video"></i> Virtual</span>
-                                </div>
-                                <div class="appointment-footer">
-                                    <span class="status-badge approved">Approved</span>
-                                    <button class="btn btn-primary btn-sm join-call-btn">
-                                        <i data-lucide="video"></i> Join Call
-                                    </button>
-                                </div>
+                    <div class="hospital-queue-mini">
+                        <div class="queue-item priority-emergency">
+                            <span class="queue-number">#1</span>
+                            <div class="queue-patient">
+                                <h4>Amara Obi</h4>
+                                <p>Emergency • Cardiology</p>
                             </div>
-
-                            <div class="appointment-card appointment-item">
-                                <div class="appointment-header">
-                                    <div class="doctor-info">
-                                        <div class="avatar">CO</div>
-                                        <div>
-                                            <h4>Dr. Chukwuemeka Obiora</h4>
-                                            <p>General Practitioner</p>
-                                        </div>
-                                    </div>
-                                    <button class="icon-btn"><i data-lucide="more-vertical"></i></button>
-                                </div>
-                                <div class="appointment-details">
-                                    <span><i data-lucide="calendar"></i> Jan 15, 2026</span>
-                                    <span><i data-lucide="clock"></i> 2:30 PM</span>
-                                    <span><i data-lucide="map-pin"></i> In-Person</span>
-                                </div>
-                                <div class="appointment-footer">
-                                    <span class="status-badge pending">Pending</span>
-                                </div>
+                            <span class="queue-status status-in-consultation">In Consultation</span>
+                        </div>
+                        <div class="queue-item priority-normal">
+                            <span class="queue-number">#2</span>
+                            <div class="queue-patient">
+                                <h4>Yusuf Bello</h4>
+                                <p>Pre-booked • General</p>
                             </div>
-
-                            <div class="appointment-card appointment-item">
-                                <div class="appointment-header">
-                                    <div class="doctor-info">
-                                        <div class="avatar">AN</div>
-                                        <div>
-                                            <h4>Dr. Adaeze Nwosu</h4>
-                                            <p>Endocrinologist</p>
-                                        </div>
-                                    </div>
-                                    <button class="icon-btn"><i data-lucide="more-vertical"></i></button>
-                                </div>
-                                <div class="appointment-details">
-                                    <span><i data-lucide="calendar"></i> Jan 20, 2026</span>
-                                    <span><i data-lucide="clock"></i> 11:00 AM</span>
-                                    <span><i data-lucide="video"></i> Virtual</span>
-                                </div>
-                                <div class="appointment-footer">
-                                    <span class="status-badge approved">Approved</span>
-                                    <button class="btn btn-primary btn-sm join-call-btn">
-                                        <i data-lucide="video"></i> Join Call
-                                    </button>
-                                </div>
+                            <span class="queue-status status-waiting">Waiting</span>
+                        </div>
+                        <div class="queue-item priority-normal">
+                            <span class="queue-number">#3</span>
+                            <div class="queue-patient">
+                                <h4>Ngozi Eze</h4>
+                                <p>Walk-in • Orthopedics</p>
                             </div>
+                            <span class="queue-status status-checked-in">Checked In</span>
+                        </div>
+                        <div class="queue-item priority-priority">
+                            <span class="queue-number">#4</span>
+                            <div class="queue-patient">
+                                <h4>Emeka Nwankwo</h4>
+                                <p>Pre-booked • Dermatology</p>
+                            </div>
+                            <span class="queue-status status-waiting">Waiting</span>
+                        </div>
+                        <div class="queue-item priority-normal">
+                            <span class="queue-number">#5</span>
+                            <div class="queue-patient">
+                                <h4>Fatima Abdullahi</h4>
+                                <p>Walk-in • Pediatrics</p>
+                            </div>
+                            <span class="queue-status status-checked-in">Checked In</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Prescriptions Section -->
-                <div class="content-section prescriptions-section">
+                <!-- Doctor Overview -->
+                <div class="content-section">
                     <div class="section-header">
-                        <h2>Active Prescriptions</h2>
-                        <a href="#" class="link-btn">View All</a>
+                        <h2>Doctor Overview</h2>
+                        <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/doctors.html">Manage</a>
                     </div>
-                    <div class="prescriptions-list">
-                        <div class="prescription-card">
-                            <div class="prescription-icon">
-                                <i data-lucide="pill"></i>
+                    <div class="doctor-overview-list">
+                        <div class="doctor-overview-item">
+                            <div class="avatar">AO</div>
+                            <div class="doctor-overview-info">
+                                <h4>Dr. Adebayo Ogunlade</h4>
+                                <p>Cardiologist</p>
                             </div>
-                            <div class="prescription-content">
-                                <div class="prescription-header">
-                                    <h4><b>Metformin</b></h4>
-                                    <span class="status-badge active">Active</span>
-                                </div>
-                                <p class="prescription-dosage">500mg</p>
-                                <p class="prescription-frequency">Twice daily after meals</p>
-                                <p class="prescription-doctor">Prescribed by: <b>Dr. Adaeze Nwosu</b></p>
-                                <div class="prescription-tags">
-                                    <span class="tag refill"><i data-lucide="refresh-cw"></i> Refill Available</span>
-                                    <span class="tag warning"><i data-lucide="alert-circle"></i> Take with food</span>
-                                </div>
-                            </div>
+                            <span class="doctor-type-badge full-time">Full-time</span>
+                            <span class="doctor-status-dot online"></span>
                         </div>
-                        <div class="prescription-card">
-                            <div class="prescription-icon">
-                                <i data-lucide="pill"></i>
+                        <div class="doctor-overview-item">
+                            <div class="avatar">OI</div>
+                            <div class="doctor-overview-info">
+                                <h4>Dr. Olumide Ifeanyi</h4>
+                                <p>Neurologist</p>
                             </div>
-                            <div class="prescription-content">
-                                <div class="prescription-header">
-                                    <h4><b>Amlodipine</b></h4>
-                                    <span class="status-badge active">Active</span>
-                                </div>
-                                <p class="prescription-dosage">5mg</p>
-                                <p class="prescription-frequency">Once daily in the morning</p>
-                                <p class="prescription-doctor">Prescribed by: <b>Dr. Adebayo Ogunlade</b></p>
-                                <div class="prescription-tags">
-                                    <span class="tag refill"><i data-lucide="refresh-cw"></i> Refill Available</span>
-                                </div>
-                            </div>
+                            <span class="doctor-type-badge visiting">Visiting</span>
+                            <span class="doctor-status-dot online"></span>
                         </div>
-                        <div class="prescription-card">
-                            <div class="prescription-icon">
-                                <i data-lucide="pill"></i>
+                        <div class="doctor-overview-item">
+                            <div class="avatar">FK</div>
+                            <div class="doctor-overview-info">
+                                <h4>Dr. Funke Kuti</h4>
+                                <p>Pediatrician</p>
                             </div>
-                            <div class="prescription-content">
-                                <div class="prescription-header">
-                                    <h4><b>Amoxicillin</b></h4>
-                                    <span class="status-badge active">Active</span>
-                                </div>
-                                <p class="prescription-dosage">500mg</p>
-                                <p class="prescription-frequency">Three times daily for 7 days</p>
-                                <p class="prescription-doctor">Prescribed by: <b>Dr. Chukwuemeka Obiora</b></p>
-                                <div class="prescription-tags">
-                                    <span class="tag warning"><i data-lucide="alert-circle"></i> Complete full course</span>
-                                </div>
+                            <span class="doctor-type-badge full-time">Full-time</span>
+                            <span class="doctor-status-dot offline"></span>
+                        </div>
+                        <div class="doctor-overview-item">
+                            <div class="avatar">SA</div>
+                            <div class="doctor-overview-info">
+                                <h4>Dr. Sani Ahmed</h4>
+                                <p>Orthopedic Surgeon</p>
                             </div>
+                            <span class="doctor-type-badge locum">Locum</span>
+                            <span class="doctor-status-dot online"></span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Grid -->
-            <div class="bottom-grid">
-                <!-- Quick Actions -->
-                <div class="content-section quick-actions-section">
-                    <h2>Quick Actions</h2>
-                    <div class="quick-actions-grid">
-                        <button class="quick-action-btn primary load-content" data-url="/export/partials/book-appointment.html">
-                            <i data-lucide="calendar-plus"></i>
-                            <span class="action-label">Book Appointment</span>
-                            <span class="action-desc">Schedule a new visit</span>
-                        </button>
-                        <button class="quick-action-btn success">
-                            <i data-lucide="stethoscope"></i>
-                            <span class="action-label">Symptom Checker</span>
-                            <span class="action-desc">Check your symptoms</span>
-                        </button>
-                        <button class="quick-action-btn info load-content" data-url="/export/partials/medical-records.html">
-                            <i data-lucide="file-search"></i>
-                            <span class="action-label">View Records</span>
-                            <span class="action-desc">Access medical history</span>
-                        </button>
-                        <button class="quick-action-btn warning">
-                            <i data-lucide="pill"></i>
-                            <span class="action-label">Refill Request</span>
-                            <span class="action-desc">Request medication refill</span>
-                        </button>
-                        <button class="quick-action-btn danger load-content" data-url="/export/partials/lab-results-view.html">
-                            <i data-lucide="test-tube"></i>
-                            <span class="action-label">Lab Results</span>
-                            <span class="action-desc">Check test results</span>
-                        </button>
-                        <button class="quick-action-btn secondary">
-                            <i data-lucide="message-square-plus"></i>
-                            <span class="action-label">Message Doctor</span>
-                            <span class="action-desc">Send a message</span>
-                        </button>
+            <!-- Second Row -->
+            <div class="content-grid" style="margin-top: 1.5rem;">
+                <!-- External Consultations -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>External Consultations</h2>
+                        <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/marketplace.html">Find Doctors</a>
                     </div>
-                </div>
-
-                <!-- Health Metrics -->
-                <div class="content-section health-metrics-section">
-                    <h2>Health Metrics</h2>
-                    <p class="metrics-updated">Last updated: January 2, 2026</p>
-                    <div class="metrics-grid">
-                        <div class="metric-item">
-                            <div class="metric-header">
-                                <span class="metric-label"><i data-lucide="thermometer"></i> Temperature</span>
-                                <span class="metric-value success">36.8 °C</span>
+                    <div class="consultation-list">
+                        <div class="consultation-card">
+                            <div class="consultation-header">
+                                <div class="doctor-info">
+                                    <div class="avatar">NO</div>
+                                    <div>
+                                        <h4>Dr. Nnamdi Okafor</h4>
+                                        <p>Neurosurgeon • University Teaching Hospital</p>
+                                    </div>
+                                </div>
+                                <span class="status-badge pending">Pending</span>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 70%;"></div>
-                            </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-header">
-                                <span class="metric-label"><i data-lucide="activity"></i> Blood Pressure</span>
-                                <span class="metric-value success">120/80 mmHg</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 75%;"></div>
+                            <div class="consultation-details">
+                                <span><i data-lucide="user"></i> Patient: Amara Obi</span>
+                                <span><i data-lucide="video"></i> Virtual</span>
+                                <span><i data-lucide="clock"></i> Requested 2h ago</span>
                             </div>
                         </div>
-                        <div class="metric-item">
-                            <div class="metric-header">
-                                <span class="metric-label"><i data-lucide="heart"></i> Heart Rate</span>
-                                <span class="metric-value success">72 bpm</span>
+                        <div class="consultation-card">
+                            <div class="consultation-header">
+                                <div class="doctor-info">
+                                    <div class="avatar">BI</div>
+                                    <div>
+                                        <h4>Dr. Blessing Igwe</h4>
+                                        <p>Oncologist • National Hospital Abuja</p>
+                                    </div>
+                                </div>
+                                <span class="status-badge approved">Accepted</span>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 70%;"></div>
+                            <div class="consultation-details">
+                                <span><i data-lucide="user"></i> Patient: Yusuf Bello</span>
+                                <span><i data-lucide="video"></i> Virtual</span>
+                                <span><i data-lucide="calendar"></i> Tomorrow 2:00 PM</span>
                             </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-header">
-                                <span class="metric-label"><i data-lucide="wind"></i> Respiratory Rate</span>
-                                <span class="metric-value success">16 /min</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 65%;"></div>
-                            </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-header">
-                                <span class="metric-label"><i data-lucide="droplets"></i> SpO2</span>
-                                <span class="metric-value success">98%</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 98%;"></div>
-                            </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-header">
-                                <span class="metric-label"><i data-lucide="scale"></i> Weight</span>
-                                <span class="metric-value success">72.5 kg</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 75%;"></div>
-                            </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-header">
-                                <span class="metric-label"><i data-lucide="ruler"></i> Height</span>
-                                <span class="metric-value success">175 cm</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 80%;"></div>
-                            </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-header">
-                                <span class="metric-label"><i data-lucide="calculator"></i> BMI</span>
-                                <span class="metric-value success">23.7</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill success" style="width: 78%;"></div>
-                            </div>
+                            <button class="btn btn-primary btn-sm" style="margin-top: 0.75rem;">
+                                <i data-lucide="video"></i> Join Session
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Recent Activity -->
-                <div class="content-section activity-section">
-                    <h2>Recent Activity</h2>
-                    <div class="activity-list" id="activityList">
-                        <div class="activity-item">
-                            <div class="activity-icon success">
-                                <i data-lucide="check-circle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h4>Appointment Approved</h4>
-                                    <i data-lucide="check-circle" class="status-icon success"></i>
-                                </div>
-                                <p>Dr. Chukwuemeka Obiora approved your appointment for Jan 10, 2026</p>
-                                <span class="activity-time">1 hour ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon info">
-                                <i data-lucide="test-tube"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h4>Lab Results Available</h4>
-                                    <i data-lucide="file-text" class="status-icon info"></i>
-                                </div>
-                                <p>Complete Blood Count and Lipid Panel results ready for review</p>
-                                <span class="activity-time">3 hours ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon warning">
-                                <i data-lucide="pill"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h4>Prescription Renewed</h4>
-                                    <i data-lucide="refresh-cw" class="status-icon warning"></i>
-                                </div>
-                                <p>Metformin 500mg renewed by Dr. Adaeze Nwosu - Qty: 60 tablets</p>
-                                <span class="activity-time">1 day ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon success">
-                                <i data-lucide="video"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h4>Teleconsultation Completed</h4>
-                                    <i data-lucide="check-circle" class="status-icon success"></i>
-                                </div>
-                                <p>45-minute session with Dr. Emeka Uzodinma - General checkup</p>
-                                <span class="activity-time">2 days ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon primary">
-                                <i data-lucide="credit-card"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h4>Payment Successful</h4>
-                                    <i data-lucide="check-circle" class="status-icon success"></i>
-                                </div>
-                                <p>₦15,000 paid for consultation with Dr. Chukwuemeka Obiora</p>
-                                <span class="activity-time">3 days ago</span>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon info">
-                                <i data-lucide="message-square"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-header">
-                                    <h4>New Message Received</h4>
-                                    <i data-lucide="mail" class="status-icon info"></i>
-                                </div>
-                                <p>Dr. Ifeoma Fasanya sent follow-up instructions for your ECG</p>
-                                <span class="activity-time">4 days ago</span>
-                            </div>
-                        </div>
+                <!-- Recent Billing -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Recent Billing</h2>
+                        <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/billing.html">View All</a>
                     </div>
-                </div>
-            </div>
-
-            <!-- Emergency Contact Section -->
-            <div class="emergency-section">
-                <div class="emergency-card">
-                    <div class="emergency-header">
-                        <i data-lucide="phone-call"></i>
-                        <h3>Emergency Contact</h3>
-                    </div>
-                    <div class="emergency-details">
-                        <p><strong>Name:</strong> <span id="emergencyName">Adaora Chukwu</span></p>
-                        <p><strong>Phone:</strong> <span id="emergencyPhone">+234 802 345 6789</span></p>
-                        <p><strong>Relationship:</strong> <span id="emergencyRelationship">Spouse</span></p>
-                    </div>
-                </div>
-                <div class="insurance-card">
-                    <div class="insurance-header">
-                        <i data-lucide="shield-check"></i>
-                        <h3>Insurance Information</h3>
-                    </div>
-                    <div class="insurance-details">
-                        <p><strong>Provider:</strong> <span id="insuranceProvider">NHIS - National Health Insurance Scheme</span></p>
-                        <p><strong>Policy No:</strong> <span id="insuranceNumber">NHIS-2024-847291</span></p>
-                        <p><strong>Status:</strong> <span class="status-badge active">Active</span></p>
+                    <div class="billing-mini-list">
+                        <div class="billing-mini-item">
+                            <div class="billing-mini-info">
+                                <h4>Amara Obi</h4>
+                                <p>Consultation + ECG</p>
+                            </div>
+                            <div class="billing-mini-amount">
+                                <span class="amount">₦45,000</span>
+                                <span class="status-badge paid-badge">Paid</span>
+                            </div>
+                        </div>
+                        <div class="billing-mini-item">
+                            <div class="billing-mini-info">
+                                <h4>Yusuf Bello</h4>
+                                <p>Lab Tests (Blood Panel)</p>
+                            </div>
+                            <div class="billing-mini-amount">
+                                <span class="amount">₦28,000</span>
+                                <span class="status-badge pending">Pending</span>
+                            </div>
+                        </div>
+                        <div class="billing-mini-item">
+                            <div class="billing-mini-info">
+                                <h4>Ngozi Eze</h4>
+                                <p>X-Ray + Consultation</p>
+                            </div>
+                            <div class="billing-mini-amount">
+                                <span class="amount">₦62,000</span>
+                                <span class="status-badge paid-badge">Paid</span>
+                            </div>
+                        </div>
+                        <div class="billing-mini-item">
+                            <div class="billing-mini-info">
+                                <h4>External Consult - Dr. Okafor</h4>
+                                <p>Neurosurgery Teleconsultation</p>
+                            </div>
+                            <div class="billing-mini-amount">
+                                <span class="amount">₦150,000</span>
+                                <span class="status-badge pending">Pending</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -593,137 +408,77 @@
     </div>
 
     <script>
+        // Set today's date
+        document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // Mobile menu toggle
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        // Store the original dashboard HTML for restoring
+        const dashboardHTML = document.querySelector('.main-content').innerHTML;
 
-        mobileMenuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-            sidebarOverlay.classList.toggle('show');
-        });
+        // AJAX content loading
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('.load-content');
+            if (!link) return;
+            e.preventDefault();
 
-        sidebarOverlay.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-            sidebarOverlay.classList.remove('show');
-        });
+            const url = link.getAttribute('data-url');
+            if (!url) return;
 
-        // Sidebar nav dropdown toggle
-        document.querySelectorAll('.nav-dropdown-toggle').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const dropdown = btn.parentElement;
-                dropdown.classList.toggle('open');
-            });
-        });
-
-        // Header dropdown toggle
-        document.querySelectorAll('.dropdown > button').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const dropdown = btn.parentElement;
-                const isOpen = dropdown.classList.contains('open');
-                document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
-                if (!isOpen) dropdown.classList.add('open');
-            });
-        });
-
-        // Close header dropdowns when clicking outside
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
-        });
-    </script>
-
-    <!-- Ajax for dashboard load -->
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const mainContent = document.querySelector(".main-content");
-            const sidebar = document.getElementById("sidebar");
-            const sidebarOverlay = document.getElementById("sidebarOverlay");
-
-            // Save default dashboard content
-            const defaultMainContent = mainContent.innerHTML;
-
-            function showLoader() {
-                mainContent.style.opacity = "0.3";
-                mainContent.style.pointerEvents = "none";
-                mainContent.innerHTML = `
-                    <div style="display:flex;justify-content:center;align-items:center;height:250px;">
-                        <div style="width:40px;height:40px;border:4px solid rgba(255,255,255,0.2);border-top-color:#00d4aa;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-                    </div>
-                    <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-                `;
+            // If clicking dashboard link, restore original content
+            if (url.startsWith('/hospital/dashboard')) {
+                document.querySelector('.main-content').innerHTML = dashboardHTML;
+                lucide.createIcons();
+                document.querySelectorAll('.nav-item, .nav-dropdown-item').forEach(el => el.classList.remove('active'));
+                link.classList.add('active');
+                return;
             }
 
-            function fadeIn() {
-                mainContent.style.opacity = "0";
-                mainContent.style.pointerEvents = "auto";
-                setTimeout(() => {
-                    mainContent.style.transition = "opacity 0.4s ease-in-out";
-                    mainContent.style.opacity = "1";
-                }, 50);
-            }
+            // Update active state
+            document.querySelectorAll('.nav-item, .nav-dropdown-item').forEach(el => el.classList.remove('active'));
+            link.classList.add('active');
 
-            function executeInlineScripts(container) {
-                container.querySelectorAll("script:not([src])").forEach(oldScript => {
-                    const newScript = document.createElement("script");
-                    newScript.textContent = oldScript.textContent;
-                    document.body.appendChild(newScript);
-                    document.body.removeChild(newScript);
+            fetch(url)
+                .then(res => res.text())
+                .then(html => {
+                    document.querySelector('.main-content').innerHTML = html;
+                    lucide.createIcons();
+                })
+                .catch(err => {
+                    document.querySelector('.main-content').innerHTML = '<div class="error-message"><h2>Failed to load content</h2><p>' + err.message + '</p></div>';
                 });
-            }
+        });
 
-            document.body.addEventListener("click", async (event) => {
-                const link = event.target.closest(".load-content");
-                if (!link) return;
-
-                event.preventDefault();
-                const url = link.getAttribute("data-url");
-
-                // Close mobile sidebar
-                if (window.innerWidth <= 991) {
-                    sidebar.classList.remove('open');
-                    sidebarOverlay.classList.remove('show');
-                }
-
-                // If dashboard root is requested
-                if (url === "/patients/dashboard") {
-                    mainContent.innerHTML = defaultMainContent;
-                    fadeIn();
-                    lucide.createIcons();
-                    return;
-                }
-
-                try {
-                    showLoader();
-                    const response = await fetch(url);
-                    const html = await response.text();
-                    mainContent.innerHTML = html;
-                    executeInlineScripts(mainContent);
-                    fadeIn();
-                    lucide.createIcons();
-                } catch (err) {
-                    console.error("Load error:", err);
-                    mainContent.innerHTML = `
-                        <div class="alert alert-danger">
-                            Could not load page. Please try again.
-                        </div>
-                    `;
-                    fadeIn();
-                }
+        // Dropdown toggles
+        document.querySelectorAll('.nav-dropdown-toggle').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.parentElement.classList.toggle('open');
             });
+        });
 
-            window.addEventListener("resize", () => {
-                if (window.innerWidth > 991) {
-                    sidebar.classList.remove('open');
-                    sidebarOverlay.classList.remove('show');
-                }
+        // Header dropdowns
+        document.querySelectorAll('.dropdown > button, .dropdown > .profile-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menu = this.nextElementSibling;
+                document.querySelectorAll('.dropdown-menu').forEach(m => { if (m !== menu) m.classList.remove('show'); });
+                menu.classList.toggle('show');
             });
+        });
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+        });
+
+        // Mobile menu
+        document.getElementById('mobileMenuToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        });
+        document.getElementById('sidebarOverlay').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.remove('open');
+            this.classList.remove('show');
         });
     </script>
 </body>
-
 </html>
