@@ -28,16 +28,19 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active">All</button>
-    <button class="emr-tab">Incoming</button>
-    <button class="emr-tab">Outgoing</button>
-    <button class="emr-tab">Pending</button>
+    <button class="emr-tab active" onclick="filterReferralTab('all')">All</button>
+    <button class="emr-tab" onclick="filterReferralTab('incoming')">Incoming</button>
+    <button class="emr-tab" onclick="filterReferralTab('outgoing')">Outgoing</button>
+    <button class="emr-tab" onclick="filterReferralTab('pending')">Pending</button>
 </div>
 
 <!-- Referrals List -->
 <div id="referralsList"><p style="padding:2rem;text-align:center;color:var(--muted-foreground);">Loading...</p></div>
 
 <script>
+let allReferrals = [];
+let currentRefFilter = 'all';
+
 async function loadReferrals() {
     try {
         const res = await fetch('/api/hospital/referrals', { credentials: 'include' });
@@ -48,17 +51,33 @@ async function loadReferrals() {
             document.querySelectorAll('.stat-value')[1].textContent = s.incoming || 0;
             document.querySelectorAll('.stat-value')[2].textContent = s.outgoing || 0;
             document.querySelectorAll('.stat-value')[3].textContent = s.completed || 0;
-
-            const list = document.getElementById('referralsList');
-            const refs = data.referrals || [];
-            list.innerHTML = refs.length ? refs.map(r => {
-                const icon = r.referral_type === 'external_incoming' ? 'arrow-down-left' : r.referral_type === 'external_outgoing' ? 'arrow-up-right' : 'repeat';
-                const color = r.referral_type === 'external_outgoing' ? 'var(--warning)' : 'var(--primary)';
-                return `<div class="emr-entry"><div class="emr-entry-header"><div><h4><i data-lucide="${icon}" style="width:16px;height:16px;color:${color};display:inline;"></i> ${r.patient_name} → ${r.specialty || 'General'}</h4><span class="emr-entry-type">${r.referral_type.replace(/_/g,' ')}</span></div><span class="entry-date">${new Date(r.created_at).toLocaleDateString()}</span></div><p><strong>From:</strong> ${r.referring_doctor||'—'} → <strong>To:</strong> ${r.referred_to_doctor||r.referred_to_hospital||'—'}<br><strong>Reason:</strong> ${r.reason}</p><div style="margin-top:0.5rem;"><span class="queue-status ${r.status==='completed'?'status-completed':'status-waiting'}">${r.status}</span></div></div>`;
-            }).join('') : '<p style="padding:2rem;text-align:center;">No referrals found</p>';
-            if (typeof lucide !== 'undefined') lucide.createIcons();
+            allReferrals = data.referrals || [];
+            renderReferrals();
         }
     } catch(e) { console.error('Referrals error:', e); }
 }
+
+function renderReferrals() {
+    const list = document.getElementById('referralsList');
+    let filtered = allReferrals;
+    if (currentRefFilter === 'incoming') filtered = allReferrals.filter(r => r.referral_type === 'external_incoming' || r.referral_type === 'internal');
+    else if (currentRefFilter === 'outgoing') filtered = allReferrals.filter(r => r.referral_type === 'external_outgoing');
+    else if (currentRefFilter === 'pending') filtered = allReferrals.filter(r => r.status === 'pending' || r.status === 'submitted');
+
+    list.innerHTML = filtered.length ? filtered.map(r => {
+        const icon = r.referral_type === 'external_incoming' ? 'arrow-down-left' : r.referral_type === 'external_outgoing' ? 'arrow-up-right' : 'repeat';
+        const color = r.referral_type === 'external_outgoing' ? 'var(--warning)' : 'var(--primary)';
+        return `<div class="emr-entry"><div class="emr-entry-header"><div><h4><i data-lucide="${icon}" style="width:16px;height:16px;color:${color};display:inline;"></i> ${r.patient_name} → ${r.specialty || 'General'}</h4><span class="emr-entry-type">${r.referral_type.replace(/_/g,' ')}</span></div><span class="entry-date">${new Date(r.created_at).toLocaleDateString()}</span></div><p><strong>From:</strong> ${r.referring_doctor||'—'} → <strong>To:</strong> ${r.referred_to_doctor||r.referred_to_hospital||'—'}<br><strong>Reason:</strong> ${r.reason}</p><div style="margin-top:0.5rem;"><span class="queue-status ${r.status==='completed'?'status-completed':'status-waiting'}">${r.status}</span></div></div>`;
+    }).join('') : '<p style="padding:2rem;text-align:center;">No referrals found</p>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function filterReferralTab(filter) {
+    currentRefFilter = filter;
+    document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderReferrals();
+}
+
 loadReferrals();
 </script>

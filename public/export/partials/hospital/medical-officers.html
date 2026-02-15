@@ -28,57 +28,63 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active">Staff Roster</button>
-    <button class="emr-tab">Duty Schedule</button>
-    <button class="emr-tab">Departments</button>
-    <button class="emr-tab">Services</button>
+    <button class="emr-tab active" onclick="showMOTab('roster')">Staff Roster</button>
+    <button class="emr-tab" onclick="showMOTab('schedule')">Duty Schedule</button>
+    <button class="emr-tab" onclick="showMOTab('departments')">Departments</button>
+    <button class="emr-tab" onclick="showMOTab('services')">Services</button>
 </div>
 
-<!-- Staff Cards -->
-<div class="doctor-cards-grid">
-    <div class="doctor-mgmt-card">
-        <div class="doctor-mgmt-header">
-            <div class="avatar">TO</div>
-            <div class="doctor-mgmt-name"><h3>Dr. Tunde Oladipo</h3><p>Medical Officer — General Practice</p></div>
-        </div>
-        <div class="doctor-mgmt-meta">
-            <span><i data-lucide="briefcase"></i> 6 yrs exp</span>
-            <span><i data-lucide="clock"></i> On Duty</span>
-            <span><i data-lucide="users"></i> 5 patients today</span>
-        </div>
-        <div class="doctor-mgmt-actions">
-            <button class="btn btn-sm btn-outline">Schedule</button>
-            <button class="btn btn-sm btn-primary">View Profile</button>
-        </div>
-    </div>
-    <div class="doctor-mgmt-card">
-        <div class="doctor-mgmt-header">
-            <div class="avatar">NA</div>
-            <div class="doctor-mgmt-name"><h3>Dr. Nkechi Anyanwu</h3><p>Medical Officer — Pediatrics</p></div>
-        </div>
-        <div class="doctor-mgmt-meta">
-            <span><i data-lucide="briefcase"></i> 4 yrs exp</span>
-            <span><i data-lucide="clock"></i> On Duty</span>
-            <span><i data-lucide="users"></i> 3 patients today</span>
-        </div>
-        <div class="doctor-mgmt-actions">
-            <button class="btn btn-sm btn-outline">Schedule</button>
-            <button class="btn btn-sm btn-primary">View Profile</button>
-        </div>
-    </div>
-    <div class="doctor-mgmt-card">
-        <div class="doctor-mgmt-header">
-            <div class="avatar">MK</div>
-            <div class="doctor-mgmt-name"><h3>Dr. Musa Kabir</h3><p>Medical Officer — Emergency</p></div>
-        </div>
-        <div class="doctor-mgmt-meta">
-            <span><i data-lucide="briefcase"></i> 8 yrs exp</span>
-            <span><i data-lucide="moon"></i> Night Shift</span>
-            <span><i data-lucide="users"></i> 7 patients today</span>
-        </div>
-        <div class="doctor-mgmt-actions">
-            <button class="btn btn-sm btn-outline">Schedule</button>
-            <button class="btn btn-sm btn-primary">View Profile</button>
-        </div>
-    </div>
-</div>
+<div id="moContent"></div>
+
+<script>
+let currentMOTab = 'roster';
+
+function showMOTab(tab) {
+    currentMOTab = tab;
+    document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderMOContent();
+}
+
+function renderMOContent() {
+    const container = document.getElementById('moContent');
+
+    if (currentMOTab === 'roster') {
+        container.innerHTML = `<div class="doctor-cards-grid">
+            <div class="doctor-mgmt-card"><div class="doctor-mgmt-header"><div class="avatar">TO</div><div class="doctor-mgmt-name"><h3>Dr. Tunde Oladipo</h3><p>Medical Officer — General Practice</p></div></div><div class="doctor-mgmt-meta"><span><i data-lucide="briefcase"></i> 6 yrs exp</span><span><i data-lucide="clock"></i> On Duty</span><span><i data-lucide="users"></i> 5 patients today</span></div><div class="doctor-mgmt-actions"><button class="btn btn-sm btn-outline">Schedule</button><button class="btn btn-sm btn-primary">View Profile</button></div></div>
+            <div class="doctor-mgmt-card"><div class="doctor-mgmt-header"><div class="avatar">NA</div><div class="doctor-mgmt-name"><h3>Dr. Nkechi Anyanwu</h3><p>Medical Officer — Pediatrics</p></div></div><div class="doctor-mgmt-meta"><span><i data-lucide="briefcase"></i> 4 yrs exp</span><span><i data-lucide="clock"></i> On Duty</span><span><i data-lucide="users"></i> 3 patients today</span></div><div class="doctor-mgmt-actions"><button class="btn btn-sm btn-outline">Schedule</button><button class="btn btn-sm btn-primary">View Profile</button></div></div>
+            <div class="doctor-mgmt-card"><div class="doctor-mgmt-header"><div class="avatar">MK</div><div class="doctor-mgmt-name"><h3>Dr. Musa Kabir</h3><p>Medical Officer — Emergency</p></div></div><div class="doctor-mgmt-meta"><span><i data-lucide="briefcase"></i> 8 yrs exp</span><span><i data-lucide="moon"></i> Night Shift</span><span><i data-lucide="users"></i> 7 patients today</span></div><div class="doctor-mgmt-actions"><button class="btn btn-sm btn-outline">Schedule</button><button class="btn btn-sm btn-primary">View Profile</button></div></div>
+        </div>`;
+    } else if (currentMOTab === 'schedule') {
+        container.innerHTML = `<div style="overflow-x:auto;"><table class="queue-table">
+            <thead><tr><th>Officer</th><th>Department</th><th>Shift</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Dr. Tunde Oladipo</strong></td><td>General Practice</td><td>Morning</td><td>7:00 AM</td><td>3:00 PM</td><td><span class="queue-status status-checked-in">On Duty</span></td></tr>
+                <tr><td><strong>Dr. Nkechi Anyanwu</strong></td><td>Pediatrics</td><td>Morning</td><td>8:00 AM</td><td>4:00 PM</td><td><span class="queue-status status-checked-in">On Duty</span></td></tr>
+                <tr><td><strong>Dr. Musa Kabir</strong></td><td>Emergency</td><td>Night</td><td>8:00 PM</td><td>6:00 AM</td><td><span class="queue-status status-waiting">Upcoming</span></td></tr>
+            </tbody>
+        </table></div>`;
+    } else if (currentMOTab === 'departments') {
+        container.innerHTML = `<div class="doctor-cards-grid">
+            ${['General Practice', 'Pediatrics', 'Emergency', 'Surgery', 'Obstetrics & Gynaecology', 'Cardiology', 'Orthopedics', 'Radiology', 'Laboratory', 'Pharmacy', 'Ophthalmology', 'ENT'].map(d => `
+                <div class="content-section" style="padding:1.25rem;"><h3 style="margin-bottom:0.5rem;">${d}</h3><p style="font-size:0.85rem;color:var(--muted-foreground);">Active staff and patient flow managed here.</p></div>
+            `).join('')}
+        </div>`;
+    } else {
+        container.innerHTML = `<div style="overflow-x:auto;"><table class="queue-table">
+            <thead><tr><th>Service</th><th>Department</th><th>Availability</th><th>Fee Range</th></tr></thead>
+            <tbody>
+                <tr><td>General Consultation</td><td>General Practice</td><td><span class="queue-status status-checked-in">Available</span></td><td>₦5,000 - ₦15,000</td></tr>
+                <tr><td>Emergency Care</td><td>Emergency</td><td><span class="queue-status status-checked-in">24/7</span></td><td>₦10,000+</td></tr>
+                <tr><td>Antenatal Care</td><td>O&G</td><td><span class="queue-status status-checked-in">Available</span></td><td>₦8,000 - ₦25,000</td></tr>
+                <tr><td>X-Ray</td><td>Radiology</td><td><span class="queue-status status-checked-in">Available</span></td><td>₦5,000 - ₦20,000</td></tr>
+                <tr><td>Full Blood Count</td><td>Laboratory</td><td><span class="queue-status status-checked-in">Available</span></td><td>₦3,000 - ₦5,000</td></tr>
+                <tr><td>Minor Surgery</td><td>Surgery</td><td><span class="queue-status status-waiting">By Appointment</span></td><td>₦50,000+</td></tr>
+            </tbody>
+        </table></div>`;
+    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+renderMOContent();
+</script>

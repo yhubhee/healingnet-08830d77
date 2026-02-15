@@ -28,20 +28,25 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active">Claims</button>
-    <button class="emr-tab">HMO Partners</button>
-    <button class="emr-tab">Verification</button>
+    <button class="emr-tab active" onclick="filterInsuranceTab('claims')">Claims</button>
+    <button class="emr-tab" onclick="filterInsuranceTab('hmo')">HMO Partners</button>
+    <button class="emr-tab" onclick="filterInsuranceTab('verification')">Verification</button>
 </div>
 
 <!-- Claims Table -->
-<div style="overflow-x:auto;">
-    <table class="billing-table">
-        <thead><tr><th>Patient</th><th>Provider</th><th>Service</th><th>Amount</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="claimsBody"><tr><td colspan="7" style="text-align:center;padding:2rem;">Loading...</td></tr></tbody>
-    </table>
+<div id="insuranceContent">
+    <div style="overflow-x:auto;">
+        <table class="billing-table">
+            <thead><tr><th>Patient</th><th>Provider</th><th>Service</th><th>Amount</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="claimsBody"><tr><td colspan="7" style="text-align:center;padding:2rem;">Loading...</td></tr></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
+let allClaims = [];
+let currentInsuranceTab = 'claims';
+
 async function loadInsurance() {
     try {
         const res = await fetch('/api/hospital/insurance', { credentials: 'include' });
@@ -52,17 +57,49 @@ async function loadInsurance() {
             document.querySelectorAll('.stat-value')[1].textContent = '₦'+Number(s.approved_total||0).toLocaleString();
             document.querySelectorAll('.stat-value')[2].textContent = '₦'+Number(s.pending_total||0).toLocaleString();
             document.querySelectorAll('.stat-value')[3].textContent = s.hmo_partners || 0;
+            allClaims = data.claims || [];
+            renderInsuranceTab();
+        }
+    } catch(e) { console.error('Insurance error:', e); }
+}
 
-            const tbody = document.getElementById('claimsBody');
-            const claims = data.claims || [];
-            tbody.innerHTML = claims.length ? claims.map(c => `<tr>
+function renderInsuranceTab() {
+    const container = document.getElementById('insuranceContent');
+    if (currentInsuranceTab === 'claims') {
+        container.innerHTML = `<div style="overflow-x:auto;"><table class="billing-table">
+            <thead><tr><th>Patient</th><th>Provider</th><th>Service</th><th>Amount</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>${allClaims.length ? allClaims.map(c => `<tr>
                 <td><strong>${c.patient_name}</strong></td><td>${c.insurance_provider}</td><td>${c.service_description||'—'}</td>
                 <td>₦${Number(c.claim_amount).toLocaleString()}</td><td>${new Date(c.claim_date).toLocaleDateString()}</td>
                 <td><span class="status-badge ${c.status==='approved'||c.status==='paid'?'paid-badge':'pending'}">${c.status}</span></td>
                 <td><button class="btn btn-sm btn-outline">View</button></td>
-            </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:2rem;">No claims</td></tr>';
-        }
-    } catch(e) { console.error('Insurance error:', e); }
+            </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:2rem;">No claims</td></tr>'}</tbody>
+        </table></div>`;
+    } else if (currentInsuranceTab === 'hmo') {
+        container.innerHTML = `<div class="content-section"><div class="section-header"><h2>HMO Partners</h2></div>
+            <div class="doctor-cards-grid">
+                <div class="doctor-mgmt-card"><div class="doctor-mgmt-header"><div class="avatar">NH</div><div class="doctor-mgmt-name"><h3>NHIS</h3><p>National Health Insurance Scheme</p></div></div><div class="doctor-mgmt-meta"><span>Coverage: Comprehensive</span><span>Patients: 245</span></div></div>
+                <div class="doctor-mgmt-card"><div class="doctor-mgmt-header"><div class="avatar">AX</div><div class="doctor-mgmt-name"><h3>AXA Mansard</h3><p>Private Health Insurance</p></div></div><div class="doctor-mgmt-meta"><span>Coverage: Premium</span><span>Patients: 128</span></div></div>
+                <div class="doctor-mgmt-card"><div class="doctor-mgmt-header"><div class="avatar">HY</div><div class="doctor-mgmt-name"><h3>Hygeia HMO</h3><p>Health Maintenance Organization</p></div></div><div class="doctor-mgmt-meta"><span>Coverage: Standard</span><span>Patients: 98</span></div></div>
+            </div>
+        </div>`;
+    } else {
+        container.innerHTML = `<div class="content-section" style="padding:2rem;">
+            <div class="section-header"><h2>Insurance Verification</h2></div>
+            <div class="form-group"><label>Patient ID or Name</label><input type="text" placeholder="Search patient..."></div>
+            <div class="form-group"><label>Insurance Provider</label><select><option>NHIS</option><option>AXA Mansard</option><option>Hygeia</option><option>Leadway</option></select></div>
+            <div class="form-group"><label>Policy Number</label><input type="text" placeholder="Enter policy number..."></div>
+            <button class="btn btn-primary">Verify Coverage</button>
+        </div>`;
+    }
 }
+
+function filterInsuranceTab(tab) {
+    currentInsuranceTab = tab;
+    document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderInsuranceTab();
+}
+
 loadInsurance();
 </script>

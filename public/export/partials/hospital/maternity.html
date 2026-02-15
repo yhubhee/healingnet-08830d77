@@ -28,23 +28,24 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active">ANC Register</button>
-    <button class="emr-tab">Delivery Log</button>
-    <button class="emr-tab">Postnatal</button>
-    <button class="emr-tab">Birth Records</button>
+    <button class="emr-tab active" onclick="filterMaternityTab('anc')">ANC Register</button>
+    <button class="emr-tab" onclick="filterMaternityTab('delivery')">Delivery Log</button>
+    <button class="emr-tab" onclick="filterMaternityTab('postnatal')">Postnatal</button>
+    <button class="emr-tab" onclick="filterMaternityTab('birth')">Birth Records</button>
 </div>
 
 <!-- ANC Table -->
 <div style="overflow-x:auto;">
     <table class="queue-table">
-        <thead><tr><th>Patient</th><th>Gestational Age</th><th>EDD</th><th>Risk Level</th><th>Next Visit</th><th>Assigned Doctor</th><th>Actions</th></tr></thead>
-        <tbody>
-            <!-- Populated by JS -->
-        </tbody>
+        <thead id="maternityThead"><tr><th>Patient</th><th>Gestational Age</th><th>EDD</th><th>Risk Level</th><th>Next Visit</th><th>Assigned Doctor</th><th>Actions</th></tr></thead>
+        <tbody id="maternityBody"></tbody>
     </table>
 </div>
 
 <script>
+let allMaternityRecords = [];
+let currentMaternityFilter = 'anc';
+
 async function loadMaternity() {
     try {
         const res = await fetch('/api/hospital/maternity', { credentials: 'include' });
@@ -55,20 +56,80 @@ async function loadMaternity() {
             document.querySelectorAll('.stat-value')[1].textContent = s.delivered_this_month || 0;
             document.querySelectorAll('.stat-value')[2].textContent = s.high_risk || 0;
             document.querySelectorAll('.stat-value')[3].textContent = s.postnatal || 0;
+            allMaternityRecords = data.records || [];
+            renderMaternity();
+        }
+    } catch(e) { console.error('Maternity error:', e); }
+}
 
-            const tbody = document.querySelector('tbody');
-            const records = data.records || [];
-            tbody.innerHTML = records.length ? records.map(r => `<tr>
-                <td><div style="display:flex;align-items:center;gap:0.75rem;"><div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">${(r.patient_name||'??').split(' ').map(n=>n[0]).join('')}</div><div><strong>${r.patient_name}</strong></div></div></td>
+function renderMaternity() {
+    const tbody = document.getElementById('maternityBody');
+    const thead = document.getElementById('maternityThead');
+    let filtered = allMaternityRecords;
+
+    if (currentMaternityFilter === 'anc') {
+        filtered = allMaternityRecords.filter(r => r.status === 'active' || !r.delivery_date);
+        thead.innerHTML = '<tr><th>Patient</th><th>Gestational Age</th><th>EDD</th><th>Risk Level</th><th>Next Visit</th><th>Assigned Doctor</th><th>Actions</th></tr>';
+    } else if (currentMaternityFilter === 'delivery') {
+        filtered = allMaternityRecords.filter(r => r.delivery_date || r.status === 'delivered');
+        thead.innerHTML = '<tr><th>Patient</th><th>Delivery Date</th><th>Type</th><th>Outcome</th><th>Doctor</th><th>Actions</th></tr>';
+    } else if (currentMaternityFilter === 'postnatal') {
+        filtered = allMaternityRecords.filter(r => r.status === 'postnatal' || r.delivery_date);
+        thead.innerHTML = '<tr><th>Patient</th><th>Delivery Date</th><th>Follow-up Due</th><th>Status</th><th>Doctor</th><th>Actions</th></tr>';
+    } else if (currentMaternityFilter === 'birth') {
+        filtered = allMaternityRecords.filter(r => r.delivery_date);
+        thead.innerHTML = '<tr><th>Mother</th><th>Baby Gender</th><th>Birth Date</th><th>Weight</th><th>Doctor</th><th>Actions</th></tr>';
+    }
+
+    tbody.innerHTML = filtered.length ? filtered.map(r => {
+        const initials = (r.patient_name||'??').split(' ').map(n=>n[0]).join('');
+        if (currentMaternityFilter === 'anc') {
+            return `<tr>
+                <td><div style="display:flex;align-items:center;gap:0.75rem;"><div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">${initials}</div><div><strong>${r.patient_name}</strong></div></div></td>
                 <td><strong>${r.gestational_age_weeks || '?'} weeks</strong></td>
                 <td>${r.edd ? new Date(r.edd).toLocaleDateString() : '—'}</td>
                 <td><span style="color:${r.risk_level==='high'?'var(--destructive)':'var(--success)'};font-weight:600;">${(r.risk_level||'low').charAt(0).toUpperCase()+(r.risk_level||'low').slice(1)}</span></td>
                 <td>—</td>
                 <td>${r.doctor_name || '—'}</td>
                 <td><button class="btn btn-sm btn-outline">View</button></td>
-            </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:2rem;">No maternity records</td></tr>';
+            </tr>`;
+        } else if (currentMaternityFilter === 'delivery') {
+            return `<tr>
+                <td><strong>${r.patient_name}</strong></td>
+                <td>${r.delivery_date ? new Date(r.delivery_date).toLocaleDateString() : '—'}</td>
+                <td>${r.delivery_type || '—'}</td>
+                <td>${r.outcome || '—'}</td>
+                <td>${r.doctor_name || '—'}</td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>`;
+        } else if (currentMaternityFilter === 'postnatal') {
+            return `<tr>
+                <td><strong>${r.patient_name}</strong></td>
+                <td>${r.delivery_date ? new Date(r.delivery_date).toLocaleDateString() : '—'}</td>
+                <td>—</td>
+                <td><span class="queue-status status-waiting">${r.status || 'Pending'}</span></td>
+                <td>${r.doctor_name || '—'}</td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>`;
+        } else {
+            return `<tr>
+                <td><strong>${r.patient_name}</strong></td>
+                <td>${r.baby_gender || '—'}</td>
+                <td>${r.delivery_date ? new Date(r.delivery_date).toLocaleDateString() : '—'}</td>
+                <td>${r.baby_weight || '—'}</td>
+                <td>${r.doctor_name || '—'}</td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>`;
         }
-    } catch(e) { console.error('Maternity error:', e); }
+    }).join('') : `<tr><td colspan="7" style="text-align:center;padding:2rem;">No records</td></tr>`;
 }
+
+function filterMaternityTab(filter) {
+    currentMaternityFilter = filter;
+    document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderMaternity();
+}
+
 loadMaternity();
 </script>
