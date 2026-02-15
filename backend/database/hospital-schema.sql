@@ -328,6 +328,19 @@ CREATE TABLE IF NOT EXISTS pharmacy_dispensing (
 );
 
 -- ==========================================
+-- HOSPITAL NOTIFICATION PREFERENCES
+-- ==========================================
+CREATE TABLE IF NOT EXISTS hospital_notification_preferences (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT NOT NULL,
+    pref_key VARCHAR(50) NOT NULL,
+    enabled BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_hospital_pref (hospital_id, pref_key)
+);
+
+-- ==========================================
 -- INDEXES
 -- ==========================================
 CREATE INDEX idx_hospital_staff_hospital ON hospital_staff(hospital_id);
