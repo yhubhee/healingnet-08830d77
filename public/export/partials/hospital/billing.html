@@ -1,191 +1,134 @@
 <!-- Hospital Billing & Revenue Partial -->
-<div class="welcome-section">
-    <div class="welcome-text">
-        <h1>Billing & Revenue</h1>
-        <p>Track income from consultations, procedures, labs, and external doctor sessions</p>
-    </div>
-</div>
+<div class="welcome-section"><div class="welcome-text"><h1>Billing & Revenue</h1><p>Track income from consultations, procedures, labs, and external doctor sessions</p></div></div>
 
-<!-- Summary Cards -->
 <div class="billing-summary-cards">
-    <div class="billing-summary-card">
-        <p class="billing-label">Total Billed (This Month)</p>
-        <p class="billing-value primary">₦8.4M</p>
-    </div>
-    <div class="billing-summary-card">
-        <p class="billing-label">Collected</p>
-        <p class="billing-value success">₦6.2M</p>
-    </div>
-    <div class="billing-summary-card">
-        <p class="billing-label">Pending</p>
-        <p class="billing-value warning">₦2.2M</p>
-    </div>
-    <div class="billing-summary-card">
-        <p class="billing-label">External Consult Revenue</p>
-        <p class="billing-value primary">₦890K</p>
-    </div>
+    <div class="billing-summary-card"><p class="billing-label">Total Billed</p><p class="billing-value primary" id="billTotal">—</p></div>
+    <div class="billing-summary-card"><p class="billing-label">Collected</p><p class="billing-value success" id="billCollected">—</p></div>
+    <div class="billing-summary-card"><p class="billing-label">Pending</p><p class="billing-value warning" id="billPending">—</p></div>
+    <div class="billing-summary-card"><p class="billing-label">External Revenue</p><p class="billing-value primary" id="billExternal">—</p></div>
 </div>
 
-<!-- Filters -->
 <div class="queue-page-header">
     <div class="queue-filters">
-        <button class="queue-filter-btn active">All</button>
-        <button class="queue-filter-btn">Paid</button>
-        <button class="queue-filter-btn">Pending</button>
-        <button class="queue-filter-btn">Consultation</button>
-        <button class="queue-filter-btn">Lab</button>
-        <button class="queue-filter-btn">External Consult</button>
+        <button class="queue-filter-btn active" onclick="filterBills('')">All</button>
+        <button class="queue-filter-btn" onclick="filterBills('paid')">Paid</button>
+        <button class="queue-filter-btn" onclick="filterBills('pending')">Pending</button>
     </div>
     <div style="display:flex;gap:0.75rem;">
-        <input type="date" style="padding:0.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--foreground);">
-        <input type="date" style="padding:0.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--foreground);">
-        <button class="btn btn-primary btn-sm" onclick="document.getElementById('newBillModal').classList.add('show')">
-            <i data-lucide="plus"></i> New Bill
-        </button>
+        <input type="date" id="billFrom" style="padding:0.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--foreground);" onchange="loadBills()">
+        <input type="date" id="billTo" style="padding:0.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--foreground);" onchange="loadBills()">
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('newBillModal').classList.add('show')"><i data-lucide="plus"></i> New Bill</button>
     </div>
 </div>
 
-<!-- Billing Table -->
-<div style="overflow-x: auto;">
-    <table class="billing-table">
-        <thead>
-            <tr>
-                <th>Invoice #</th>
-                <th>Patient</th>
-                <th>Type</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>INV-2026-0142</strong></td>
-                <td>Amara Obi</td>
-                <td><span class="emr-entry-type">Consultation</span></td>
-                <td>Cardiac evaluation + ECG</td>
-                <td style="font-weight:700;">₦45,000</td>
-                <td><span class="status-badge paid-badge">Paid</span></td>
-                <td>Card</td>
-                <td>Feb 14, 2026</td>
-                <td><button class="btn btn-outline btn-sm">Receipt</button></td>
-            </tr>
-            <tr>
-                <td><strong>INV-2026-0141</strong></td>
-                <td>Yusuf Bello</td>
-                <td><span class="emr-entry-type" style="background:hsl(38,92%,50%,0.15);color:var(--warning);">Lab</span></td>
-                <td>Complete blood panel + urinalysis</td>
-                <td style="font-weight:700;">₦28,000</td>
-                <td><span class="status-badge pending">Pending</span></td>
-                <td>—</td>
-                <td>Feb 14, 2026</td>
-                <td><button class="btn btn-primary btn-sm">Mark Paid</button></td>
-            </tr>
-            <tr>
-                <td><strong>INV-2026-0140</strong></td>
-                <td>Ngozi Eze</td>
-                <td><span class="emr-entry-type">Consultation</span></td>
-                <td>X-Ray + orthopedic consultation</td>
-                <td style="font-weight:700;">₦62,000</td>
-                <td><span class="status-badge paid-badge">Paid</span></td>
-                <td>Transfer</td>
-                <td>Feb 14, 2026</td>
-                <td><button class="btn btn-outline btn-sm">Receipt</button></td>
-            </tr>
-            <tr>
-                <td><strong>INV-2026-0139</strong></td>
-                <td>Amara Obi</td>
-                <td><span class="emr-entry-type" style="background:hsl(270,60%,50%,0.15);color:hsl(270,60%,65%);">External</span></td>
-                <td>Neurosurgery teleconsult — Dr. Okafor</td>
-                <td style="font-weight:700;">₦150,000</td>
-                <td><span class="status-badge pending">Pending</span></td>
-                <td>—</td>
-                <td>Feb 13, 2026</td>
-                <td><button class="btn btn-primary btn-sm">Mark Paid</button></td>
-            </tr>
-            <tr>
-                <td><strong>INV-2026-0138</strong></td>
-                <td>Ibrahim Danjuma</td>
-                <td><span class="emr-entry-type" style="background:hsl(270,60%,50%,0.15);color:hsl(270,60%,65%);">External</span></td>
-                <td>Nephrology teleconsult — Dr. Mohammed</td>
-                <td style="font-weight:700;">₦40,000</td>
-                <td><span class="status-badge paid-badge">Paid</span></td>
-                <td>Cash</td>
-                <td>Feb 10, 2026</td>
-                <td><button class="btn btn-outline btn-sm">Receipt</button></td>
-            </tr>
-            <tr>
-                <td><strong>INV-2026-0137</strong></td>
-                <td>Emeka Nwankwo</td>
-                <td><span class="emr-entry-type">Consultation</span></td>
-                <td>Dermatology consultation + biopsy</td>
-                <td style="font-weight:700;">₦55,000</td>
-                <td><span class="status-badge paid-badge">Paid</span></td>
-                <td>HMO</td>
-                <td>Feb 10, 2026</td>
-                <td><button class="btn btn-outline btn-sm">Receipt</button></td>
-            </tr>
-        </tbody>
+<div style="overflow-x:auto;">
+    <table class="billing-table"><thead><tr><th>Invoice</th><th>Patient</th><th>Type</th><th>Description</th><th>Amount</th><th>Status</th><th>Payment</th><th>Date</th><th>Actions</th></tr></thead>
+        <tbody id="billsTableBody"><tr><td colspan="9" style="text-align:center;padding:2rem;">Loading...</td></tr></tbody>
     </table>
 </div>
 
 <!-- New Bill Modal -->
 <div class="modal-overlay" id="newBillModal">
     <div class="modal-content">
-        <h2><i data-lucide="credit-card" style="width:20px;height:20px;display:inline;"></i> Create New Bill</h2>
-        <div class="form-group">
-            <label>Patient</label>
-            <input type="text" placeholder="Search patient...">
-        </div>
-        <div class="form-group">
-            <label>Billing Type</label>
-            <select>
-                <option value="consultation">Consultation</option>
-                <option value="procedure">Procedure</option>
-                <option value="lab">Lab Test</option>
-                <option value="pharmacy">Pharmacy</option>
-                <option value="external_consultation">External Consultation</option>
-                <option value="teleconsultation">Teleconsultation</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Description</label>
-            <input type="text" placeholder="e.g., Cardiac evaluation + ECG">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
-            <div class="form-group">
-                <label>Amount (₦)</label>
-                <input type="number" placeholder="0.00">
+        <h2>Create New Bill</h2>
+        <form id="newBillForm">
+            <div class="form-group"><label>Patient ID</label><input type="number" id="billPatientId" required></div>
+            <div class="form-group"><label>Billing Type</label><select id="billType"><option value="consultation">Consultation</option><option value="procedure">Procedure</option><option value="lab">Lab</option><option value="pharmacy">Pharmacy</option><option value="external_consultation">External</option></select></div>
+            <div class="form-group"><label>Description</label><input type="text" id="billDesc"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+                <div class="form-group"><label>Amount (₦)</label><input type="number" id="billAmount" required></div>
+                <div class="form-group"><label>Discount</label><input type="number" id="billDiscount" value="0"></div>
+                <div class="form-group"><label>Tax</label><input type="number" id="billTax" value="0"></div>
             </div>
-            <div class="form-group">
-                <label>Discount (₦)</label>
-                <input type="number" placeholder="0.00" value="0">
+            <div class="form-group"><label>Payment Method</label><select id="billPayMethod"><option value="cash">Cash</option><option value="card">Card</option><option value="transfer">Transfer</option><option value="insurance">Insurance</option><option value="hmo">HMO</option></select></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('newBillModal').classList.remove('show')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Bill</button>
             </div>
-            <div class="form-group">
-                <label>Tax (₦)</label>
-                <input type="number" placeholder="0.00" value="0">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Payment Method</label>
-            <select>
-                <option value="cash">Cash</option>
-                <option value="card">Card</option>
-                <option value="transfer">Bank Transfer</option>
-                <option value="insurance">Insurance</option>
-                <option value="hmo">HMO</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Insurance/HMO Provider (optional)</label>
-            <input type="text" placeholder="Provider name...">
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-outline" onclick="document.getElementById('newBillModal').classList.remove('show')">Cancel</button>
-            <button class="btn btn-primary">Create Bill</button>
-        </div>
+        </form>
     </div>
 </div>
+
+<script>
+let currentBillFilter = '';
+
+async function loadBills() {
+    try {
+        const params = new URLSearchParams();
+        if (currentBillFilter) params.set('status', currentBillFilter);
+        const from = document.getElementById('billFrom').value;
+        const to = document.getElementById('billTo').value;
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+
+        const res = await fetch(`/api/hospital/billing?${params}`, { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) {
+            const t = data.totals || {};
+            document.getElementById('billTotal').textContent = '₦' + Number(t.total_billed || 0).toLocaleString();
+            document.getElementById('billCollected').textContent = '₦' + Number(t.total_paid || 0).toLocaleString();
+            document.getElementById('billPending').textContent = '₦' + Number(t.total_pending || 0).toLocaleString();
+            renderBills(data.bills || []);
+        }
+    } catch (err) { console.error('Load bills error:', err); }
+}
+
+function renderBills(bills) {
+    const tbody = document.getElementById('billsTableBody');
+    if (!bills.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:2rem;">No bills found</td></tr>'; return; }
+
+    tbody.innerHTML = bills.map(b => `<tr>
+        <td><strong>INV-${b.id}</strong></td>
+        <td>${b.patient_first_name || ''} ${b.patient_last_name || ''}</td>
+        <td><span class="emr-entry-type">${b.billing_type}</span></td>
+        <td>${b.description || '—'}</td>
+        <td style="font-weight:700;">₦${Number(b.total).toLocaleString()}</td>
+        <td><span class="status-badge ${b.payment_status === 'paid' ? 'paid-badge' : 'pending'}">${b.payment_status}</span></td>
+        <td>${b.payment_method || '—'}</td>
+        <td>${new Date(b.created_at).toLocaleDateString()}</td>
+        <td>${b.payment_status !== 'paid' ? `<button class="btn btn-primary btn-sm" onclick="markPaid(${b.id})">Mark Paid</button>` : `<button class="btn btn-outline btn-sm">Receipt</button>`}</td>
+    </tr>`).join('');
+}
+
+function filterBills(status) {
+    currentBillFilter = status;
+    document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    loadBills();
+}
+
+async function markPaid(billId) {
+    try {
+        const res = await fetch(`/api/hospital/billing/${billId}/pay`, {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment_method: 'cash' })
+        });
+        if ((await res.json()).success) loadBills();
+    } catch (err) { console.error('Pay error:', err); }
+}
+
+document.getElementById('newBillForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        const res = await fetch('/api/hospital/billing', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                patient_id: document.getElementById('billPatientId').value,
+                billing_type: document.getElementById('billType').value,
+                description: document.getElementById('billDesc').value,
+                amount: document.getElementById('billAmount').value,
+                discount: document.getElementById('billDiscount').value,
+                tax: document.getElementById('billTax').value,
+                payment_method: document.getElementById('billPayMethod').value,
+            })
+        });
+        const data = await res.json();
+        if (data.success) { document.getElementById('newBillModal').classList.remove('show'); loadBills(); }
+        else alert(data.message);
+    } catch (err) { console.error('Create bill error:', err); }
+});
+
+loadBills();
+</script>

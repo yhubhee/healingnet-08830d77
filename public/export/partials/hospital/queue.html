@@ -12,28 +12,28 @@
         <i data-lucide="users" class="stat-icon"></i>
         <div class="stat-content">
             <p class="stat-label">Total Today</p>
-            <h3 class="stat-value">42</h3>
+            <h3 class="stat-value" id="statTotal">—</h3>
         </div>
     </div>
     <div class="stat-card gradient-warning">
         <i data-lucide="clock" class="stat-icon"></i>
         <div class="stat-content">
             <p class="stat-label">Waiting</p>
-            <h3 class="stat-value">8</h3>
+            <h3 class="stat-value" id="statWaiting">—</h3>
         </div>
     </div>
     <div class="stat-card gradient-info">
         <i data-lucide="stethoscope" class="stat-icon"></i>
         <div class="stat-content">
             <p class="stat-label">In Consultation</p>
-            <h3 class="stat-value">3</h3>
+            <h3 class="stat-value" id="statConsultation">—</h3>
         </div>
     </div>
     <div class="stat-card gradient-success">
         <i data-lucide="check-circle" class="stat-icon"></i>
         <div class="stat-content">
             <p class="stat-label">Completed</p>
-            <h3 class="stat-value">31</h3>
+            <h3 class="stat-value" id="statCompleted">—</h3>
         </div>
     </div>
 </div>
@@ -41,18 +41,16 @@
 <!-- Controls -->
 <div class="queue-page-header">
     <div class="queue-filters">
-        <button class="queue-filter-btn active">All</button>
-        <button class="queue-filter-btn">Waiting</button>
-        <button class="queue-filter-btn">In Consultation</button>
-        <button class="queue-filter-btn">Completed</button>
-        <button class="queue-filter-btn">Pre-booked</button>
-        <button class="queue-filter-btn">Walk-in</button>
+        <button class="queue-filter-btn active" onclick="filterQueue('')">All</button>
+        <button class="queue-filter-btn" onclick="filterQueue('waiting')">Waiting</button>
+        <button class="queue-filter-btn" onclick="filterQueue('in_consultation')">In Consultation</button>
+        <button class="queue-filter-btn" onclick="filterQueue('completed')">Completed</button>
     </div>
     <div style="display: flex; gap: 0.75rem;">
         <button class="btn btn-primary btn-sm" onclick="document.getElementById('checkinModal').classList.add('show')">
             <i data-lucide="user-plus"></i> Check In Patient
         </button>
-        <button class="btn btn-outline btn-sm">
+        <button class="btn btn-outline btn-sm" onclick="autoCheckin()">
             <i data-lucide="download"></i> Auto Check-in
         </button>
     </div>
@@ -62,99 +60,10 @@
 <div style="overflow-x: auto;">
     <table class="queue-table">
         <thead>
-            <tr>
-                <th>#</th>
-                <th>Patient</th>
-                <th>Type</th>
-                <th>Department</th>
-                <th>Doctor</th>
-                <th>Priority</th>
-                <th>Wait Time</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
+            <tr><th>#</th><th>Patient</th><th>Type</th><th>Department</th><th>Doctor</th><th>Priority</th><th>Wait Time</th><th>Status</th><th>Actions</th></tr>
         </thead>
-        <tbody>
-            <tr>
-                <td><strong>1</strong></td>
-                <td>
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">AO</div>
-                        <div><strong>Amara Obi</strong><br><small style="color:var(--muted-foreground)">F • 34yrs • O+</small></div>
-                    </div>
-                </td>
-                <td><span class="doctor-type-badge" style="background:hsl(186,82%,47%,0.15);color:var(--primary);">Pre-booked</span></td>
-                <td>Cardiology</td>
-                <td>Dr. Ogunlade</td>
-                <td><span style="color:var(--destructive);font-weight:600;">Emergency</span></td>
-                <td>—</td>
-                <td><span class="queue-status status-in-consultation">In Consultation</span></td>
-                <td><button class="btn btn-sm btn-outline">Complete</button></td>
-            </tr>
-            <tr>
-                <td><strong>2</strong></td>
-                <td>
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">YB</div>
-                        <div><strong>Yusuf Bello</strong><br><small style="color:var(--muted-foreground)">M • 45yrs • A+</small></div>
-                    </div>
-                </td>
-                <td><span class="doctor-type-badge" style="background:hsl(186,82%,47%,0.15);color:var(--primary);">Pre-booked</span></td>
-                <td>General</td>
-                <td>Dr. Obiora</td>
-                <td><span style="color:var(--foreground);">Normal</span></td>
-                <td>25 min</td>
-                <td><span class="queue-status status-waiting">Waiting</span></td>
-                <td><button class="btn btn-sm btn-primary">Call In</button></td>
-            </tr>
-            <tr>
-                <td><strong>3</strong></td>
-                <td>
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">NE</div>
-                        <div><strong>Ngozi Eze</strong><br><small style="color:var(--muted-foreground)">F • 28yrs • B+</small></div>
-                    </div>
-                </td>
-                <td><span class="doctor-type-badge visiting">Walk-in</span></td>
-                <td>Orthopedics</td>
-                <td>Dr. Ahmed</td>
-                <td><span style="color:var(--foreground);">Normal</span></td>
-                <td>15 min</td>
-                <td><span class="queue-status status-checked-in">Checked In</span></td>
-                <td><button class="btn btn-sm btn-primary">Call In</button></td>
-            </tr>
-            <tr>
-                <td><strong>4</strong></td>
-                <td>
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">EN</div>
-                        <div><strong>Emeka Nwankwo</strong><br><small style="color:var(--muted-foreground)">M • 52yrs • AB+</small></div>
-                    </div>
-                </td>
-                <td><span class="doctor-type-badge" style="background:hsl(186,82%,47%,0.15);color:var(--primary);">Pre-booked</span></td>
-                <td>Dermatology</td>
-                <td>Dr. Kuti</td>
-                <td><span style="color:var(--warning);font-weight:600;">Priority</span></td>
-                <td>35 min</td>
-                <td><span class="queue-status status-waiting">Waiting</span></td>
-                <td><button class="btn btn-sm btn-primary">Call In</button></td>
-            </tr>
-            <tr>
-                <td><strong>5</strong></td>
-                <td>
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">FA</div>
-                        <div><strong>Fatima Abdullahi</strong><br><small style="color:var(--muted-foreground)">F • 8yrs • A-</small></div>
-                    </div>
-                </td>
-                <td><span class="doctor-type-badge visiting">Walk-in</span></td>
-                <td>Pediatrics</td>
-                <td>Unassigned</td>
-                <td><span style="color:var(--foreground);">Normal</span></td>
-                <td>10 min</td>
-                <td><span class="queue-status status-checked-in">Checked In</span></td>
-                <td><button class="btn btn-sm btn-outline">Assign</button></td>
-            </tr>
+        <tbody id="queueTableBody">
+            <tr><td colspan="9" style="text-align:center;color:var(--muted-foreground);padding:2rem;">Loading queue...</td></tr>
         </tbody>
     </table>
 </div>
@@ -163,54 +72,149 @@
 <div class="modal-overlay" id="checkinModal">
     <div class="modal-content">
         <h2><i data-lucide="user-plus" style="width:20px;height:20px;display:inline;"></i> Check In Patient</h2>
-        <div class="form-group">
-            <label>Patient ID or Search</label>
-            <input type="text" placeholder="Search by name, email, or phone...">
-        </div>
-        <div class="form-group">
-            <label>Check-in Type</label>
-            <select>
-                <option value="pre_booked">Pre-booked Appointment</option>
-                <option value="walk_in">Walk-in</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Department</label>
-            <select>
-                <option value="">Select Department</option>
-                <option>Cardiology</option>
-                <option>General Practice</option>
-                <option>Orthopedics</option>
-                <option>Pediatrics</option>
-                <option>Dermatology</option>
-                <option>Neurology</option>
-                <option>Oncology</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Priority</label>
-            <select>
-                <option value="normal">Normal</option>
-                <option value="priority">Priority</option>
-                <option value="emergency">Emergency</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Assign Doctor (Optional)</label>
-            <select>
-                <option value="">Auto-assign</option>
-                <option>Dr. Adebayo Ogunlade</option>
-                <option>Dr. Funke Kuti</option>
-                <option>Dr. Sani Ahmed</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Notes</label>
-            <textarea rows="2" placeholder="Any relevant notes..."></textarea>
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-outline" onclick="document.getElementById('checkinModal').classList.remove('show')">Cancel</button>
-            <button class="btn btn-primary">Check In</button>
-        </div>
+        <form id="checkinForm">
+            <div class="form-group">
+                <label>Patient ID or Search</label>
+                <input type="text" id="checkinPatientSearch" placeholder="Search by name, email, or phone..." required>
+            </div>
+            <input type="hidden" id="checkinPatientId">
+            <div class="form-group">
+                <label>Check-in Type</label>
+                <select id="checkinType">
+                    <option value="pre_booked">Pre-booked Appointment</option>
+                    <option value="walk_in">Walk-in</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Department</label>
+                <select id="checkinDept">
+                    <option value="">Select Department</option>
+                    <option>Cardiology</option><option>General Practice</option><option>Orthopedics</option>
+                    <option>Pediatrics</option><option>Dermatology</option><option>Neurology</option><option>Oncology</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Priority</label>
+                <select id="checkinPriority">
+                    <option value="normal">Normal</option><option value="priority">Priority</option><option value="emergency">Emergency</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="checkinNotes" rows="2" placeholder="Any relevant notes..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('checkinModal').classList.remove('show')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Check In</button>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+let queueData = [];
+
+async function loadQueue(statusFilter) {
+    try {
+        let url = '/api/hospital/queue';
+        if (statusFilter) url += '?status=' + statusFilter;
+        const res = await fetch(url, { credentials: 'include' });
+        const data = await res.json();
+
+        if (data.success) {
+            queueData = data.queue || [];
+            const stats = data.stats || {};
+            document.getElementById('statTotal').textContent = stats.total || 0;
+            document.getElementById('statWaiting').textContent = stats.waiting || 0;
+            document.getElementById('statConsultation').textContent = stats.in_consultation || 0;
+            document.getElementById('statCompleted').textContent = stats.completed || 0;
+            renderQueue(queueData);
+        }
+    } catch (err) {
+        console.error('Queue load error:', err);
+        document.getElementById('queueTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--destructive);">Failed to load queue</td></tr>';
+    }
+}
+
+function renderQueue(queue) {
+    const tbody = document.getElementById('queueTableBody');
+    if (!queue.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted-foreground);padding:2rem;">No patients in queue</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = queue.map((q, i) => {
+        const initials = ((q.first_name || '')[0] || '') + ((q.last_name || '')[0] || '');
+        const age = q.date_of_birth ? Math.floor((Date.now() - new Date(q.date_of_birth)) / 31557600000) : '?';
+        const waitTime = q.checkin_time ? Math.floor((Date.now() - new Date(q.checkin_time)) / 60000) : 0;
+        const statusClass = q.status === 'in_consultation' ? 'status-in-consultation' : q.status === 'completed' ? 'status-completed' : q.status === 'checked_in' ? 'status-checked-in' : 'status-waiting';
+        const priorityColor = q.priority === 'emergency' ? 'var(--destructive)' : q.priority === 'priority' ? 'var(--warning)' : 'var(--foreground)';
+
+        let actionBtn = '';
+        if (q.status === 'in_consultation') actionBtn = `<button class="btn btn-sm btn-outline" onclick="updateStatus(${q.id},'completed')">Complete</button>`;
+        else if (q.status === 'checked_in' || q.status === 'waiting') actionBtn = `<button class="btn btn-sm btn-primary" onclick="updateStatus(${q.id},'in_consultation')">Call In</button>`;
+        
+        return `<tr>
+            <td><strong>${q.queue_number || i+1}</strong></td>
+            <td><div style="display:flex;align-items:center;gap:0.75rem;"><div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">${initials}</div><div><strong>${q.first_name} ${q.last_name}</strong><br><small style="color:var(--muted-foreground)">${q.gender === 'male' ? 'M' : q.gender === 'female' ? 'F' : '?'} • ${age}yrs • ${q.blood_group || '?'}</small></div></div></td>
+            <td><span class="doctor-type-badge ${q.checkin_type === 'walk_in' ? 'visiting' : ''}" style="${q.checkin_type !== 'walk_in' ? 'background:hsl(186,82%,47%,0.15);color:var(--primary);' : ''}">${q.checkin_type === 'walk_in' ? 'Walk-in' : 'Pre-booked'}</span></td>
+            <td>${q.department || '—'}</td>
+            <td>${q.doctor_first_name ? 'Dr. ' + q.doctor_last_name : 'Unassigned'}</td>
+            <td><span style="color:${priorityColor};font-weight:600;">${q.priority ? q.priority.charAt(0).toUpperCase() + q.priority.slice(1) : 'Normal'}</span></td>
+            <td>${q.status === 'completed' ? '—' : waitTime + ' min'}</td>
+            <td><span class="queue-status ${statusClass}">${(q.status || '').replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}</span></td>
+            <td>${actionBtn}</td>
+        </tr>`;
+    }).join('');
+}
+
+function filterQueue(status) {
+    document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    loadQueue(status);
+}
+
+async function updateStatus(checkinId, status) {
+    try {
+        const res = await fetch(`/api/hospital/queue/${checkinId}/status`, {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if ((await res.json()).success) loadQueue();
+    } catch (err) { console.error('Status update error:', err); }
+}
+
+async function autoCheckin() {
+    try {
+        const res = await fetch('/api/hospital/queue/auto-checkin', { method: 'POST', credentials: 'include' });
+        const data = await res.json();
+        if (data.success) { alert(`${data.checked_in} patients auto-checked in.`); loadQueue(); }
+    } catch (err) { console.error('Auto-checkin error:', err); }
+}
+
+document.getElementById('checkinForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        const res = await fetch('/api/hospital/queue/checkin', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                patient_id: document.getElementById('checkinPatientId').value || 1,
+                checkin_type: document.getElementById('checkinType').value,
+                department: document.getElementById('checkinDept').value,
+                priority: document.getElementById('checkinPriority').value,
+                notes: document.getElementById('checkinNotes').value,
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('checkinModal').classList.remove('show');
+            loadQueue();
+        } else { alert(data.message); }
+    } catch (err) { console.error('Check-in error:', err); }
+});
+
+// Initial load
+loadQueue();
+</script>

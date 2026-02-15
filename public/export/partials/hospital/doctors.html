@@ -1,202 +1,116 @@
 <!-- Hospital Doctor Management Partial -->
 <div class="welcome-section">
-    <div class="welcome-text">
-        <h1>Doctor Management</h1>
-        <p>Add, remove, and manage doctors assigned to your hospital</p>
-    </div>
+    <div class="welcome-text"><h1>Doctor Management</h1><p>Add, remove, and manage doctors assigned to your hospital</p></div>
 </div>
 
-<!-- Controls -->
 <div class="doctor-management-header">
     <div class="queue-filters">
-        <button class="queue-filter-btn active">All (12)</button>
-        <button class="queue-filter-btn">Full-time (8)</button>
-        <button class="queue-filter-btn">Visiting (3)</button>
-        <button class="queue-filter-btn">Locum (1)</button>
+        <button class="queue-filter-btn active" onclick="filterDoctors('')">All</button>
+        <button class="queue-filter-btn" onclick="filterDoctors('full_time')">Full-time</button>
+        <button class="queue-filter-btn" onclick="filterDoctors('visiting_consultant')">Visiting</button>
+        <button class="queue-filter-btn" onclick="filterDoctors('locum')">Locum</button>
     </div>
-    <button class="btn btn-primary" onclick="document.getElementById('addDoctorModal').classList.add('show')">
-        <i data-lucide="user-plus"></i> Add Doctor
-    </button>
+    <button class="btn btn-primary" onclick="document.getElementById('addDoctorModal').classList.add('show')"><i data-lucide="user-plus"></i> Add Doctor</button>
 </div>
 
-<!-- Doctor Cards -->
-<div class="doctor-cards-grid">
-    <div class="doctor-mgmt-card">
-        <div class="doctor-mgmt-header">
-            <div class="avatar">AO</div>
-            <div class="doctor-mgmt-name">
-                <h3>Dr. Adebayo Ogunlade</h3>
-                <p>Cardiologist</p>
-            </div>
-            <span class="doctor-type-badge full-time">Full-time</span>
-        </div>
-        <div class="doctor-mgmt-meta">
-            <span><i data-lucide="award"></i> 15 yrs exp</span>
-            <span><i data-lucide="star"></i> 4.8 rating</span>
-            <span><i data-lucide="users"></i> 8 patients today</span>
-            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
-        </div>
-        <div class="doctor-mgmt-actions">
-            <button class="btn btn-outline btn-sm">Edit</button>
-            <button class="btn btn-outline btn-sm">Schedule</button>
-            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
-        </div>
-    </div>
-
-    <div class="doctor-mgmt-card">
-        <div class="doctor-mgmt-header">
-            <div class="avatar">OI</div>
-            <div class="doctor-mgmt-name">
-                <h3>Dr. Olumide Ifeanyi</h3>
-                <p>Neurologist</p>
-            </div>
-            <span class="doctor-type-badge visiting">Visiting</span>
-        </div>
-        <div class="doctor-mgmt-meta">
-            <span><i data-lucide="award"></i> 20 yrs exp</span>
-            <span><i data-lucide="star"></i> 4.9 rating</span>
-            <span><i data-lucide="calendar"></i> Mon, Wed, Fri</span>
-            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
-        </div>
-        <div class="doctor-mgmt-actions">
-            <button class="btn btn-outline btn-sm">Edit</button>
-            <button class="btn btn-outline btn-sm">Schedule</button>
-            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
-        </div>
-    </div>
-
-    <div class="doctor-mgmt-card">
-        <div class="doctor-mgmt-header">
-            <div class="avatar">FK</div>
-            <div class="doctor-mgmt-name">
-                <h3>Dr. Funke Kuti</h3>
-                <p>Pediatrician</p>
-            </div>
-            <span class="doctor-type-badge full-time">Full-time</span>
-        </div>
-        <div class="doctor-mgmt-meta">
-            <span><i data-lucide="award"></i> 10 yrs exp</span>
-            <span><i data-lucide="star"></i> 4.7 rating</span>
-            <span><i data-lucide="users"></i> 5 patients today</span>
-            <span class="doctor-status-dot offline" style="margin-left:auto;"></span>
-        </div>
-        <div class="doctor-mgmt-actions">
-            <button class="btn btn-outline btn-sm">Edit</button>
-            <button class="btn btn-outline btn-sm">Schedule</button>
-            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
-        </div>
-    </div>
-
-    <div class="doctor-mgmt-card">
-        <div class="doctor-mgmt-header">
-            <div class="avatar">SA</div>
-            <div class="doctor-mgmt-name">
-                <h3>Dr. Sani Ahmed</h3>
-                <p>Orthopedic Surgeon</p>
-            </div>
-            <span class="doctor-type-badge locum">Locum</span>
-        </div>
-        <div class="doctor-mgmt-meta">
-            <span><i data-lucide="award"></i> 8 yrs exp</span>
-            <span><i data-lucide="star"></i> 4.5 rating</span>
-            <span><i data-lucide="calendar"></i> Contract: Feb 1 - Mar 31</span>
-            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
-        </div>
-        <div class="doctor-mgmt-actions">
-            <button class="btn btn-outline btn-sm">Edit</button>
-            <button class="btn btn-outline btn-sm">Schedule</button>
-            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
-        </div>
-    </div>
-
-    <div class="doctor-mgmt-card">
-        <div class="doctor-mgmt-header">
-            <div class="avatar">CO</div>
-            <div class="doctor-mgmt-name">
-                <h3>Dr. Chukwuemeka Obiora</h3>
-                <p>General Practitioner</p>
-            </div>
-            <span class="doctor-type-badge full-time">Full-time</span>
-        </div>
-        <div class="doctor-mgmt-meta">
-            <span><i data-lucide="award"></i> 12 yrs exp</span>
-            <span><i data-lucide="star"></i> 4.6 rating</span>
-            <span><i data-lucide="users"></i> 10 patients today</span>
-            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
-        </div>
-        <div class="doctor-mgmt-actions">
-            <button class="btn btn-outline btn-sm">Edit</button>
-            <button class="btn btn-outline btn-sm">Schedule</button>
-            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
-        </div>
-    </div>
-
-    <div class="doctor-mgmt-card">
-        <div class="doctor-mgmt-header">
-            <div class="avatar">AN</div>
-            <div class="doctor-mgmt-name">
-                <h3>Dr. Adaeze Nwosu</h3>
-                <p>Endocrinologist</p>
-            </div>
-            <span class="doctor-type-badge visiting">Visiting</span>
-        </div>
-        <div class="doctor-mgmt-meta">
-            <span><i data-lucide="award"></i> 14 yrs exp</span>
-            <span><i data-lucide="star"></i> 4.8 rating</span>
-            <span><i data-lucide="calendar"></i> Tue, Thu</span>
-            <span class="doctor-status-dot online" style="margin-left:auto;"></span>
-        </div>
-        <div class="doctor-mgmt-actions">
-            <button class="btn btn-outline btn-sm">Edit</button>
-            <button class="btn btn-outline btn-sm">Schedule</button>
-            <button class="btn btn-sm" style="color:var(--destructive);">Remove</button>
-        </div>
-    </div>
+<div class="doctor-cards-grid" id="doctorCards">
+    <p style="padding:2rem;color:var(--muted-foreground);text-align:center;">Loading doctors...</p>
 </div>
 
 <!-- Add Doctor Modal -->
 <div class="modal-overlay" id="addDoctorModal">
     <div class="modal-content">
         <h2><i data-lucide="user-plus" style="width:20px;height:20px;display:inline;"></i> Add Doctor to Hospital</h2>
-        <div class="form-group">
-            <label>Search Doctor (by name or license #)</label>
-            <input type="text" placeholder="Search registered doctors...">
-        </div>
-        <div class="form-group">
-            <label>Employment Type</label>
-            <select>
-                <option value="full_time">Full-time</option>
-                <option value="visiting_consultant">Visiting Consultant</option>
-                <option value="locum">Locum</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Department</label>
-            <input type="text" placeholder="e.g., Cardiology, Pediatrics...">
-        </div>
-        <div class="form-group">
-            <label>Contract Start Date</label>
-            <input type="date">
-        </div>
-        <div class="form-group">
-            <label>Contract End Date (optional)</label>
-            <input type="date">
-        </div>
-        <div class="form-group">
-            <label>Salary / Fee (₦)</label>
-            <input type="number" placeholder="Monthly salary or per-session fee">
-        </div>
-        <div class="form-group">
-            <label>Commission Rate (%)</label>
-            <input type="number" placeholder="e.g., 10" value="0">
-        </div>
-        <div class="form-group">
-            <label>Notes</label>
-            <textarea rows="2" placeholder="Any contract notes..."></textarea>
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-outline" onclick="document.getElementById('addDoctorModal').classList.remove('show')">Cancel</button>
-            <button class="btn btn-primary">Add Doctor</button>
-        </div>
+        <form id="addDoctorForm">
+            <div class="form-group"><label>Doctor ID</label><input type="number" id="addDocId" required placeholder="Enter doctor ID"></div>
+            <div class="form-group"><label>Employment Type</label><select id="addDocType"><option value="full_time">Full-time</option><option value="visiting_consultant">Visiting Consultant</option><option value="locum">Locum</option></select></div>
+            <div class="form-group"><label>Department</label><input type="text" id="addDocDept" placeholder="e.g., Cardiology"></div>
+            <div class="form-group"><label>Contract Start</label><input type="date" id="addDocStart"></div>
+            <div class="form-group"><label>Contract End (optional)</label><input type="date" id="addDocEnd"></div>
+            <div class="form-group"><label>Salary / Fee (₦)</label><input type="number" id="addDocSalary" placeholder="Monthly salary"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('addDoctorModal').classList.remove('show')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Doctor</button>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+async function loadDoctors(typeFilter) {
+    try {
+        let url = '/api/hospital/doctors';
+        if (typeFilter) url += '?type=' + typeFilter;
+        const res = await fetch(url, { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) renderDoctors(data.doctors || []);
+    } catch (err) { console.error('Load doctors error:', err); }
+}
+
+function renderDoctors(doctors) {
+    const container = document.getElementById('doctorCards');
+    if (!doctors.length) { container.innerHTML = '<p style="padding:2rem;color:var(--muted-foreground);text-align:center;">No doctors found</p>'; return; }
+
+    container.innerHTML = doctors.map(d => {
+        const initials = ((d.first_name||'')[0]||'') + ((d.last_name||'')[0]||'');
+        const typeClass = d.employment_type === 'full_time' ? 'full-time' : d.employment_type === 'visiting_consultant' ? 'visiting' : 'locum';
+        const typeLabel = d.employment_type === 'full_time' ? 'Full-time' : d.employment_type === 'visiting_consultant' ? 'Visiting' : 'Locum';
+
+        return `<div class="doctor-mgmt-card">
+            <div class="doctor-mgmt-header">
+                <div class="avatar">${initials}</div>
+                <div class="doctor-mgmt-name"><h3>Dr. ${d.first_name} ${d.last_name}</h3><p>${d.specialty || '—'}</p></div>
+                <span class="doctor-type-badge ${typeClass}">${typeLabel}</span>
+            </div>
+            <div class="doctor-mgmt-meta">
+                <span><i data-lucide="award"></i> ${d.years_experience || '?'} yrs exp</span>
+                <span><i data-lucide="star"></i> ${d.rating || '—'}</span>
+                <span><i data-lucide="briefcase"></i> ${d.department || '—'}</span>
+                <span class="doctor-status-dot ${d.is_available ? 'online' : 'offline'}" style="margin-left:auto;"></span>
+            </div>
+            <div class="doctor-mgmt-actions">
+                <button class="btn btn-outline btn-sm" onclick="editDoctor(${d.id})">Edit</button>
+                <button class="btn btn-sm" style="color:var(--destructive);" onclick="removeDoctor(${d.id})">Remove</button>
+            </div>
+        </div>`;
+    }).join('');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function filterDoctors(type) {
+    document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    loadDoctors(type);
+}
+
+async function removeDoctor(id) {
+    if (!confirm('Remove this doctor from the hospital?')) return;
+    try {
+        const res = await fetch(`/api/hospital/doctors/${id}`, { method: 'DELETE', credentials: 'include' });
+        if ((await res.json()).success) loadDoctors();
+    } catch (err) { console.error('Remove error:', err); }
+}
+
+document.getElementById('addDoctorForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        const res = await fetch('/api/hospital/doctors', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                doctor_id: document.getElementById('addDocId').value,
+                employment_type: document.getElementById('addDocType').value,
+                department: document.getElementById('addDocDept').value,
+                contract_start: document.getElementById('addDocStart').value || null,
+                contract_end: document.getElementById('addDocEnd').value || null,
+                salary: document.getElementById('addDocSalary').value || null,
+            })
+        });
+        const data = await res.json();
+        if (data.success) { document.getElementById('addDoctorModal').classList.remove('show'); loadDoctors(); }
+        else alert(data.message);
+    } catch (err) { console.error('Add doctor error:', err); }
+});
+
+loadDoctors();
+</script>

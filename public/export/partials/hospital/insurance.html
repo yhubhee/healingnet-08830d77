@@ -37,43 +37,32 @@
 <div style="overflow-x:auto;">
     <table class="billing-table">
         <thead><tr><th>Patient</th><th>Provider</th><th>Service</th><th>Amount</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-            <tr>
-                <td><strong>Amara Obi</strong></td>
-                <td>NHIS</td>
-                <td>Cardiology Consultation + ECG</td>
-                <td>₦45,000</td>
-                <td>14 Feb 2026</td>
-                <td><span class="status-badge paid-badge">Approved</span></td>
-                <td><button class="btn btn-sm btn-outline">View</button></td>
-            </tr>
-            <tr>
-                <td><strong>Emeka Nwankwo</strong></td>
-                <td>Hygeia HMO</td>
-                <td>Hernia Repair Surgery</td>
-                <td>₦850,000</td>
-                <td>12 Feb 2026</td>
-                <td><span class="status-badge pending">Pending Review</span></td>
-                <td><button class="btn btn-sm btn-outline">Follow Up</button></td>
-            </tr>
-            <tr>
-                <td><strong>Yusuf Bello</strong></td>
-                <td>AXA Mansard</td>
-                <td>Lab Panel + Consultation</td>
-                <td>₦38,000</td>
-                <td>10 Feb 2026</td>
-                <td><span class="status-badge paid-badge">Approved</span></td>
-                <td><button class="btn btn-sm btn-outline">View</button></td>
-            </tr>
-            <tr>
-                <td><strong>Fatima Abdullahi</strong></td>
-                <td>NHIS</td>
-                <td>Pediatric Consultation</td>
-                <td>₦15,000</td>
-                <td>08 Feb 2026</td>
-                <td><span class="queue-status" style="background:hsl(0,84%,60%,0.15);color:var(--destructive);">Rejected</span></td>
-                <td><button class="btn btn-sm btn-primary">Appeal</button></td>
-            </tr>
-        </tbody>
+        <tbody id="claimsBody"><tr><td colspan="7" style="text-align:center;padding:2rem;">Loading...</td></tr></tbody>
     </table>
 </div>
+
+<script>
+async function loadInsurance() {
+    try {
+        const res = await fetch('/api/hospital/insurance', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) {
+            const s = data.stats || {};
+            document.querySelectorAll('.stat-value')[0].textContent = (s.insured_patients||0).toLocaleString();
+            document.querySelectorAll('.stat-value')[1].textContent = '₦'+Number(s.approved_total||0).toLocaleString();
+            document.querySelectorAll('.stat-value')[2].textContent = '₦'+Number(s.pending_total||0).toLocaleString();
+            document.querySelectorAll('.stat-value')[3].textContent = s.hmo_partners || 0;
+
+            const tbody = document.getElementById('claimsBody');
+            const claims = data.claims || [];
+            tbody.innerHTML = claims.length ? claims.map(c => `<tr>
+                <td><strong>${c.patient_name}</strong></td><td>${c.insurance_provider}</td><td>${c.service_description||'—'}</td>
+                <td>₦${Number(c.claim_amount).toLocaleString()}</td><td>${new Date(c.claim_date).toLocaleDateString()}</td>
+                <td><span class="status-badge ${c.status==='approved'||c.status==='paid'?'paid-badge':'pending'}">${c.status}</span></td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:2rem;">No claims</td></tr>';
+        }
+    } catch(e) { console.error('Insurance error:', e); }
+}
+loadInsurance();
+</script>
