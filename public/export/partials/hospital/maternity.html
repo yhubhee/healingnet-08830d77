@@ -39,48 +39,36 @@
     <table class="queue-table">
         <thead><tr><th>Patient</th><th>Gestational Age</th><th>EDD</th><th>Risk Level</th><th>Next Visit</th><th>Assigned Doctor</th><th>Actions</th></tr></thead>
         <tbody>
-            <tr>
-                <td>
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">CU</div>
-                        <div><strong>Chidinma Uche</strong><br><small style="color:var(--muted-foreground)">F • 29yrs</small></div>
-                    </div>
-                </td>
-                <td><strong>28 weeks</strong></td>
-                <td>15 May 2026</td>
-                <td><span style="color:var(--success);font-weight:600;">Low</span></td>
-                <td>21 Feb 2026</td>
-                <td>Dr. Kuti</td>
-                <td><button class="btn btn-sm btn-outline">View</button></td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">HA</div>
-                        <div><strong>Hauwa Abubakar</strong><br><small style="color:var(--muted-foreground)">F • 35yrs</small></div>
-                    </div>
-                </td>
-                <td><strong>36 weeks</strong></td>
-                <td>10 Mar 2026</td>
-                <td><span style="color:var(--destructive);font-weight:600;">High</span></td>
-                <td>17 Feb 2026</td>
-                <td>Dr. Ogunlade</td>
-                <td><button class="btn btn-sm btn-primary">Urgent</button></td>
-            </tr>
-            <tr>
-                <td>
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">BO</div>
-                        <div><strong>Bimpe Olatunji</strong><br><small style="color:var(--muted-foreground)">F • 24yrs</small></div>
-                    </div>
-                </td>
-                <td><strong>16 weeks</strong></td>
-                <td>28 Jul 2026</td>
-                <td><span style="color:var(--success);font-weight:600;">Low</span></td>
-                <td>28 Feb 2026</td>
-                <td>Dr. Kuti</td>
-                <td><button class="btn btn-sm btn-outline">View</button></td>
-            </tr>
+            <!-- Populated by JS -->
         </tbody>
     </table>
 </div>
+
+<script>
+async function loadMaternity() {
+    try {
+        const res = await fetch('/api/hospital/maternity', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) {
+            const s = data.stats || {};
+            document.querySelectorAll('.stat-value')[0].textContent = s.active_anc || 0;
+            document.querySelectorAll('.stat-value')[1].textContent = s.delivered_this_month || 0;
+            document.querySelectorAll('.stat-value')[2].textContent = s.high_risk || 0;
+            document.querySelectorAll('.stat-value')[3].textContent = s.postnatal || 0;
+
+            const tbody = document.querySelector('tbody');
+            const records = data.records || [];
+            tbody.innerHTML = records.length ? records.map(r => `<tr>
+                <td><div style="display:flex;align-items:center;gap:0.75rem;"><div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">${(r.patient_name||'??').split(' ').map(n=>n[0]).join('')}</div><div><strong>${r.patient_name}</strong></div></div></td>
+                <td><strong>${r.gestational_age_weeks || '?'} weeks</strong></td>
+                <td>${r.edd ? new Date(r.edd).toLocaleDateString() : '—'}</td>
+                <td><span style="color:${r.risk_level==='high'?'var(--destructive)':'var(--success)'};font-weight:600;">${(r.risk_level||'low').charAt(0).toUpperCase()+(r.risk_level||'low').slice(1)}</span></td>
+                <td>—</td>
+                <td>${r.doctor_name || '—'}</td>
+                <td><button class="btn btn-sm btn-outline">View</button></td>
+            </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:2rem;">No maternity records</td></tr>';
+        }
+    } catch(e) { console.error('Maternity error:', e); }
+}
+loadMaternity();
+</script>

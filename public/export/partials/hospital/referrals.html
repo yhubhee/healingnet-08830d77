@@ -35,41 +35,30 @@
 </div>
 
 <!-- Referrals List -->
-<div class="emr-entry">
-    <div class="emr-entry-header">
-        <div>
-            <h4><i data-lucide="arrow-down-left" style="width:16px;height:16px;color:var(--primary);display:inline;"></i> Incoming: Amara Obi → Cardiology</h4>
-            <span class="emr-entry-type">Internal Referral</span>
-        </div>
-        <span class="entry-date">10 Feb 2026</span>
-    </div>
-    <p><strong>From:</strong> Dr. Obiora (General Practice) → <strong>To:</strong> Dr. Ogunlade (Cardiology)<br>
-    <strong>Reason:</strong> Persistent elevated BP, intermittent chest discomfort. Needs cardiac workup.</p>
-    <div style="margin-top:0.75rem;"><span class="queue-status status-in-consultation">In Progress</span></div>
-</div>
+<div id="referralsList"><p style="padding:2rem;text-align:center;color:var(--muted-foreground);">Loading...</p></div>
 
-<div class="emr-entry">
-    <div class="emr-entry-header">
-        <div>
-            <h4><i data-lucide="arrow-up-right" style="width:16px;height:16px;color:var(--warning);display:inline;"></i> Outgoing: Yusuf Bello → Oncology</h4>
-            <span class="emr-entry-type">External Referral</span>
-        </div>
-        <span class="entry-date">05 Feb 2026</span>
-    </div>
-    <p><strong>From:</strong> Dr. Obiora (General Practice) → <strong>To:</strong> Dr. Blessing Igwe (Oncologist, National Hospital Abuja)<br>
-    <strong>Reason:</strong> Suspicious mass found on abdominal ultrasound. Requires oncology evaluation and biopsy.</p>
-    <div style="margin-top:0.75rem;"><span class="status-badge pending">Awaiting Appointment</span></div>
-</div>
+<script>
+async function loadReferrals() {
+    try {
+        const res = await fetch('/api/hospital/referrals', { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) {
+            const s = data.stats || {};
+            document.querySelectorAll('.stat-value')[0].textContent = s.total || 0;
+            document.querySelectorAll('.stat-value')[1].textContent = s.incoming || 0;
+            document.querySelectorAll('.stat-value')[2].textContent = s.outgoing || 0;
+            document.querySelectorAll('.stat-value')[3].textContent = s.completed || 0;
 
-<div class="emr-entry">
-    <div class="emr-entry-header">
-        <div>
-            <h4><i data-lucide="arrow-down-left" style="width:16px;height:16px;color:var(--primary);display:inline;"></i> Incoming: Ngozi Eze → Orthopedics</h4>
-            <span class="emr-entry-type">External Referral</span>
-        </div>
-        <span class="entry-date">01 Feb 2026</span>
-    </div>
-    <p><strong>From:</strong> Ikoyi Medical Center → <strong>To:</strong> Dr. Ahmed (Orthopedic Surgery)<br>
-    <strong>Reason:</strong> ACL tear confirmed on MRI. Referred for surgical management.</p>
-    <div style="margin-top:0.75rem;"><span class="queue-status status-checked-in">Completed</span></div>
-</div>
+            const list = document.getElementById('referralsList');
+            const refs = data.referrals || [];
+            list.innerHTML = refs.length ? refs.map(r => {
+                const icon = r.referral_type === 'external_incoming' ? 'arrow-down-left' : r.referral_type === 'external_outgoing' ? 'arrow-up-right' : 'repeat';
+                const color = r.referral_type === 'external_outgoing' ? 'var(--warning)' : 'var(--primary)';
+                return `<div class="emr-entry"><div class="emr-entry-header"><div><h4><i data-lucide="${icon}" style="width:16px;height:16px;color:${color};display:inline;"></i> ${r.patient_name} → ${r.specialty || 'General'}</h4><span class="emr-entry-type">${r.referral_type.replace(/_/g,' ')}</span></div><span class="entry-date">${new Date(r.created_at).toLocaleDateString()}</span></div><p><strong>From:</strong> ${r.referring_doctor||'—'} → <strong>To:</strong> ${r.referred_to_doctor||r.referred_to_hospital||'—'}<br><strong>Reason:</strong> ${r.reason}</p><div style="margin-top:0.5rem;"><span class="queue-status ${r.status==='completed'?'status-completed':'status-waiting'}">${r.status}</span></div></div>`;
+            }).join('') : '<p style="padding:2rem;text-align:center;">No referrals found</p>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    } catch(e) { console.error('Referrals error:', e); }
+}
+loadReferrals();
+</script>

@@ -6,21 +6,11 @@
 </div>
 
 <!-- Patient Header -->
-<div class="emr-patient-header" style="margin-bottom:1.5rem;">
-    <div class="avatar" style="width:72px;height:72px;font-size:1.5rem;">AO</div>
+<div class="emr-patient-header" style="margin-bottom:1.5rem;" id="patientHeader">
+    <div class="avatar" style="width:72px;height:72px;font-size:1.5rem;" id="patientAvatar">—</div>
     <div class="emr-patient-info" style="flex:1;">
-        <h2>Amara Obi</h2>
-        <div class="patient-meta">
-            <span><i data-lucide="user" style="width:14px;height:14px;"></i> Female • 34 yrs</span>
-            <span><i data-lucide="droplet" style="width:14px;height:14px;"></i> O+ / AA</span>
-            <span><i data-lucide="phone" style="width:14px;height:14px;"></i> +234 801 234 5678</span>
-            <span><i data-lucide="mail" style="width:14px;height:14px;"></i> amara@email.com</span>
-            <span><i data-lucide="id-card" style="width:14px;height:14px;"></i> NIN: 12345678901</span>
-        </div>
-    </div>
-    <div style="display:flex;gap:0.5rem;">
-        <button class="btn btn-sm btn-primary">Edit Patient</button>
-        <button class="btn btn-sm btn-outline">Print Card</button>
+        <h2 id="patientName">Loading...</h2>
+        <div class="patient-meta" id="patientMeta"></div>
     </div>
 </div>
 
@@ -36,200 +26,14 @@
     <button class="emr-tab" onclick="showPatientTab('referrals')">Referrals</button>
 </div>
 
-<!-- Overview Tab -->
-<div id="tab-overview" class="patient-tab-content">
-    <div class="content-grid">
-        <!-- Personal Info -->
-        <div class="content-section">
-            <div class="section-header"><h2>Personal Information</h2></div>
-            <div class="detail-grid">
-                <div class="detail-row"><span class="detail-label">Full Name</span><span>Amara Obi</span></div>
-                <div class="detail-row"><span class="detail-label">Date of Birth</span><span>15 Mar 1990</span></div>
-                <div class="detail-row"><span class="detail-label">Gender</span><span>Female</span></div>
-                <div class="detail-row"><span class="detail-label">Address</span><span>24 Admiralty Way, Lekki Phase 1, Lagos</span></div>
-                <div class="detail-row"><span class="detail-label">National ID</span><span>12345678901</span></div>
-                <div class="detail-row"><span class="detail-label">Date Joined</span><span>12 Jan 2024</span></div>
-                <div class="detail-row"><span class="detail-label">Status</span><span class="queue-status status-checked-in">Active</span></div>
-            </div>
-        </div>
-
-        <!-- Organization / Plan -->
-        <div class="content-section">
-            <div class="section-header"><h2>Plan & Organization</h2></div>
-            <div class="detail-grid">
-                <div class="detail-row"><span class="detail-label">Plan Type</span><span class="doctor-type-badge full-time">Family Plan</span></div>
-                <div class="detail-row"><span class="detail-label">Organization</span><span>Obi Family (ID: ORG-204)</span></div>
-                <div class="detail-row"><span class="detail-label">Membership Role</span><span>Primary Member</span></div>
-                <div class="detail-row"><span class="detail-label">Subscription</span><span>Premium — ₦150,000/yr</span></div>
-                <div class="detail-row"><span class="detail-label">Family Members</span><span>3 (Amara, Chidi, Ada)</span></div>
-                <div class="detail-row"><span class="detail-label">Subscription Status</span><span class="queue-status status-checked-in">Active</span></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="content-grid" style="margin-top:1.25rem;">
-        <!-- Emergency Contact -->
-        <div class="content-section">
-            <div class="section-header"><h2>Emergency Contact</h2></div>
-            <div class="detail-grid">
-                <div class="detail-row"><span class="detail-label">Name</span><span>Chidi Obi</span></div>
-                <div class="detail-row"><span class="detail-label">Phone</span><span>+234 802 345 6789</span></div>
-                <div class="detail-row"><span class="detail-label">Relationship</span><span>Husband</span></div>
-            </div>
-        </div>
-
-        <!-- Insurance -->
-        <div class="content-section">
-            <div class="section-header"><h2>Insurance</h2></div>
-            <div class="detail-grid">
-                <div class="detail-row"><span class="detail-label">Provider</span><span>NHIS</span></div>
-                <div class="detail-row"><span class="detail-label">Policy Number</span><span>NHF-2024-0891</span></div>
-                <div class="detail-row"><span class="detail-label">Coverage</span><span>Comprehensive (In/Outpatient)</span></div>
-                <div class="detail-row"><span class="detail-label">Expiry</span><span>31 Dec 2026</span></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Medical History Tab -->
-<div id="tab-medical" class="patient-tab-content" style="display:none;">
-    <div class="content-grid">
-        <div class="content-section">
-            <div class="section-header"><h2>Conditions & Allergies</h2></div>
-            <div class="detail-grid">
-                <div class="detail-row"><span class="detail-label">Medical Conditions</span><span>Hypertension, Mild Asthma</span></div>
-                <div class="detail-row"><span class="detail-label">Chronic Conditions</span><span>None</span></div>
-                <div class="detail-row"><span class="detail-label">Allergies</span><span>Penicillin, Shellfish</span></div>
-                <div class="detail-row"><span class="detail-label">Current Medications</span><span>Amlodipine 5mg daily, Ventolin inhaler PRN</span></div>
-                <div class="detail-row"><span class="detail-label">Surgical History</span><span>Appendectomy (2015)</span></div>
-                <div class="detail-row"><span class="detail-label">Family History</span><span>Father: Diabetes Type 2, Mother: Hypertension</span></div>
-                <div class="detail-row"><span class="detail-label">Lifestyle</span><span>Non-smoker, Occasional alcohol, Regular exercise</span></div>
-                <div class="detail-row"><span class="detail-label">Immunizations</span><span>COVID-19 (Fully), Yellow Fever, Hepatitis B</span></div>
-            </div>
-        </div>
-        <div class="content-section">
-            <div class="section-header"><h2>Vitals (Last Recorded)</h2></div>
-            <div class="detail-grid">
-                <div class="detail-row"><span class="detail-label">Blood Pressure</span><span>130/85 mmHg</span></div>
-                <div class="detail-row"><span class="detail-label">Heart Rate</span><span>78 bpm</span></div>
-                <div class="detail-row"><span class="detail-label">Temperature</span><span>36.8°C</span></div>
-                <div class="detail-row"><span class="detail-label">SpO2</span><span>98%</span></div>
-                <div class="detail-row"><span class="detail-label">Weight</span><span>68 kg</span></div>
-                <div class="detail-row"><span class="detail-label">Height</span><span>165 cm</span></div>
-                <div class="detail-row"><span class="detail-label">BMI</span><span>25.0</span></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Visits Tab -->
-<div id="tab-visits" class="patient-tab-content" style="display:none;">
-    <div class="content-section">
-        <div class="section-header"><h2>Visit History</h2></div>
-        <div class="emr-entry">
-            <div class="emr-entry-header">
-                <div><h4>Cardiology Consultation</h4><span class="emr-entry-type">In-Person</span></div>
-                <span class="entry-date">14 Feb 2026</span>
-            </div>
-            <p><strong>Dr. Ogunlade</strong> — BP elevated at 140/90. ECG normal sinus rhythm. Increased Amlodipine to 10mg. Follow-up in 2 weeks.</p>
-        </div>
-        <div class="emr-entry">
-            <div class="emr-entry-header">
-                <div><h4>General Check-up</h4><span class="emr-entry-type">Virtual</span></div>
-                <span class="entry-date">02 Jan 2026</span>
-            </div>
-            <p><strong>Dr. Obiora</strong> — Routine follow-up. All vitals within normal range. Continue current medications. Annual blood panel ordered.</p>
-        </div>
-    </div>
-</div>
-
-<!-- Prescriptions Tab -->
-<div id="tab-prescriptions" class="patient-tab-content" style="display:none;">
-    <div class="content-section">
-        <div class="section-header"><h2>Active Prescriptions</h2></div>
-        <table class="billing-table">
-            <thead><tr><th>Drug</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Prescribed By</th><th>Status</th></tr></thead>
-            <tbody>
-                <tr>
-                    <td><strong>Amlodipine</strong></td><td>10mg</td><td>Once daily</td><td>30 days</td><td>Dr. Ogunlade</td>
-                    <td><span class="queue-status status-checked-in">Active</span></td>
-                </tr>
-                <tr>
-                    <td><strong>Ventolin Inhaler</strong></td><td>2 puffs</td><td>As needed</td><td>Ongoing</td><td>Dr. Obiora</td>
-                    <td><span class="queue-status status-checked-in">Active</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Lab Tab -->
-<div id="tab-lab" class="patient-tab-content" style="display:none;">
-    <div class="content-section">
-        <div class="section-header"><h2>Lab Results</h2></div>
-        <table class="billing-table">
-            <thead><tr><th>Test</th><th>Category</th><th>Result</th><th>Flag</th><th>Date</th><th>Status</th></tr></thead>
-            <tbody>
-                <tr><td>Full Blood Count</td><td>Hematology</td><td>—</td><td>—</td><td>14 Feb 2026</td><td><span class="queue-status status-waiting">Pending</span></td></tr>
-                <tr><td>Lipid Panel</td><td>Metabolic</td><td>Total Cholesterol: 210 mg/dL</td><td><span style="color:var(--warning);font-weight:600;">High</span></td><td>02 Jan 2026</td><td><span class="queue-status status-completed">Completed</span></td></tr>
-                <tr><td>Fasting Blood Sugar</td><td>Metabolic</td><td>92 mg/dL</td><td><span style="color:var(--success);font-weight:600;">Normal</span></td><td>02 Jan 2026</td><td><span class="queue-status status-completed">Completed</span></td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Billing Tab -->
-<div id="tab-billing" class="patient-tab-content" style="display:none;">
-    <div class="content-section">
-        <div class="section-header"><h2>Billing History</h2></div>
-        <table class="billing-table">
-            <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Payment</th><th>Status</th></tr></thead>
-            <tbody>
-                <tr><td>14 Feb 2026</td><td>Cardiology Consultation + ECG</td><td>Consultation</td><td>₦45,000</td><td>Insurance (NHIS)</td><td><span class="status-badge paid-badge">Paid</span></td></tr>
-                <tr><td>14 Feb 2026</td><td>Full Blood Count</td><td>Lab</td><td>₦12,000</td><td>—</td><td><span class="status-badge pending">Pending</span></td></tr>
-                <tr><td>02 Jan 2026</td><td>Virtual Consultation</td><td>Teleconsultation</td><td>₦15,000</td><td>Card</td><td><span class="status-badge paid-badge">Paid</span></td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Insurance Tab -->
-<div id="tab-insurance" class="patient-tab-content" style="display:none;">
-    <div class="content-section">
-        <div class="section-header"><h2>Insurance Details</h2></div>
-        <div class="detail-grid">
-            <div class="detail-row"><span class="detail-label">Provider</span><span>NHIS (National Health Insurance Scheme)</span></div>
-            <div class="detail-row"><span class="detail-label">Policy Number</span><span>NHF-2024-0891</span></div>
-            <div class="detail-row"><span class="detail-label">Plan Type</span><span>Comprehensive</span></div>
-            <div class="detail-row"><span class="detail-label">Coverage</span><span>Inpatient + Outpatient + Maternity + Surgery</span></div>
-            <div class="detail-row"><span class="detail-label">Annual Limit</span><span>₦5,000,000</span></div>
-            <div class="detail-row"><span class="detail-label">Used This Year</span><span>₦320,000</span></div>
-            <div class="detail-row"><span class="detail-label">Valid Until</span><span>31 Dec 2026</span></div>
-            <div class="detail-row"><span class="detail-label">Dependents Covered</span><span>3 (Spouse + 2 Children)</span></div>
-        </div>
-    </div>
-</div>
-
-<!-- Referrals Tab -->
-<div id="tab-referrals" class="patient-tab-content" style="display:none;">
-    <div class="content-section">
-        <div class="section-header"><h2>Referral History</h2></div>
-        <div class="emr-entry">
-            <div class="emr-entry-header">
-                <div><h4>Referred to Cardiology — Dr. Ogunlade</h4><span class="emr-entry-type">Internal</span></div>
-                <span class="entry-date">10 Feb 2026</span>
-            </div>
-            <p>Referred by Dr. Obiora (General Practice) for persistent elevated BP. Patient reports intermittent chest discomfort.</p>
-        </div>
-        <div class="emr-entry">
-            <div class="emr-entry-header">
-                <div><h4>External Consultation — Dr. Nnamdi Okafor (Neurosurgeon)</h4><span class="emr-entry-type">External</span></div>
-                <span class="entry-date">20 Jan 2026</span>
-            </div>
-            <p>Second opinion requested for recurring migraines. Virtual teleconsultation completed. No surgical intervention needed.</p>
-        </div>
-    </div>
-</div>
+<div id="tab-overview" class="patient-tab-content"><p style="color:var(--muted-foreground);padding:2rem;text-align:center;">Loading patient data...</p></div>
+<div id="tab-medical" class="patient-tab-content" style="display:none;"></div>
+<div id="tab-visits" class="patient-tab-content" style="display:none;"></div>
+<div id="tab-prescriptions" class="patient-tab-content" style="display:none;"></div>
+<div id="tab-lab" class="patient-tab-content" style="display:none;"></div>
+<div id="tab-billing" class="patient-tab-content" style="display:none;"></div>
+<div id="tab-insurance" class="patient-tab-content" style="display:none;"></div>
+<div id="tab-referrals" class="patient-tab-content" style="display:none;"></div>
 
 <script>
 function showPatientTab(tab) {
@@ -237,5 +41,107 @@ function showPatientTab(tab) {
     document.getElementById('tab-' + tab).style.display = 'block';
     document.querySelectorAll('.emr-tab').forEach(el => el.classList.remove('active'));
     event.target.classList.add('active');
+}
+
+async function loadPatientData(patientId) {
+    if (!patientId) return;
+    try {
+        const res = await fetch(`/api/hospital/patients/${patientId}`, { credentials: 'include' });
+        const data = await res.json();
+        if (!data.success) return;
+
+        const p = data.patient;
+        const initials = ((p.firstname||'')[0]||'') + ((p.lastname||'')[0]||'');
+        const age = p.date_of_birth ? Math.floor((Date.now() - new Date(p.date_of_birth)) / 31557600000) : '?';
+
+        document.getElementById('patientAvatar').textContent = initials;
+        document.getElementById('patientName').textContent = `${p.firstname} ${p.lastname}`;
+        document.getElementById('patientMeta').innerHTML = `
+            <span><i data-lucide="user" style="width:14px;height:14px;"></i> ${p.gender || '?'} • ${age} yrs</span>
+            <span><i data-lucide="droplet" style="width:14px;height:14px;"></i> ${p.blood_type || '?'} / ${p.genotype || '?'}</span>
+            <span><i data-lucide="phone" style="width:14px;height:14px;"></i> ${p.phone || '—'}</span>
+            <span><i data-lucide="mail" style="width:14px;height:14px;"></i> ${p.email || '—'}</span>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        // Overview
+        document.getElementById('tab-overview').innerHTML = `<div class="content-grid">
+            <div class="content-section"><div class="section-header"><h2>Personal Information</h2></div><div class="detail-grid">
+                <div class="detail-row"><span class="detail-label">Full Name</span><span>${p.firstname} ${p.lastname}</span></div>
+                <div class="detail-row"><span class="detail-label">Date of Birth</span><span>${p.date_of_birth ? new Date(p.date_of_birth).toLocaleDateString() : '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Gender</span><span>${p.gender || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Address</span><span>${p.address || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">National ID</span><span>${p.national_id || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Status</span><span class="queue-status status-checked-in">${p.status || 'Active'}</span></div>
+            </div></div>
+            <div class="content-section"><div class="section-header"><h2>Plan & Insurance</h2></div><div class="detail-grid">
+                <div class="detail-row"><span class="detail-label">Organization</span><span>${p.organization_id ? 'Org ID: ' + p.organization_id : 'Individual'}</span></div>
+                <div class="detail-row"><span class="detail-label">Insurance</span><span>${p.insurance_provider || 'None'}</span></div>
+                <div class="detail-row"><span class="detail-label">Policy #</span><span>${p.insurance_number || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Emergency Contact</span><span>${p.emergency_contact_name || '—'} (${p.emergency_contact_phone || '—'})</span></div>
+            </div></div>
+        </div>`;
+
+        // Medical
+        document.getElementById('tab-medical').innerHTML = `<div class="content-section"><div class="section-header"><h2>Conditions & Allergies</h2></div><div class="detail-grid">
+            <div class="detail-row"><span class="detail-label">Medical Conditions</span><span>${p.medical_conditions || 'None recorded'}</span></div>
+            <div class="detail-row"><span class="detail-label">Chronic Conditions</span><span>${p.chronic_conditions || 'None'}</span></div>
+            <div class="detail-row"><span class="detail-label">Allergies</span><span>${p.allergies || 'None recorded'}</span></div>
+            <div class="detail-row"><span class="detail-label">Current Medications</span><span>${p.medications || 'None'}</span></div>
+            <div class="detail-row"><span class="detail-label">Surgical History</span><span>${p.surgical_history || 'None'}</span></div>
+            <div class="detail-row"><span class="detail-label">Family History</span><span>${p.family_medical_history || 'None'}</span></div>
+            <div class="detail-row"><span class="detail-label">Blood Type</span><span>${p.blood_type || '?'}</span></div>
+            <div class="detail-row"><span class="detail-label">Genotype</span><span>${p.genotype || '?'}</span></div>
+        </div></div>`;
+
+        // Visits/EMR
+        const emr = data.emr_entries || [];
+        document.getElementById('tab-visits').innerHTML = `<div class="content-section"><div class="section-header"><h2>Visit History (${emr.length})</h2></div>
+            ${emr.length ? emr.map(e => `<div class="emr-entry"><div class="emr-entry-header"><div><h4>${e.title}</h4><span class="emr-entry-type">${e.entry_type}</span></div><span class="entry-date">${new Date(e.created_at).toLocaleDateString()} • ${e.doctor_name || 'Staff'}</span></div><p>${e.content || '—'}</p></div>`).join('') : '<p style="padding:1rem;color:var(--muted-foreground);">No EMR entries</p>'}
+        </div>`;
+
+        // Prescriptions
+        const rx = data.prescriptions || [];
+        document.getElementById('tab-prescriptions').innerHTML = `<div class="content-section"><div class="section-header"><h2>Prescriptions (${rx.length})</h2></div>
+            ${rx.length ? `<table class="billing-table"><thead><tr><th>Drug</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Doctor</th><th>Status</th></tr></thead><tbody>
+            ${rx.map(r => `<tr><td><strong>${r.drug_name}</strong></td><td>${r.dosage}</td><td>${r.frequency}</td><td>${r.duration}</td><td>${r.doctor_name || '—'}</td><td><span class="queue-status ${r.prescription_status === 'active' ? 'status-checked-in' : 'status-completed'}">${r.prescription_status}</span></td></tr>`).join('')}
+            </tbody></table>` : '<p style="padding:1rem;color:var(--muted-foreground);">No prescriptions</p>'}
+        </div>`;
+
+        // Lab
+        const labs = data.lab_results || [];
+        document.getElementById('tab-lab').innerHTML = `<div class="content-section"><div class="section-header"><h2>Lab Results (${labs.length})</h2></div>
+            ${labs.length ? `<table class="billing-table"><thead><tr><th>Date</th><th>Ordered By</th><th>Status</th></tr></thead><tbody>
+            ${labs.map(l => `<tr><td>${l.reported_at ? new Date(l.reported_at).toLocaleDateString() : '—'}</td><td>${l.doctor_name || 'Lab'}</td><td><span class="queue-status ${l.status === 'final' ? 'status-completed' : 'status-waiting'}">${l.status}</span></td></tr>`).join('')}
+            </tbody></table>` : '<p style="padding:1rem;color:var(--muted-foreground);">No lab results</p>'}
+        </div>`;
+
+        // Billing
+        const bills = data.billing || [];
+        document.getElementById('tab-billing').innerHTML = `<div class="content-section"><div class="section-header"><h2>Billing History (${bills.length})</h2></div>
+            ${bills.length ? `<table class="billing-table"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+            ${bills.map(b => `<tr><td>${new Date(b.created_at).toLocaleDateString()}</td><td>${b.billing_type}</td><td>${b.description || '—'}</td><td style="font-weight:700;">₦${Number(b.total).toLocaleString()}</td><td><span class="status-badge ${b.payment_status === 'paid' ? 'paid-badge' : 'pending'}">${b.payment_status}</span></td></tr>`).join('')}
+            </tbody></table>` : '<p style="padding:1rem;color:var(--muted-foreground);">No billing records</p>'}
+        </div>`;
+
+        // Insurance
+        const claims = data.insurance_claims || [];
+        document.getElementById('tab-insurance').innerHTML = `<div class="content-section"><div class="section-header"><h2>Insurance Claims (${claims.length})</h2></div><div class="detail-grid" style="margin-bottom:1rem;">
+            <div class="detail-row"><span class="detail-label">Provider</span><span>${p.insurance_provider || 'None'}</span></div>
+            <div class="detail-row"><span class="detail-label">Policy #</span><span>${p.insurance_number || '—'}</span></div>
+        </div>${claims.length ? `<table class="billing-table"><thead><tr><th>Date</th><th>Service</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+        ${claims.map(c => `<tr><td>${new Date(c.claim_date).toLocaleDateString()}</td><td>${c.service_description || '—'}</td><td>₦${Number(c.claim_amount).toLocaleString()}</td><td><span class="status-badge ${c.status === 'approved' || c.status === 'paid' ? 'paid-badge' : 'pending'}">${c.status}</span></td></tr>`).join('')}
+        </tbody></table>` : ''}</div>`;
+
+        // Referrals
+        const refs = data.referrals || [];
+        document.getElementById('tab-referrals').innerHTML = `<div class="content-section"><div class="section-header"><h2>Referrals (${refs.length})</h2></div>
+            ${refs.length ? refs.map(r => `<div class="emr-entry"><div class="emr-entry-header"><div><h4>${r.referral_type === 'internal' ? 'Internal' : r.referral_type === 'external_incoming' ? 'Incoming' : 'Outgoing'}: ${r.specialty || 'General'}</h4><span class="emr-entry-type">${r.referral_type}</span></div><span class="entry-date">${new Date(r.created_at).toLocaleDateString()}</span></div><p><strong>From:</strong> ${r.referring_doctor || '—'} → <strong>To:</strong> ${r.referred_to_doctor || r.referred_to_hospital || '—'}<br><strong>Reason:</strong> ${r.reason}</p><div style="margin-top:0.5rem;"><span class="queue-status ${r.status === 'completed' ? 'status-completed' : 'status-waiting'}">${r.status}</span></div></div>`).join('') : '<p style="padding:1rem;color:var(--muted-foreground);">No referrals</p>'}
+        </div>`;
+
+    } catch (err) {
+        console.error('Load patient error:', err);
+        document.getElementById('tab-overview').innerHTML = '<p style="color:var(--destructive);padding:2rem;">Failed to load patient data</p>';
+    }
 }
 </script>
