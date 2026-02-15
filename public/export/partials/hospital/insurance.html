@@ -28,9 +28,9 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active" onclick="filterInsuranceTab('claims')">Claims</button>
-    <button class="emr-tab" onclick="filterInsuranceTab('hmo')">HMO Partners</button>
-    <button class="emr-tab" onclick="filterInsuranceTab('verification')">Verification</button>
+    <button class="emr-tab active" onclick="filterInsuranceTab('claims', this)">Claims</button>
+    <button class="emr-tab" onclick="filterInsuranceTab('hmo', this)">HMO Partners</button>
+    <button class="emr-tab" onclick="filterInsuranceTab('verification', this)">Verification</button>
 </div>
 
 <!-- Claims Table -->
@@ -94,10 +94,10 @@ function renderInsuranceTab() {
     }
 }
 
-function filterInsuranceTab(tab) {
+function filterInsuranceTab(tab, btn) {
     currentInsuranceTab = tab;
     document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     renderInsuranceTab();
 }
 

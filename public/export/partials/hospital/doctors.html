@@ -5,10 +5,10 @@
 
 <div class="doctor-management-header">
     <div class="queue-filters">
-        <button class="queue-filter-btn active" onclick="filterDoctors('')">All</button>
-        <button class="queue-filter-btn" onclick="filterDoctors('full_time')">Full-time</button>
-        <button class="queue-filter-btn" onclick="filterDoctors('visiting_consultant')">Visiting</button>
-        <button class="queue-filter-btn" onclick="filterDoctors('locum')">Locum</button>
+        <button class="queue-filter-btn active" onclick="filterDoctors('', this)">All</button>
+        <button class="queue-filter-btn" onclick="filterDoctors('full_time', this)">Full-time</button>
+        <button class="queue-filter-btn" onclick="filterDoctors('visiting_consultant', this)">Visiting</button>
+        <button class="queue-filter-btn" onclick="filterDoctors('locum', this)">Locum</button>
     </div>
     <button class="btn btn-primary" onclick="document.getElementById('addDoctorModal').classList.add('show')"><i data-lucide="user-plus"></i> Add Doctor</button>
 </div>
@@ -77,9 +77,9 @@ function renderDoctors(doctors) {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-function filterDoctors(type) {
+function filterDoctors(type, btn) {
     document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     loadDoctors(type);
 }
 

@@ -28,10 +28,10 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active" onclick="showMOTab('roster')">Staff Roster</button>
-    <button class="emr-tab" onclick="showMOTab('schedule')">Duty Schedule</button>
-    <button class="emr-tab" onclick="showMOTab('departments')">Departments</button>
-    <button class="emr-tab" onclick="showMOTab('services')">Services</button>
+    <button class="emr-tab active" onclick="showMOTab('roster', this)">Staff Roster</button>
+    <button class="emr-tab" onclick="showMOTab('schedule', this)">Duty Schedule</button>
+    <button class="emr-tab" onclick="showMOTab('departments', this)">Departments</button>
+    <button class="emr-tab" onclick="showMOTab('services', this)">Services</button>
 </div>
 
 <div id="moContent"></div>
@@ -39,10 +39,10 @@
 <script>
 let currentMOTab = 'roster';
 
-function showMOTab(tab) {
+function showMOTab(tab, btn) {
     currentMOTab = tab;
     document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     renderMOContent();
 }
 

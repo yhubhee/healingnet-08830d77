@@ -16,14 +16,14 @@
 
 <!-- Detail Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.5rem;">
-    <button class="emr-tab active" onclick="showPatientTab('overview')">Overview</button>
-    <button class="emr-tab" onclick="showPatientTab('medical')">Medical History</button>
-    <button class="emr-tab" onclick="showPatientTab('visits')">Visits & EMR</button>
-    <button class="emr-tab" onclick="showPatientTab('prescriptions')">Prescriptions</button>
-    <button class="emr-tab" onclick="showPatientTab('lab')">Lab Results</button>
-    <button class="emr-tab" onclick="showPatientTab('billing')">Billing</button>
-    <button class="emr-tab" onclick="showPatientTab('insurance')">Insurance</button>
-    <button class="emr-tab" onclick="showPatientTab('referrals')">Referrals</button>
+    <button class="emr-tab active" onclick="showPatientTab('overview', this)">Overview</button>
+    <button class="emr-tab" onclick="showPatientTab('medical', this)">Medical History</button>
+    <button class="emr-tab" onclick="showPatientTab('visits', this)">Visits & EMR</button>
+    <button class="emr-tab" onclick="showPatientTab('prescriptions', this)">Prescriptions</button>
+    <button class="emr-tab" onclick="showPatientTab('lab', this)">Lab Results</button>
+    <button class="emr-tab" onclick="showPatientTab('billing', this)">Billing</button>
+    <button class="emr-tab" onclick="showPatientTab('insurance', this)">Insurance</button>
+    <button class="emr-tab" onclick="showPatientTab('referrals', this)">Referrals</button>
 </div>
 
 <div id="tab-overview" class="patient-tab-content"><p style="color:var(--muted-foreground);padding:2rem;text-align:center;">Loading patient data...</p></div>
@@ -36,11 +36,11 @@
 <div id="tab-referrals" class="patient-tab-content" style="display:none;"></div>
 
 <script>
-function showPatientTab(tab) {
+function showPatientTab(tab, btn) {
     document.querySelectorAll('.patient-tab-content').forEach(el => el.style.display = 'none');
     document.getElementById('tab-' + tab).style.display = 'block';
     document.querySelectorAll('.emr-tab').forEach(el => el.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
 }
 
 async function loadPatientData(patientId) {

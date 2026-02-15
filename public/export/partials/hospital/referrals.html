@@ -28,10 +28,10 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active" onclick="filterReferralTab('all')">All</button>
-    <button class="emr-tab" onclick="filterReferralTab('incoming')">Incoming</button>
-    <button class="emr-tab" onclick="filterReferralTab('outgoing')">Outgoing</button>
-    <button class="emr-tab" onclick="filterReferralTab('pending')">Pending</button>
+    <button class="emr-tab active" onclick="filterReferralTab('all', this)">All</button>
+    <button class="emr-tab" onclick="filterReferralTab('incoming', this)">Incoming</button>
+    <button class="emr-tab" onclick="filterReferralTab('outgoing', this)">Outgoing</button>
+    <button class="emr-tab" onclick="filterReferralTab('pending', this)">Pending</button>
 </div>
 
 <!-- Referrals List -->
@@ -72,10 +72,10 @@ function renderReferrals() {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-function filterReferralTab(filter) {
+function filterReferralTab(filter, btn) {
     currentRefFilter = filter;
     document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     renderReferrals();
 }
 

@@ -28,11 +28,11 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active" onclick="filterLabTab('pending')">Pending Orders</button>
-    <button class="emr-tab" onclick="filterLabTab('in_progress')">In Progress</button>
-    <button class="emr-tab" onclick="filterLabTab('completed')">Completed</button>
-    <button class="emr-tab" onclick="filterLabTab('sample')">Sample Tracking</button>
-    <button class="emr-tab" onclick="filterLabTab('categories')">Categories</button>
+    <button class="emr-tab active" onclick="filterLabTab('pending', this)">Pending Orders</button>
+    <button class="emr-tab" onclick="filterLabTab('in_progress', this)">In Progress</button>
+    <button class="emr-tab" onclick="filterLabTab('completed', this)">Completed</button>
+    <button class="emr-tab" onclick="filterLabTab('sample', this)">Sample Tracking</button>
+    <button class="emr-tab" onclick="filterLabTab('categories', this)">Categories</button>
 </div>
 
 <!-- Orders Table -->
@@ -83,10 +83,10 @@ function renderLabOrders() {
     </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:2rem;">No lab orders</td></tr>';
 }
 
-function filterLabTab(filter) {
+function filterLabTab(filter, btn) {
     currentLabFilter = filter;
     document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     renderLabOrders();
 }
 
