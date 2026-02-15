@@ -7,106 +7,83 @@
 </div>
 
 <div class="queue-filters" style="margin-bottom:1.5rem;">
-    <button class="queue-filter-btn active">All (5)</button>
-    <button class="queue-filter-btn">Pending (2)</button>
-    <button class="queue-filter-btn">Accepted (2)</button>
-    <button class="queue-filter-btn">Completed (1)</button>
+    <button class="queue-filter-btn active" onclick="filterConsultations('all')">All (5)</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('pending')">Pending (2)</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('accepted')">Accepted (2)</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('completed')">Completed (1)</button>
 </div>
 
-<div class="consultation-list">
-    <div class="consultation-card">
+<div class="consultation-list" id="consultationList">
+    <div class="consultation-card" data-status="pending">
         <div class="consultation-header">
-            <div class="doctor-info">
-                <div class="avatar">NO</div>
-                <div>
-                    <h4>Dr. Nnamdi Okafor — Neurosurgeon</h4>
-                    <p style="font-size:0.8rem;color:var(--muted-foreground);">University Teaching Hospital, Ibadan</p>
-                </div>
-            </div>
+            <div class="doctor-info"><div class="avatar">NO</div><div><h4>Dr. Nnamdi Okafor — Neurosurgeon</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">University Teaching Hospital, Ibadan</p></div></div>
             <span class="status-badge pending">Pending</span>
         </div>
         <div class="consultation-details">
-            <span><i data-lucide="user"></i> Patient: Amara Obi</span>
-            <span><i data-lucide="alert-circle"></i> Urgency: High</span>
-            <span><i data-lucide="video"></i> Virtual</span>
-            <span><i data-lucide="credit-card"></i> ₦50,000</span>
-            <span><i data-lucide="clock"></i> Requested 2 hours ago</span>
+            <span><i data-lucide="user"></i> Patient: Amara Obi</span><span><i data-lucide="alert-circle"></i> Urgency: High</span><span><i data-lucide="video"></i> Virtual</span><span><i data-lucide="credit-card"></i> ₦50,000</span><span><i data-lucide="clock"></i> Requested 2 hours ago</span>
         </div>
-        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">
-            Patient presenting with severe headaches, vision changes, and suspected intracranial mass. CT scan attached. Requesting urgent neurosurgical opinion.
-        </p>
-        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
-            <button class="btn btn-outline btn-sm">Cancel Request</button>
-            <button class="btn btn-outline btn-sm">Send Reminder</button>
-        </div>
+        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">Patient presenting with severe headaches, vision changes, and suspected intracranial mass.</p>
+        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;"><button class="btn btn-outline btn-sm">Cancel Request</button><button class="btn btn-outline btn-sm">Send Reminder</button></div>
     </div>
 
-    <div class="consultation-card">
+    <div class="consultation-card" data-status="accepted">
         <div class="consultation-header">
-            <div class="doctor-info">
-                <div class="avatar">BI</div>
-                <div>
-                    <h4>Dr. Blessing Igwe — Oncologist</h4>
-                    <p style="font-size:0.8rem;color:var(--muted-foreground);">National Hospital, Abuja</p>
-                </div>
-            </div>
+            <div class="doctor-info"><div class="avatar">BI</div><div><h4>Dr. Blessing Igwe — Oncologist</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">National Hospital, Abuja</p></div></div>
             <span class="status-badge approved">Accepted</span>
         </div>
         <div class="consultation-details">
-            <span><i data-lucide="user"></i> Patient: Yusuf Bello</span>
-            <span><i data-lucide="alert-circle"></i> Urgency: Moderate</span>
-            <span><i data-lucide="video"></i> Virtual</span>
-            <span><i data-lucide="credit-card"></i> ₦45,000</span>
-            <span><i data-lucide="calendar"></i> Tomorrow, 2:00 PM</span>
+            <span><i data-lucide="user"></i> Patient: Yusuf Bello</span><span><i data-lucide="alert-circle"></i> Urgency: Moderate</span><span><i data-lucide="video"></i> Virtual</span><span><i data-lucide="credit-card"></i> ₦45,000</span><span><i data-lucide="calendar"></i> Tomorrow, 2:00 PM</span>
         </div>
-        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">
-            Follow-up consultation for breast cancer staging. Pathology and imaging results shared.
-        </p>
-        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
-            <button class="btn btn-primary btn-sm"><i data-lucide="video"></i> Join Session</button>
-            <button class="btn btn-outline btn-sm">View Details</button>
-        </div>
+        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">Follow-up consultation for breast cancer staging.</p>
+        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;"><button class="btn btn-primary btn-sm"><i data-lucide="video"></i> Join Session</button><button class="btn btn-outline btn-sm">View Details</button></div>
     </div>
 
-    <div class="consultation-card">
+    <div class="consultation-card" data-status="accepted">
         <div class="consultation-header">
-            <div class="doctor-info">
-                <div class="avatar">TM</div>
-                <div>
-                    <h4>Dr. Tunde Makinde — Cardiologist</h4>
-                    <p style="font-size:0.8rem;color:var(--muted-foreground);">Lagos University Teaching Hospital</p>
-                </div>
-            </div>
+            <div class="doctor-info"><div class="avatar">TM</div><div><h4>Dr. Tunde Makinde — Cardiologist</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">Lagos University Teaching Hospital</p></div></div>
             <span class="status-badge approved">Accepted</span>
         </div>
         <div class="consultation-details">
-            <span><i data-lucide="user"></i> Patient: Chidinma Okoye</span>
-            <span><i data-lucide="alert-circle"></i> Urgency: High</span>
-            <span><i data-lucide="map-pin"></i> In-Person Visit</span>
-            <span><i data-lucide="credit-card"></i> ₦100,000</span>
-            <span><i data-lucide="calendar"></i> Feb 18, 9:00 AM</span>
+            <span><i data-lucide="user"></i> Patient: Chidinma Okoye</span><span><i data-lucide="alert-circle"></i> Urgency: High</span><span><i data-lucide="map-pin"></i> In-Person Visit</span><span><i data-lucide="credit-card"></i> ₦100,000</span><span><i data-lucide="calendar"></i> Feb 18, 9:00 AM</span>
         </div>
-        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">
-            Complex congenital heart defect. Dr. Makinde will visit for in-person evaluation. Patient remains at our facility.
-        </p>
+        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">Complex congenital heart defect. Dr. Makinde will visit for in-person evaluation.</p>
     </div>
 
-    <div class="consultation-card" style="opacity: 0.7;">
+    <div class="consultation-card" data-status="completed" style="opacity: 0.7;">
         <div class="consultation-header">
-            <div class="doctor-info">
-                <div class="avatar">AM</div>
-                <div>
-                    <h4>Dr. Aisha Mohammed — Nephrologist</h4>
-                    <p style="font-size:0.8rem;color:var(--muted-foreground);">Aminu Kano Teaching Hospital</p>
-                </div>
-            </div>
+            <div class="doctor-info"><div class="avatar">AM</div><div><h4>Dr. Aisha Mohammed — Nephrologist</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">Aminu Kano Teaching Hospital</p></div></div>
             <span class="status-badge" style="background:hsl(160,84%,39%,0.15);color:var(--success);">Completed</span>
         </div>
         <div class="consultation-details">
-            <span><i data-lucide="user"></i> Patient: Ibrahim Danjuma</span>
-            <span><i data-lucide="video"></i> Virtual</span>
-            <span><i data-lucide="credit-card"></i> ₦40,000 — Paid</span>
-            <span><i data-lucide="check-circle"></i> Completed Feb 10</span>
+            <span><i data-lucide="user"></i> Patient: Ibrahim Danjuma</span><span><i data-lucide="video"></i> Virtual</span><span><i data-lucide="credit-card"></i> ₦40,000 — Paid</span><span><i data-lucide="check-circle"></i> Completed Feb 10</span>
         </div>
     </div>
+
+    <div class="consultation-card" data-status="pending">
+        <div class="consultation-header">
+            <div class="doctor-info"><div class="avatar">EO</div><div><h4>Dr. Emeka Okonkwo — Orthopedic Surgeon</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">University of Benin Teaching Hospital</p></div></div>
+            <span class="status-badge pending">Pending</span>
+        </div>
+        <div class="consultation-details">
+            <span><i data-lucide="user"></i> Patient: Fatima Suleiman</span><span><i data-lucide="alert-circle"></i> Urgency: Moderate</span><span><i data-lucide="map-pin"></i> In-Person</span><span><i data-lucide="credit-card"></i> ₦75,000</span><span><i data-lucide="clock"></i> Requested 1 day ago</span>
+        </div>
+        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">Complex fracture requiring specialist opinion.</p>
+        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;"><button class="btn btn-outline btn-sm">Cancel Request</button><button class="btn btn-outline btn-sm">Send Reminder</button></div>
+    </div>
 </div>
+
+<script>
+function filterConsultations(status) {
+    document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+
+    const cards = document.querySelectorAll('.consultation-card');
+    cards.forEach(card => {
+        if (status === 'all' || card.getAttribute('data-status') === status) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>

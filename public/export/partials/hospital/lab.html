@@ -28,11 +28,11 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active">Pending Orders</button>
-    <button class="emr-tab">In Progress</button>
-    <button class="emr-tab">Completed</button>
-    <button class="emr-tab">Sample Tracking</button>
-    <button class="emr-tab">Categories</button>
+    <button class="emr-tab active" onclick="filterLabTab('pending')">Pending Orders</button>
+    <button class="emr-tab" onclick="filterLabTab('in_progress')">In Progress</button>
+    <button class="emr-tab" onclick="filterLabTab('completed')">Completed</button>
+    <button class="emr-tab" onclick="filterLabTab('sample')">Sample Tracking</button>
+    <button class="emr-tab" onclick="filterLabTab('categories')">Categories</button>
 </div>
 
 <!-- Orders Table -->
@@ -44,6 +44,9 @@
 </div>
 
 <script>
+let allLabOrders = [];
+let currentLabFilter = 'pending';
+
 async function loadLab() {
     try {
         const res = await fetch('/api/hospital/lab', { credentials: 'include' });
@@ -54,22 +57,38 @@ async function loadLab() {
             document.querySelectorAll('.stat-value')[1].textContent = s.pending || 0;
             document.querySelectorAll('.stat-value')[2].textContent = s.in_progress || 0;
             document.querySelectorAll('.stat-value')[3].textContent = s.completed || 0;
-
-            const tbody = document.getElementById('labBody');
-            const orders = data.orders || [];
-            tbody.innerHTML = orders.length ? orders.map(o => `<tr>
-                <td><strong>LAB-${o.result_id}</strong></td>
-                <td><strong>${o.patient_name}</strong></td>
-                <td>${(o.tests||[]).map(t=>t.test_name).join(', ') || '—'}</td>
-                <td>${(o.tests||[])[0]?.category_name || '—'}</td>
-                <td>${(o.tests||[])[0]?.sample_type || '—'}</td>
-                <td>—</td>
-                <td>${o.ordered_by_name || '—'}</td>
-                <td><span class="queue-status ${o.status==='final'?'status-completed':'status-waiting'}">${o.status}</span></td>
-                <td><button class="btn btn-sm btn-outline">View</button></td>
-            </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:2rem;">No lab orders</td></tr>';
+            allLabOrders = data.orders || [];
+            renderLabOrders();
         }
     } catch(e) { console.error('Lab error:', e); }
 }
+
+function renderLabOrders() {
+    const tbody = document.getElementById('labBody');
+    let filtered = allLabOrders;
+    if (currentLabFilter === 'pending') filtered = allLabOrders.filter(o => o.status === 'pending' || o.status === 'ordered');
+    else if (currentLabFilter === 'in_progress') filtered = allLabOrders.filter(o => o.status === 'in_progress' || o.status === 'processing');
+    else if (currentLabFilter === 'completed') filtered = allLabOrders.filter(o => o.status === 'final' || o.status === 'completed');
+
+    tbody.innerHTML = filtered.length ? filtered.map(o => `<tr>
+        <td><strong>LAB-${o.result_id}</strong></td>
+        <td><strong>${o.patient_name}</strong></td>
+        <td>${(o.tests||[]).map(t=>t.test_name).join(', ') || '—'}</td>
+        <td>${(o.tests||[])[0]?.category_name || '—'}</td>
+        <td>${(o.tests||[])[0]?.sample_type || '—'}</td>
+        <td>—</td>
+        <td>${o.ordered_by_name || '—'}</td>
+        <td><span class="queue-status ${o.status==='final'||o.status==='completed'?'status-completed':'status-waiting'}">${o.status}</span></td>
+        <td><button class="btn btn-sm btn-outline">View</button></td>
+    </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:2rem;">No lab orders</td></tr>';
+}
+
+function filterLabTab(filter) {
+    currentLabFilter = filter;
+    document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    renderLabOrders();
+}
+
 loadLab();
 </script>

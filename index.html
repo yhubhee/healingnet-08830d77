@@ -496,6 +496,7 @@
                 .then(html => {
                     document.querySelector('.main-content').innerHTML = html;
                     lucide.createIcons();
+                    initEmrTabs();
                 })
                 .catch(err => {
                     document.querySelector('.main-content').innerHTML = '<div class="error-message"><h2>Failed to load content</h2><p>' + err.message + '</p></div>';
@@ -521,6 +522,29 @@
         document.addEventListener('click', () => {
             document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
         });
+
+        // Global EMR tab switching
+        function initEmrTabs() {
+            document.querySelectorAll('.emr-tabs').forEach(tabGroup => {
+                const tabs = tabGroup.querySelectorAll('.emr-tab');
+                tabs.forEach((tab, idx) => {
+                    if (tab.hasAttribute('onclick')) return; // skip if already has handler
+                    tab.addEventListener('click', function() {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        // Look for tab-content panels
+                        const panels = this.closest('.emr-tabs')?.parentElement?.querySelectorAll('.tab-panel');
+                        if (panels && panels.length) {
+                            panels.forEach(p => p.style.display = 'none');
+                            if (panels[idx]) panels[idx].style.display = 'block';
+                        }
+                        // Fire custom event for partial-specific filtering
+                        const evt = new CustomEvent('emr-tab-change', { detail: { index: idx, label: this.textContent.trim() } });
+                        document.dispatchEvent(evt);
+                    });
+                });
+            });
+        }
 
         // Mobile menu
         document.getElementById('mobileMenuToggle').addEventListener('click', function() {

@@ -36,19 +36,19 @@
 
 <!-- EMR Tabs -->
 <div class="emr-tabs">
-    <button class="emr-tab active">All Records</button>
-    <button class="emr-tab">Consultation Notes</button>
-    <button class="emr-tab">Vitals</button>
-    <button class="emr-tab">Diagnoses</button>
-    <button class="emr-tab">Lab Results</button>
-    <button class="emr-tab">Imaging</button>
-    <button class="emr-tab">Prescriptions</button>
-    <button class="emr-tab">Referrals</button>
+    <button class="emr-tab active" onclick="filterEmrTab('all')">All Records</button>
+    <button class="emr-tab" onclick="filterEmrTab('consultation_note')">Consultation Notes</button>
+    <button class="emr-tab" onclick="filterEmrTab('vitals')">Vitals</button>
+    <button class="emr-tab" onclick="filterEmrTab('diagnosis')">Diagnoses</button>
+    <button class="emr-tab" onclick="filterEmrTab('lab_result')">Lab Results</button>
+    <button class="emr-tab" onclick="filterEmrTab('imaging')">Imaging</button>
+    <button class="emr-tab" onclick="filterEmrTab('prescription')">Prescriptions</button>
+    <button class="emr-tab" onclick="filterEmrTab('referral')">Referrals</button>
 </div>
 
 <!-- EMR Entries -->
-<div class="emr-entries">
-    <div class="emr-entry">
+<div class="emr-entries" id="emrEntries">
+    <div class="emr-entry" data-type="consultation_note">
         <div class="emr-entry-header">
             <div>
                 <span class="emr-entry-type">Consultation Note</span>
@@ -59,7 +59,7 @@
         <p>Patient presents with recurring chest pain (3 episodes this week). BP: 145/92. ECG shows ST-segment changes. Recommended stress test and echocardiogram. Adjusted Amlodipine dosage to 10mg daily. Follow-up in 2 weeks.</p>
     </div>
 
-    <div class="emr-entry">
+    <div class="emr-entry" data-type="vitals">
         <div class="emr-entry-header">
             <div>
                 <span class="emr-entry-type" style="background:hsl(160,84%,39%,0.15);color:var(--success);">Vitals</span>
@@ -68,30 +68,15 @@
             <span class="entry-date">Feb 14, 2026 • Nurse Aduke</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.75rem;margin-top:0.5rem;">
-            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);">
-                <small style="color:var(--muted-foreground);">Blood Pressure</small>
-                <p style="font-weight:700;color:var(--warning);">145/92 mmHg</p>
-            </div>
-            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);">
-                <small style="color:var(--muted-foreground);">Heart Rate</small>
-                <p style="font-weight:700;">88 bpm</p>
-            </div>
-            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);">
-                <small style="color:var(--muted-foreground);">Temperature</small>
-                <p style="font-weight:700;">36.8°C</p>
-            </div>
-            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);">
-                <small style="color:var(--muted-foreground);">SpO2</small>
-                <p style="font-weight:700;color:var(--success);">98%</p>
-            </div>
-            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);">
-                <small style="color:var(--muted-foreground);">Weight</small>
-                <p style="font-weight:700;">72 kg</p>
-            </div>
+            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);"><small style="color:var(--muted-foreground);">Blood Pressure</small><p style="font-weight:700;color:var(--warning);">145/92 mmHg</p></div>
+            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);"><small style="color:var(--muted-foreground);">Heart Rate</small><p style="font-weight:700;">88 bpm</p></div>
+            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);"><small style="color:var(--muted-foreground);">Temperature</small><p style="font-weight:700;">36.8°C</p></div>
+            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);"><small style="color:var(--muted-foreground);">SpO2</small><p style="font-weight:700;color:var(--success);">98%</p></div>
+            <div style="background:var(--background);padding:0.75rem;border-radius:var(--radius);"><small style="color:var(--muted-foreground);">Weight</small><p style="font-weight:700;">72 kg</p></div>
         </div>
     </div>
 
-    <div class="emr-entry">
+    <div class="emr-entry" data-type="lab_result">
         <div class="emr-entry-header">
             <div>
                 <span class="emr-entry-type" style="background:hsl(38,92%,50%,0.15);color:var(--warning);">Lab Result</span>
@@ -100,22 +85,14 @@
             <span class="entry-date">Feb 12, 2026 • Lab Tech</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.5rem;margin-top:0.5rem;">
-            <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);">
-                <span style="font-size:0.85rem;">WBC</span><span style="font-weight:600;">7.2 x10³/µL <small style="color:var(--success);">Normal</small></span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);">
-                <span style="font-size:0.85rem;">RBC</span><span style="font-weight:600;">4.5 x10⁶/µL <small style="color:var(--success);">Normal</small></span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);">
-                <span style="font-size:0.85rem;">Hemoglobin</span><span style="font-weight:600;">13.2 g/dL <small style="color:var(--success);">Normal</small></span>
-            </div>
-            <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);">
-                <span style="font-size:0.85rem;">Platelets</span><span style="font-weight:600;">245 x10³/µL <small style="color:var(--success);">Normal</small></span>
-            </div>
+            <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);"><span style="font-size:0.85rem;">WBC</span><span style="font-weight:600;">7.2 x10³/µL <small style="color:var(--success);">Normal</small></span></div>
+            <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);"><span style="font-size:0.85rem;">RBC</span><span style="font-weight:600;">4.5 x10⁶/µL <small style="color:var(--success);">Normal</small></span></div>
+            <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);"><span style="font-size:0.85rem;">Hemoglobin</span><span style="font-weight:600;">13.2 g/dL <small style="color:var(--success);">Normal</small></span></div>
+            <div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);"><span style="font-size:0.85rem;">Platelets</span><span style="font-weight:600;">245 x10³/µL <small style="color:var(--success);">Normal</small></span></div>
         </div>
     </div>
 
-    <div class="emr-entry">
+    <div class="emr-entry" data-type="diagnosis">
         <div class="emr-entry-header">
             <div>
                 <span class="emr-entry-type" style="background:hsl(0,84%,60%,0.15);color:var(--destructive);">Diagnosis</span>
@@ -126,7 +103,7 @@
         <p>ICD-10: I11.9 — Hypertensive heart disease without heart failure. Patient has Stage 2 hypertension with evidence of left ventricular hypertrophy. Started on combination therapy.</p>
     </div>
 
-    <div class="emr-entry">
+    <div class="emr-entry" data-type="imaging">
         <div class="emr-entry-header">
             <div>
                 <span class="emr-entry-type" style="background:hsl(270,60%,50%,0.15);color:hsl(270,60%,65%);">Imaging</span>
@@ -142,43 +119,33 @@
 <div class="modal-overlay" id="emrEntryModal">
     <div class="modal-content">
         <h2><i data-lucide="file-plus" style="width:20px;height:20px;display:inline;"></i> New EMR Entry</h2>
-        <div class="form-group">
-            <label>Entry Type</label>
-            <select>
-                <option value="consultation_note">Consultation Note</option>
-                <option value="vitals">Vitals</option>
-                <option value="diagnosis">Diagnosis</option>
-                <option value="lab_order">Lab Order</option>
-                <option value="lab_result">Lab Result</option>
-                <option value="imaging">Imaging</option>
-                <option value="procedure">Procedure</option>
-                <option value="referral">Referral</option>
-                <option value="discharge_summary">Discharge Summary</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Title</label>
-            <input type="text" placeholder="Entry title...">
-        </div>
-        <div class="form-group">
-            <label>Doctor</label>
-            <select>
-                <option>Dr. Adebayo Ogunlade</option>
-                <option>Dr. Funke Kuti</option>
-                <option>Dr. Sani Ahmed</option>
-                <option>Dr. Olumide Ifeanyi (Visiting)</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Content</label>
-            <textarea rows="5" placeholder="Enter clinical notes, findings, or observations..."></textarea>
-        </div>
-        <div class="form-group">
-            <label><input type="checkbox" style="width:auto;margin-right:0.5rem;"> Mark as confidential</label>
-        </div>
+        <div class="form-group"><label>Entry Type</label><select><option value="consultation_note">Consultation Note</option><option value="vitals">Vitals</option><option value="diagnosis">Diagnosis</option><option value="lab_order">Lab Order</option><option value="lab_result">Lab Result</option><option value="imaging">Imaging</option><option value="procedure">Procedure</option><option value="referral">Referral</option><option value="discharge_summary">Discharge Summary</option></select></div>
+        <div class="form-group"><label>Title</label><input type="text" placeholder="Entry title..."></div>
+        <div class="form-group"><label>Doctor</label><select><option>Dr. Adebayo Ogunlade</option><option>Dr. Funke Kuti</option><option>Dr. Sani Ahmed</option><option>Dr. Olumide Ifeanyi (Visiting)</option></select></div>
+        <div class="form-group"><label>Content</label><textarea rows="5" placeholder="Enter clinical notes, findings, or observations..."></textarea></div>
+        <div class="form-group"><label><input type="checkbox" style="width:auto;margin-right:0.5rem;"> Mark as confidential</label></div>
         <div class="modal-actions">
             <button class="btn btn-outline" onclick="document.getElementById('emrEntryModal').classList.remove('show')">Cancel</button>
             <button class="btn btn-primary">Save Entry</button>
         </div>
     </div>
 </div>
+
+<script>
+let currentEmrFilter = 'all';
+
+function filterEmrTab(type) {
+    currentEmrFilter = type;
+    document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+
+    const entries = document.querySelectorAll('.emr-entry');
+    entries.forEach(entry => {
+        if (type === 'all' || entry.getAttribute('data-type') === type) {
+            entry.style.display = 'block';
+        } else {
+            entry.style.display = 'none';
+        }
+    });
+}
+</script>
