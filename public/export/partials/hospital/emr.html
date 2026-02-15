@@ -36,14 +36,14 @@
 
 <!-- EMR Tabs -->
 <div class="emr-tabs">
-    <button class="emr-tab active" onclick="filterEmrTab('all')">All Records</button>
-    <button class="emr-tab" onclick="filterEmrTab('consultation_note')">Consultation Notes</button>
-    <button class="emr-tab" onclick="filterEmrTab('vitals')">Vitals</button>
-    <button class="emr-tab" onclick="filterEmrTab('diagnosis')">Diagnoses</button>
-    <button class="emr-tab" onclick="filterEmrTab('lab_result')">Lab Results</button>
-    <button class="emr-tab" onclick="filterEmrTab('imaging')">Imaging</button>
-    <button class="emr-tab" onclick="filterEmrTab('prescription')">Prescriptions</button>
-    <button class="emr-tab" onclick="filterEmrTab('referral')">Referrals</button>
+    <button class="emr-tab active" onclick="filterEmrTab('all', this)">All Records</button>
+    <button class="emr-tab" onclick="filterEmrTab('consultation_note', this)">Consultation Notes</button>
+    <button class="emr-tab" onclick="filterEmrTab('vitals', this)">Vitals</button>
+    <button class="emr-tab" onclick="filterEmrTab('diagnosis', this)">Diagnoses</button>
+    <button class="emr-tab" onclick="filterEmrTab('lab_result', this)">Lab Results</button>
+    <button class="emr-tab" onclick="filterEmrTab('imaging', this)">Imaging</button>
+    <button class="emr-tab" onclick="filterEmrTab('prescription', this)">Prescriptions</button>
+    <button class="emr-tab" onclick="filterEmrTab('referral', this)">Referrals</button>
 </div>
 
 <!-- EMR Entries -->
@@ -134,10 +134,10 @@
 <script>
 let currentEmrFilter = 'all';
 
-function filterEmrTab(type) {
+function filterEmrTab(type, btn) {
     currentEmrFilter = type;
     document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
 
     const entries = document.querySelectorAll('.emr-entry');
     entries.forEach(entry => {

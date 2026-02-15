@@ -28,10 +28,10 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active" onclick="filterMaternityTab('anc')">ANC Register</button>
-    <button class="emr-tab" onclick="filterMaternityTab('delivery')">Delivery Log</button>
-    <button class="emr-tab" onclick="filterMaternityTab('postnatal')">Postnatal</button>
-    <button class="emr-tab" onclick="filterMaternityTab('birth')">Birth Records</button>
+    <button class="emr-tab active" onclick="filterMaternityTab('anc', this)">ANC Register</button>
+    <button class="emr-tab" onclick="filterMaternityTab('delivery', this)">Delivery Log</button>
+    <button class="emr-tab" onclick="filterMaternityTab('postnatal', this)">Postnatal</button>
+    <button class="emr-tab" onclick="filterMaternityTab('birth', this)">Birth Records</button>
 </div>
 
 <!-- ANC Table -->
@@ -124,10 +124,10 @@ function renderMaternity() {
     }).join('') : `<tr><td colspan="7" style="text-align:center;padding:2rem;">No records</td></tr>`;
 }
 
-function filterMaternityTab(filter) {
+function filterMaternityTab(filter, btn) {
     currentMaternityFilter = filter;
     document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     renderMaternity();
 }
 

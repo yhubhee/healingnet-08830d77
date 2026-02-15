@@ -7,10 +7,10 @@
 </div>
 
 <div class="queue-filters" style="margin-bottom:1.5rem;">
-    <button class="queue-filter-btn active" onclick="filterConsultations('all')">All (5)</button>
-    <button class="queue-filter-btn" onclick="filterConsultations('pending')">Pending (2)</button>
-    <button class="queue-filter-btn" onclick="filterConsultations('accepted')">Accepted (2)</button>
-    <button class="queue-filter-btn" onclick="filterConsultations('completed')">Completed (1)</button>
+    <button class="queue-filter-btn active" onclick="filterConsultations('all', this)">All (5)</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('pending', this)">Pending (2)</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('accepted', this)">Accepted (2)</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('completed', this)">Completed (1)</button>
 </div>
 
 <div class="consultation-list" id="consultationList">
@@ -73,9 +73,9 @@
 </div>
 
 <script>
-function filterConsultations(status) {
+function filterConsultations(status, btn) {
     document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
 
     const cards = document.querySelectorAll('.consultation-card');
     cards.forEach(card => {

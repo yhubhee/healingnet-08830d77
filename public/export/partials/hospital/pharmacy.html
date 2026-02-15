@@ -28,10 +28,10 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active" onclick="filterPharmacyTab('pending')">Pending Prescriptions</button>
-    <button class="emr-tab" onclick="filterPharmacyTab('dispensed')">Dispensed</button>
-    <button class="emr-tab" onclick="filterPharmacyTab('inventory')">Drug Inventory</button>
-    <button class="emr-tab" onclick="filterPharmacyTab('low_stock')">Low Stock Alerts</button>
+    <button class="emr-tab active" onclick="filterPharmacyTab('pending', this)">Pending Prescriptions</button>
+    <button class="emr-tab" onclick="filterPharmacyTab('dispensed', this)">Dispensed</button>
+    <button class="emr-tab" onclick="filterPharmacyTab('inventory', this)">Drug Inventory</button>
+    <button class="emr-tab" onclick="filterPharmacyTab('low_stock', this)">Low Stock Alerts</button>
 </div>
 
 <!-- Content -->
@@ -108,10 +108,10 @@ function renderRxTable(rx) {
     </table></div>`;
 }
 
-function filterPharmacyTab(tab) {
+function filterPharmacyTab(tab, btn) {
     currentPharmacyTab = tab;
     document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     renderPharmacyTab();
 }
 

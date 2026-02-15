@@ -28,10 +28,10 @@
 
 <!-- Tabs -->
 <div class="emr-tabs" style="margin-bottom:1.25rem;">
-    <button class="emr-tab active" onclick="filterSurgeryTab('today')">Today's Schedule</button>
-    <button class="emr-tab" onclick="filterSurgeryTab('upcoming')">Upcoming</button>
-    <button class="emr-tab" onclick="filterSurgeryTab('post_op')">Post-Op</button>
-    <button class="emr-tab" onclick="filterSurgeryTab('history')">Surgical History</button>
+    <button class="emr-tab active" onclick="filterSurgeryTab('today', this)">Today's Schedule</button>
+    <button class="emr-tab" onclick="filterSurgeryTab('upcoming', this)">Upcoming</button>
+    <button class="emr-tab" onclick="filterSurgeryTab('post_op', this)">Post-Op</button>
+    <button class="emr-tab" onclick="filterSurgeryTab('history', this)">Surgical History</button>
 </div>
 
 <!-- Surgery Schedule -->
@@ -83,10 +83,10 @@ function renderSurgery() {
     </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;padding:2rem;">No surgeries</td></tr>';
 }
 
-function filterSurgeryTab(filter) {
+function filterSurgeryTab(filter, btn) {
     currentSurgeryFilter = filter;
     document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     renderSurgery();
 }
 

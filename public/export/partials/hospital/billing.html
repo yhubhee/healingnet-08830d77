@@ -10,9 +10,9 @@
 
 <div class="queue-page-header">
     <div class="queue-filters">
-        <button class="queue-filter-btn active" onclick="filterBills('')">All</button>
-        <button class="queue-filter-btn" onclick="filterBills('paid')">Paid</button>
-        <button class="queue-filter-btn" onclick="filterBills('pending')">Pending</button>
+        <button class="queue-filter-btn active" onclick="filterBills('', this)">All</button>
+        <button class="queue-filter-btn" onclick="filterBills('paid', this)">Paid</button>
+        <button class="queue-filter-btn" onclick="filterBills('pending', this)">Pending</button>
     </div>
     <div style="display:flex;gap:0.75rem;">
         <input type="date" id="billFrom" style="padding:0.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--foreground);" onchange="loadBills()">
@@ -90,10 +90,10 @@ function renderBills(bills) {
     </tr>`).join('');
 }
 
-function filterBills(status) {
+function filterBills(status, btn) {
     currentBillFilter = status;
     document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     loadBills();
 }
 

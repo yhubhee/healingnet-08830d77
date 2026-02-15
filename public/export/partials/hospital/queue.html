@@ -41,10 +41,10 @@
 <!-- Controls -->
 <div class="queue-page-header">
     <div class="queue-filters">
-        <button class="queue-filter-btn active" onclick="filterQueue('')">All</button>
-        <button class="queue-filter-btn" onclick="filterQueue('waiting')">Waiting</button>
-        <button class="queue-filter-btn" onclick="filterQueue('in_consultation')">In Consultation</button>
-        <button class="queue-filter-btn" onclick="filterQueue('completed')">Completed</button>
+        <button class="queue-filter-btn active" onclick="filterQueue('', this)">All</button>
+        <button class="queue-filter-btn" onclick="filterQueue('waiting', this)">Waiting</button>
+        <button class="queue-filter-btn" onclick="filterQueue('in_consultation', this)">In Consultation</button>
+        <button class="queue-filter-btn" onclick="filterQueue('completed', this)">Completed</button>
     </div>
     <div style="display: flex; gap: 0.75rem;">
         <button class="btn btn-primary btn-sm" onclick="document.getElementById('checkinModal').classList.add('show')">
@@ -168,9 +168,9 @@ function renderQueue(queue) {
     }).join('');
 }
 
-function filterQueue(status) {
+function filterQueue(status, btn) {
     document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    btn.classList.add('active');
     loadQueue(status);
 }
 
