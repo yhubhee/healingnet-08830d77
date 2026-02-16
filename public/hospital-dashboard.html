@@ -89,6 +89,13 @@
                 <i data-lucide="video"></i>
                 <span>Teleconsultation</span>
             </a>
+
+            <!-- Notifications -->
+            <a href="#" class="nav-item load-content" data-url="/export/partials/hospital/notifications.html">
+                <i data-lucide="bell"></i>
+                <span>Notifications</span>
+                <span class="nav-badge notif-sidebar-badge">0</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -506,12 +513,43 @@
             .then(r => r.json())
             .then(json => {
                 if (json.success) {
-                    const nb = document.querySelector('.notification-badge');
-                    if (nb) nb.textContent = json.data.queue_waiting || 0;
-                    const qb = document.querySelector('.nav-badge');
+                    const qb = document.querySelector('.nav-badge:not(.notif-sidebar-badge)');
                     if (qb) qb.textContent = json.data.queue_waiting || 0;
                 }
             }).catch(() => {});
+
+        // Notification badge count
+        fetch('/api/hospital/notifications?limit=1', { credentials: 'include' })
+            .then(r => r.json())
+            .then(json => {
+                if (json.success) {
+                    const count = json.unread_count || 0;
+                    const nb = document.querySelector('.notification-badge');
+                    if (nb) nb.textContent = count;
+                    const sb = document.querySelector('.notif-sidebar-badge');
+                    if (sb) sb.textContent = count;
+                }
+            }).catch(() => {});
+
+        // ==========================================
+        // Logout handler with token blacklisting
+        // ==========================================
+        document.addEventListener('click', function(e) {
+            const logoutBtn = e.target.closest('.logout, .logout-item');
+            if (!logoutBtn) return;
+            e.preventDefault();
+
+            fetch('/api/hospital/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            })
+            .then(() => {
+                window.location.href = '/hospital-login.html';
+            })
+            .catch(() => {
+                window.location.href = '/hospital-login.html';
+            });
+        });
     </script>
 </body>
 </html>
