@@ -1,0 +1,20 @@
+<% if (!patients || !patients.length) { %>
+    <p style="padding:1rem;color:var(--muted-foreground);text-align:center;">No patients found</p>
+<% } else { %>
+    <% patients.forEach(function(p) { %>
+        <% 
+            const fn = p.firstname || p.first_name || '';
+            const ln = p.lastname || p.last_name || '';
+            const age = p.date_of_birth ? Math.floor((Date.now() - new Date(p.date_of_birth).getTime()) / 31557600000) : '?';
+            const initials = (fn[0] || '') + (ln[0] || '');
+        %>
+        <div onclick="selectEmrPatient(<%= p.patient_id || p.id %>)" style="padding:0.75rem 1rem;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;transition:background 0.15s;" onmouseover="this.style.background='var(--accent)'" onmouseout="this.style.background=''">
+            <div class="avatar" style="width:36px;height:36px;font-size:0.8rem;"><%= initials %></div>
+            <div style="flex:1;">
+                <strong><%= fn %> <%= ln %></strong><br>
+                <small style="color:var(--muted-foreground);"><%= p.gender || '?' %> &bull; <%= age %> yrs &bull; <%= p.phone || '—' %></small>
+            </div>
+            <span style="font-size:0.8rem;color:var(--muted-foreground);">ID: <%= p.patient_id || p.id %></span>
+        </div>
+    <% }); %>
+<% } %>

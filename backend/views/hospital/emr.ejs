@@ -1,0 +1,200 @@
+<!-- Hospital EMR Partial — Server-side EJS rendered -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Electronic Medical Records</h1>
+        <p>View and manage patient medical records, vitals, diagnoses, and treatment history</p>
+    </div>
+</div>
+
+<!-- Patient Search -->
+<div class="emr-patient-search">
+    <div class="marketplace-search">
+        <input type="text" id="emrSearchInput" placeholder="Search patients by name, ID, phone, or email..." style="flex:1;" onkeydown="if(event.key==='Enter')searchEmrPatients()">
+        <button class="btn btn-primary" onclick="searchEmrPatients()"><i data-lucide="search"></i> Search</button>
+    </div>
+    <div id="emrSearchResults" style="display:none;margin-top:0.75rem;max-height:250px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;background:var(--card);"></div>
+</div>
+
+<!-- Patient Profile & Entries container (loaded via AJAX EJS render) -->
+<div id="emrPatientContainer"></div>
+
+<!-- New EMR Entry Modal -->
+<div class="modal-overlay" id="emrEntryModal">
+    <div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto;">
+        <h2><i data-lucide="file-plus" style="width:20px;height:20px;display:inline;"></i> New EMR Entry</h2>
+        <form id="emrEntryForm">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                    <label>Entry Type</label>
+                    <select id="entryType" onchange="loadEntryFields(this.value)" required>
+                        <option value="">— Select Type —</option>
+                        <option value="consultation_note">Consultation Note</option>
+                        <option value="vitals">Vitals</option>
+                        <option value="diagnosis">Diagnosis</option>
+                        <option value="procedure">Procedure</option>
+                        <option value="lab_order">Lab Order</option>
+                        <option value="lab_result">Lab Result</option>
+                        <option value="imaging">Imaging</option>
+                        <option value="referral">Referral</option>
+                        <option value="discharge_summary">Discharge Summary</option>
+                        <option value="surgery_note">Surgery Note</option>
+                        <option value="antenatal">Antenatal Visit</option>
+                        <option value="delivery">Delivery Record</option>
+                        <option value="postnatal">Postnatal Visit</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Doctor</label>
+                    <select id="entryDoctor">
+                        <option value="">— Select Doctor —</option>
+                        <% if (locals.doctors && doctors.length) { %>
+                            <% doctors.forEach(function(d) { %>
+                                <option value="<%= d.doctor_id || d.id %>">Dr. <%= d.first_name %> <%= d.last_name %> (<%= d.specialty || d.department || '—' %>)</option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><label>Title</label><input type="text" id="entryTitle" required placeholder="Entry title..."></div>
+
+            <!-- Dynamic fields loaded via EJS -->
+            <div id="dynamicFields"></div>
+
+            <div class="form-group"><label>General Notes</label><textarea id="entryContent" rows="3" placeholder="Additional notes..."></textarea></div>
+            <div class="form-group"><label><input type="checkbox" id="entryConfidential" style="width:auto;margin-right:0.5rem;"> Mark as confidential</label></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeNewEntry()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let emrPatientId = null;
+
+// ===================== SEARCH (AJAX → EJS rendered results) =====================
+async function searchEmrPatients() {
+    const q = document.getElementById('emrSearchInput').value.trim();
+    if (!q) return;
+    try {
+        const res = await fetch('/api/hospital/emr/render/search?search=' + encodeURIComponent(q), { credentials: 'include' });
+        const html = await res.text();
+        const box = document.getElementById('emrSearchResults');
+        box.innerHTML = html;
+        box.style.display = 'block';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (err) { console.error('Search error:', err); }
+}
+
+// ===================== SELECT PATIENT (loads EJS-rendered profile + entries) =====================
+async function selectEmrPatient(id) {
+    emrPatientId = id;
+    document.getElementById('emrSearchResults').style.display = 'none';
+    try {
+        const res = await fetch('/api/hospital/emr/render/patient/' + id, { credentials: 'include' });
+        const html = await res.text();
+        document.getElementById('emrPatientContainer').innerHTML = html;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (err) { console.error('Load patient error:', err); }
+}
+
+// ===================== FULL PROFILE TOGGLE =====================
+function toggleFullProfile() {
+    const el = document.getElementById('emrFullProfile');
+    if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+// ===================== TAB FILTERING =====================
+function filterEmrTab(type, btn) {
+    document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.emr-entry').forEach(entry => {
+        entry.style.display = (type === 'all' || entry.dataset.type === type) ? '' : 'none';
+    });
+}
+
+// ===================== NEW ENTRY MODAL =====================
+function openNewEntry() {
+    document.getElementById('emrEntryModal').classList.add('show');
+}
+function closeNewEntry() {
+    document.getElementById('emrEntryModal').classList.remove('show');
+    document.getElementById('emrEntryForm').reset();
+    document.getElementById('dynamicFields').innerHTML = '';
+}
+
+// Load entry-type-specific fields via EJS
+async function loadEntryFields(type) {
+    if (!type) { document.getElementById('dynamicFields').innerHTML = ''; return; }
+    try {
+        const res = await fetch('/api/hospital/emr/render/entry-fields/' + type, { credentials: 'include' });
+        const html = await res.text();
+        document.getElementById('dynamicFields').innerHTML = html;
+        // Auto-calc BMI for vitals
+        if (type === 'vitals') {
+            const wEl = document.getElementById('sf_weight');
+            const hEl = document.getElementById('sf_height');
+            if (wEl && hEl) {
+                const calc = () => {
+                    const w = parseFloat(wEl.value), h = parseFloat(hEl.value);
+                    document.getElementById('sf_bmi').value = (w && h) ? (w / ((h/100)**2)).toFixed(1) : '';
+                };
+                wEl.addEventListener('input', calc);
+                hEl.addEventListener('input', calc);
+            }
+        }
+    } catch (err) { console.error('Load fields error:', err); }
+}
+
+// ===================== COLLECT STRUCTURED DATA =====================
+function collectStructuredData(type) {
+    const sd = {};
+    document.querySelectorAll('#dynamicFields input, #dynamicFields select, #dynamicFields textarea').forEach(f => {
+        if (!f.id || !f.id.startsWith('sf_')) return;
+        const key = f.id.replace('sf_', '');
+        const val = f.value.trim();
+        if (val) sd[key] = val;
+    });
+    if (type === 'lab_result' && sd.results_raw) {
+        sd.results = sd.results_raw.split('\n').filter(l=>l.trim()).map(line => {
+            const parts = line.split('|').map(s=>s.trim());
+            return { test: parts[0]||'', value: parts[1]||'', unit: parts[2]||'', flag: parts[3]||'normal' };
+        });
+        delete sd.results_raw;
+    }
+    if (type === 'lab_order' && sd.tests) {
+        sd.tests = sd.tests.split(',').map(s=>s.trim()).filter(Boolean);
+    }
+    return sd;
+}
+
+// ===================== SUBMIT ENTRY =====================
+document.getElementById('emrEntryForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!emrPatientId) { alert('No patient selected'); return; }
+    const type = document.getElementById('entryType').value;
+    if (!type) { alert('Select an entry type'); return; }
+    const structured_data = collectStructuredData(type);
+    try {
+        const res = await fetch('/api/hospital/emr/entries', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                patient_id: emrPatientId,
+                doctor_id: document.getElementById('entryDoctor').value || null,
+                entry_type: type,
+                title: document.getElementById('entryTitle').value,
+                content: document.getElementById('entryContent').value,
+                structured_data: Object.keys(structured_data).length ? structured_data : null,
+                is_confidential: document.getElementById('entryConfidential').checked,
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            closeNewEntry();
+            selectEmrPatient(emrPatientId);
+        } else { alert(data.message || 'Error saving entry'); }
+    } catch (err) { console.error('Save entry error:', err); }
+});
+</script>
