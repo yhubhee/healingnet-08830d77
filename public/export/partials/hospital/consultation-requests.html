@@ -4,86 +4,331 @@
         <h1>Consultation Requests</h1>
         <p>Track requests sent to external doctors for your patients</p>
     </div>
+    <button class="btn btn-primary" onclick="document.getElementById('newConsultationModal').classList.add('show')">
+        <i data-lucide="plus"></i> New Request
+    </button>
 </div>
 
+<!-- Summary Stats -->
+<div class="stats-grid" id="consultationStats" style="margin-bottom:1.5rem;">
+    <div class="stat-card"><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Requests</div></div>
+    <div class="stat-card"><div class="stat-value" id="statPending" style="color:var(--warning);">—</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card"><div class="stat-value" id="statAccepted" style="color:var(--info);">—</div><div class="stat-label">Accepted</div></div>
+    <div class="stat-card"><div class="stat-value" id="statCompleted" style="color:var(--success);">—</div><div class="stat-label">Completed</div></div>
+</div>
+
+<!-- Filters -->
 <div class="queue-filters" style="margin-bottom:1.5rem;">
-    <button class="queue-filter-btn active" onclick="filterConsultations('all', this)">All (5)</button>
-    <button class="queue-filter-btn" onclick="filterConsultations('pending', this)">Pending (2)</button>
-    <button class="queue-filter-btn" onclick="filterConsultations('accepted', this)">Accepted (2)</button>
-    <button class="queue-filter-btn" onclick="filterConsultations('completed', this)">Completed (1)</button>
+    <button class="queue-filter-btn active" onclick="filterConsultations('all', this)">All</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('pending', this)">Pending</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('accepted', this)">Accepted</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('completed', this)">Completed</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('rejected', this)">Rejected</button>
+    <button class="queue-filter-btn" onclick="filterConsultations('cancelled', this)">Cancelled</button>
 </div>
 
+<!-- Consultation List -->
 <div class="consultation-list" id="consultationList">
-    <div class="consultation-card" data-status="pending">
-        <div class="consultation-header">
-            <div class="doctor-info"><div class="avatar">NO</div><div><h4>Dr. Nnamdi Okafor — Neurosurgeon</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">University Teaching Hospital, Ibadan</p></div></div>
-            <span class="status-badge pending">Pending</span>
-        </div>
-        <div class="consultation-details">
-            <span><i data-lucide="user"></i> Patient: Amara Obi</span><span><i data-lucide="alert-circle"></i> Urgency: High</span><span><i data-lucide="video"></i> Virtual</span><span><i data-lucide="credit-card"></i> ₦50,000</span><span><i data-lucide="clock"></i> Requested 2 hours ago</span>
-        </div>
-        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">Patient presenting with severe headaches, vision changes, and suspected intracranial mass.</p>
-        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;"><button class="btn btn-outline btn-sm">Cancel Request</button><button class="btn btn-outline btn-sm">Send Reminder</button></div>
-    </div>
+    <p style="padding:2rem;color:var(--muted-foreground);text-align:center;">Loading consultation requests...</p>
+</div>
 
-    <div class="consultation-card" data-status="accepted">
-        <div class="consultation-header">
-            <div class="doctor-info"><div class="avatar">BI</div><div><h4>Dr. Blessing Igwe — Oncologist</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">National Hospital, Abuja</p></div></div>
-            <span class="status-badge approved">Accepted</span>
-        </div>
-        <div class="consultation-details">
-            <span><i data-lucide="user"></i> Patient: Yusuf Bello</span><span><i data-lucide="alert-circle"></i> Urgency: Moderate</span><span><i data-lucide="video"></i> Virtual</span><span><i data-lucide="credit-card"></i> ₦45,000</span><span><i data-lucide="calendar"></i> Tomorrow, 2:00 PM</span>
-        </div>
-        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">Follow-up consultation for breast cancer staging.</p>
-        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;"><button class="btn btn-primary btn-sm"><i data-lucide="video"></i> Join Session</button><button class="btn btn-outline btn-sm">View Details</button></div>
+<!-- New Consultation Request Modal -->
+<div class="modal-overlay" id="newConsultationModal">
+    <div class="modal-content" style="max-width:600px;">
+        <h2><i data-lucide="send" style="width:20px;height:20px;display:inline;"></i> New Consultation Request</h2>
+        <form id="newConsultationForm">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div class="form-group"><label>Doctor ID</label><input type="number" id="crDoctorId" required placeholder="External doctor ID"></div>
+                <div class="form-group"><label>Patient ID</label><input type="number" id="crPatientId" required placeholder="Patient ID"></div>
+            </div>
+            <div class="form-group"><label>Specialty Needed</label><input type="text" id="crSpecialty" placeholder="e.g., Neurosurgery, Cardiology"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+                <div class="form-group">
+                    <label>Urgency</label>
+                    <select id="crUrgency">
+                        <option value="low">Low</option>
+                        <option value="moderate" selected>Moderate</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="crType">
+                        <option value="virtual">Virtual</option>
+                        <option value="in_person">In-Person</option>
+                        <option value="either">Either</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Fee (₦)</label><input type="number" id="crFee" placeholder="Agreed fee"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div class="form-group"><label>Preferred Date</label><input type="date" id="crDate"></div>
+                <div class="form-group"><label>Preferred Time</label><input type="time" id="crTime"></div>
+            </div>
+            <div class="form-group"><label>Reason for Consultation</label><textarea id="crReason" rows="3" required placeholder="Describe the clinical reason for this consultation..."></textarea></div>
+            <div class="form-group"><label>Patient Summary (optional)</label><textarea id="crSummary" rows="2" placeholder="Brief clinical summary of the patient's condition..."></textarea></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('newConsultationModal').classList.remove('show')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Send Request</button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="consultation-card" data-status="accepted">
-        <div class="consultation-header">
-            <div class="doctor-info"><div class="avatar">TM</div><div><h4>Dr. Tunde Makinde — Cardiologist</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">Lagos University Teaching Hospital</p></div></div>
-            <span class="status-badge approved">Accepted</span>
+<!-- Consultation Detail Modal -->
+<div class="modal-overlay" id="consultationDetailModal">
+    <div class="modal-content" style="max-width:650px;">
+        <div id="consultationDetailContent">
+            <p style="padding:2rem;text-align:center;color:var(--muted-foreground);">Loading...</p>
         </div>
-        <div class="consultation-details">
-            <span><i data-lucide="user"></i> Patient: Chidinma Okoye</span><span><i data-lucide="alert-circle"></i> Urgency: High</span><span><i data-lucide="map-pin"></i> In-Person Visit</span><span><i data-lucide="credit-card"></i> ₦100,000</span><span><i data-lucide="calendar"></i> Feb 18, 9:00 AM</span>
+        <div class="modal-actions" style="margin-top:1rem;">
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('consultationDetailModal').classList.remove('show')">Close</button>
         </div>
-        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">Complex congenital heart defect. Dr. Makinde will visit for in-person evaluation.</p>
-    </div>
-
-    <div class="consultation-card" data-status="completed" style="opacity: 0.7;">
-        <div class="consultation-header">
-            <div class="doctor-info"><div class="avatar">AM</div><div><h4>Dr. Aisha Mohammed — Nephrologist</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">Aminu Kano Teaching Hospital</p></div></div>
-            <span class="status-badge" style="background:hsl(160,84%,39%,0.15);color:var(--success);">Completed</span>
-        </div>
-        <div class="consultation-details">
-            <span><i data-lucide="user"></i> Patient: Ibrahim Danjuma</span><span><i data-lucide="video"></i> Virtual</span><span><i data-lucide="credit-card"></i> ₦40,000 — Paid</span><span><i data-lucide="check-circle"></i> Completed Feb 10</span>
-        </div>
-    </div>
-
-    <div class="consultation-card" data-status="pending">
-        <div class="consultation-header">
-            <div class="doctor-info"><div class="avatar">EO</div><div><h4>Dr. Emeka Okonkwo — Orthopedic Surgeon</h4><p style="font-size:0.8rem;color:var(--muted-foreground);">University of Benin Teaching Hospital</p></div></div>
-            <span class="status-badge pending">Pending</span>
-        </div>
-        <div class="consultation-details">
-            <span><i data-lucide="user"></i> Patient: Fatima Suleiman</span><span><i data-lucide="alert-circle"></i> Urgency: Moderate</span><span><i data-lucide="map-pin"></i> In-Person</span><span><i data-lucide="credit-card"></i> ₦75,000</span><span><i data-lucide="clock"></i> Requested 1 day ago</span>
-        </div>
-        <p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">Complex fracture requiring specialist opinion.</p>
-        <div style="display:flex;gap:0.5rem;margin-top:0.75rem;"><button class="btn btn-outline btn-sm">Cancel Request</button><button class="btn btn-outline btn-sm">Send Reminder</button></div>
     </div>
 </div>
 
 <script>
+let allConsultations = [];
+let currentFilter = 'all';
+
+async function loadConsultations(statusFilter) {
+    try {
+        let url = '/api/hospital/consultations';
+        if (statusFilter && statusFilter !== 'all') url += '?status=' + statusFilter;
+        const res = await fetch(url, { credentials: 'include' });
+        const data = await res.json();
+
+        if (data.success) {
+            allConsultations = data.consultations || [];
+            renderConsultations(allConsultations);
+            if (data.counts) renderStats(data.counts);
+        } else {
+            document.getElementById('consultationList').innerHTML =
+                '<p style="padding:2rem;color:var(--destructive);text-align:center;">Failed to load consultations</p>';
+        }
+    } catch (err) {
+        console.error('Load consultations error:', err);
+        document.getElementById('consultationList').innerHTML =
+            '<p style="padding:2rem;color:var(--destructive);text-align:center;">Error loading consultations</p>';
+    }
+}
+
+function renderStats(c) {
+    document.getElementById('statTotal').textContent = c.total || 0;
+    document.getElementById('statPending').textContent = c.pending || 0;
+    document.getElementById('statAccepted').textContent = c.accepted || 0;
+    document.getElementById('statCompleted').textContent = c.completed || 0;
+}
+
+function renderConsultations(list) {
+    const container = document.getElementById('consultationList');
+    if (!list.length) {
+        container.innerHTML = '<p style="padding:2rem;color:var(--muted-foreground);text-align:center;">No consultation requests found</p>';
+        return;
+    }
+
+    container.innerHTML = list.map(c => {
+        const initials = ((c.doctor_first_name||'')[0]||'') + ((c.doctor_last_name||'')[0]||'');
+        const statusClass = c.status === 'pending' ? 'pending' : c.status === 'accepted' ? 'approved' : c.status === 'completed' ? 'completed' : c.status === 'rejected' ? 'rejected' : 'cancelled';
+        const statusStyle = c.status === 'completed' ? 'background:hsl(160,84%,39%,0.15);color:var(--success);' :
+                            c.status === 'rejected' ? 'background:hsl(0,84%,60%,0.15);color:var(--destructive);' :
+                            c.status === 'cancelled' ? 'background:hsl(0,0%,50%,0.15);color:var(--muted-foreground);' : '';
+        const urgencyIcon = c.urgency === 'high' || c.urgency === 'urgent' ? 'alert-circle' : 'info';
+        const typeIcon = c.request_type === 'virtual' ? 'video' : 'map-pin';
+        const typeLabel = c.request_type === 'virtual' ? 'Virtual' : c.request_type === 'in_person' ? 'In-Person' : 'Either';
+        const feeDisplay = c.fee_agreed ? '₦' + Number(c.fee_agreed).toLocaleString() : 'TBD';
+        const timeAgo = getTimeAgo(c.created_at);
+        const opacity = c.status === 'completed' || c.status === 'cancelled' ? 'opacity:0.7;' : '';
+
+        let scheduleLine = '';
+        if (c.status === 'accepted' && c.preferred_date) {
+            const d = new Date(c.preferred_date);
+            const dateStr = d.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' });
+            const timeStr = c.preferred_time ? c.preferred_time.slice(0,5) : '';
+            scheduleLine = `<span><i data-lucide="calendar"></i> ${dateStr}${timeStr ? ', ' + timeStr : ''}</span>`;
+        } else if (c.status === 'pending') {
+            scheduleLine = `<span><i data-lucide="clock"></i> ${timeAgo}</span>`;
+        } else if (c.status === 'completed') {
+            scheduleLine = `<span><i data-lucide="check-circle"></i> Completed ${getTimeAgo(c.updated_at)}</span>`;
+        }
+
+        let actions = '';
+        if (c.status === 'pending') {
+            actions = `<div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+                <button class="btn btn-outline btn-sm" onclick="cancelConsultation(${c.id})">Cancel Request</button>
+                <button class="btn btn-outline btn-sm" onclick="viewConsultation(${c.id})">View Details</button>
+            </div>`;
+        } else if (c.status === 'accepted') {
+            actions = `<div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+                ${c.request_type === 'virtual' || c.meeting_link ? '<button class="btn btn-primary btn-sm" onclick="joinSession(\'' + (c.meeting_link||'') + '\')"><i data-lucide="video"></i> Join Session</button>' : ''}
+                <button class="btn btn-outline btn-sm" onclick="viewConsultation(${c.id})">View Details</button>
+            </div>`;
+        } else {
+            actions = `<div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+                <button class="btn btn-outline btn-sm" onclick="viewConsultation(${c.id})">View Details</button>
+            </div>`;
+        }
+
+        return `<div class="consultation-card" data-status="${c.status}" style="${opacity}">
+            <div class="consultation-header">
+                <div class="doctor-info">
+                    <div class="avatar">${initials}</div>
+                    <div>
+                        <h4>Dr. ${c.doctor_first_name} ${c.doctor_last_name} — ${c.doctor_specialty || c.specialty_needed || 'Specialist'}</h4>
+                        <p style="font-size:0.8rem;color:var(--muted-foreground);">${c.doctor_hospital_name || 'External Doctor'}</p>
+                    </div>
+                </div>
+                <span class="status-badge ${statusClass}" ${statusStyle ? 'style="'+statusStyle+'"' : ''}>${capitalize(c.status)}</span>
+            </div>
+            <div class="consultation-details">
+                <span><i data-lucide="user"></i> Patient: ${c.patient_firstname} ${c.patient_lastname}</span>
+                <span><i data-lucide="${urgencyIcon}"></i> Urgency: ${capitalize(c.urgency)}</span>
+                <span><i data-lucide="${typeIcon}"></i> ${typeLabel}</span>
+                <span><i data-lucide="credit-card"></i> ${feeDisplay}</span>
+                ${scheduleLine}
+            </div>
+            ${c.reason ? `<p style="font-size:0.85rem;color:var(--muted-foreground);margin-top:0.75rem;">${truncate(c.reason, 150)}</p>` : ''}
+            ${actions}
+        </div>`;
+    }).join('');
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
 function filterConsultations(status, btn) {
     document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-
-    const cards = document.querySelectorAll('.consultation-card');
-    cards.forEach(card => {
-        if (status === 'all' || card.getAttribute('data-status') === status) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
-    });
+    currentFilter = status;
+    loadConsultations(status);
 }
+
+async function viewConsultation(id) {
+    const modal = document.getElementById('consultationDetailModal');
+    const content = document.getElementById('consultationDetailContent');
+    modal.classList.add('show');
+    content.innerHTML = '<p style="padding:2rem;text-align:center;color:var(--muted-foreground);">Loading...</p>';
+
+    try {
+        const res = await fetch('/api/hospital/consultations/' + id, { credentials: 'include' });
+        const data = await res.json();
+        if (!data.success) { content.innerHTML = '<p style="color:var(--destructive);">Failed to load details</p>'; return; }
+
+        const c = data.consultation;
+        const initials = ((c.doctor_first_name||'')[0]||'') + ((c.doctor_last_name||'')[0]||'');
+        content.innerHTML = `
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+                <div class="avatar" style="width:48px;height:48px;font-size:1.1rem;">${initials}</div>
+                <div>
+                    <h3 style="margin:0;">Dr. ${c.doctor_first_name} ${c.doctor_last_name}</h3>
+                    <p style="color:var(--muted-foreground);font-size:0.85rem;">${c.doctor_specialty || '—'} · ${c.doctor_hospital_name || 'External'}</p>
+                </div>
+                <span class="status-badge ${c.status}" style="margin-left:auto;">${capitalize(c.status)}</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+                <div><label style="font-size:0.75rem;color:var(--muted-foreground);display:block;">Patient</label><strong>${c.patient_firstname} ${c.patient_lastname}</strong></div>
+                <div><label style="font-size:0.75rem;color:var(--muted-foreground);display:block;">Urgency</label><strong>${capitalize(c.urgency)}</strong></div>
+                <div><label style="font-size:0.75rem;color:var(--muted-foreground);display:block;">Request Type</label><strong>${c.request_type === 'virtual' ? 'Virtual' : c.request_type === 'in_person' ? 'In-Person' : 'Either'}</strong></div>
+                <div><label style="font-size:0.75rem;color:var(--muted-foreground);display:block;">Fee</label><strong>${c.fee_agreed ? '₦' + Number(c.fee_agreed).toLocaleString() : 'TBD'}</strong></div>
+                <div><label style="font-size:0.75rem;color:var(--muted-foreground);display:block;">Preferred Date</label><strong>${c.preferred_date ? new Date(c.preferred_date).toLocaleDateString('en-NG', {year:'numeric', month:'short', day:'numeric'}) : '—'}</strong></div>
+                <div><label style="font-size:0.75rem;color:var(--muted-foreground);display:block;">Preferred Time</label><strong>${c.preferred_time || '—'}</strong></div>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+                <label style="font-size:0.75rem;color:var(--muted-foreground);display:block;margin-bottom:0.25rem;">Reason</label>
+                <p style="font-size:0.9rem;">${c.reason || '—'}</p>
+            </div>
+
+            ${c.patient_summary ? `<div style="margin-bottom:1rem;">
+                <label style="font-size:0.75rem;color:var(--muted-foreground);display:block;margin-bottom:0.25rem;">Patient Summary</label>
+                <p style="font-size:0.9rem;">${c.patient_summary}</p>
+            </div>` : ''}
+
+            ${c.doctor_notes ? `<div style="margin-bottom:1rem;">
+                <label style="font-size:0.75rem;color:var(--muted-foreground);display:block;margin-bottom:0.25rem;">Doctor's Notes</label>
+                <p style="font-size:0.9rem;">${c.doctor_notes}</p>
+            </div>` : ''}
+
+            ${c.meeting_link ? `<div style="margin-bottom:1rem;">
+                <label style="font-size:0.75rem;color:var(--muted-foreground);display:block;margin-bottom:0.25rem;">Meeting Link</label>
+                <a href="${c.meeting_link}" target="_blank" style="color:var(--primary);">${c.meeting_link}</a>
+            </div>` : ''}
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding-top:0.75rem;border-top:1px solid var(--border);font-size:0.8rem;color:var(--muted-foreground);">
+                <div>Revenue Split: Hospital ${c.revenue_split_hospital}% / Doctor ${c.revenue_split_doctor}%</div>
+                <div>Created: ${new Date(c.created_at).toLocaleDateString('en-NG', {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (err) {
+        content.innerHTML = '<p style="color:var(--destructive);">Error loading details</p>';
+    }
+}
+
+async function cancelConsultation(id) {
+    if (!confirm('Cancel this consultation request?')) return;
+    try {
+        const res = await fetch('/api/hospital/consultations/' + id, {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'cancelled' })
+        });
+        const data = await res.json();
+        if (data.success) loadConsultations(currentFilter);
+        else alert(data.message || 'Failed to cancel');
+    } catch (err) { console.error('Cancel error:', err); }
+}
+
+function joinSession(link) {
+    if (link) window.open(link, '_blank');
+    else alert('Meeting link not yet available. The doctor will provide one after confirming.');
+}
+
+// Form submission
+document.getElementById('newConsultationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        const res = await fetch('/api/hospital/consultations', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                doctor_id: document.getElementById('crDoctorId').value,
+                patient_id: document.getElementById('crPatientId').value,
+                specialty_needed: document.getElementById('crSpecialty').value || null,
+                urgency: document.getElementById('crUrgency').value,
+                request_type: document.getElementById('crType').value,
+                fee_agreed: document.getElementById('crFee').value || null,
+                preferred_date: document.getElementById('crDate').value || null,
+                preferred_time: document.getElementById('crTime').value || null,
+                reason: document.getElementById('crReason').value,
+                patient_summary: document.getElementById('crSummary').value || null
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            document.getElementById('newConsultationModal').classList.remove('show');
+            document.getElementById('newConsultationForm').reset();
+            loadConsultations(currentFilter);
+        } else {
+            alert(data.message || 'Failed to send request');
+        }
+    } catch (err) { console.error('Create consultation error:', err); alert('Error sending request'); }
+});
+
+// Utility functions
+function capitalize(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ''; }
+function truncate(str, len) { return str && str.length > len ? str.slice(0, len) + '…' : str || ''; }
+function getTimeAgo(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins + ' min ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + ' hr' + (hrs>1?'s':'') + ' ago';
+    const days = Math.floor(hrs / 24);
+    return days + ' day' + (days>1?'s':'') + ' ago';
+}
+
+// Initial load
+loadConsultations();
 </script>
