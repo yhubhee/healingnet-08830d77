@@ -47,6 +47,7 @@ app.use('/api/notifications', require('./routes/notifications'));
 // API Routes — Hospital
 // ==========================================
 app.use('/api/hospital/auth', require('./routes/hospital/auth'));
+app.use('/api/hospital/dashboard', require('./routes/hospital/dashboard'));
 app.use('/api/hospital/doctors', require('./routes/hospital/doctors'));
 app.use('/api/hospital/marketplace', require('./routes/hospital/marketplace'));
 app.use('/api/hospital/queue', require('./routes/hospital/queue'));

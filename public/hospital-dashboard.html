@@ -165,12 +165,67 @@
         </header>
 
         <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Welcome Section -->
+        <main class="main-content" id="mainContent">
+            <!-- Dashboard content will be loaded dynamically -->
+            <div class="loading-dashboard" style="display:flex;align-items:center;justify-content:center;min-height:60vh;">
+                <div style="text-align:center;">
+                    <div class="spinner" style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--color-primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;"></div>
+                    <p style="color:var(--text-secondary);">Loading dashboard...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // ==========================================
+        // Format helpers
+        // ==========================================
+        function formatNaira(amount) {
+            const n = Number(amount) || 0;
+            if (n >= 1000000) return '₦' + (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return '₦' + (n / 1000).toFixed(0) + 'K';
+            return '₦' + n.toLocaleString();
+        }
+
+        function timeAgo(dateStr) {
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return 'Just now';
+            if (mins < 60) return mins + ' min ago';
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return hrs + 'h ago';
+            return Math.floor(hrs / 24) + 'd ago';
+        }
+
+        function getInitials(first, last) {
+            return ((first || '')[0] || '') + ((last || '')[0] || '');
+        }
+
+        function statusClass(status) {
+            const map = { waiting: 'status-waiting', checked_in: 'status-checked-in', in_consultation: 'status-in-consultation', completed: 'status-completed' };
+            return map[status] || '';
+        }
+
+        function statusLabel(status) {
+            return (status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        // ==========================================
+        // Render dashboard
+        // ==========================================
+        function renderDashboard(data) {
+            const s = data.stats;
+            const p = s.patients, d = s.doctors, r = s.revenue, c = s.consultations;
+            const todayStr = new Date().toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            let html = `
             <div class="welcome-section">
                 <div class="welcome-text">
-                    <h1>Lagos General Hospital</h1>
-                    <p>Hospital Operations Dashboard — Today: <span id="todayDate"></span></p>
+                    <h1>Hospital Operations</h1>
+                    <p>Dashboard — Today: ${todayStr}</p>
                 </div>
             </div>
 
@@ -180,32 +235,32 @@
                     <i data-lucide="users" class="stat-icon"></i>
                     <div class="stat-content">
                         <p class="stat-label">Patients Today</p>
-                        <h3 class="stat-value">42</h3>
-                        <p class="stat-subtitle">8 waiting • 3 in consultation</p>
+                        <h3 class="stat-value">${p.total || 0}</h3>
+                        <p class="stat-subtitle">${p.waiting || 0} waiting • ${p.in_consultation || 0} in consultation</p>
                     </div>
                 </div>
                 <div class="stat-card gradient-success">
                     <i data-lucide="user-check" class="stat-icon"></i>
                     <div class="stat-content">
                         <p class="stat-label">Active Doctors</p>
-                        <h3 class="stat-value">12</h3>
-                        <p class="stat-subtitle">8 full-time • 3 visiting • 1 locum</p>
+                        <h3 class="stat-value">${d.active || 0}</h3>
+                        <p class="stat-subtitle">${d.full_time || 0} full-time • ${d.visiting || 0} visiting • ${d.locum || 0} locum</p>
                     </div>
                 </div>
                 <div class="stat-card gradient-warning">
                     <i data-lucide="credit-card" class="stat-icon"></i>
                     <div class="stat-content">
                         <p class="stat-label">Today's Revenue</p>
-                        <h3 class="stat-value">₦1.2M</h3>
-                        <p class="stat-subtitle">₦850K collected</p>
+                        <h3 class="stat-value">${formatNaira(r.total_revenue)}</h3>
+                        <p class="stat-subtitle">${formatNaira(r.collected)} collected • ${formatNaira(r.pending)} pending</p>
                     </div>
                 </div>
                 <div class="stat-card gradient-info">
                     <i data-lucide="video" class="stat-icon"></i>
                     <div class="stat-content">
                         <p class="stat-label">External Consults</p>
-                        <h3 class="stat-value">3</h3>
-                        <p class="stat-subtitle">2 pending • 1 active</p>
+                        <h3 class="stat-value">${c.total || 0}</h3>
+                        <p class="stat-subtitle">${c.pending || 0} pending • ${c.accepted || 0} active</p>
                     </div>
                 </div>
             </div>
@@ -219,46 +274,15 @@
                         <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/queue.html">View All</a>
                     </div>
                     <div class="hospital-queue-mini">
-                        <div class="queue-item priority-emergency">
-                            <span class="queue-number">#1</span>
+                        ${data.queue.length ? data.queue.map((q, i) => `
+                        <div class="queue-item priority-${q.priority || 'normal'}">
+                            <span class="queue-number">#${q.queue_number || (i + 1)}</span>
                             <div class="queue-patient">
-                                <h4>Amara Obi</h4>
-                                <p>Emergency • Cardiology</p>
+                                <h4>${q.firstname} ${q.lastname}</h4>
+                                <p>${statusLabel(q.checkin_type)} • ${q.department || 'General'}</p>
                             </div>
-                            <span class="queue-status status-in-consultation">In Consultation</span>
-                        </div>
-                        <div class="queue-item priority-normal">
-                            <span class="queue-number">#2</span>
-                            <div class="queue-patient">
-                                <h4>Yusuf Bello</h4>
-                                <p>Pre-booked • General</p>
-                            </div>
-                            <span class="queue-status status-waiting">Waiting</span>
-                        </div>
-                        <div class="queue-item priority-normal">
-                            <span class="queue-number">#3</span>
-                            <div class="queue-patient">
-                                <h4>Ngozi Eze</h4>
-                                <p>Walk-in • Orthopedics</p>
-                            </div>
-                            <span class="queue-status status-checked-in">Checked In</span>
-                        </div>
-                        <div class="queue-item priority-priority">
-                            <span class="queue-number">#4</span>
-                            <div class="queue-patient">
-                                <h4>Emeka Nwankwo</h4>
-                                <p>Pre-booked • Dermatology</p>
-                            </div>
-                            <span class="queue-status status-waiting">Waiting</span>
-                        </div>
-                        <div class="queue-item priority-normal">
-                            <span class="queue-number">#5</span>
-                            <div class="queue-patient">
-                                <h4>Fatima Abdullahi</h4>
-                                <p>Walk-in • Pediatrics</p>
-                            </div>
-                            <span class="queue-status status-checked-in">Checked In</span>
-                        </div>
+                            <span class="queue-status ${statusClass(q.status)}">${statusLabel(q.status)}</span>
+                        </div>`).join('') : '<p style="color:var(--text-secondary);padding:1rem;text-align:center;">No patients in queue today</p>'}
                     </div>
                 </div>
 
@@ -269,42 +293,20 @@
                         <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/doctors.html">Manage</a>
                     </div>
                     <div class="doctor-overview-list">
+                        ${data.doctors.length ? data.doctors.map(doc => {
+                            const typeMap = { full_time: 'Full-time', visiting_consultant: 'Visiting', locum: 'Locum' };
+                            const typeClass = doc.employment_type === 'full_time' ? 'full-time' : (doc.employment_type === 'visiting_consultant' ? 'visiting' : 'locum');
+                            return `
                         <div class="doctor-overview-item">
-                            <div class="avatar">AO</div>
+                            <div class="avatar">${getInitials(doc.firstname, doc.lastname)}</div>
                             <div class="doctor-overview-info">
-                                <h4>Dr. Adebayo Ogunlade</h4>
-                                <p>Cardiologist</p>
+                                <h4>Dr. ${doc.firstname} ${doc.lastname}</h4>
+                                <p>${doc.specialization || 'General'}</p>
                             </div>
-                            <span class="doctor-type-badge full-time">Full-time</span>
-                            <span class="doctor-status-dot online"></span>
-                        </div>
-                        <div class="doctor-overview-item">
-                            <div class="avatar">OI</div>
-                            <div class="doctor-overview-info">
-                                <h4>Dr. Olumide Ifeanyi</h4>
-                                <p>Neurologist</p>
-                            </div>
-                            <span class="doctor-type-badge visiting">Visiting</span>
-                            <span class="doctor-status-dot online"></span>
-                        </div>
-                        <div class="doctor-overview-item">
-                            <div class="avatar">FK</div>
-                            <div class="doctor-overview-info">
-                                <h4>Dr. Funke Kuti</h4>
-                                <p>Pediatrician</p>
-                            </div>
-                            <span class="doctor-type-badge full-time">Full-time</span>
-                            <span class="doctor-status-dot offline"></span>
-                        </div>
-                        <div class="doctor-overview-item">
-                            <div class="avatar">SA</div>
-                            <div class="doctor-overview-info">
-                                <h4>Dr. Sani Ahmed</h4>
-                                <p>Orthopedic Surgeon</p>
-                            </div>
-                            <span class="doctor-type-badge locum">Locum</span>
-                            <span class="doctor-status-dot online"></span>
-                        </div>
+                            <span class="doctor-type-badge ${typeClass}">${typeMap[doc.employment_type] || doc.employment_type}</span>
+                            <span class="doctor-status-dot ${doc.is_active ? 'online' : 'offline'}"></span>
+                        </div>`;
+                        }).join('') : '<p style="color:var(--text-secondary);padding:1rem;text-align:center;">No doctors assigned</p>'}
                     </div>
                 </div>
             </div>
@@ -315,46 +317,28 @@
                 <div class="content-section">
                     <div class="section-header">
                         <h2>External Consultations</h2>
-                        <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/marketplace.html">Find Doctors</a>
+                        <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/consultation-requests.html">View All</a>
                     </div>
                     <div class="consultation-list">
+                        ${data.consultations.length ? data.consultations.map(cr => `
                         <div class="consultation-card">
                             <div class="consultation-header">
                                 <div class="doctor-info">
-                                    <div class="avatar">NO</div>
+                                    <div class="avatar">${getInitials(cr.doc_first, cr.doc_last)}</div>
                                     <div>
-                                        <h4>Dr. Nnamdi Okafor</h4>
-                                        <p>Neurosurgeon • University Teaching Hospital</p>
+                                        <h4>Dr. ${cr.doc_first} ${cr.doc_last}</h4>
+                                        <p>${cr.specialization || 'Specialist'} • ${cr.request_type || 'Virtual'}</p>
                                     </div>
                                 </div>
-                                <span class="status-badge pending">Pending</span>
+                                <span class="status-badge ${cr.status === 'accepted' ? 'approved' : cr.status}">${statusLabel(cr.status)}</span>
                             </div>
                             <div class="consultation-details">
-                                <span><i data-lucide="user"></i> Patient: Amara Obi</span>
-                                <span><i data-lucide="video"></i> Virtual</span>
-                                <span><i data-lucide="clock"></i> Requested 2h ago</span>
+                                <span><i data-lucide="user"></i> ${cr.pat_first} ${cr.pat_last}</span>
+                                <span><i data-lucide="${cr.request_type === 'virtual' ? 'video' : 'map-pin'}"></i> ${statusLabel(cr.request_type)}</span>
+                                <span><i data-lucide="clock"></i> ${timeAgo(cr.created_at)}</span>
                             </div>
-                        </div>
-                        <div class="consultation-card">
-                            <div class="consultation-header">
-                                <div class="doctor-info">
-                                    <div class="avatar">BI</div>
-                                    <div>
-                                        <h4>Dr. Blessing Igwe</h4>
-                                        <p>Oncologist • National Hospital Abuja</p>
-                                    </div>
-                                </div>
-                                <span class="status-badge approved">Accepted</span>
-                            </div>
-                            <div class="consultation-details">
-                                <span><i data-lucide="user"></i> Patient: Yusuf Bello</span>
-                                <span><i data-lucide="video"></i> Virtual</span>
-                                <span><i data-lucide="calendar"></i> Tomorrow 2:00 PM</span>
-                            </div>
-                            <button class="btn btn-primary btn-sm" style="margin-top: 0.75rem;">
-                                <i data-lucide="video"></i> Join Session
-                            </button>
-                        </div>
+                            ${cr.status === 'accepted' && cr.meeting_link ? `<button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="window.open('${cr.meeting_link}')"><i data-lucide="video"></i> Join Session</button>` : ''}
+                        </div>`).join('') : '<p style="color:var(--text-secondary);padding:1rem;text-align:center;">No recent consultation requests</p>'}
                     </div>
                 </div>
 
@@ -365,67 +349,112 @@
                         <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/billing.html">View All</a>
                     </div>
                     <div class="billing-mini-list">
+                        ${data.billing.length ? data.billing.map(b => `
                         <div class="billing-mini-item">
                             <div class="billing-mini-info">
-                                <h4>Amara Obi</h4>
-                                <p>Consultation + ECG</p>
+                                <h4>${b.firstname} ${b.lastname}</h4>
+                                <p>${b.description || statusLabel(b.billing_type)}</p>
                             </div>
                             <div class="billing-mini-amount">
-                                <span class="amount">₦45,000</span>
-                                <span class="status-badge paid-badge">Paid</span>
+                                <span class="amount">₦${Number(b.total).toLocaleString()}</span>
+                                <span class="status-badge ${b.payment_status === 'paid' ? 'paid-badge' : 'pending'}">${statusLabel(b.payment_status)}</span>
                             </div>
-                        </div>
-                        <div class="billing-mini-item">
-                            <div class="billing-mini-info">
-                                <h4>Yusuf Bello</h4>
-                                <p>Lab Tests (Blood Panel)</p>
-                            </div>
-                            <div class="billing-mini-amount">
-                                <span class="amount">₦28,000</span>
-                                <span class="status-badge pending">Pending</span>
-                            </div>
-                        </div>
-                        <div class="billing-mini-item">
-                            <div class="billing-mini-info">
-                                <h4>Ngozi Eze</h4>
-                                <p>X-Ray + Consultation</p>
-                            </div>
-                            <div class="billing-mini-amount">
-                                <span class="amount">₦62,000</span>
-                                <span class="status-badge paid-badge">Paid</span>
-                            </div>
-                        </div>
-                        <div class="billing-mini-item">
-                            <div class="billing-mini-info">
-                                <h4>External Consult - Dr. Okafor</h4>
-                                <p>Neurosurgery Teleconsultation</p>
-                            </div>
-                            <div class="billing-mini-amount">
-                                <span class="amount">₦150,000</span>
-                                <span class="status-badge pending">Pending</span>
-                            </div>
-                        </div>
+                        </div>`).join('') : '<p style="color:var(--text-secondary);padding:1rem;text-align:center;">No recent billing</p>'}
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
 
-    <script>
-        // Set today's date
-        document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            <!-- Third Row: Activity Feed -->
+            <div class="content-grid" style="margin-top: 1.5rem;">
+                <div class="content-section" style="grid-column: 1 / -1;">
+                    <div class="section-header">
+                        <h2>Recent Activity</h2>
+                    </div>
+                    <div class="activity-feed">
+                        ${data.activity.length ? data.activity.map(a => {
+                            const iconMap = { checkin: 'user-plus', billing: 'credit-card', emr: 'file-text' };
+                            const colorMap = { checkin: 'var(--color-primary)', billing: 'var(--color-warning)', emr: 'var(--color-success)' };
+                            return `
+                        <div class="activity-item" style="display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <div style="width:36px;height:36px;border-radius:50%;background:${colorMap[a.type] || 'var(--color-primary)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i data-lucide="${iconMap[a.type] || 'activity'}" style="width:16px;height:16px;color:#fff;"></i>
+                            </div>
+                            <div style="flex:1;min-width:0;">
+                                <p style="font-weight:500;color:var(--text-primary);margin:0;">${a.title}</p>
+                                <p style="font-size:0.8rem;color:var(--text-secondary);margin:0;">${a.detail}</p>
+                            </div>
+                            <span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${timeAgo(a.time)}</span>
+                        </div>`;
+                        }).join('') : '<p style="color:var(--text-secondary);padding:1rem;text-align:center;">No recent activity</p>'}
+                    </div>
+                </div>
+            </div>`;
 
-        // Initialize Lucide icons
-        lucide.createIcons();
+            document.getElementById('mainContent').innerHTML = html;
+            lucide.createIcons();
+        }
 
-        // AJAX content loading
+        // ==========================================
+        // Load dashboard data
+        // ==========================================
+        function loadDashboard() {
+            fetch('/api/hospital/dashboard', { credentials: 'include' })
+                .then(res => res.json())
+                .then(json => {
+                    if (json.success) {
+                        renderDashboard(json.data);
+                    } else {
+                        // Show fallback static dashboard if not authenticated
+                        renderFallbackDashboard();
+                    }
+                })
+                .catch(() => {
+                    renderFallbackDashboard();
+                });
+        }
+
+        function renderFallbackDashboard() {
+            const todayStr = new Date().toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('mainContent').innerHTML = `
+                <div class="welcome-section">
+                    <div class="welcome-text">
+                        <h1>Hospital Operations</h1>
+                        <p>Dashboard — Today: ${todayStr}</p>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card gradient-primary"><i data-lucide="users" class="stat-icon"></i><div class="stat-content"><p class="stat-label">Patients Today</p><h3 class="stat-value">--</h3><p class="stat-subtitle">Login to view live data</p></div></div>
+                    <div class="stat-card gradient-success"><i data-lucide="user-check" class="stat-icon"></i><div class="stat-content"><p class="stat-label">Active Doctors</p><h3 class="stat-value">--</h3><p class="stat-subtitle">Login to view live data</p></div></div>
+                    <div class="stat-card gradient-warning"><i data-lucide="credit-card" class="stat-icon"></i><div class="stat-content"><p class="stat-label">Today's Revenue</p><h3 class="stat-value">--</h3><p class="stat-subtitle">Login to view live data</p></div></div>
+                    <div class="stat-card gradient-info"><i data-lucide="video" class="stat-icon"></i><div class="stat-content"><p class="stat-label">External Consults</p><h3 class="stat-value">--</h3><p class="stat-subtitle">Login to view live data</p></div></div>
+                </div>
+                <p style="text-align:center;color:var(--text-secondary);margin-top:2rem;">Please log in to view live dashboard data.</p>`;
+            lucide.createIcons();
+        }
+
+        // Load on page ready
+        loadDashboard();
+
+        // Auto-refresh every 60 seconds
+        setInterval(loadDashboard, 60000);
+
+        // ==========================================
+        // Navigation: Dashboard link reloads dashboard
+        // ==========================================
         document.addEventListener('click', function(e) {
             const link = e.target.closest('.load-content');
             if (!link) return;
             e.preventDefault();
 
             const url = link.getAttribute('data-url');
-            if (!url || url.startsWith('/hospital/dashboard')) return;
+
+            // If dashboard link, reload dashboard
+            if (!url || url.startsWith('/hospital/dashboard')) {
+                document.querySelectorAll('.nav-item, .nav-dropdown-item').forEach(el => el.classList.remove('active'));
+                link.classList.add('active');
+                loadDashboard();
+                return;
+            }
 
             // Update active state
             document.querySelectorAll('.nav-item, .nav-dropdown-item').forEach(el => el.classList.remove('active'));
@@ -434,11 +463,11 @@
             fetch(url)
                 .then(res => res.text())
                 .then(html => {
-                    document.querySelector('.main-content').innerHTML = html;
+                    document.getElementById('mainContent').innerHTML = html;
                     lucide.createIcons();
                 })
                 .catch(err => {
-                    document.querySelector('.main-content').innerHTML = '<div class="error-message"><h2>Failed to load content</h2><p>' + err.message + '</p></div>';
+                    document.getElementById('mainContent').innerHTML = '<div class="error-message"><h2>Failed to load content</h2><p>' + err.message + '</p></div>';
                 });
         });
 
@@ -471,6 +500,18 @@
             document.getElementById('sidebar').classList.remove('open');
             this.classList.remove('show');
         });
+
+        // Update header badge counts
+        fetch('/api/hospital/dashboard/quick-stats', { credentials: 'include' })
+            .then(r => r.json())
+            .then(json => {
+                if (json.success) {
+                    const nb = document.querySelector('.notification-badge');
+                    if (nb) nb.textContent = json.data.queue_waiting || 0;
+                    const qb = document.querySelector('.nav-badge');
+                    if (qb) qb.textContent = json.data.queue_waiting || 0;
+                }
+            }).catch(() => {});
     </script>
 </body>
 </html>
