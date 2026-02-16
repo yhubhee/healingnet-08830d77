@@ -120,32 +120,26 @@
         <header class="header">
             <div class="header-search">
                 <i data-lucide="search"></i>
-                <input type="text" placeholder="Search patients, doctors, records...">
+                <input type="text" id="headerSearchInput" placeholder="Search patients, doctors, records..." autocomplete="off">
+                <div class="search-results-dropdown" id="searchResultsDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);max-height:320px;overflow-y:auto;z-index:100;margin-top:4px;box-shadow:0 8px 24px rgba(0,0,0,0.3);"></div>
             </div>
             <div class="header-actions">
                 <div class="dropdown">
                     <button class="icon-btn notification-btn">
                         <i data-lucide="bell"></i>
-                        <span class="notification-badge">5</span>
+                        <span class="notification-badge" id="headerNotifBadge">0</span>
                     </button>
-                    <div class="dropdown-menu notification-menu">
+                    <div class="dropdown-menu notification-menu" id="headerNotifMenu">
                         <div class="dropdown-header">
                             <span>Notifications</span>
-                            <span class="badge">5 new</span>
+                            <span class="badge" id="headerNotifNewBadge">0 new</span>
                         </div>
                         <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item notification-item">
-                            <p class="notification-title">New Patient Check-in</p>
-                            <p class="notification-text">Abubakar Musa has checked in for appointment</p>
-                            <span class="notification-time">5 min ago</span>
-                        </a>
-                        <a href="#" class="dropdown-item notification-item">
-                            <p class="notification-title">Consultation Request</p>
-                            <p class="notification-text">Dr. Olumide accepted your consultation request</p>
-                            <span class="notification-time">30 min ago</span>
-                        </a>
+                        <div id="headerNotifList">
+                            <p style="padding:1rem;text-align:center;color:var(--muted-foreground);font-size:0.85rem;">Loading...</p>
+                        </div>
                         <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item view-all">View all notifications</a>
+                        <a href="#" class="dropdown-item view-all load-content" data-url="/export/partials/hospital/notifications.html">View all notifications</a>
                     </div>
                 </div>
 
@@ -153,16 +147,16 @@
                     <button class="profile-btn">
                         <div class="avatar" style="background: var(--gradient-info);"><i data-lucide="building-2" style="width:18px;height:18px;"></i></div>
                         <div class="profile-info">
-                            <span class="profile-name">Lagos General Hospital</span>
-                            <span class="profile-role">Admin</span>
+                            <span class="profile-name" id="headerProfileName">Hospital</span>
+                            <span class="profile-role" id="headerProfileRole">Admin</span>
                         </div>
                         <i data-lucide="chevron-down"></i>
                     </button>
                     <div class="dropdown-menu profile-menu">
-                        <div class="dropdown-header">Hospital Account</div>
+                        <div class="dropdown-header" id="headerAccountLabel">Hospital Account</div>
                         <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item">Hospital Profile</a>
-                        <a href="#" class="dropdown-item">Staff Management</a>
+                        <a href="#" class="dropdown-item load-content" data-url="/export/partials/hospital/patients-list.html">Hospital Profile</a>
+                        <a href="#" class="dropdown-item load-content" data-url="/export/partials/hospital/doctors.html">Staff Management</a>
                         <a href="#" class="dropdown-item load-content" data-url="/export/partials/hospital/settings.html">Settings</a>
                         <div class="dropdown-divider"></div>
                         <a href="#" class="dropdown-item logout-item">Log out</a>
@@ -508,7 +502,107 @@
             this.classList.remove('show');
         });
 
-        // Update header badge counts
+        // ==========================================
+        // Dynamic Header: Notifications, Profile, Search
+        // ==========================================
+        function loadHeaderNotifications() {
+            fetch('/api/hospital/notifications?limit=5&status=unread', { credentials: 'include' })
+                .then(r => r.json())
+                .then(json => {
+                    if (!json.success) return;
+                    const count = json.unread_count || 0;
+                    const nb = document.getElementById('headerNotifBadge');
+                    const newBadge = document.getElementById('headerNotifNewBadge');
+                    const sb = document.querySelector('.notif-sidebar-badge');
+                    if (nb) { nb.textContent = count; nb.style.display = count > 0 ? '' : 'none'; }
+                    if (newBadge) newBadge.textContent = count + ' new';
+                    if (sb) sb.textContent = count;
+
+                    const list = document.getElementById('headerNotifList');
+                    if (!list) return;
+                    if (!json.notifications || json.notifications.length === 0) {
+                        list.innerHTML = '<p style="padding:1rem;text-align:center;color:var(--muted-foreground);font-size:0.85rem;">No new notifications</p>';
+                        return;
+                    }
+                    list.innerHTML = json.notifications.slice(0, 5).map(n => `
+                        <a href="#" class="dropdown-item notification-item" data-notif-id="${n.id}">
+                            <p class="notification-title">${n.title || n.type}</p>
+                            <p class="notification-text">${n.message || ''}</p>
+                            <span class="notification-time">${timeAgo(n.created_at)}</span>
+                        </a>
+                    `).join('');
+                }).catch(() => {});
+        }
+
+        // Mark notification as read on click
+        document.addEventListener('click', function(e) {
+            const item = e.target.closest('[data-notif-id]');
+            if (!item) return;
+            const id = item.getAttribute('data-notif-id');
+            fetch('/api/hospital/notifications/' + id + '/read', { method: 'PUT', credentials: 'include' }).catch(() => {});
+            item.style.opacity = '0.5';
+        });
+
+        // Load profile info from dashboard API
+        function loadHeaderProfile() {
+            fetch('/api/hospital/dashboard', { credentials: 'include' })
+                .then(r => r.json())
+                .then(json => {
+                    if (!json.success || !json.data.hospital) return;
+                    const h = json.data.hospital;
+                    const nameEl = document.getElementById('headerProfileName');
+                    const roleEl = document.getElementById('headerProfileRole');
+                    if (nameEl) nameEl.textContent = (h.first_name || '') + ' ' + (h.last_name || '');
+                    if (roleEl) roleEl.textContent = (h.role || 'Admin').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                }).catch(() => {});
+        }
+
+        // Header search with debounce
+        let searchTimeout;
+        const searchInput = document.getElementById('headerSearchInput');
+        const searchDropdown = document.getElementById('searchResultsDropdown');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const q = this.value.trim();
+                if (q.length < 2) { searchDropdown.style.display = 'none'; return; }
+                searchTimeout = setTimeout(() => {
+                    Promise.all([
+                        fetch('/api/hospital/patients?search=' + encodeURIComponent(q) + '&limit=5', { credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false })),
+                        fetch('/api/hospital/doctors?search=' + encodeURIComponent(q) + '&limit=5', { credentials: 'include' }).then(r => r.json()).catch(() => ({ success: false }))
+                    ]).then(([patRes, docRes]) => {
+                        let html = '';
+                        const patients = (patRes.success && (patRes.patients || patRes.data || []));
+                        const doctors = (docRes.success && (docRes.doctors || docRes.data || []));
+                        if (patients && patients.length) {
+                            html += '<div style="padding:0.5rem 1rem;font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground);font-weight:600;">Patients</div>';
+                            patients.forEach(p => {
+                                html += '<a href="#" class="dropdown-item" style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1rem;">' +
+                                    '<div class="avatar" style="width:28px;height:28px;font-size:0.7rem;">' + getInitials(p.firstname, p.lastname) + '</div>' +
+                                    '<div><p style="margin:0;font-size:0.85rem;">' + (p.firstname||'') + ' ' + (p.lastname||'') + '</p>' +
+                                    '<p style="margin:0;font-size:0.72rem;color:var(--muted-foreground);">' + (p.patient_id||'') + '</p></div></a>';
+                            });
+                        }
+                        if (doctors && doctors.length) {
+                            html += '<div style="padding:0.5rem 1rem;font-size:0.7rem;text-transform:uppercase;color:var(--muted-foreground);font-weight:600;">Doctors</div>';
+                            doctors.forEach(d => {
+                                html += '<a href="#" class="dropdown-item" style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 1rem;">' +
+                                    '<div class="avatar" style="width:28px;height:28px;font-size:0.7rem;">' + getInitials(d.firstname, d.lastname) + '</div>' +
+                                    '<div><p style="margin:0;font-size:0.85rem;">Dr. ' + (d.firstname||'') + ' ' + (d.lastname||'') + '</p>' +
+                                    '<p style="margin:0;font-size:0.72rem;color:var(--muted-foreground);">' + (d.specialization||'') + '</p></div></a>';
+                            });
+                        }
+                        if (!html) html = '<p style="padding:1rem;text-align:center;color:var(--muted-foreground);font-size:0.85rem;">No results found</p>';
+                        searchDropdown.innerHTML = html;
+                        searchDropdown.style.display = 'block';
+                    });
+                }, 300);
+            });
+            searchInput.addEventListener('blur', () => setTimeout(() => { searchDropdown.style.display = 'none'; }, 200));
+            searchInput.addEventListener('focus', function() { if (this.value.trim().length >= 2) searchDropdown.style.display = 'block'; });
+        }
+
+        // Update sidebar badge counts
         fetch('/api/hospital/dashboard/quick-stats', { credentials: 'include' })
             .then(r => r.json())
             .then(json => {
@@ -518,18 +612,10 @@
                 }
             }).catch(() => {});
 
-        // Notification badge count
-        fetch('/api/hospital/notifications?limit=1', { credentials: 'include' })
-            .then(r => r.json())
-            .then(json => {
-                if (json.success) {
-                    const count = json.unread_count || 0;
-                    const nb = document.querySelector('.notification-badge');
-                    if (nb) nb.textContent = count;
-                    const sb = document.querySelector('.notif-sidebar-badge');
-                    if (sb) sb.textContent = count;
-                }
-            }).catch(() => {});
+        // Initialize header
+        loadHeaderNotifications();
+        loadHeaderProfile();
+        setInterval(loadHeaderNotifications, 30000);
 
         // ==========================================
         // Logout handler with token blacklisting
