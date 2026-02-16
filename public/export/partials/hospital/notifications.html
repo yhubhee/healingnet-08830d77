@@ -1,0 +1,263 @@
+<!-- Hospital Notifications Partial -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Notifications</h1>
+        <p>Stay updated with hospital events, alerts, and important updates</p>
+    </div>
+    <div style="display:flex;gap:0.5rem;">
+        <button class="btn btn-outline" onclick="markAllRead()"><i data-lucide="check-check" style="width:16px;height:16px;"></i> Mark All Read</button>
+        <button class="btn btn-outline" onclick="clearReadNotifs()" style="color:var(--destructive);border-color:var(--destructive);"><i data-lucide="trash-2" style="width:16px;height:16px;"></i> Clear Read</button>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid" style="grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));margin-bottom:1.5rem;" id="notifStats">
+    <div class="stat-card gradient-primary" style="padding:1rem;">
+        <div class="stat-content">
+            <p class="stat-label">Total</p>
+            <h3 class="stat-value" id="statTotal">0</h3>
+        </div>
+    </div>
+    <div class="stat-card" style="padding:1rem;background:var(--card);border:1px solid var(--border);">
+        <div class="stat-content">
+            <p class="stat-label">Unread</p>
+            <h3 class="stat-value" id="statUnread" style="color:hsl(38, 92%, 50%);">0</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="queue-filters" style="margin-bottom:1.5rem;">
+    <button class="queue-filter-btn active" onclick="filterNotifs('all', this)">All</button>
+    <button class="queue-filter-btn" onclick="filterNotifs('unread', this)">Unread</button>
+    <button class="queue-filter-btn" onclick="filterNotifs('checkin', this)">Check-ins</button>
+    <button class="queue-filter-btn" onclick="filterNotifs('appointment', this)">Appointments</button>
+    <button class="queue-filter-btn" onclick="filterNotifs('billing', this)">Billing</button>
+    <button class="queue-filter-btn" onclick="filterNotifs('lab', this)">Lab</button>
+    <button class="queue-filter-btn" onclick="filterNotifs('pharmacy', this)">Pharmacy</button>
+    <button class="queue-filter-btn" onclick="filterNotifs('consultation', this)">Consultations</button>
+    <button class="queue-filter-btn" onclick="filterNotifs('emergency', this)">Emergency</button>
+    <button class="queue-filter-btn" onclick="filterNotifs('system', this)">System</button>
+</div>
+
+<!-- Notification List -->
+<div class="content-section" style="padding:0;">
+    <div id="notifList" style="display:flex;flex-direction:column;">
+        <div style="text-align:center;padding:3rem;color:var(--muted-foreground);">
+            <div class="spinner" style="width:32px;height:32px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;"></div>
+            Loading notifications...
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div id="notifPagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1.5rem;"></div>
+
+<script>
+let currentFilter = 'all';
+let currentPage = 1;
+const LIMIT = 20;
+
+// Icon map for notification types
+const notifIcons = {
+    checkin: 'user-plus',
+    appointment: 'calendar',
+    billing: 'credit-card',
+    lab: 'flask-conical',
+    pharmacy: 'pill',
+    consultation: 'video',
+    emergency: 'alert-triangle',
+    referral: 'arrow-right-left',
+    system: 'settings',
+    emr: 'file-text'
+};
+const notifColors = {
+    checkin: 'hsl(186, 82%, 47%)',
+    appointment: 'hsl(210, 80%, 55%)',
+    billing: 'hsl(38, 92%, 50%)',
+    lab: 'hsl(270, 60%, 60%)',
+    pharmacy: 'hsl(160, 84%, 39%)',
+    consultation: 'hsl(186, 82%, 47%)',
+    emergency: 'hsl(0, 72%, 51%)',
+    referral: 'hsl(30, 80%, 55%)',
+    system: 'hsl(217, 33%, 55%)',
+    emr: 'hsl(160, 84%, 39%)'
+};
+
+function filterNotifs(filter, btn) {
+    document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = filter;
+    currentPage = 1;
+    loadNotifications();
+}
+
+async function loadNotifications() {
+    try {
+        let url = `/api/hospital/notifications?page=${currentPage}&limit=${LIMIT}`;
+        if (currentFilter === 'unread') {
+            url += '&status=unread';
+        } else if (currentFilter !== 'all') {
+            url += `&type=${currentFilter}`;
+        }
+
+        const res = await fetch(url, { credentials: 'include' });
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById('statTotal').textContent = data.total || 0;
+            document.getElementById('statUnread').textContent = data.unread_count || 0;
+
+            // Update header badge if exists
+            const headerBadge = parent.document.querySelector('.notification-badge');
+            if (headerBadge) headerBadge.textContent = data.unread_count || 0;
+
+            renderNotifications(data.notifications || []);
+            renderPagination(data.total || 0);
+        }
+    } catch (err) {
+        console.error('Load notifications error:', err);
+        document.getElementById('notifList').innerHTML = '<div style="text-align:center;padding:3rem;color:var(--muted-foreground);">Failed to load notifications</div>';
+    }
+}
+
+function renderNotifications(notifs) {
+    const container = document.getElementById('notifList');
+
+    if (!notifs.length) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:4rem 2rem;color:var(--muted-foreground);">
+                <i data-lucide="bell-off" style="width:48px;height:48px;margin-bottom:1rem;opacity:0.4;"></i>
+                <h3 style="margin-bottom:0.5rem;font-size:1.1rem;">No notifications</h3>
+                <p style="font-size:0.85rem;">You're all caught up!</p>
+            </div>`;
+        lucide.createIcons();
+        return;
+    }
+
+    // Group by date
+    const groups = {};
+    notifs.forEach(n => {
+        const date = new Date(n.created_at);
+        const today = new Date();
+        const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+        let label;
+        if (date.toDateString() === today.toDateString()) label = 'Today';
+        else if (date.toDateString() === yesterday.toDateString()) label = 'Yesterday';
+        else label = date.toLocaleDateString('en-NG', { weekday: 'long', month: 'short', day: 'numeric' });
+
+        if (!groups[label]) groups[label] = [];
+        groups[label].push(n);
+    });
+
+    let html = '';
+    for (const [label, items] of Object.entries(groups)) {
+        html += `<div style="padding:0.5rem 1.25rem;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted-foreground);background:var(--background);border-bottom:1px solid var(--border);">${label}</div>`;
+        items.forEach(n => {
+            const icon = notifIcons[n.type] || 'bell';
+            const color = notifColors[n.type] || 'var(--primary)';
+            const unreadStyle = n.is_read ? '' : 'border-left:3px solid ' + color + ';';
+            const unreadBg = n.is_read ? '' : 'background:hsla(186, 82%, 47%, 0.03);';
+            const time = timeAgoNotif(n.created_at);
+
+            html += `
+            <div class="notif-item" style="display:flex;align-items:flex-start;gap:1rem;padding:1rem 1.25rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;${unreadStyle}${unreadBg}" onmouseenter="this.style.background='var(--sidebar-accent)'" onmouseleave="this.style.background='${n.is_read ? '' : 'hsla(186, 82%, 47%, 0.03)'}'" onclick="handleNotifClick(${n.id}, ${n.is_read})">
+                <div style="width:40px;height:40px;border-radius:10px;background:${color}20;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i data-lucide="${icon}" style="width:18px;height:18px;color:${color};"></i>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
+                        <h4 style="font-size:0.9rem;font-weight:${n.is_read ? '500' : '600'};margin-bottom:0.2rem;">${escapeHtml(n.title)}</h4>
+                        <span style="font-size:0.72rem;color:var(--muted-foreground);white-space:nowrap;flex-shrink:0;">${time}</span>
+                    </div>
+                    <p style="font-size:0.82rem;color:var(--muted-foreground);line-height:1.4;">${escapeHtml(n.message)}</p>
+                    <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;">
+                        <span style="font-size:0.7rem;padding:0.15rem 0.5rem;border-radius:100px;background:${color}15;color:${color};font-weight:600;text-transform:capitalize;">${n.type}</span>
+                        ${!n.is_read ? '<span style="font-size:0.7rem;padding:0.15rem 0.5rem;border-radius:100px;background:hsla(38,92%,50%,0.15);color:hsl(38,92%,50%);font-weight:600;">Unread</span>' : ''}
+                    </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:0.25rem;flex-shrink:0;">
+                    ${!n.is_read ? `<button onclick="event.stopPropagation();markRead(${n.id})" title="Mark as read" style="background:none;border:none;color:var(--muted-foreground);cursor:pointer;padding:4px;border-radius:6px;" onmouseenter="this.style.color='var(--primary)'" onmouseleave="this.style.color='var(--muted-foreground)'"><i data-lucide="check" style="width:16px;height:16px;"></i></button>` : ''}
+                    <button onclick="event.stopPropagation();deleteNotif(${n.id})" title="Delete" style="background:none;border:none;color:var(--muted-foreground);cursor:pointer;padding:4px;border-radius:6px;" onmouseenter="this.style.color='var(--destructive)'" onmouseleave="this.style.color='var(--muted-foreground)'"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+                </div>
+            </div>`;
+        });
+    }
+
+    container.innerHTML = html;
+    lucide.createIcons();
+}
+
+function renderPagination(total) {
+    const pages = Math.ceil(total / LIMIT);
+    const container = document.getElementById('notifPagination');
+    if (pages <= 1) { container.innerHTML = ''; return; }
+
+    let html = '';
+    for (let i = 1; i <= pages; i++) {
+        const active = i === currentPage ? 'background:var(--primary);color:var(--primary-foreground);' : 'background:var(--card);color:var(--foreground);';
+        html += `<button onclick="goPage(${i})" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-weight:600;font-size:0.82rem;${active}">${i}</button>`;
+    }
+    container.innerHTML = html;
+}
+
+function goPage(p) {
+    currentPage = p;
+    loadNotifications();
+}
+
+async function handleNotifClick(id, isRead) {
+    if (!isRead) await markRead(id);
+}
+
+async function markRead(id) {
+    try {
+        await fetch(`/api/hospital/notifications/${id}/read`, { method: 'PUT', credentials: 'include' });
+        loadNotifications();
+    } catch (err) { console.error(err); }
+}
+
+async function markAllRead() {
+    try {
+        await fetch('/api/hospital/notifications/read-all', { method: 'PUT', credentials: 'include' });
+        loadNotifications();
+    } catch (err) { console.error(err); }
+}
+
+async function deleteNotif(id) {
+    try {
+        await fetch(`/api/hospital/notifications/${id}`, { method: 'DELETE', credentials: 'include' });
+        loadNotifications();
+    } catch (err) { console.error(err); }
+}
+
+async function clearReadNotifs() {
+    if (!confirm('Clear all read notifications?')) return;
+    try {
+        await fetch('/api/hospital/notifications/clear-read', { method: 'DELETE', credentials: 'include' });
+        loadNotifications();
+    } catch (err) { console.error(err); }
+}
+
+function timeAgoNotif(dateStr) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return days + 'd ago';
+    return new Date(dateStr).toLocaleDateString('en-NG', { month: 'short', day: 'numeric' });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// Init
+loadNotifications();
+</script>

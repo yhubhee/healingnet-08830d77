@@ -341,6 +341,24 @@ CREATE TABLE IF NOT EXISTS hospital_notification_preferences (
 );
 
 -- ==========================================
+-- HOSPITAL NOTIFICATIONS
+-- ==========================================
+CREATE TABLE IF NOT EXISTS hospital_notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT NOT NULL,
+    type ENUM('checkin', 'appointment', 'billing', 'lab', 'pharmacy', 'consultation', 'emergency', 'referral', 'system', 'emr') NOT NULL DEFAULT 'system',
+    title VARCHAR(255) NOT NULL,
+    message TEXT,
+    reference_id INT NULL,
+    reference_type VARCHAR(50) NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_hosp_notif_hospital (hospital_id),
+    INDEX idx_hosp_notif_read (hospital_id, is_read),
+    INDEX idx_hosp_notif_type (type)
+);
+
+-- ==========================================
 -- INDEXES
 -- ==========================================
 CREATE INDEX idx_hospital_staff_hospital ON hospital_staff(hospital_id);
