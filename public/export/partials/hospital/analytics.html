@@ -1,92 +1,382 @@
-<!-- Hospital Analytics Partial -->
-<div class="welcome-section"><div class="welcome-text"><h1>Analytics Dashboard</h1><p>Hospital performance, patient flow, revenue trends, and doctor utilization</p></div></div>
+<!-- Hospital Analytics Dashboard -->
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Analytics Dashboard</h1>
+        <p>Hospital performance, patient flow, revenue trends, and doctor utilization</p>
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="exportAnalytics()"><i data-lucide="download" style="width:14px;height:14px;"></i> Export</button>
+        <button class="btn btn-primary btn-sm" onclick="loadAnalytics(currentAnPeriod)"><i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh</button>
+    </div>
+</div>
 
+<!-- Period Filter -->
 <div style="display:flex;gap:0.75rem;margin-bottom:1.5rem;align-items:center;flex-wrap:wrap;">
     <span style="font-size:0.85rem;color:var(--muted-foreground);">Period:</span>
     <button class="queue-filter-btn active" onclick="loadAnalytics('today', this)">Today</button>
     <button class="queue-filter-btn" onclick="loadAnalytics('week', this)">This Week</button>
     <button class="queue-filter-btn" onclick="loadAnalytics('month', this)">This Month</button>
     <button class="queue-filter-btn" onclick="loadAnalytics('30days', this)">Last 30 Days</button>
+    <button class="queue-filter-btn" onclick="loadAnalytics('90days', this)">Last 90 Days</button>
 </div>
 
+<!-- Summary Stats Row -->
 <div class="stats-grid" style="margin-bottom:1.5rem;">
-    <div class="stat-card gradient-primary"><i data-lucide="users" class="stat-icon"></i><div class="stat-content"><p class="stat-label">Total Patients</p><h3 class="stat-value" id="anTotal">—</h3></div></div>
-    <div class="stat-card gradient-success"><i data-lucide="credit-card" class="stat-icon"></i><div class="stat-content"><p class="stat-label">Revenue</p><h3 class="stat-value" id="anRevenue">—</h3></div></div>
-    <div class="stat-card gradient-warning"><i data-lucide="clock" class="stat-icon"></i><div class="stat-content"><p class="stat-label">Avg Wait Time</p><h3 class="stat-value" id="anWait">—</h3></div></div>
-    <div class="stat-card gradient-info"><i data-lucide="user-check" class="stat-icon"></i><div class="stat-content"><p class="stat-label">Active Doctors</p><h3 class="stat-value" id="anDoctors">—</h3></div></div>
+    <div class="stat-card gradient-primary">
+        <i data-lucide="users" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Total Patients</p><h3 class="stat-value" id="anTotal">—</h3><p class="stat-sub" id="anPatientSub"></p></div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="credit-card" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Revenue</p><h3 class="stat-value" id="anRevenue">—</h3><p class="stat-sub" id="anRevSub"></p></div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="clock" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Avg Wait Time</p><h3 class="stat-value" id="anWait">—</h3><p class="stat-sub" id="anWaitSub"></p></div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="user-check" class="stat-icon"></i>
+        <div class="stat-content"><p class="stat-label">Active Doctors</p><h3 class="stat-value" id="anDoctors">—</h3><p class="stat-sub" id="anDocSub"></p></div>
+    </div>
 </div>
 
-<div class="analytics-grid">
-    <div class="analytics-card" id="patientFlowCard"><h3>Patient Flow</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
-    <div class="analytics-card" id="revenueCard"><h3>Revenue Breakdown</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+<!-- Secondary Stats Row -->
+<div class="stats-grid" style="margin-bottom:1.5rem;">
+    <div class="stat-card" style="background:var(--card);border:1px solid var(--border);">
+        <i data-lucide="microscope" class="stat-icon" style="color:var(--primary);"></i>
+        <div class="stat-content"><p class="stat-label">Lab Tests</p><h3 class="stat-value" id="anLab">—</h3><p class="stat-sub" id="anLabSub"></p></div>
+    </div>
+    <div class="stat-card" style="background:var(--card);border:1px solid var(--border);">
+        <i data-lucide="pill" class="stat-icon" style="color:var(--success);"></i>
+        <div class="stat-content"><p class="stat-label">Pharmacy Orders</p><h3 class="stat-value" id="anPharm">—</h3><p class="stat-sub" id="anPharmSub"></p></div>
+    </div>
+    <div class="stat-card" style="background:var(--card);border:1px solid var(--border);">
+        <i data-lucide="check-circle" class="stat-icon" style="color:var(--success);"></i>
+        <div class="stat-content"><p class="stat-label">Completed</p><h3 class="stat-value" id="anCompleted">—</h3><p class="stat-sub">Consultations finished</p></div>
+    </div>
+    <div class="stat-card" style="background:var(--card);border:1px solid var(--border);">
+        <i data-lucide="alert-circle" class="stat-icon" style="color:var(--destructive);"></i>
+        <div class="stat-content"><p class="stat-label">No-shows</p><h3 class="stat-value" id="anNoShows">—</h3><p class="stat-sub">Missed appointments</p></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="emr-tabs" style="margin-bottom:1.25rem;">
+    <button class="emr-tab active" onclick="showAnTab('overview', this)">Overview</button>
+    <button class="emr-tab" onclick="showAnTab('revenue', this)">Revenue</button>
+    <button class="emr-tab" onclick="showAnTab('doctors', this)">Doctors</button>
+    <button class="emr-tab" onclick="showAnTab('departments', this)">Departments</button>
+    <button class="emr-tab" onclick="showAnTab('trends', this)">Trends</button>
+</div>
+
+<!-- Tab Panels -->
+
+<!-- Overview Tab -->
+<div class="tab-panel active" id="anTab-overview">
+    <div class="analytics-grid">
+        <div class="analytics-card" id="patientFlowCard"><h3>Patient Flow</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+        <div class="analytics-card" id="revenueBreakdownCard"><h3>Revenue Breakdown</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+    </div>
+    <div class="analytics-grid" style="margin-top:1rem;">
+        <div class="analytics-card" id="hourlyFlowCard"><h3>Hourly Patient Flow</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+        <div class="analytics-card" id="topDiagnosesCard"><h3>Top Diagnoses</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+    </div>
+</div>
+
+<!-- Revenue Tab -->
+<div class="tab-panel" id="anTab-revenue" style="display:none;">
+    <div class="analytics-card" id="revenueTrendCard" style="margin-bottom:1rem;"><h3>Revenue Trend (Last 30 Days)</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+    <div class="analytics-grid">
+        <div class="analytics-card" id="revenueDetailCard"><h3>Revenue Details</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+        <div class="analytics-card" id="revenueSourcesCard"><h3>Revenue Sources</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+    </div>
+</div>
+
+<!-- Doctors Tab -->
+<div class="tab-panel" id="anTab-doctors" style="display:none;">
     <div class="analytics-card" id="doctorUtilCard"><h3>Doctor Utilization</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+</div>
+
+<!-- Departments Tab -->
+<div class="tab-panel" id="anTab-departments" style="display:none;">
     <div class="analytics-card" id="deptStatsCard"><h3>Department Performance</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
 </div>
 
+<!-- Trends Tab -->
+<div class="tab-panel" id="anTab-trends" style="display:none;">
+    <div class="analytics-card" id="patientTrendCard"><h3>Patient Volume Trend (Last 30 Days)</h3><p style="color:var(--muted-foreground);">Loading...</p></div>
+</div>
+
 <script>
+let currentAnPeriod = 'today';
+let anOverviewData = null;
+
+function showAnTab(tab, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.emr-tab').forEach(t => t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    const panel = document.getElementById('anTab-' + tab);
+    if (panel) panel.style.display = '';
+}
+
+function fmt(n) { return Number(n || 0).toLocaleString(); }
+function fmtCurrency(n) { return '₦' + Number(n || 0).toLocaleString(); }
+function pct(part, total) { return total > 0 ? Math.round((part / total) * 100) : 0; }
+
+function buildBar(label, value, maxVal, color, suffix) {
+    const w = maxVal > 0 ? Math.max(4, (value / maxVal) * 100) : 4;
+    return `<div class="analytics-metric"><span class="metric-label">${label}</span><span class="metric-value">${value}${suffix || ''}</span></div>
+    <div class="analytics-bar"><div class="analytics-bar-fill" style="width:${w}%;${color ? 'background:' + color + ';' : ''}"></div></div>`;
+}
+
+function buildSparkBars(data, keyLabel, keyValue, color) {
+    if (!data || !data.length) return '<p style="color:var(--muted-foreground);padding:1rem 0;">No data available</p>';
+    const maxV = Math.max(...data.map(d => d[keyValue] || 0), 1);
+    return data.map(d => buildBar(d[keyLabel], d[keyValue] || 0, maxV, color)).join('');
+}
+
 async function loadAnalytics(period, btn) {
+    currentAnPeriod = period || 'today';
     document.querySelectorAll('.queue-filter-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+    else document.querySelector('.queue-filter-btn')?.classList.add('active');
 
     const today = new Date().toISOString().split('T')[0];
     let from = today, to = today;
     if (period === 'week') { const d = new Date(); d.setDate(d.getDate() - 7); from = d.toISOString().split('T')[0]; }
     else if (period === 'month') { const d = new Date(); d.setDate(1); from = d.toISOString().split('T')[0]; }
     else if (period === '30days') { const d = new Date(); d.setDate(d.getDate() - 30); from = d.toISOString().split('T')[0]; }
+    else if (period === '90days') { const d = new Date(); d.setDate(d.getDate() - 90); from = d.toISOString().split('T')[0]; }
 
     try {
-        const [overviewRes, deptRes] = await Promise.all([
+        const [overviewRes, deptRes, trendRes, patTrendRes, diagRes, hourlyRes] = await Promise.all([
             fetch(`/api/hospital/analytics/overview?from=${from}&to=${to}`, { credentials: 'include' }),
             fetch('/api/hospital/analytics/department-stats', { credentials: 'include' }),
+            fetch('/api/hospital/analytics/revenue-trend?days=30', { credentials: 'include' }),
+            fetch('/api/hospital/analytics/patient-trend?days=30', { credentials: 'include' }),
+            fetch('/api/hospital/analytics/top-diagnoses?days=30', { credentials: 'include' }),
+            fetch('/api/hospital/analytics/hourly-flow?days=7', { credentials: 'include' }),
         ]);
-        const overview = await overviewRes.json();
-        const dept = await deptRes.json();
+        const [overview, dept, trend, patTrend, diag, hourly] = await Promise.all([
+            overviewRes.json(), deptRes.json(), trendRes.json(), patTrendRes.json(), diagRes.json(), hourlyRes.json()
+        ]);
 
         if (overview.success) {
+            anOverviewData = overview;
             const pf = overview.patient_flow || {};
             const rev = overview.revenue || {};
             const dc = overview.doctor_counts || {};
+            const lab = overview.lab_stats || {};
+            const pharm = overview.pharmacy_stats || {};
 
-            document.getElementById('anTotal').textContent = (pf.total_patients || 0).toLocaleString();
-            document.getElementById('anRevenue').textContent = '₦' + Number(rev.total_revenue || 0).toLocaleString();
+            // Top stats
+            document.getElementById('anTotal').textContent = fmt(pf.total_patients);
+            document.getElementById('anPatientSub').textContent = `${fmt(pf.pre_booked)} booked · ${fmt(pf.walk_ins)} walk-ins`;
+            document.getElementById('anRevenue').textContent = fmtCurrency(rev.total_revenue);
+            document.getElementById('anRevSub').textContent = `${fmt(rev.total_transactions)} transactions`;
             document.getElementById('anWait').textContent = Math.round(pf.avg_wait_minutes || 0) + ' min';
+            document.getElementById('anWaitSub').textContent = pf.in_progress ? `${fmt(pf.in_progress)} in progress` : '';
             document.getElementById('anDoctors').textContent = dc.total || 0;
+            document.getElementById('anDocSub').textContent = `${dc.full_time||0} FT · ${dc.visiting||0} visiting · ${dc.locum||0} locum`;
+            document.getElementById('anCompleted').textContent = fmt(pf.completed);
+            document.getElementById('anNoShows').textContent = fmt(pf.no_shows);
+            document.getElementById('anLab').textContent = fmt(lab.total_tests);
+            document.getElementById('anLabSub').textContent = `${fmt(lab.completed_tests)} done · ${fmt(lab.pending_tests)} pending`;
+            document.getElementById('anPharm').textContent = fmt(pharm.total_orders);
+            document.getElementById('anPharmSub').textContent = `${fmt(pharm.dispensed)} dispensed · ${fmtCurrency(pharm.pharmacy_revenue)}`;
 
-            // Patient flow
-            const total = pf.total_patients || 1;
+            // Patient flow card
+            const total = Math.max(pf.total_patients || 1, 1);
             document.getElementById('patientFlowCard').innerHTML = `<h3>Patient Flow</h3>
-                <div class="analytics-metric"><span class="metric-label">Pre-booked</span><span class="metric-value">${pf.pre_booked || 0}</span></div>
-                <div class="analytics-bar"><div class="analytics-bar-fill" style="width:${((pf.pre_booked||0)/total*100)}%;"></div></div>
-                <div class="analytics-metric" style="margin-top:1rem;"><span class="metric-label">Walk-ins</span><span class="metric-value">${pf.walk_ins || 0}</span></div>
-                <div class="analytics-bar"><div class="analytics-bar-fill" style="width:${((pf.walk_ins||0)/total*100)}%;background:var(--gradient-warning);"></div></div>
-                <div class="analytics-metric" style="margin-top:1rem;"><span class="metric-label">No-shows</span><span class="metric-value" style="color:var(--destructive);">${pf.no_shows || 0}</span></div>
-                <div class="analytics-bar"><div class="analytics-bar-fill" style="width:${((pf.no_shows||0)/total*100)}%;background:var(--gradient-danger);"></div></div>
-                <div class="analytics-metric" style="margin-top:1rem;"><span class="metric-label">Completed</span><span class="metric-value" style="color:var(--success);">${pf.completed || 0}</span></div>`;
+                ${buildBar('Pre-booked', pf.pre_booked||0, total, 'var(--primary)')}
+                ${buildBar('Walk-ins', pf.walk_ins||0, total, 'var(--warning)', '')}
+                ${buildBar('Completed', pf.completed||0, total, 'var(--success)', '')}
+                ${buildBar('No-shows', pf.no_shows||0, total, 'var(--destructive)', '')}
+                <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+                    <div class="analytics-metric"><span class="metric-label">Completion Rate</span><span class="metric-value" style="color:var(--success);">${pct(pf.completed, total)}%</span></div>
+                    <div class="analytics-metric"><span class="metric-label">No-show Rate</span><span class="metric-value" style="color:var(--destructive);">${pct(pf.no_shows, total)}%</span></div>
+                </div>`;
 
-            // Revenue
-            document.getElementById('revenueCard').innerHTML = `<h3>Revenue</h3>
-                <div class="analytics-metric"><span class="metric-label">Collected</span><span class="metric-value" style="color:var(--success);">₦${Number(rev.collected||0).toLocaleString()}</span></div>
-                <div class="analytics-metric" style="margin-top:0.75rem;"><span class="metric-label">Pending</span><span class="metric-value" style="color:var(--warning);">₦${Number(rev.pending||0).toLocaleString()}</span></div>
-                <div class="analytics-metric" style="margin-top:0.75rem;"><span class="metric-label">External Consults</span><span class="metric-value">₦${Number(rev.external_revenue||0).toLocaleString()}</span></div>`;
+            // Revenue breakdown card
+            document.getElementById('revenueBreakdownCard').innerHTML = `<h3>Revenue Breakdown</h3>
+                <div class="analytics-metric"><span class="metric-label">💰 Collected</span><span class="metric-value" style="color:var(--success);">${fmtCurrency(rev.collected)}</span></div>
+                <div class="analytics-bar"><div class="analytics-bar-fill" style="width:${pct(rev.collected, rev.total_revenue)}%;background:var(--success);"></div></div>
+                <div class="analytics-metric" style="margin-top:0.75rem;"><span class="metric-label">⏳ Pending</span><span class="metric-value" style="color:var(--warning);">${fmtCurrency(rev.pending)}</span></div>
+                <div class="analytics-bar"><div class="analytics-bar-fill" style="width:${pct(rev.pending, rev.total_revenue)}%;background:var(--warning);"></div></div>
+                <div class="analytics-metric" style="margin-top:0.75rem;"><span class="metric-label">⚠️ Overdue</span><span class="metric-value" style="color:var(--destructive);">${fmtCurrency(rev.overdue)}</span></div>
+                <div class="analytics-bar"><div class="analytics-bar-fill" style="width:${pct(rev.overdue, rev.total_revenue)}%;background:var(--destructive);"></div></div>
+                <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+                    <div class="analytics-metric"><span class="metric-label">Collection Rate</span><span class="metric-value" style="color:var(--success);">${pct(rev.collected, rev.total_revenue)}%</span></div>
+                </div>`;
+
+            // Revenue detail card (revenue tab)
+            document.getElementById('revenueDetailCard').innerHTML = `<h3>Revenue Details</h3>
+                <div class="analytics-metric"><span class="metric-label">Total Revenue</span><span class="metric-value">${fmtCurrency(rev.total_revenue)}</span></div>
+                <div style="height:1px;background:var(--border);margin:0.75rem 0;"></div>
+                <div class="analytics-metric"><span class="metric-label">Collected</span><span class="metric-value" style="color:var(--success);">${fmtCurrency(rev.collected)}</span></div>
+                <div class="analytics-metric"><span class="metric-label">Pending</span><span class="metric-value" style="color:var(--warning);">${fmtCurrency(rev.pending)}</span></div>
+                <div class="analytics-metric"><span class="metric-label">Overdue</span><span class="metric-value" style="color:var(--destructive);">${fmtCurrency(rev.overdue)}</span></div>
+                <div style="height:1px;background:var(--border);margin:0.75rem 0;"></div>
+                <div class="analytics-metric"><span class="metric-label">Transactions</span><span class="metric-value">${fmt(rev.total_transactions)}</span></div>
+                <div class="analytics-metric"><span class="metric-label">Avg per Transaction</span><span class="metric-value">${rev.total_transactions > 0 ? fmtCurrency(Math.round(rev.total_revenue / rev.total_transactions)) : '—'}</span></div>`;
+
+            // Revenue sources card
+            document.getElementById('revenueSourcesCard').innerHTML = `<h3>Revenue Sources</h3>
+                ${buildBar('Direct Payments', (rev.total_revenue - (rev.external_revenue||0) - (rev.insurance_revenue||0)), rev.total_revenue, 'var(--primary)')}
+                ${buildBar('External Consults', rev.external_revenue||0, rev.total_revenue, 'var(--info)')}
+                ${buildBar('Insurance/HMO', rev.insurance_revenue||0, rev.total_revenue, 'var(--warning)')}
+                ${buildBar('Pharmacy', pharm.pharmacy_revenue||0, rev.total_revenue, 'var(--success)')}`;
 
             // Doctor utilization
             const docUtil = overview.doctor_utilization || [];
-            document.getElementById('doctorUtilCard').innerHTML = `<h3>Doctor Utilization</h3>` +
-                docUtil.slice(0,5).map(d => {
-                    const maxP = Math.max(...docUtil.map(x => x.patients_seen || 1));
-                    return `<div class="analytics-metric"><span class="metric-label">Dr. ${d.last_name} (${d.specialty || '—'})</span><span class="metric-value">${d.patients_seen || 0} patients</span></div>
-                    <div class="analytics-bar"><div class="analytics-bar-fill" style="width:${((d.patients_seen||0)/maxP*100)}%;"></div></div>`;
-                }).join('');
+            if (docUtil.length) {
+                const maxP = Math.max(...docUtil.map(x => x.patients_seen || 0), 1);
+                document.getElementById('doctorUtilCard').innerHTML = `<h3>Doctor Utilization</h3>
+                    <div style="overflow-x:auto;"><table class="queue-table" style="margin-top:0.75rem;">
+                    <thead><tr><th>Doctor</th><th>Specialty</th><th>Type</th><th>Patients</th><th>Avg Consult</th><th>Load</th></tr></thead>
+                    <tbody>${docUtil.map(d => `<tr>
+                        <td><strong>Dr. ${d.first_name} ${d.last_name}</strong></td>
+                        <td>${d.specialty || '—'}</td>
+                        <td><span class="queue-status ${d.employment_type === 'full_time' ? 'status-completed' : 'status-waiting'}">${(d.employment_type||'').replace('_',' ')}</span></td>
+                        <td><strong>${d.patients_seen || 0}</strong></td>
+                        <td>${d.avg_consultation_mins ? Math.round(d.avg_consultation_mins) + ' min' : '—'}</td>
+                        <td><div class="analytics-bar" style="width:120px;display:inline-block;vertical-align:middle;"><div class="analytics-bar-fill" style="width:${((d.patients_seen||0)/maxP*100)}%;"></div></div></td>
+                    </tr>`).join('')}</tbody></table></div>`;
+            } else {
+                document.getElementById('doctorUtilCard').innerHTML = '<h3>Doctor Utilization</h3><p style="color:var(--muted-foreground);padding:2rem 0;text-align:center;">No doctor activity data for this period</p>';
+            }
         }
 
-        if (dept.success) {
-            const stats = dept.stats || [];
-            document.getElementById('deptStatsCard').innerHTML = `<h3>Department Performance</h3>` +
-                stats.map(s => `<div class="analytics-metric"><span class="metric-label">${s.department}</span><span class="metric-value">${s.total_patients} visits</span></div>
-                <div class="analytics-metric"><span class="metric-label" style="font-size:0.78rem;">Avg wait: ${Math.round(s.avg_wait||0)} min</span></div>
-                <div style="height:1px;background:var(--border);margin:0.5rem 0;"></div>`).join('');
+        // Department stats
+        if (dept.success && dept.stats?.length) {
+            document.getElementById('deptStatsCard').innerHTML = `<h3>Department Performance</h3>
+                <div style="overflow-x:auto;"><table class="queue-table" style="margin-top:0.75rem;">
+                <thead><tr><th>Department</th><th>Total Patients</th><th>Completed</th><th>In Progress</th><th>Avg Wait</th><th>Completion Rate</th></tr></thead>
+                <tbody>${dept.stats.map(s => `<tr>
+                    <td><strong>${s.department}</strong></td>
+                    <td>${s.total_patients}</td>
+                    <td style="color:var(--success);">${s.completed || 0}</td>
+                    <td style="color:var(--warning);">${s.in_progress || 0}</td>
+                    <td>${Math.round(s.avg_wait||0)} min</td>
+                    <td><div class="analytics-bar" style="width:80px;display:inline-block;vertical-align:middle;"><div class="analytics-bar-fill" style="width:${pct(s.completed, s.total_patients)}%;"></div></div> ${pct(s.completed, s.total_patients)}%</td>
+                </tr>`).join('')}</tbody></table></div>`;
+        } else {
+            document.getElementById('deptStatsCard').innerHTML = '<h3>Department Performance</h3><p style="color:var(--muted-foreground);padding:2rem 0;text-align:center;">No department data available</p>';
         }
-    } catch (err) { console.error('Analytics error:', err); }
+
+        // Revenue trend (simple bar chart)
+        if (trend.success && trend.trend?.length) {
+            const maxRev = Math.max(...trend.trend.map(t => t.revenue || 0), 1);
+            document.getElementById('revenueTrendCard').innerHTML = `<h3>Revenue Trend (Last 30 Days)</h3>
+                <div style="display:flex;align-items:flex-end;gap:3px;height:180px;padding-top:1rem;overflow-x:auto;">
+                ${trend.trend.map(t => {
+                    const h = Math.max(4, (t.revenue / maxRev) * 160);
+                    const dt = new Date(t.date);
+                    const label = (dt.getMonth()+1) + '/' + dt.getDate();
+                    return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:18px;" title="${label}: ${fmtCurrency(t.revenue)}">
+                        <div style="width:100%;max-width:28px;height:${h}px;background:var(--primary);border-radius:4px 4px 0 0;transition:height 0.3s;"></div>
+                        <span style="font-size:0.6rem;color:var(--muted-foreground);margin-top:4px;writing-mode:vertical-rl;transform:rotate(180deg);height:30px;overflow:hidden;">${label}</span>
+                    </div>`;
+                }).join('')}
+                </div>
+                <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);display:flex;gap:2rem;">
+                    <div class="analytics-metric"><span class="metric-label">Total</span><span class="metric-value">${fmtCurrency(trend.trend.reduce((s,t)=>s+(t.revenue||0),0))}</span></div>
+                    <div class="analytics-metric"><span class="metric-label">Daily Avg</span><span class="metric-value">${fmtCurrency(Math.round(trend.trend.reduce((s,t)=>s+(t.revenue||0),0)/trend.trend.length))}</span></div>
+                </div>`;
+        } else {
+            document.getElementById('revenueTrendCard').innerHTML = '<h3>Revenue Trend</h3><p style="color:var(--muted-foreground);padding:2rem 0;text-align:center;">No revenue data available</p>';
+        }
+
+        // Patient trend
+        if (patTrend.success && patTrend.trend?.length) {
+            const maxPat = Math.max(...patTrend.trend.map(t => t.patients || 0), 1);
+            document.getElementById('patientTrendCard').innerHTML = `<h3>Patient Volume Trend (Last 30 Days)</h3>
+                <div style="display:flex;align-items:flex-end;gap:3px;height:180px;padding-top:1rem;overflow-x:auto;">
+                ${patTrend.trend.map(t => {
+                    const h = Math.max(4, (t.patients / maxPat) * 160);
+                    const dt = new Date(t.date);
+                    const label = (dt.getMonth()+1) + '/' + dt.getDate();
+                    return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:18px;" title="${label}: ${t.patients} patients (${t.walk_ins||0} walk-ins)">
+                        <div style="width:100%;max-width:28px;border-radius:4px 4px 0 0;overflow:hidden;">
+                            <div style="height:${Math.max(2,((t.pre_booked||0)/maxPat)*160)}px;background:var(--primary);"></div>
+                            <div style="height:${Math.max(2,((t.walk_ins||0)/maxPat)*160)}px;background:var(--warning);"></div>
+                        </div>
+                        <span style="font-size:0.6rem;color:var(--muted-foreground);margin-top:4px;writing-mode:vertical-rl;transform:rotate(180deg);height:30px;overflow:hidden;">${label}</span>
+                    </div>`;
+                }).join('')}
+                </div>
+                <div style="margin-top:0.5rem;display:flex;gap:1.5rem;font-size:0.8rem;">
+                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--primary);margin-right:4px;"></span>Pre-booked</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--warning);margin-right:4px;"></span>Walk-ins</span>
+                </div>
+                <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);display:flex;gap:2rem;">
+                    <div class="analytics-metric"><span class="metric-label">Total Patients</span><span class="metric-value">${fmt(patTrend.trend.reduce((s,t)=>s+(t.patients||0),0))}</span></div>
+                    <div class="analytics-metric"><span class="metric-label">Daily Avg</span><span class="metric-value">${Math.round(patTrend.trend.reduce((s,t)=>s+(t.patients||0),0)/patTrend.trend.length)}</span></div>
+                </div>`;
+        } else {
+            document.getElementById('patientTrendCard').innerHTML = '<h3>Patient Volume Trend</h3><p style="color:var(--muted-foreground);padding:2rem 0;text-align:center;">No patient data available</p>';
+        }
+
+        // Top diagnoses
+        if (diag.success && diag.diagnoses?.length) {
+            const maxD = Math.max(...diag.diagnoses.map(d => d.count || 0), 1);
+            document.getElementById('topDiagnosesCard').innerHTML = `<h3>Top Diagnoses (30 Days)</h3>` +
+                diag.diagnoses.map((d,i) => `<div class="analytics-metric"><span class="metric-label">${i+1}. ${d.diagnosis}</span><span class="metric-value">${d.count}</span></div>
+                <div class="analytics-bar"><div class="analytics-bar-fill" style="width:${(d.count/maxD*100)}%;"></div></div>`).join('');
+        } else {
+            document.getElementById('topDiagnosesCard').innerHTML = '<h3>Top Diagnoses</h3><p style="color:var(--muted-foreground);padding:2rem 0;text-align:center;">No diagnosis data available</p>';
+        }
+
+        // Hourly flow
+        if (hourly.success && hourly.flow?.length) {
+            const maxH = Math.max(...hourly.flow.map(h => h.patients || 0), 1);
+            document.getElementById('hourlyFlowCard').innerHTML = `<h3>Hourly Patient Flow (Last 7 Days)</h3>
+                <div style="display:flex;align-items:flex-end;gap:4px;height:160px;padding-top:1rem;">
+                ${Array.from({length:24}, (_,i) => {
+                    const entry = hourly.flow.find(h => h.hour === i);
+                    const count = entry ? entry.patients : 0;
+                    const h = Math.max(2, (count / maxH) * 140);
+                    const isPeak = count === maxH && count > 0;
+                    return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;" title="${i}:00 - ${count} patients">
+                        <div style="width:100%;max-width:24px;height:${h}px;background:${isPeak ? 'var(--destructive)' : 'var(--primary)'};border-radius:3px 3px 0 0;opacity:${count > 0 ? 1 : 0.3};"></div>
+                        <span style="font-size:0.65rem;color:var(--muted-foreground);margin-top:3px;">${i}</span>
+                    </div>`;
+                }).join('')}
+                </div>
+                <div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted-foreground);">
+                    Peak hour highlighted in red
+                </div>`;
+        } else {
+            document.getElementById('hourlyFlowCard').innerHTML = '<h3>Hourly Patient Flow</h3><p style="color:var(--muted-foreground);padding:2rem 0;text-align:center;">No hourly data available</p>';
+        }
+
+        // Reinitialize Lucide icons
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    } catch (err) {
+        console.error('Analytics error:', err);
+    }
+}
+
+function exportAnalytics() {
+    if (!anOverviewData) return alert('Load analytics data first.');
+    const pf = anOverviewData.patient_flow || {};
+    const rev = anOverviewData.revenue || {};
+    const csv = [
+        'Metric,Value',
+        `Total Patients,${pf.total_patients||0}`,
+        `Pre-booked,${pf.pre_booked||0}`,
+        `Walk-ins,${pf.walk_ins||0}`,
+        `Completed,${pf.completed||0}`,
+        `No-shows,${pf.no_shows||0}`,
+        `Avg Wait (min),${Math.round(pf.avg_wait_minutes||0)}`,
+        `Total Revenue,${rev.total_revenue||0}`,
+        `Collected,${rev.collected||0}`,
+        `Pending,${rev.pending||0}`,
+        `Overdue,${rev.overdue||0}`,
+    ].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `analytics-${currentAnPeriod}.csv`; a.click();
 }
 
 loadAnalytics('today');
