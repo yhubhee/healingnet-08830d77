@@ -576,6 +576,28 @@ CREATE TABLE lab_attachments (
 
 
 
+-- ==========================================
+-- HOSPITALS
+-- ==========================================
+CREATE TABLE IF NOT EXISTS hospitals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    address VARCHAR(500),
+    city VARCHAR(100),
+    state VARCHAR(100),
+    country VARCHAR(100) DEFAULT 'Nigeria',
+    phone VARCHAR(50),
+    email VARCHAR(255),
+    website VARCHAR(255),
+    license_number VARCHAR(100),
+    type ENUM('general', 'specialist', 'teaching', 'clinic', 'diagnostics') DEFAULT 'general',
+    bed_capacity INT DEFAULT 0,
+    logo_url VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- ALTER TABLE appointments
 -- ADD COLUMN reminder_sent TINYINT(1) DEFAULT 0,
 -- ADD COLUMN reminder_sent_at DATETIME NULL;
