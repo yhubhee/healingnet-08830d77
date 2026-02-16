@@ -65,6 +65,11 @@ app.use('/api/hospital/settings', require('./routes/hospital/settings'));
 app.use('/api/hospital/consultations', require('./routes/hospital/consultations'));
 app.use('/api/hospital/notifications', require('./routes/hospital/notifications'));
 
+// Clean URL routes
+app.get('/hospital/login', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/hospital-login.html'));
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
