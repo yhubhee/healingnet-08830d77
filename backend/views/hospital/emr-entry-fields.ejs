@@ -1,0 +1,245 @@
+<%# Dynamic entry form fields rendered per entry type %>
+
+<% if (entry_type === 'consultation_note') { %>
+    <div class="form-group"><label>Chief Complaint</label><input type="text" id="sf_chief_complaint" placeholder="Patient's main complaint"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>History of Present Illness</label><textarea id="sf_hpi" rows="3" placeholder="Detailed history..."></textarea></div>
+        <div class="form-group"><label>Examination Findings</label><textarea id="sf_examination" rows="3" placeholder="Physical examination findings..."></textarea></div>
+    </div>
+    <div class="form-group"><label>Assessment & Plan</label><textarea id="sf_assessment" rows="3" placeholder="Clinical assessment and treatment plan..."></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Follow-up</label><input type="text" id="sf_follow_up" placeholder="e.g., 2 weeks"></div>
+        <div class="form-group"><label>Prescriptions Given</label><input type="text" id="sf_prescriptions" placeholder="Medications prescribed"></div>
+    </div>
+
+<% } else if (entry_type === 'vitals') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Blood Pressure</label><input type="text" id="sf_blood_pressure" placeholder="e.g., 120/80 mmHg"></div>
+        <div class="form-group"><label>Heart Rate</label><input type="text" id="sf_heart_rate" placeholder="e.g., 72 bpm"></div>
+        <div class="form-group"><label>Temperature</label><input type="text" id="sf_temperature" placeholder="e.g., 36.8°C"></div>
+        <div class="form-group"><label>SpO2</label><input type="text" id="sf_spo2" placeholder="e.g., 98%"></div>
+        <div class="form-group"><label>Respiratory Rate</label><input type="text" id="sf_respiratory_rate" placeholder="e.g., 18/min"></div>
+        <div class="form-group"><label>Weight (kg)</label><input type="number" id="sf_weight" step="0.1" placeholder="kg"></div>
+        <div class="form-group"><label>Height (cm)</label><input type="number" id="sf_height" step="0.1" placeholder="cm"></div>
+        <div class="form-group"><label>BMI</label><input type="text" id="sf_bmi" readonly placeholder="Auto-calculated"></div>
+        <div class="form-group"><label>Blood Sugar</label><input type="text" id="sf_blood_sugar" placeholder="e.g., 5.5 mmol/L"></div>
+    </div>
+
+<% } else if (entry_type === 'diagnosis') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>ICD-10 Code</label><input type="text" id="sf_icd_code" placeholder="e.g., I11.9"></div>
+        <div class="form-group"><label>Diagnosis Type</label>
+            <select id="sf_type">
+                <option value="primary">Primary</option><option value="secondary">Secondary</option>
+                <option value="differential">Differential</option><option value="provisional">Provisional</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Severity</label>
+            <select id="sf_severity">
+                <option value="mild">Mild</option><option value="moderate">Moderate</option>
+                <option value="severe">Severe</option><option value="critical">Critical</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Status</label>
+            <select id="sf_status">
+                <option value="active">Active</option><option value="resolved">Resolved</option>
+                <option value="chronic">Chronic</option><option value="recurrent">Recurrent</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group"><label>Clinical Description</label><textarea id="sf_description" rows="3" placeholder="Detailed diagnosis description..."></textarea></div>
+
+<% } else if (entry_type === 'procedure') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Procedure Name</label><input type="text" id="sf_procedure_name" placeholder="e.g., Wound debridement"></div>
+        <div class="form-group"><label>Anaesthesia</label>
+            <select id="sf_anaesthesia">
+                <option value="none">None</option><option value="local">Local</option>
+                <option value="general">General</option><option value="spinal">Spinal</option><option value="sedation">Sedation</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Duration (min)</label><input type="number" id="sf_duration" placeholder="Minutes"></div>
+        <div class="form-group"><label>Outcome</label>
+            <select id="sf_outcome">
+                <option value="successful">Successful</option><option value="partial">Partial</option>
+                <option value="failed">Failed</option><option value="aborted">Aborted</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group"><label>Findings</label><textarea id="sf_findings" rows="2" placeholder="Intra-procedural findings..."></textarea></div>
+    <div class="form-group"><label>Complications</label><input type="text" id="sf_complications" placeholder="None, or describe..."></div>
+    <div class="form-group"><label>Post-procedure Instructions</label><textarea id="sf_post_instructions" rows="2" placeholder="Patient instructions..."></textarea></div>
+
+<% } else if (entry_type === 'lab_order') { %>
+    <div class="form-group"><label>Tests Ordered</label><textarea id="sf_tests" rows="2" placeholder="e.g., CBC, LFT, RFT, Lipid profile (comma-separated)"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Urgency</label>
+            <select id="sf_urgency"><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="stat">STAT</option></select>
+        </div>
+        <div class="form-group"><label>Fasting Required</label>
+            <select id="sf_fasting"><option value="no">No</option><option value="yes">Yes</option></select>
+        </div>
+        <div class="form-group"><label>Specimen Type</label><input type="text" id="sf_specimen" placeholder="e.g., Blood, Urine"></div>
+    </div>
+    <div class="form-group"><label>Clinical Indication</label><input type="text" id="sf_indication" placeholder="Reason for ordering..."></div>
+
+<% } else if (entry_type === 'lab_result') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Test Category</label><input type="text" id="sf_category" placeholder="e.g., Hematology"></div>
+        <div class="form-group"><label>Specimen</label><input type="text" id="sf_specimen" placeholder="e.g., Venous blood"></div>
+    </div>
+    <div class="form-group"><label>Results (one per line: test | value | unit | flag)</label>
+        <textarea id="sf_results_raw" rows="5" placeholder="WBC | 7.2 | x10³/µL | normal
+RBC | 4.5 | x10⁶/µL | normal
+Hemoglobin | 13.2 | g/dL | normal"></textarea>
+    </div>
+    <div class="form-group"><label>Overall Interpretation</label><textarea id="sf_interpretation" rows="2" placeholder="Summary interpretation..."></textarea></div>
+
+<% } else if (entry_type === 'imaging') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Modality</label>
+            <select id="sf_modality">
+                <option value="X-Ray">X-Ray</option><option value="Ultrasound">Ultrasound</option>
+                <option value="CT">CT Scan</option><option value="MRI">MRI</option>
+                <option value="Mammography">Mammography</option><option value="Fluoroscopy">Fluoroscopy</option><option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Body Part</label><input type="text" id="sf_body_part" placeholder="e.g., Chest, Abdomen"></div>
+        <div class="form-group"><label>Contrast Used</label>
+            <select id="sf_contrast"><option value="no">No</option><option value="yes">Yes</option></select>
+        </div>
+    </div>
+    <div class="form-group"><label>Findings</label><textarea id="sf_findings" rows="3" placeholder="Radiological findings..."></textarea></div>
+    <div class="form-group"><label>Impression</label><textarea id="sf_impression" rows="2" placeholder="Radiologist's impression..."></textarea></div>
+    <div class="form-group"><label>Recommendation</label><input type="text" id="sf_recommendation" placeholder="Further investigations or follow-up"></div>
+
+<% } else if (entry_type === 'referral') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Referred To (Doctor/Facility)</label><input type="text" id="sf_referred_to" placeholder="Dr. name or Hospital"></div>
+        <div class="form-group"><label>Specialty</label><input type="text" id="sf_specialty" placeholder="e.g., Cardiology"></div>
+        <div class="form-group"><label>Urgency</label>
+            <select id="sf_urgency"><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="emergency">Emergency</option></select>
+        </div>
+        <div class="form-group"><label>Referral Type</label>
+            <select id="sf_referral_type"><option value="internal">Internal</option><option value="external_outgoing">External</option></select>
+        </div>
+    </div>
+    <div class="form-group"><label>Reason for Referral</label><textarea id="sf_reason" rows="3" placeholder="Clinical reason for referral..."></textarea></div>
+    <div class="form-group"><label>Clinical Summary</label><textarea id="sf_clinical_summary" rows="3" placeholder="Relevant clinical history and findings..."></textarea></div>
+
+<% } else if (entry_type === 'discharge_summary') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Admission Date</label><input type="date" id="sf_admission_date"></div>
+        <div class="form-group"><label>Discharge Date</label><input type="date" id="sf_discharge_date"></div>
+    </div>
+    <div class="form-group"><label>Admitting Diagnosis</label><input type="text" id="sf_admitting_diagnosis" placeholder="Diagnosis at admission"></div>
+    <div class="form-group"><label>Discharge Diagnosis</label><input type="text" id="sf_discharge_diagnosis" placeholder="Final diagnosis at discharge"></div>
+    <div class="form-group"><label>Summary of Stay</label><textarea id="sf_summary" rows="3" placeholder="Hospital course, procedures, treatments..."></textarea></div>
+    <div class="form-group"><label>Discharge Medications</label><textarea id="sf_discharge_medications" rows="2" placeholder="Medications on discharge..."></textarea></div>
+    <div class="form-group"><label>Follow-up Instructions</label><textarea id="sf_follow_up" rows="2" placeholder="Follow-up plan, appointments..."></textarea></div>
+    <div class="form-group"><label>Discharge Condition</label>
+        <select id="sf_condition">
+            <option value="improved">Improved</option><option value="stable">Stable</option>
+            <option value="unchanged">Unchanged</option><option value="deteriorated">Deteriorated</option><option value="deceased">Deceased</option>
+        </select>
+    </div>
+
+<% } else if (entry_type === 'surgery_note') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Procedure Name</label><input type="text" id="sf_procedure_name" placeholder="e.g., Appendectomy"></div>
+        <div class="form-group"><label>Anaesthesia Type</label>
+            <select id="sf_anaesthesia_type">
+                <option value="general">General</option><option value="local">Local</option>
+                <option value="spinal">Spinal</option><option value="epidural">Epidural</option><option value="sedation">Sedation</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Duration (min)</label><input type="number" id="sf_duration" placeholder="Minutes"></div>
+        <div class="form-group"><label>Blood Loss (ml)</label><input type="number" id="sf_blood_loss" placeholder="ml"></div>
+    </div>
+    <div class="form-group"><label>Pre-operative Diagnosis</label><input type="text" id="sf_pre_op_diagnosis" placeholder="Diagnosis before surgery"></div>
+    <div class="form-group"><label>Post-operative Diagnosis</label><input type="text" id="sf_post_op_diagnosis" placeholder="Diagnosis after surgery"></div>
+    <div class="form-group"><label>Operative Findings</label><textarea id="sf_findings" rows="3" placeholder="What was found during surgery..."></textarea></div>
+    <div class="form-group"><label>Complications</label><input type="text" id="sf_complications" placeholder="None, or describe..."></div>
+    <div class="form-group"><label>Post-op Instructions</label><textarea id="sf_post_op_instructions" rows="2" placeholder="Recovery instructions..."></textarea></div>
+
+<% } else if (entry_type === 'antenatal') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Gestational Age (weeks)</label><input type="number" id="sf_gestational_age" placeholder="Weeks"></div>
+        <div class="form-group"><label>Fundal Height (cm)</label><input type="number" id="sf_fundal_height" placeholder="cm"></div>
+        <div class="form-group"><label>Fetal Heart Rate</label><input type="number" id="sf_fetal_heart_rate" placeholder="bpm"></div>
+        <div class="form-group"><label>Presentation</label>
+            <select id="sf_presentation">
+                <option value="cephalic">Cephalic</option><option value="breech">Breech</option>
+                <option value="transverse">Transverse</option><option value="oblique">Oblique</option><option value="unstable">Unstable</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Blood Pressure</label><input type="text" id="sf_blood_pressure" placeholder="e.g., 120/80"></div>
+        <div class="form-group"><label>Weight (kg)</label><input type="number" id="sf_weight" step="0.1" placeholder="kg"></div>
+        <div class="form-group"><label>Urine Protein</label>
+            <select id="sf_urine_protein"><option value="nil">Nil</option><option value="trace">Trace</option><option value="+">+</option><option value="++">++</option><option value="+++">+++</option></select>
+        </div>
+        <div class="form-group"><label>Urine Sugar</label>
+            <select id="sf_urine_sugar"><option value="nil">Nil</option><option value="trace">Trace</option><option value="+">+</option><option value="++">++</option></select>
+        </div>
+        <div class="form-group"><label>Oedema</label>
+            <select id="sf_oedema"><option value="nil">Nil</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select>
+        </div>
+    </div>
+    <div class="form-group"><label>Complaints</label><textarea id="sf_complaints" rows="2" placeholder="Current complaints..."></textarea></div>
+    <div class="form-group"><label>Medications / Supplements</label><input type="text" id="sf_medications" placeholder="e.g., Folic acid, Iron, Calcium"></div>
+    <div class="form-group"><label>Next Appointment</label><input type="date" id="sf_next_appointment"></div>
+
+<% } else if (entry_type === 'delivery') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Delivery Date & Time</label><input type="datetime-local" id="sf_delivery_date"></div>
+        <div class="form-group"><label>Delivery Type</label>
+            <select id="sf_delivery_type">
+                <option value="normal">Normal Vaginal</option><option value="caesarean">Caesarean Section</option>
+                <option value="assisted">Assisted (Forceps/Vacuum)</option><option value="vacuum">Vacuum Extraction</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Baby Weight (kg)</label><input type="number" id="sf_baby_weight" step="0.01" placeholder="e.g., 3.25"></div>
+        <div class="form-group"><label>Baby Gender</label>
+            <select id="sf_baby_gender"><option value="male">Male</option><option value="female">Female</option></select>
+        </div>
+        <div class="form-group"><label>APGAR Score (1min/5min)</label><input type="text" id="sf_apgar_score" placeholder="e.g., 8/9"></div>
+        <div class="form-group"><label>Blood Loss (ml)</label><input type="number" id="sf_blood_loss" placeholder="ml"></div>
+        <div class="form-group"><label>Placenta</label>
+            <select id="sf_placenta"><option value="complete">Complete</option><option value="incomplete">Incomplete</option><option value="retained">Retained</option></select>
+        </div>
+        <div class="form-group"><label>Perineum</label>
+            <select id="sf_perineum">
+                <option value="intact">Intact</option><option value="1st_degree_tear">1st Degree Tear</option>
+                <option value="2nd_degree_tear">2nd Degree Tear</option><option value="episiotomy">Episiotomy</option><option value="3rd_degree_tear">3rd Degree Tear</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group"><label>Complications</label><textarea id="sf_complications" rows="2" placeholder="Any complications..."></textarea></div>
+    <div class="form-group"><label>Baby Condition at Birth</label><textarea id="sf_baby_condition" rows="2" placeholder="General condition, resuscitation needed, etc."></textarea></div>
+
+<% } else if (entry_type === 'postnatal') { %>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Days Postpartum</label><input type="number" id="sf_days_postpartum" placeholder="Days"></div>
+        <div class="form-group"><label>Mother's Condition</label>
+            <select id="sf_mother_condition"><option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor</option></select>
+        </div>
+        <div class="form-group"><label>Baby's Condition</label>
+            <select id="sf_baby_condition"><option value="healthy">Healthy</option><option value="jaundice">Jaundice</option><option value="unwell">Unwell</option><option value="nicu">NICU</option></select>
+        </div>
+        <div class="form-group"><label>Breastfeeding</label>
+            <select id="sf_breastfeeding"><option value="exclusive">Exclusive</option><option value="mixed">Mixed</option><option value="formula">Formula</option><option value="not_started">Not Started</option></select>
+        </div>
+        <div class="form-group"><label>Baby Weight (kg)</label><input type="number" id="sf_baby_weight" step="0.01" placeholder="kg"></div>
+        <div class="form-group"><label>Umbilical Cord</label>
+            <select id="sf_cord"><option value="healthy">Healthy</option><option value="infected">Infected</option><option value="fallen">Fallen Off</option></select>
+        </div>
+    </div>
+    <div class="form-group"><label>Mother's Vitals (BP, Temp, etc.)</label><input type="text" id="sf_mother_vitals" placeholder="e.g., BP: 120/80, Temp: 36.5°C"></div>
+    <div class="form-group"><label>Immunization Given</label><input type="text" id="sf_immunization" placeholder="e.g., BCG, OPV0, Hep B"></div>
+    <div class="form-group"><label>Lochia</label>
+        <select id="sf_lochia"><option value="normal">Normal (Rubra/Serosa/Alba)</option><option value="heavy">Heavy</option><option value="foul_smelling">Foul Smelling</option></select>
+    </div>
+    <div class="form-group"><label>Family Planning Counselling</label>
+        <select id="sf_family_planning"><option value="not_discussed">Not Discussed</option><option value="discussed">Discussed</option><option value="accepted">Method Accepted</option></select>
+    </div>
+<% } %>
