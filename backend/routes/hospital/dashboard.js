@@ -89,7 +89,7 @@ router.get('/', requireHospitalAuth, async (req, res) => {
       // 6. Doctor overview (active doctors with details)
       query(`
         SELECT hd.employment_type, hd.is_active,
-               d.firstname, d.lastname, d.specialization, d.profile_image, d.doctor_id
+               d.first_name, d.last_name, d.specialty, d.profile_image_url, d.doctor_id
         FROM hospital_doctors hd
         JOIN doctors d ON hd.doctor_id = d.doctor_id
         WHERE hd.hospital_id = ? AND hd.is_active = 1
@@ -101,7 +101,7 @@ router.get('/', requireHospitalAuth, async (req, res) => {
       query(`
         SELECT cr.id, cr.status, cr.urgency, cr.request_type, cr.reason, cr.created_at,
                cr.meeting_link, cr.preferred_date, cr.preferred_time,
-               d.firstname AS doc_first, d.lastname AS doc_last, d.specialization,
+               d.first_name AS doc_first, d.last_name AS doc_last, d.specialty,
                p.firstname AS pat_first, p.lastname AS pat_last
         FROM consultation_requests cr
         JOIN doctors d ON cr.doctor_id = d.doctor_id
