@@ -3,7 +3,14 @@ const router = express.Router();
 const { requireHospitalAuth } = require('../../middleware/hospitalAuth');
 const { query } = require('../../config/database');
 
-// GET /api/hospital/insurance - List claims
+function formatNaira(amount) {
+  const n = Number(amount) || 0;
+  if (n >= 1000000) return '₦' + (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return '₦' + (n / 1000).toFixed(0) + 'K';
+  return '₦' + n.toLocaleString();
+}
+
+// GET /hospital/insurance - Render EJS
 router.get('/', requireHospitalAuth, async (req, res) => {
   try {
     const { status, provider } = req.query;
@@ -17,7 +24,6 @@ router.get('/', requireHospitalAuth, async (req, res) => {
     if (status) { sql += ' AND ic.status = ?'; params.push(status); }
     if (provider) { sql += ' AND ic.insurance_provider LIKE ?'; params.push(`%${provider}%`); }
     sql += ' ORDER BY ic.created_at DESC';
-
     const claims = await query(sql, params);
 
     const [stats] = await query(`
@@ -31,38 +37,30 @@ router.get('/', requireHospitalAuth, async (req, res) => {
       WHERE ic.hospital_id = ?
     `, [req.hospitalId]);
 
-    res.json({ success: true, claims, stats });
+    res.render('hospital/insurance', { claims, stats: stats || {}, formatNaira });
   } catch (err) {
     console.error('Insurance error:', err);
-    res.status(500).json({ success: false, message: 'Server error.' });
+    res.status(500).send('<div class="error-message"><h2>Failed to load insurance</h2><p>' + err.message + '</p></div>');
   }
 });
 
-// POST /api/hospital/insurance - Submit claim
+// POST /hospital/insurance
 router.post('/', requireHospitalAuth, async (req, res) => {
   try {
     const { patient_id, billing_id, insurance_provider, policy_number, claim_amount, service_description, notes } = req.body;
-
-    if (!patient_id || !insurance_provider || !claim_amount) {
-      return res.status(400).json({ success: false, message: 'Patient, provider, and amount required.' });
-    }
-
+    if (!patient_id || !insurance_provider || !claim_amount) return res.status(400).json({ success: false, message: 'Patient, provider, and amount required.' });
     const result = await query(
-      `INSERT INTO insurance_claims (hospital_id, patient_id, billing_id, insurance_provider, policy_number,
-       claim_amount, service_description, claim_date, status, notes)
+      `INSERT INTO insurance_claims (hospital_id, patient_id, billing_id, insurance_provider, policy_number, claim_amount, service_description, claim_date, status, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE(), 'submitted', ?)`,
-      [req.hospitalId, patient_id, billing_id || null, insurance_provider, policy_number || null,
-       claim_amount, service_description || null, notes || null]
+      [req.hospitalId, patient_id, billing_id || null, insurance_provider, policy_number || null, claim_amount, service_description || null, notes || null]
     );
-
     res.status(201).json({ success: true, id: result.insertId, message: 'Claim submitted.' });
   } catch (err) {
-    console.error('Submit claim error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
 });
 
-// PUT /api/hospital/insurance/:id
+// PUT /hospital/insurance/:id
 router.put('/:id', requireHospitalAuth, async (req, res) => {
   try {
     const { status, approved_amount, rejection_reason, notes } = req.body;
@@ -74,12 +72,10 @@ router.put('/:id', requireHospitalAuth, async (req, res) => {
     if (notes) { updates.push('notes = ?'); params.push(notes); }
     if (status === 'paid') updates.push('paid_date = CURDATE()');
     if (updates.length === 0) return res.status(400).json({ success: false, message: 'No fields.' });
-
     params.push(req.params.id, req.hospitalId);
     await query(`UPDATE insurance_claims SET ${updates.join(', ')} WHERE id = ? AND hospital_id = ?`, params);
     res.json({ success: true, message: 'Claim updated.' });
   } catch (err) {
-    console.error('Update claim error:', err);
     res.status(500).json({ success: false, message: 'Server error.' });
   }
 });

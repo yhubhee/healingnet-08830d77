@@ -1,0 +1,74 @@
+<!-- Analytics EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Analytics & Reports</h1>
+    <p>Hospital performance metrics and trends</p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card gradient-primary">
+    <i data-lucide="users" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Total Patients</p>
+      <h3 class="stat-value"><%= patient_flow.total_patients || 0 %></h3>
+      <p class="stat-subtitle">Walk-ins: <%= patient_flow.walk_ins || 0 %> | Booked: <%= patient_flow.pre_booked || 0 %></p>
+    </div>
+  </div>
+  <div class="stat-card gradient-success">
+    <i data-lucide="credit-card" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Revenue</p>
+      <h3 class="stat-value"><%= formatNaira(revenue.total_revenue) %></h3>
+      <p class="stat-subtitle">Collected: <%= formatNaira(revenue.collected) %></p>
+    </div>
+  </div>
+  <div class="stat-card gradient-info">
+    <i data-lucide="user-check" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Active Doctors</p>
+      <h3 class="stat-value"><%= doctor_counts.total || 0 %></h3>
+      <p class="stat-subtitle">FT: <%= doctor_counts.full_time || 0 %> | Visiting: <%= doctor_counts.visiting || 0 %></p>
+    </div>
+  </div>
+  <div class="stat-card gradient-warning">
+    <i data-lucide="clock" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Avg Wait Time</p>
+      <h3 class="stat-value"><%= Math.round(patient_flow.avg_wait_minutes || 0) %> min</h3>
+    </div>
+  </div>
+</div>
+
+<!-- Doctor Utilization -->
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header"><h2>Doctor Utilization</h2></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Doctor</th>
+          <th>Specialty</th>
+          <th>Type</th>
+          <th>Patients Seen</th>
+          <th>Avg Consult (min)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (doctor_utilization && doctor_utilization.length > 0) { %>
+          <% doctor_utilization.forEach(function(d) { %>
+            <tr>
+              <td>Dr. <%= d.first_name %> <%= d.last_name %></td>
+              <td><%= d.specialty || 'General' %></td>
+              <td><%= (d.employment_type || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></td>
+              <td><%= d.patients_seen || 0 %></td>
+              <td><%= Math.round(d.avg_consultation_mins || 0) %></td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No data available</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

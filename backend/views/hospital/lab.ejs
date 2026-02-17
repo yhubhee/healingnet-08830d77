@@ -1,0 +1,77 @@
+<!-- Lab EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Laboratory</h1>
+    <p>Manage lab orders and results</p>
+  </div>
+  <div class="welcome-actions">
+    <button class="btn btn-primary" onclick="document.getElementById('newLabOrderModal').style.display='flex'">
+      <i data-lucide="plus"></i> New Lab Order
+    </button>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card gradient-primary">
+    <i data-lucide="flask-conical" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Today's Orders</p>
+      <h3 class="stat-value"><%= stats.today || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-warning">
+    <i data-lucide="clock" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Pending</p>
+      <h3 class="stat-value"><%= stats.pending || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-info">
+    <i data-lucide="loader" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">In Progress</p>
+      <h3 class="stat-value"><%= stats.in_progress || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-success">
+    <i data-lucide="check-circle" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Completed</p>
+      <h3 class="stat-value"><%= stats.completed || 0 %></h3>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header"><h2>Lab Orders</h2></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Patient</th>
+          <th>Ordered By</th>
+          <th>Status</th>
+          <th>Tests</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (orders && orders.length > 0) { %>
+          <% orders.forEach(function(o) { %>
+            <tr>
+              <td>#<%= o.result_id %></td>
+              <td><%= o.patient_name || '--' %></td>
+              <td><%= o.ordered_by_name || '--' %></td>
+              <td><span class="status-badge <%= o.status %>"><%= (o.status || '').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><%= o.tests ? o.tests.length : 0 %> tests</td>
+              <td><%= o.created_at ? new Date(o.created_at).toLocaleDateString('en-NG') : '--' %></td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No lab orders</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,71 @@
+<!-- Referrals EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Referrals</h1>
+    <p>Internal and external patient referral management</p>
+  </div>
+  <div class="welcome-actions">
+    <button class="btn btn-primary" onclick="document.getElementById('createReferralModal').style.display='flex'">
+      <i data-lucide="plus"></i> New Referral
+    </button>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card gradient-primary">
+    <i data-lucide="share-2" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Total</p>
+      <h3 class="stat-value"><%= stats.total || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-info">
+    <i data-lucide="arrow-down-left" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Incoming</p>
+      <h3 class="stat-value"><%= stats.incoming || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-warning">
+    <i data-lucide="arrow-up-right" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Outgoing</p>
+      <h3 class="stat-value"><%= stats.outgoing || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-success">
+    <i data-lucide="check-circle" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Completed</p>
+      <h3 class="stat-value"><%= stats.completed || 0 %></h3>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header"><h2>Referral List</h2></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>Patient</th><th>From Doctor</th><th>To Doctor</th><th>Type</th><th>Reason</th><th>Status</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        <% if (referrals && referrals.length > 0) { %>
+          <% referrals.forEach(function(r) { %>
+            <tr>
+              <td><%= r.patient_name || '--' %></td>
+              <td>Dr. <%= r.referring_doctor || '--' %><br><small style="color:var(--muted-foreground);"><%= r.referring_specialty || '' %></small></td>
+              <td>Dr. <%= r.referred_to_doctor || '--' %><br><small style="color:var(--muted-foreground);"><%= r.referred_specialty || '' %></small></td>
+              <td><span class="badge"><%= (r.referral_type || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><%= r.reason || '--' %></td>
+              <td><span class="status-badge <%= r.status %>"><%= (r.status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><%= r.created_at ? new Date(r.created_at).toLocaleDateString('en-NG') : '--' %></td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No referrals</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

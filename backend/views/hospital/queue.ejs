@@ -1,0 +1,136 @@
+<!-- Queue EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Patient Queue</h1>
+    <p>Today's patient check-ins and queue management</p>
+  </div>
+  <div class="welcome-actions">
+    <button class="btn btn-primary" onclick="openCheckinModal()">
+      <i data-lucide="user-plus"></i> Check In Patient
+    </button>
+    <button class="btn btn-outline" onclick="autoCheckin()">
+      <i data-lucide="refresh-cw"></i> Auto Check-in
+    </button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card gradient-primary">
+    <i data-lucide="users" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Total Today</p>
+      <h3 class="stat-value"><%= stats.total || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-warning">
+    <i data-lucide="clock" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Waiting</p>
+      <h3 class="stat-value"><%= stats.waiting || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-info">
+    <i data-lucide="stethoscope" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">In Consultation</p>
+      <h3 class="stat-value"><%= stats.in_consultation || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-success">
+    <i data-lucide="check-circle" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Completed</p>
+      <h3 class="stat-value"><%= stats.completed || 0 %></h3>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <h2>Queue List</h2>
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="filterQueue('all', this)">All</button>
+      <button class="tab-btn" onclick="filterQueue('waiting', this)">Waiting</button>
+      <button class="tab-btn" onclick="filterQueue('in_consultation', this)">In Consultation</button>
+      <button class="tab-btn" onclick="filterQueue('completed', this)">Completed</button>
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Patient</th>
+          <th>Type</th>
+          <th>Department</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Check-in Time</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="queueTableBody">
+        <% if (queue && queue.length > 0) { %>
+          <% queue.forEach(function(q) { %>
+            <tr data-status="<%= q.status %>">
+              <td><span class="queue-number"><%= q.queue_number %></span></td>
+              <td>
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <div class="avatar avatar-sm"><%= ((q.firstname || q.first_name || '')[0] || '') + ((q.lastname || q.last_name || '')[0] || '') %></div>
+                  <span><%= q.firstname || q.first_name || '' %> <%= q.lastname || q.last_name || '' %></span>
+                </div>
+              </td>
+              <td><span class="badge badge-<%= q.checkin_type === 'walk_in' ? 'warning' : 'info' %>"><%= q.checkin_type === 'walk_in' ? 'Walk-in' : 'Pre-booked' %></span></td>
+              <td><%= q.department || 'General' %></td>
+              <td><span class="badge badge-<%= q.priority === 'emergency' ? 'danger' : q.priority === 'priority' ? 'warning' : 'default' %>"><%= (q.priority || 'normal').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><span class="status-badge <%= q.status %>"><%= (q.status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><%= q.checkin_time ? new Date(q.checkin_time).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }) : '--' %></td>
+              <td>
+                <div class="action-btns">
+                  <% if (q.status === 'waiting' || q.status === 'checked_in') { %>
+                    <button class="btn btn-sm btn-primary" onclick="updateQueueStatus(<%= q.id %>, 'in_consultation')">Start</button>
+                  <% } else if (q.status === 'in_consultation') { %>
+                    <button class="btn btn-sm btn-success" onclick="updateQueueStatus(<%= q.id %>, 'completed')">Complete</button>
+                  <% } %>
+                  <button class="btn btn-sm btn-outline" onclick="updateQueueStatus(<%= q.id %>, 'no_show')">No Show</button>
+                </div>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No patients in queue today</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function filterQueue(status, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#queueTableBody tr').forEach(row => {
+    if (status === 'all' || row.dataset.status === status) row.style.display = '';
+    else row.style.display = 'none';
+  });
+}
+
+function updateQueueStatus(id, status) {
+  fetch('/hospital/queue/' + id + '/status', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ status })
+  }).then(r => r.json()).then(json => {
+    if (json.success) location.querySelector('[data-url="/hospital/queue"]')?.click() || window.location.reload();
+  });
+}
+
+function autoCheckin() {
+  fetch('/hospital/queue/auto-checkin', { method: 'POST', credentials: 'include' })
+    .then(r => r.json())
+    .then(json => { alert(json.message || 'Done'); });
+}
+</script>

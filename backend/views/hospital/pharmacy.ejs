@@ -1,0 +1,155 @@
+<!-- Pharmacy EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Pharmacy</h1>
+    <p>Prescriptions, dispensing, and inventory management</p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card gradient-primary">
+    <i data-lucide="pill" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Total Prescriptions</p>
+      <h3 class="stat-value"><%= stats.total_prescriptions || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-warning">
+    <i data-lucide="clock" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Pending</p>
+      <h3 class="stat-value"><%= stats.pending || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-success">
+    <i data-lucide="check-circle" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Dispensed</p>
+      <h3 class="stat-value"><%= stats.dispensed || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-danger">
+    <i data-lucide="alert-triangle" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Low Stock Items</p>
+      <h3 class="stat-value"><%= stats.low_stock_count || 0 %></h3>
+    </div>
+  </div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="tab-nav" style="margin:1.5rem 0 1rem;">
+  <button class="tab-btn active" onclick="showPharmacyTab('prescriptions', this)">Prescriptions</button>
+  <button class="tab-btn" onclick="showPharmacyTab('inventory', this)">Inventory</button>
+  <button class="tab-btn" onclick="showPharmacyTab('lowstock', this)">Low Stock (<%= low_stock.length %>)</button>
+</div>
+
+<!-- Prescriptions -->
+<div class="card tab-panel" id="prescriptions-panel">
+  <div class="card-header"><h2>Prescriptions</h2></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>Patient</th><th>Doctor</th><th>Medication</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <% if (prescriptions && prescriptions.length > 0) { %>
+          <% prescriptions.forEach(function(p) { %>
+            <tr>
+              <td><%= p.patient_name || '--' %></td>
+              <td>Dr. <%= p.doctor_name || '--' %></td>
+              <td><%= p.medication || p.drug_name || '--' %></td>
+              <td><span class="status-badge <%= p.dispensing_id ? 'dispensed' : 'pending' %>"><%= p.dispensing_id ? 'Dispensed' : 'Pending' %></span></td>
+              <td><%= p.created_at ? new Date(p.created_at).toLocaleDateString('en-NG') : '--' %></td>
+              <td>
+                <% if (!p.dispensing_id) { %>
+                  <button class="btn btn-sm btn-primary" onclick="dispenseDrug(<%= p.prescription_id %>, <%= p.patient_id %>)">Dispense</button>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No prescriptions</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Inventory -->
+<div class="card tab-panel" id="inventory-panel" style="display:none;">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <h2>Inventory</h2>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('addInventoryModal').style.display='flex'">Add Item</button>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>Drug Name</th><th>Category</th><th>Form</th><th>Stock</th><th>Reorder Level</th><th>Price</th><th>Expiry</th></tr>
+      </thead>
+      <tbody>
+        <% if (inventory && inventory.length > 0) { %>
+          <% inventory.forEach(function(i) { %>
+            <tr>
+              <td><%= i.drug_name %><% if (i.generic_name) { %><br><small style="color:var(--muted-foreground);"><%= i.generic_name %></small><% } %></td>
+              <td><%= i.category || '--' %></td>
+              <td><%= i.dosage_form || '--' %></td>
+              <td style="color:<%= i.quantity_in_stock <= i.reorder_level ? 'var(--destructive)' : 'inherit' %>;font-weight:600;"><%= i.quantity_in_stock %></td>
+              <td><%= i.reorder_level %></td>
+              <td><%= i.unit_price ? '₦' + Number(i.unit_price).toLocaleString() : '--' %></td>
+              <td><%= i.expiry_date ? new Date(i.expiry_date).toLocaleDateString('en-NG') : '--' %></td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No inventory items</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Low Stock -->
+<div class="card tab-panel" id="lowstock-panel" style="display:none;">
+  <div class="card-header"><h2>Low Stock Alerts</h2></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead><tr><th>Drug</th><th>Current Stock</th><th>Reorder Level</th><th>Supplier</th></tr></thead>
+      <tbody>
+        <% if (low_stock && low_stock.length > 0) { %>
+          <% low_stock.forEach(function(i) { %>
+            <tr>
+              <td><%= i.drug_name %></td>
+              <td style="color:var(--destructive);font-weight:600;"><%= i.quantity_in_stock %></td>
+              <td><%= i.reorder_level %></td>
+              <td><%= i.supplier || '--' %></td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--muted-foreground);">All stock levels OK</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function showPharmacyTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+  document.getElementById(tab + '-panel').style.display = '';
+}
+
+function dispenseDrug(prescriptionId, patientId) {
+  const drugName = prompt('Drug name to dispense:');
+  if (!drugName) return;
+  fetch('/hospital/pharmacy/dispense', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ prescription_id: prescriptionId, patient_id: patientId, drug_name: drugName, quantity_dispensed: 1 })
+  }).then(r => r.json()).then(json => {
+    if (json.success) document.querySelector('[data-url="/hospital/pharmacy"]')?.click();
+  });
+}
+</script>

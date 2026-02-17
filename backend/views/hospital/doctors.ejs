@@ -1,0 +1,59 @@
+<!-- Doctors EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Doctors Management</h1>
+    <p>Manage your hospital's medical staff</p>
+  </div>
+  <div class="welcome-actions">
+    <button class="btn btn-primary" onclick="document.getElementById('addDoctorModal').style.display='flex'">
+      <i data-lucide="user-plus"></i> Add Doctor
+    </button>
+  </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="tab-nav" style="margin-bottom:1rem;">
+  <button class="tab-btn active" onclick="filterDoctors('all', this)">All (<%= doctors.length %>)</button>
+  <button class="tab-btn" onclick="filterDoctors('full_time', this)">Full-Time</button>
+  <button class="tab-btn" onclick="filterDoctors('visiting_consultant', this)">Visiting</button>
+  <button class="tab-btn" onclick="filterDoctors('locum', this)">Locum</button>
+</div>
+
+<div class="doctors-grid" id="doctorsGrid">
+  <% if (doctors && doctors.length > 0) { %>
+    <% doctors.forEach(function(d) { %>
+      <div class="card doctor-card" data-type="<%= d.employment_type %>">
+        <div class="card-body" style="display:flex;align-items:center;gap:1rem;padding:1rem;">
+          <div class="avatar avatar-lg" style="background:var(--gradient-info);">
+            <% if (d.profile_image_url || d.profile_image) { %>
+              <img src="<%= d.profile_image_url || d.profile_image %>" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+            <% } else { %>
+              <%= ((d.first_name || '')[0] || '') + ((d.last_name || '')[0] || '') %>
+            <% } %>
+          </div>
+          <div style="flex:1;">
+            <h3 style="margin:0;font-size:0.95rem;">Dr. <%= d.first_name %> <%= d.last_name %></h3>
+            <p style="margin:0.2rem 0;font-size:0.8rem;color:var(--muted-foreground);"><%= d.specialty || 'General' %></p>
+            <div style="display:flex;gap:0.5rem;margin-top:0.4rem;">
+              <span class="badge badge-<%= d.employment_type === 'full_time' ? 'success' : d.employment_type === 'visiting_consultant' ? 'info' : 'warning' %>"><%= (d.employment_type || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></span>
+              <span class="badge badge-<%= d.is_active ? 'success' : 'danger' %>"><%= d.is_active ? 'Active' : 'Inactive' %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  <% } else { %>
+    <div class="card" style="padding:2rem;text-align:center;color:var(--muted-foreground);">No doctors found</div>
+  <% } %>
+</div>
+
+<script>
+function filterDoctors(type, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.doctor-card').forEach(card => {
+    if (type === 'all' || card.dataset.type === type) card.style.display = '';
+    else card.style.display = 'none';
+  });
+}
+</script>

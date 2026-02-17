@@ -46,24 +46,24 @@ app.use('/api/notifications', require('./routes/notifications'));
 // ==========================================
 // API Routes — Hospital
 // ==========================================
-app.use('/api/hospital/auth', require('./routes/hospital/auth'));
-app.use('/api/hospital/dashboard', require('./routes/hospital/dashboard'));
-app.use('/api/hospital/doctors', require('./routes/hospital/doctors'));
-app.use('/api/hospital/marketplace', require('./routes/hospital/marketplace'));
-app.use('/api/hospital/queue', require('./routes/hospital/queue'));
-app.use('/api/hospital/emr', require('./routes/hospital/emr'));
-app.use('/api/hospital/billing', require('./routes/hospital/billing'));
-app.use('/api/hospital/analytics', require('./routes/hospital/analytics'));
-app.use('/api/hospital/patients', require('./routes/hospital/patients'));
-app.use('/api/hospital/maternity', require('./routes/hospital/maternity'));
-app.use('/api/hospital/surgery', require('./routes/hospital/surgery'));
-app.use('/api/hospital/referrals', require('./routes/hospital/referrals'));
-app.use('/api/hospital/insurance', require('./routes/hospital/insurance'));
-app.use('/api/hospital/lab', require('./routes/hospital/lab'));
-app.use('/api/hospital/pharmacy', require('./routes/hospital/pharmacy'));
-app.use('/api/hospital/settings', require('./routes/hospital/settings'));
-app.use('/api/hospital/consultations', require('./routes/hospital/consultations'));
-app.use('/api/hospital/notifications', require('./routes/hospital/notifications'));
+app.use('/hospital/auth', require('./routes/hospital/auth'));
+app.use('/hospital/dashboard', require('./routes/hospital/dashboard'));
+app.use('/hospital/doctors', require('./routes/hospital/doctors'));
+app.use('/hospital/marketplace', require('./routes/hospital/marketplace'));
+app.use('/hospital/queue', require('./routes/hospital/queue'));
+app.use('/hospital/emr', require('./routes/hospital/emr'));
+app.use('/hospital/billing', require('./routes/hospital/billing'));
+app.use('/hospital/analytics', require('./routes/hospital/analytics'));
+app.use('/hospital/patients', require('./routes/hospital/patients'));
+app.use('/hospital/maternity', require('./routes/hospital/maternity'));
+app.use('/hospital/surgery', require('./routes/hospital/surgery'));
+app.use('/hospital/referrals', require('./routes/hospital/referrals'));
+app.use('/hospital/insurance', require('./routes/hospital/insurance'));
+app.use('/hospital/lab', require('./routes/hospital/lab'));
+app.use('/hospital/pharmacy', require('./routes/hospital/pharmacy'));
+app.use('/hospital/settings', require('./routes/hospital/settings'));
+app.use('/hospital/consultations', require('./routes/hospital/consultations'));
+app.use('/hospital/notifications', require('./routes/hospital/notifications'));
 
 // Clean URL routes
 app.get('/hospital/login', (req, res) => {
