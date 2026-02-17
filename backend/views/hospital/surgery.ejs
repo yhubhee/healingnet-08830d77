@@ -1,0 +1,91 @@
+<!-- Surgery EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Surgery Management</h1>
+    <p>Schedule and track surgical procedures</p>
+  </div>
+  <div class="welcome-actions">
+    <button class="btn btn-primary" onclick="document.getElementById('scheduleSurgeryModal').style.display='flex'">
+      <i data-lucide="plus"></i> Schedule Surgery
+    </button>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card gradient-primary">
+    <i data-lucide="calendar" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Today's Surgeries</p>
+      <h3 class="stat-value"><%= stats.today || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-success">
+    <i data-lucide="check-circle" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Completed (Week)</p>
+      <h3 class="stat-value"><%= stats.completed_week || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-warning">
+    <i data-lucide="clock" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Pending</p>
+      <h3 class="stat-value"><%= stats.pending || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-info">
+    <i data-lucide="heart-pulse" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Post-Op Recovery</p>
+      <h3 class="stat-value"><%= stats.post_op || 0 %></h3>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header"><h2>Surgery Schedule</h2></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>Date/Time</th><th>Patient</th><th>Procedure</th><th>Surgeon</th><th>Anaesthetist</th><th>Theatre</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <% if (records && records.length > 0) { %>
+          <% records.forEach(function(s) { %>
+            <tr>
+              <td><%= s.scheduled_date ? new Date(s.scheduled_date).toLocaleDateString('en-NG') : '--' %><br><small><%= s.scheduled_time || '' %></small></td>
+              <td><%= s.patient_name || '--' %></td>
+              <td><%= s.procedure_name %><br><small style="color:var(--muted-foreground);"><%= (s.procedure_type || '').replace(/\b\w/g, c => c.toUpperCase()) %></small></td>
+              <td>Dr. <%= s.surgeon_name || '--' %></td>
+              <td><%= s.anaesthetist_name || '--' %></td>
+              <td><%= s.theatre_number || '--' %></td>
+              <td><span class="status-badge <%= s.status %>"><%= (s.status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td>
+                <% if (s.status === 'scheduled') { %>
+                  <button class="btn btn-sm btn-primary" onclick="updateSurgeryStatus(<%= s.id %>, 'in_progress')">Start</button>
+                <% } else if (s.status === 'in_progress') { %>
+                  <button class="btn btn-sm btn-success" onclick="updateSurgeryStatus(<%= s.id %>, 'completed')">Complete</button>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No surgery records</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function updateSurgeryStatus(id, status) {
+  fetch('/hospital/surgery/' + id + '/status', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ status })
+  }).then(r => r.json()).then(json => {
+    if (json.success) document.querySelector('[data-url="/hospital/surgery"]')?.click();
+  });
+}
+</script>

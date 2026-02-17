@@ -1,0 +1,89 @@
+<!-- Insurance/HMO EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Insurance & HMO</h1>
+    <p>Manage insurance claims and HMO partnerships</p>
+  </div>
+  <div class="welcome-actions">
+    <button class="btn btn-primary" onclick="document.getElementById('submitClaimModal').style.display='flex'">
+      <i data-lucide="plus"></i> Submit Claim
+    </button>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card gradient-primary">
+    <i data-lucide="users" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Insured Patients</p>
+      <h3 class="stat-value"><%= stats.insured_patients || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-success">
+    <i data-lucide="check-circle" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Approved Total</p>
+      <h3 class="stat-value"><%= formatNaira(stats.approved_total) %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-warning">
+    <i data-lucide="clock" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Pending Claims</p>
+      <h3 class="stat-value"><%= formatNaira(stats.pending_total) %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-info">
+    <i data-lucide="building" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">HMO Partners</p>
+      <h3 class="stat-value"><%= stats.hmo_partners || 0 %></h3>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header"><h2>Claims</h2></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>Patient</th><th>Provider</th><th>Claim Amount</th><th>Approved</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        <% if (claims && claims.length > 0) { %>
+          <% claims.forEach(function(c) { %>
+            <tr>
+              <td><%= c.patient_name || '--' %></td>
+              <td><%= c.insurance_provider || '--' %></td>
+              <td><%= formatNaira(c.claim_amount) %></td>
+              <td><%= c.approved_amount ? formatNaira(c.approved_amount) : '--' %></td>
+              <td><span class="status-badge <%= c.status %>"><%= (c.status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><%= c.claim_date ? new Date(c.claim_date).toLocaleDateString('en-NG') : '--' %></td>
+              <td>
+                <% if (c.status === 'submitted' || c.status === 'under_review') { %>
+                  <button class="btn btn-sm btn-success" onclick="updateClaim(<%= c.id %>, 'approved')">Approve</button>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No claims</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function updateClaim(id, status) {
+  const amount = status === 'approved' ? prompt('Approved amount:') : null;
+  fetch('/hospital/insurance/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ status, approved_amount: amount })
+  }).then(r => r.json()).then(json => {
+    if (json.success) document.querySelector('[data-url="/hospital/insurance"]')?.click();
+  });
+}
+</script>

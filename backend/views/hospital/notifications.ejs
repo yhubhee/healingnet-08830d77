@@ -1,0 +1,63 @@
+<!-- Notifications EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Notifications</h1>
+    <p>Hospital alerts and system notifications</p>
+  </div>
+  <div class="welcome-actions">
+    <button class="btn btn-outline" onclick="markAllRead()">
+      <i data-lucide="check-check"></i> Mark All Read
+    </button>
+    <button class="btn btn-outline" onclick="clearRead()">
+      <i data-lucide="trash-2"></i> Clear Read
+    </button>
+  </div>
+</div>
+
+<div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+  <span class="badge" style="font-size:0.85rem;">Unread: <%= unread_count || 0 %></span>
+  <span class="badge" style="font-size:0.85rem;">Total: <%= total || 0 %></span>
+</div>
+
+<div class="notifications-list">
+  <% if (notifications && notifications.length > 0) { %>
+    <% notifications.forEach(function(n) { %>
+      <div class="card notification-card" style="margin-bottom:0.75rem;padding:1rem;opacity:<%= n.is_read ? '0.6' : '1' %>;" data-notif-id="<%= n.id %>">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <h3 style="margin:0 0 0.25rem;font-size:0.9rem;"><%= n.title || n.type %></h3>
+            <p style="margin:0;font-size:0.82rem;color:var(--muted-foreground);"><%= n.message || '' %></p>
+            <span style="font-size:0.72rem;color:var(--muted-foreground);"><%= n.created_at ? new Date(n.created_at).toLocaleString('en-NG') : '' %></span>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <% if (!n.is_read) { %>
+              <button class="btn btn-sm btn-outline" onclick="markRead(<%= n.id %>)">Read</button>
+            <% } %>
+            <button class="btn btn-sm btn-outline" onclick="deleteNotif(<%= n.id %>)" style="color:var(--destructive);">×</button>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  <% } else { %>
+    <div class="card" style="padding:2rem;text-align:center;color:var(--muted-foreground);">No notifications</div>
+  <% } %>
+</div>
+
+<script>
+function markRead(id) {
+  fetch('/hospital/notifications/' + id + '/read', { method: 'PUT', credentials: 'include' })
+    .then(() => document.querySelector('[data-url="/hospital/notifications"]')?.click());
+}
+function markAllRead() {
+  fetch('/hospital/notifications/read-all', { method: 'PUT', credentials: 'include' })
+    .then(() => document.querySelector('[data-url="/hospital/notifications"]')?.click());
+}
+function clearRead() {
+  fetch('/hospital/notifications/clear-read', { method: 'DELETE', credentials: 'include' })
+    .then(() => document.querySelector('[data-url="/hospital/notifications"]')?.click());
+}
+function deleteNotif(id) {
+  fetch('/hospital/notifications/' + id, { method: 'DELETE', credentials: 'include' })
+    .then(() => document.querySelector('[data-url="/hospital/notifications"]')?.click());
+}
+</script>

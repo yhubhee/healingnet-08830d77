@@ -1,0 +1,95 @@
+<!-- Consultations EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Consultation Requests</h1>
+    <p>External and internal consultation management</p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card gradient-primary">
+    <i data-lucide="send" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Total</p>
+      <h3 class="stat-value"><%= counts.total || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-warning">
+    <i data-lucide="clock" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Pending</p>
+      <h3 class="stat-value"><%= counts.pending || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-success">
+    <i data-lucide="check-circle" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Completed</p>
+      <h3 class="stat-value"><%= counts.completed || 0 %></h3>
+    </div>
+  </div>
+  <div class="stat-card gradient-info">
+    <i data-lucide="thumbs-up" class="stat-icon"></i>
+    <div class="stat-content">
+      <p class="stat-label">Accepted</p>
+      <h3 class="stat-value"><%= counts.accepted || 0 %></h3>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header"><h2>Requests</h2></div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Doctor</th>
+          <th>Patient</th>
+          <th>Type</th>
+          <th>Urgency</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (consultations && consultations.length > 0) { %>
+          <% consultations.forEach(function(c) { %>
+            <tr>
+              <td>Dr. <%= c.doctor_first_name %> <%= c.doctor_last_name %> <br><small style="color:var(--muted-foreground);"><%= c.doctor_specialty || '' %></small></td>
+              <td><%= c.patient_firstname %> <%= c.patient_lastname %></td>
+              <td><span class="badge"><%= (c.request_type || 'virtual').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><span class="badge badge-<%= c.urgency === 'emergency' ? 'danger' : c.urgency === 'urgent' ? 'warning' : 'info' %>"><%= (c.urgency || 'moderate').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><span class="status-badge <%= c.status %>"><%= (c.status || '').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><%= c.created_at ? new Date(c.created_at).toLocaleDateString('en-NG') : '--' %></td>
+              <td>
+                <% if (c.meeting_link) { %>
+                  <a href="<%= c.meeting_link %>" target="_blank" class="btn btn-sm btn-primary">Join</a>
+                <% } %>
+                <% if (c.status === 'pending') { %>
+                  <button class="btn btn-sm btn-outline" onclick="cancelConsult(<%= c.id %>)">Cancel</button>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No consultation requests</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function cancelConsult(id) {
+  if (!confirm('Cancel this consultation request?')) return;
+  fetch('/hospital/consultations/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ status: 'cancelled' })
+  }).then(r => r.json()).then(json => {
+    if (json.success) document.querySelector('[data-url="/hospital/consultations"]')?.click();
+  });
+}
+</script>

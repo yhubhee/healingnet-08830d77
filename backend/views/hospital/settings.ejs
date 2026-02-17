@@ -1,0 +1,110 @@
+<!-- Settings EJS Template -->
+<div class="welcome-section">
+  <div class="welcome-text">
+    <h1>Settings</h1>
+    <p>Hospital profile, staff, and system configuration</p>
+  </div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="tab-nav" style="margin-bottom:1rem;">
+  <button class="tab-btn active" onclick="showSettingsTab('profile', this)">Hospital Profile</button>
+  <button class="tab-btn" onclick="showSettingsTab('staff', this)">Staff (<%= staff.length %>)</button>
+  <button class="tab-btn" onclick="showSettingsTab('departments', this)">Departments</button>
+  <button class="tab-btn" onclick="showSettingsTab('notifications', this)">Notifications</button>
+</div>
+
+<!-- Profile Tab -->
+<div class="card tab-panel" id="profile-panel">
+  <div class="card-header"><h2>Hospital Profile</h2></div>
+  <div class="card-body" style="padding:1.5rem;">
+    <% if (hospital) { %>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div><label class="form-label">Name</label><p><%= hospital.name || '--' %></p></div>
+        <div><label class="form-label">Email</label><p><%= hospital.email || '--' %></p></div>
+        <div><label class="form-label">Phone</label><p><%= hospital.phone || '--' %></p></div>
+        <div><label class="form-label">Address</label><p><%= hospital.address || '--' %></p></div>
+        <div><label class="form-label">Website</label><p><%= hospital.website || '--' %></p></div>
+        <div><label class="form-label">Operating Hours</label><p><%= hospital.operating_hours || '--' %></p></div>
+      </div>
+    <% } else { %>
+      <p style="color:var(--muted-foreground);">Hospital profile not found</p>
+    <% } %>
+  </div>
+</div>
+
+<!-- Staff Tab -->
+<div class="card tab-panel" id="staff-panel" style="display:none;">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <h2>Staff Members</h2>
+    <button class="btn btn-primary btn-sm" onclick="document.getElementById('addStaffModal').style.display='flex'">Add Staff</button>
+  </div>
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <% if (staff && staff.length > 0) { %>
+          <% staff.forEach(function(s) { %>
+            <tr>
+              <td><%= s.first_name %> <%= s.last_name %></td>
+              <td><%= s.email %></td>
+              <td><span class="badge"><%= (s.role || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %></span></td>
+              <td><%= s.department || '--' %></td>
+              <td><span class="badge badge-<%= s.is_active ? 'success' : 'danger' %>"><%= s.is_active ? 'Active' : 'Inactive' %></span></td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted-foreground);">No staff members</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Departments Tab -->
+<div class="card tab-panel" id="departments-panel" style="display:none;">
+  <div class="card-header"><h2>Departments</h2></div>
+  <div class="card-body" style="padding:1.5rem;">
+    <% if (departments && departments.length > 0) { %>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;">
+        <% departments.forEach(function(d) { %>
+          <div class="card" style="padding:1rem;">
+            <h3 style="margin:0 0 0.5rem;font-size:0.9rem;"><%= d.name %></h3>
+            <p style="margin:0;font-size:0.8rem;color:var(--muted-foreground);"><%= d.staff_count || 0 %> staff · <%= d.doctor_count || 0 %> doctors</p>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <p style="color:var(--muted-foreground);">No departments configured</p>
+    <% } %>
+  </div>
+</div>
+
+<!-- Notifications Tab -->
+<div class="card tab-panel" id="notifications-panel" style="display:none;">
+  <div class="card-header"><h2>Notification Preferences</h2></div>
+  <div class="card-body" style="padding:1.5rem;">
+    <% if (preferences && preferences.length > 0) { %>
+      <% preferences.forEach(function(p) { %>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid var(--border);">
+          <span><%= p.label %></span>
+          <label class="switch">
+            <input type="checkbox" data-pref="<%= p.key %>" <%= p.enabled ? 'checked' : '' %>>
+            <span class="slider"></span>
+          </label>
+        </div>
+      <% }); %>
+    <% } %>
+  </div>
+</div>
+
+<script>
+function showSettingsTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+  document.getElementById(tab + '-panel').style.display = '';
+}
+</script>
