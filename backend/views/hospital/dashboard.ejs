@@ -1,0 +1,200 @@
+<div class="welcome-section">
+    <div class="welcome-text">
+        <h1>Hospital Operations</h1>
+        <p>Dashboard — Today: <%= todayStr %></p>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card gradient-primary">
+        <i data-lucide="users" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Patients Today</p>
+            <h3 class="stat-value"><%= patients.total || 0 %></h3>
+            <p class="stat-subtitle"><%= patients.waiting || 0 %> waiting • <%= patients.in_consultation || 0 %> in consultation</p>
+        </div>
+    </div>
+    <div class="stat-card gradient-success">
+        <i data-lucide="user-check" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Active Doctors</p>
+            <h3 class="stat-value"><%= doctors_stats.active || 0 %></h3>
+            <p class="stat-subtitle"><%= doctors_stats.full_time || 0 %> full-time • <%= doctors_stats.visiting || 0 %> visiting • <%= doctors_stats.locum || 0 %> locum</p>
+        </div>
+    </div>
+    <div class="stat-card gradient-warning">
+        <i data-lucide="credit-card" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">Today's Revenue</p>
+            <h3 class="stat-value"><%= formatNaira(revenue.total_revenue) %></h3>
+            <p class="stat-subtitle"><%= formatNaira(revenue.collected) %> collected • <%= formatNaira(revenue.pending) %> pending</p>
+        </div>
+    </div>
+    <div class="stat-card gradient-info">
+        <i data-lucide="video" class="stat-icon"></i>
+        <div class="stat-content">
+            <p class="stat-label">External Consults</p>
+            <h3 class="stat-value"><%= consults.total || 0 %></h3>
+            <p class="stat-subtitle"><%= consults.pending || 0 %> pending • <%= consults.accepted || 0 %> active</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Grid -->
+<div class="content-grid">
+    <!-- Live Queue -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>Live Patient Queue</h2>
+            <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/queue.html">View All</a>
+        </div>
+        <div class="hospital-queue-mini">
+            <% if (queue.length) { %>
+                <% queue.forEach(function(q, i) { %>
+                <div class="queue-item priority-<%= q.priority || 'normal' %>">
+                    <span class="queue-number">#<%= q.queue_number || (i + 1) %></span>
+                    <div class="queue-patient">
+                        <h4><%= q.firstname %> <%= q.lastname %></h4>
+                        <p><%= statusLabel(q.checkin_type) %> • <%= q.department || 'General' %></p>
+                    </div>
+                    <span class="queue-status <%= statusClass(q.status) %>"><%= statusLabel(q.status) %></span>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <p style="color:var(--text-secondary);padding:1rem;text-align:center;">No patients in queue today</p>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Doctor Overview -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>Doctor Overview</h2>
+            <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/doctors.html">Manage</a>
+        </div>
+        <div class="doctor-overview-list">
+            <% if (doctors_list.length) { %>
+                <% doctors_list.forEach(function(doc) {
+                    var typeMap = { full_time: 'Full-time', visiting_consultant: 'Visiting', locum: 'Locum' };
+                    var typeClass = doc.employment_type === 'full_time' ? 'full-time' : (doc.employment_type === 'visiting_consultant' ? 'visiting' : 'locum');
+                %>
+                <div class="doctor-overview-item">
+                    <div class="avatar"><%= ((doc.first_name || '')[0] || '') + ((doc.last_name || '')[0] || '') %></div>
+                    <div class="doctor-overview-info">
+                        <h4>Dr. <%= doc.first_name %> <%= doc.last_name %></h4>
+                        <p><%= doc.specialty || 'General' %></p>
+                    </div>
+                    <span class="doctor-type-badge <%= typeClass %>"><%= typeMap[doc.employment_type] || doc.employment_type %></span>
+                    <span class="doctor-status-dot <%= doc.is_active ? 'online' : 'offline' %>"></span>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <p style="color:var(--text-secondary);padding:1rem;text-align:center;">No doctors assigned</p>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Second Row -->
+<div class="content-grid" style="margin-top: 1.5rem;">
+    <!-- External Consultations -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>External Consultations</h2>
+            <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/consultation-requests.html">View All</a>
+        </div>
+        <div class="consultation-list">
+            <% if (consultations.length) { %>
+                <% consultations.forEach(function(cr) { %>
+                <div class="consultation-card">
+                    <div class="consultation-header">
+                        <div class="doctor-info">
+                            <div class="avatar"><%= ((cr.doc_first || '')[0] || '') + ((cr.doc_last || '')[0] || '') %></div>
+                            <div>
+                                <h4>Dr. <%= cr.doc_first %> <%= cr.doc_last %></h4>
+                                <p><%= cr.specialty || 'Specialist' %> • <%= cr.request_type || 'Virtual' %></p>
+                            </div>
+                        </div>
+                        <span class="status-badge <%= cr.status === 'accepted' ? 'approved' : cr.status %>"><%= statusLabel(cr.status) %></span>
+                    </div>
+                    <div class="consultation-details">
+                        <span><i data-lucide="user"></i> <%= cr.pat_first %> <%= cr.pat_last %></span>
+                        <span><i data-lucide="<%= cr.request_type === 'virtual' ? 'video' : 'map-pin' %>"></i> <%= statusLabel(cr.request_type) %></span>
+                        <span><i data-lucide="clock"></i> <%= timeAgo(cr.created_at) %></span>
+                    </div>
+                    <% if (cr.status === 'accepted' && cr.meeting_link) { %>
+                        <button class="btn btn-primary btn-sm" style="margin-top:0.75rem;" onclick="window.open('<%= cr.meeting_link %>')"><i data-lucide="video"></i> Join Session</button>
+                    <% } %>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <p style="color:var(--text-secondary);padding:1rem;text-align:center;">No recent consultation requests</p>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Recent Billing -->
+    <div class="content-section">
+        <div class="section-header">
+            <h2>Recent Billing</h2>
+            <a href="#" class="link-btn load-content" data-url="/export/partials/hospital/billing.html">View All</a>
+        </div>
+        <div class="billing-mini-list">
+            <% if (billing.length) { %>
+                <% billing.forEach(function(b) { %>
+                <div class="billing-mini-item">
+                    <div class="billing-mini-info">
+                        <h4><%= b.firstname %> <%= b.lastname %></h4>
+                        <p><%= b.description || statusLabel(b.billing_type) %></p>
+                    </div>
+                    <div class="billing-mini-amount">
+                        <span class="amount">₦<%= Number(b.total).toLocaleString() %></span>
+                        <span class="status-badge <%= b.payment_status === 'paid' ? 'paid-badge' : 'pending' %>"><%= statusLabel(b.payment_status) %></span>
+                    </div>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <p style="color:var(--text-secondary);padding:1rem;text-align:center;">No recent billing</p>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Third Row: Activity Feed -->
+<div class="content-grid" style="margin-top: 1.5rem;">
+    <div class="content-section" style="grid-column: 1 / -1;">
+        <div class="section-header">
+            <h2>Recent Activity</h2>
+        </div>
+        <div class="activity-feed">
+            <% if (activity.length) { %>
+                <% activity.forEach(function(a) {
+                    var iconMap = { checkin: 'user-plus', billing: 'credit-card', emr: 'file-text' };
+                    var colorMap = { checkin: 'var(--color-primary)', billing: 'var(--color-warning)', emr: 'var(--color-success)' };
+                %>
+                <div class="activity-item" style="display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <div style="width:36px;height:36px;border-radius:50%;background:<%= colorMap[a.type] || 'var(--color-primary)' %>;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i data-lucide="<%= iconMap[a.type] || 'activity' %>" style="width:16px;height:16px;color:#fff;"></i>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <p style="font-weight:500;color:var(--text-primary);margin:0;"><%= a.title %></p>
+                        <p style="font-size:0.8rem;color:var(--text-secondary);margin:0;"><%= a.detail %></p>
+                    </div>
+                    <span style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;"><%= timeAgo(a.time) %></span>
+                </div>
+                <% }); %>
+            <% } else { %>
+                <p style="color:var(--text-secondary);padding:1rem;text-align:center;">No recent activity</p>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Quick stats data for sidebar badges -->
+<script>
+    (function() {
+        var qb = document.querySelector('.nav-badge:not(.notif-sidebar-badge)');
+        if (qb) qb.textContent = '<%= queue_waiting || 0 %>';
+    })();
+</script>

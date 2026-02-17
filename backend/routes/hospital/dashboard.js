@@ -4,15 +4,44 @@ const { query } = require('../../config/database');
 const { requireHospitalAuth } = require('../../middleware/hospitalAuth');
 
 // ==========================================
+// Helper functions for EJS templates
+// ==========================================
+function formatNaira(amount) {
+  const n = Number(amount) || 0;
+  if (n >= 1000000) return '₦' + (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return '₦' + (n / 1000).toFixed(0) + 'K';
+  return '₦' + n.toLocaleString();
+}
+
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return mins + ' min ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
+function statusLabel(status) {
+  return (status || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function statusClass(status) {
+  const map = { waiting: 'status-waiting', checked_in: 'status-checked-in', in_consultation: 'status-in-consultation', completed: 'status-completed' };
+  return map[status] || '';
+}
+
+// ==========================================
 // GET /api/hospital/dashboard
-// Aggregated landing dashboard data
+// Render dashboard as EJS HTML partial
 // ==========================================
 router.get('/', requireHospitalAuth, async (req, res) => {
   const hid = req.hospitalId;
   const today = new Date().toISOString().slice(0, 10);
+  const todayStr = new Date().toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   try {
-    // Run all queries in parallel
     const [
       patientStats,
       doctorStats,
@@ -155,58 +184,47 @@ router.get('/', requireHospitalAuth, async (req, res) => {
       FROM hospital_staff hs WHERE hs.id = ?
     `, [req.staffId]);
 
-    res.json({
-      success: true,
-      data: {
-        hospital: hospitalInfo[0] || { first_name: 'Admin', role: 'admin' },
-        stats: {
-          patients: patientStats[0] || {},
-          doctors: doctorStats[0] || {},
-          revenue: revenueStats[0] || {},
-          consultations: consultStats[0] || {}
-        },
-        queue: queueRows || [],
-        doctors: doctorRows || [],
-        consultations: consultationRows || [],
-        billing: billingRows || [],
-        activity: recentActivity || []
-      }
+    // Count waiting patients for sidebar badge
+    const waitingCount = patientStats[0]?.waiting || 0;
+
+    res.render('hospital/dashboard', {
+      todayStr,
+      patients: patientStats[0] || {},
+      doctors_stats: doctorStats[0] || {},
+      revenue: revenueStats[0] || {},
+      consults: consultStats[0] || {},
+      queue: queueRows || [],
+      doctors_list: doctorRows || [],
+      consultations: consultationRows || [],
+      billing: billingRows || [],
+      activity: recentActivity || [],
+      hospital: hospitalInfo[0] || { first_name: 'Admin', role: 'admin' },
+      queue_waiting: waitingCount,
+      // Helper functions
+      formatNaira,
+      timeAgo,
+      statusLabel,
+      statusClass
     });
   } catch (err) {
     console.error('Dashboard data error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load dashboard data' });
+    res.status(500).send('<div class="error-message"><h2>Failed to load dashboard</h2><p>' + err.message + '</p></div>');
   }
 });
 
 // ==========================================
-// GET /api/hospital/dashboard/quick-stats
-// Lightweight endpoint for header badge counts
+// GET /api/hospital/dashboard/profile
+// Lightweight endpoint for header profile info
 // ==========================================
-router.get('/quick-stats', requireHospitalAuth, async (req, res) => {
-  const hid = req.hospitalId;
-  const today = new Date().toISOString().slice(0, 10);
-
+router.get('/profile', requireHospitalAuth, async (req, res) => {
   try {
-    const [queueCount, pendingBills, pendingConsults] = await Promise.all([
-      query(`SELECT COUNT(*) AS count FROM patient_checkins
-             WHERE hospital_id = ? AND DATE(checkin_time) = ?
-             AND status IN ('waiting','checked_in')`, [hid, today]),
-      query(`SELECT COUNT(*) AS count FROM hospital_billing
-             WHERE hospital_id = ? AND payment_status = 'pending'`, [hid]),
-      query(`SELECT COUNT(*) AS count FROM consultation_requests
-             WHERE requesting_hospital_id = ? AND status = 'pending'`, [hid])
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        queue_waiting: queueCount[0]?.count || 0,
-        pending_bills: pendingBills[0]?.count || 0,
-        pending_consults: pendingConsults[0]?.count || 0
-      }
-    });
+    const rows = await query(`
+      SELECT first_name, last_name, role FROM hospital_staff WHERE id = ?
+    `, [req.staffId]);
+    const staff = rows[0] || { first_name: 'Admin', role: 'admin' };
+    res.json({ success: true, first_name: staff.first_name, last_name: staff.last_name, role: staff.role });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to load quick stats' });
+    res.status(500).json({ success: false, message: 'Failed to load profile' });
   }
 });
 
