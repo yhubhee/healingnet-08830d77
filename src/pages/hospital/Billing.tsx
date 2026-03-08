@@ -3,27 +3,27 @@ import { cn } from "@/lib/utils";
 import { CreditCard, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
-const summaryCards = [
-  { label: "Total Revenue", value: "₦12.8M", colorClass: "text-success", icon: TrendingUp },
-  { label: "Collected", value: "₦9.2M", colorClass: "text-primary", icon: CheckCircle },
-  { label: "Pending", value: "₦3.6M", colorClass: "text-warning", icon: Clock },
-  { label: "Avg. Bill", value: "₦18,500", colorClass: "text-info", icon: CreditCard },
-];
-
-const mockBills = [
-  { id: 1, patient: "Amara Obi", type: "Consultation", amount: 15000, total: 15000, method: "Cash", status: "paid", date: "2026-03-08" },
-  { id: 2, patient: "Chidi Nwosu", type: "Lab Test", amount: 8500, total: 8500, method: "Transfer", status: "pending", date: "2026-03-08" },
-  { id: 3, patient: "Fatima Bello", type: "Pharmacy", amount: 22000, total: 22000, method: "Insurance", status: "paid", date: "2026-03-07" },
-  { id: 4, patient: "Emeka Eze", type: "Procedure", amount: 45000, total: 45000, method: "Card", status: "pending", date: "2026-03-07" },
-  { id: 5, patient: "Ngozi Adamu", type: "Surgery", amount: 350000, total: 350000, method: "HMO", status: "partial", date: "2026-03-06" },
-];
+import { useHospitalBilling } from "@/hooks/useHospitalData";
 
 const filters = ["All", "Paid", "Pending", "Partial"];
 
 export default function HospitalBilling() {
+  const { data: billing = [], isLoading } = useHospitalBilling();
   const [activeFilter, setActiveFilter] = useState("All");
-  const filtered = activeFilter === "All" ? mockBills : mockBills.filter((b) => b.status === activeFilter.toLowerCase());
+
+  const filtered = activeFilter === "All" ? billing : billing.filter((b: any) => b.payment_status === activeFilter.toLowerCase());
+
+  const totalRevenue = billing.reduce((s: number, b: any) => s + Number(b.total), 0);
+  const collected = billing.filter((b: any) => b.payment_status === "paid").reduce((s: number, b: any) => s + Number(b.total), 0);
+  const pending = billing.filter((b: any) => b.payment_status === "pending").reduce((s: number, b: any) => s + Number(b.total), 0);
+  const avg = billing.length > 0 ? Math.round(totalRevenue / billing.length) : 0;
+
+  const summaryCards = [
+    { label: "Total Revenue", value: `₦${(totalRevenue / 1000000).toFixed(1)}M`, colorClass: "text-success", icon: TrendingUp },
+    { label: "Collected", value: `₦${(collected / 1000000).toFixed(1)}M`, colorClass: "text-primary", icon: CheckCircle },
+    { label: "Pending", value: `₦${(pending / 1000000).toFixed(1)}M`, colorClass: "text-warning", icon: Clock },
+    { label: "Avg. Bill", value: `₦${avg.toLocaleString()}`, colorClass: "text-info", icon: CreditCard },
+  ];
 
   return (
     <HospitalLayout>
@@ -43,41 +43,43 @@ export default function HospitalBilling() {
 
       <div className="flex flex-wrap gap-2 mb-6">
         {filters.map((f) => (
-          <Button key={f} variant={activeFilter === f ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setActiveFilter(f)}>
-            {f}
-          </Button>
+          <Button key={f} variant={activeFilter === f ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setActiveFilter(f)}>{f}</Button>
         ))}
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                {["Patient", "Type", "Amount", "Method", "Date", "Status", "Actions"].map((h) => (
-                  <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((b) => (
-                <tr key={b.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
-                  <td className="p-4 font-medium">{b.patient}</td>
-                  <td className="p-4 text-sm">{b.type}</td>
-                  <td className="p-4 font-heading font-bold">₦{b.total.toLocaleString()}</td>
-                  <td className="p-4 text-sm">{b.method}</td>
-                  <td className="p-4 text-sm text-muted-foreground">{new Date(b.date).toLocaleDateString()}</td>
-                  <td className="p-4">
-                    <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
-                      b.status === "paid" ? "bg-success/15 text-success" : b.status === "partial" ? "bg-info/15 text-info" : "bg-warning/15 text-warning"
-                    )}>{b.status}</span>
-                  </td>
-                  <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading billing...</div> : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Patient", "Type", "Amount", "Method", "Date", "Status", "Actions"].map((h) => (
+                    <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No billing records</td></tr>
+                ) : filtered.map((b: any) => (
+                  <tr key={b.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
+                    <td className="p-4 font-medium">{b.patients?.first_name} {b.patients?.last_name}</td>
+                    <td className="p-4 text-sm">{b.billing_type}</td>
+                    <td className="p-4 font-heading font-bold">₦{Number(b.total).toLocaleString()}</td>
+                    <td className="p-4 text-sm">{b.payment_method}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</td>
+                    <td className="p-4">
+                      <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
+                        b.payment_status === "paid" ? "bg-success/15 text-success" : b.payment_status === "partial" ? "bg-info/15 text-info" : "bg-warning/15 text-warning"
+                      )}>{b.payment_status}</span>
+                    </td>
+                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </HospitalLayout>
   );

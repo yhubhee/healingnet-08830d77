@@ -3,36 +3,26 @@ import { cn } from "@/lib/utils";
 import { Baby, Heart, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
-const stats = [
-  { label: "Active ANC", value: 18, icon: Baby, gradient: "gradient-primary" },
-  { label: "High Risk", value: 3, icon: AlertTriangle, gradient: "gradient-danger" },
-  { label: "Due This Week", value: 4, icon: Heart, gradient: "gradient-warning" },
-  { label: "Delivered (Month)", value: 12, icon: CheckCircle, gradient: "gradient-success" },
-];
+import { useMaternityRecords } from "@/hooks/useHospitalData";
 
 const tabs = ["ANC Register", "Labour Ward", "Delivered", "Postnatal"];
-
-const mockRecords = [
-  { id: 1, patient: "Ngozi Adamu", edd: "2026-03-20", weeks: 38, gravida: 2, para: 1, risk: "low", status: "active_anc", blood: "O+", doctor: "Dr. Okonkwo" },
-  { id: 2, patient: "Amina Yusuf", edd: "2026-03-15", weeks: 39, gravida: 1, para: 0, risk: "high", status: "active_anc", blood: "B+", doctor: "Dr. Okonkwo" },
-  { id: 3, patient: "Blessing Okafor", edd: "2026-03-10", weeks: 40, gravida: 3, para: 2, risk: "moderate", status: "labour", blood: "A+", doctor: "Dr. Mohammed" },
-  { id: 4, patient: "Fatima Abubakar", edd: "2026-03-01", weeks: 41, gravida: 2, para: 1, risk: "low", status: "delivered", blood: "O-", doctor: "Dr. Okonkwo" },
-];
-
-const riskColors: Record<string, string> = {
-  low: "bg-success/15 text-success",
-  moderate: "bg-warning/15 text-warning",
-  high: "bg-destructive/15 text-destructive",
-};
+const riskColors: Record<string, string> = { low: "bg-success/15 text-success", moderate: "bg-warning/15 text-warning", high: "bg-destructive/15 text-destructive" };
 
 export default function HospitalMaternity() {
+  const { data: records = [], isLoading } = useMaternityRecords();
   const [activeTab, setActiveTab] = useState("ANC Register");
 
-  const filtered = activeTab === "ANC Register" ? mockRecords.filter((r) => r.status.includes("anc")) :
-    activeTab === "Labour Ward" ? mockRecords.filter((r) => r.status === "labour") :
-    activeTab === "Delivered" ? mockRecords.filter((r) => r.status === "delivered") :
-    mockRecords.filter((r) => r.status === "postnatal");
+  const filtered = activeTab === "ANC Register" ? records.filter((r: any) => (r.status || "").includes("anc")) :
+    activeTab === "Labour Ward" ? records.filter((r: any) => r.status === "labour") :
+    activeTab === "Delivered" ? records.filter((r: any) => r.status === "delivered") :
+    records.filter((r: any) => r.status === "postnatal");
+
+  const stats = [
+    { label: "Active ANC", value: records.filter((r: any) => (r.status || "").includes("anc")).length, icon: Baby, gradient: "gradient-primary" },
+    { label: "High Risk", value: records.filter((r: any) => r.risk_level === "high").length, icon: AlertTriangle, gradient: "gradient-danger" },
+    { label: "In Labour", value: records.filter((r: any) => r.status === "labour").length, icon: Heart, gradient: "gradient-warning" },
+    { label: "Delivered", value: records.filter((r: any) => r.status === "delivered").length, icon: CheckCircle, gradient: "gradient-success" },
+  ];
 
   return (
     <HospitalLayout>
@@ -58,34 +48,36 @@ export default function HospitalMaternity() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                {["Patient", "EDD", "Weeks", "G/P", "Blood Group", "Risk Level", "Doctor", "Status", "Actions"].map((h) => (
-                  <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length ? filtered.map((r) => (
-                <tr key={r.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
-                  <td className="p-4 font-medium">{r.patient}</td>
-                  <td className="p-4 text-sm">{new Date(r.edd).toLocaleDateString()}</td>
-                  <td className="p-4 font-heading font-bold">{r.weeks}</td>
-                  <td className="p-4 text-sm">G{r.gravida}P{r.para}</td>
-                  <td className="p-4"><span className="bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">{r.blood}</span></td>
-                  <td className="p-4"><span className={cn("text-xs font-semibold px-3 py-1 rounded-full", riskColors[r.risk])}>{r.risk}</span></td>
-                  <td className="p-4 text-sm">{r.doctor}</td>
-                  <td className="p-4"><span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/15 text-primary">{r.status.replace(/_/g, " ")}</span></td>
-                  <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Patient", "EDD", "Weeks", "G/P", "Blood Group", "Risk Level", "Doctor", "Status", "Actions"].map((h) => (
+                    <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
+                  ))}
                 </tr>
-              )) : (
-                <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No records in this category</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No records in this category</td></tr>
+                ) : filtered.map((r: any) => (
+                  <tr key={r.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
+                    <td className="p-4 font-medium">{r.patients?.first_name} {r.patients?.last_name}</td>
+                    <td className="p-4 text-sm">{r.edd ? new Date(r.edd).toLocaleDateString() : "—"}</td>
+                    <td className="p-4 font-heading font-bold">{r.gestational_age_weeks || "—"}</td>
+                    <td className="p-4 text-sm">G{r.gravida || 0}P{r.para || 0}</td>
+                    <td className="p-4">{r.patients?.blood_group ? <span className="bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">{r.patients.blood_group}</span> : "—"}</td>
+                    <td className="p-4"><span className={cn("text-xs font-semibold px-3 py-1 rounded-full", riskColors[r.risk_level || "low"])}>{r.risk_level || "low"}</span></td>
+                    <td className="p-4 text-sm">{r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : "—"}</td>
+                    <td className="p-4"><span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/15 text-primary">{(r.status || "").replace(/_/g, " ")}</span></td>
+                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </HospitalLayout>
   );
