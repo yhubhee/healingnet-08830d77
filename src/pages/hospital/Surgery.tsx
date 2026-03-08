@@ -3,28 +3,23 @@ import { cn } from "@/lib/utils";
 import { Scissors, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
-const stats = [
-  { label: "Scheduled Today", value: 4, icon: Scissors, gradient: "gradient-primary" },
-  { label: "In Progress", value: 1, icon: Clock, gradient: "gradient-warning" },
-  { label: "Completed", value: 2, icon: CheckCircle, gradient: "gradient-success" },
-  { label: "Emergency", value: 1, icon: AlertTriangle, gradient: "gradient-danger" },
-];
-
-const mockSurgeries = [
-  { id: 1, patient: "Emeka Eze", procedure: "Appendectomy", type: "emergency", surgeon: "Dr. Nnamdi", theatre: "OT-1", time: "08:00", status: "completed", anaesthesia: "General" },
-  { id: 2, patient: "Amara Obi", procedure: "Hernia Repair", type: "elective", surgeon: "Dr. Adebayo", theatre: "OT-2", time: "10:30", status: "in_progress", anaesthesia: "Spinal" },
-  { id: 3, patient: "Ibrahim Musa", procedure: "Knee Replacement", type: "elective", surgeon: "Dr. Nnamdi", theatre: "OT-1", time: "14:00", status: "scheduled", anaesthesia: "General" },
-  { id: 4, patient: "Fatima Bello", procedure: "Tonsillectomy", type: "day_case", surgeon: "Dr. Mohammed", theatre: "OT-3", time: "16:00", status: "scheduled", anaesthesia: "General" },
-];
+import { useSurgeryRecords } from "@/hooks/useHospitalData";
 
 const tabs = ["All", "Scheduled", "In Progress", "Completed"];
 
 export default function HospitalSurgery() {
+  const { data: surgeries = [], isLoading } = useSurgeryRecords();
   const [activeTab, setActiveTab] = useState("All");
 
-  const filtered = activeTab === "All" ? mockSurgeries :
-    mockSurgeries.filter((s) => s.status === activeTab.toLowerCase().replace(/ /g, "_"));
+  const filtered = activeTab === "All" ? surgeries :
+    surgeries.filter((s: any) => s.status === activeTab.toLowerCase().replace(/ /g, "_"));
+
+  const stats = [
+    { label: "Scheduled", value: surgeries.filter((s: any) => s.status === "scheduled").length, icon: Scissors, gradient: "gradient-primary" },
+    { label: "In Progress", value: surgeries.filter((s: any) => s.status === "in_progress").length, icon: Clock, gradient: "gradient-warning" },
+    { label: "Completed", value: surgeries.filter((s: any) => s.status === "completed").length, icon: CheckCircle, gradient: "gradient-success" },
+    { label: "Emergency", value: surgeries.filter((s: any) => s.procedure_type === "emergency").length, icon: AlertTriangle, gradient: "gradient-danger" },
+  ];
 
   return (
     <HospitalLayout>
@@ -50,36 +45,40 @@ export default function HospitalSurgery() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                {["Patient", "Procedure", "Type", "Surgeon", "Theatre", "Time", "Anaesthesia", "Status", "Actions"].map((h) => (
-                  <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((s) => (
-                <tr key={s.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
-                  <td className="p-4 font-medium">{s.patient}</td>
-                  <td className="p-4 text-sm">{s.procedure}</td>
-                  <td className="p-4"><span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", s.type === "emergency" ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary")}>{s.type}</span></td>
-                  <td className="p-4 text-sm">{s.surgeon}</td>
-                  <td className="p-4 text-sm">{s.theatre}</td>
-                  <td className="p-4 text-sm">{s.time}</td>
-                  <td className="p-4 text-sm">{s.anaesthesia}</td>
-                  <td className="p-4">
-                    <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
-                      s.status === "completed" ? "bg-success/15 text-success" : s.status === "in_progress" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
-                    )}>{s.status.replace(/_/g, " ")}</span>
-                  </td>
-                  <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Patient", "Procedure", "Type", "Surgeon", "Theatre", "Time", "Anaesthesia", "Status", "Actions"].map((h) => (
+                    <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No surgery records</td></tr>
+                ) : filtered.map((s: any) => (
+                  <tr key={s.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
+                    <td className="p-4 font-medium">{s.patients?.first_name} {s.patients?.last_name}</td>
+                    <td className="p-4 text-sm">{s.procedure_name}</td>
+                    <td className="p-4"><span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", s.procedure_type === "emergency" ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary")}>{s.procedure_type}</span></td>
+                    <td className="p-4 text-sm">{s.doctors ? `Dr. ${s.doctors.first_name} ${s.doctors.last_name}` : "—"}</td>
+                    <td className="p-4 text-sm">{s.theatre_number || "—"}</td>
+                    <td className="p-4 text-sm">{s.scheduled_time}</td>
+                    <td className="p-4 text-sm">{s.anaesthesia_type || "—"}</td>
+                    <td className="p-4">
+                      <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
+                        s.status === "completed" ? "bg-success/15 text-success" : s.status === "in_progress" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
+                      )}>{(s.status || "scheduled").replace(/_/g, " ")}</span>
+                    </td>
+                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </HospitalLayout>
   );

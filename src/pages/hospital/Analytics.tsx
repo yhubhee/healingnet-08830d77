@@ -1,22 +1,42 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { cn } from "@/lib/utils";
 import { BarChart3, Users, TrendingUp, Activity } from "lucide-react";
-
-const kpis = [
-  { label: "Patient Volume", value: "1,247", change: "+12%", icon: Users, gradient: "gradient-primary" },
-  { label: "Revenue (Month)", value: "₦12.8M", change: "+8%", icon: TrendingUp, gradient: "gradient-success" },
-  { label: "Avg Wait Time", value: "22 min", change: "-15%", icon: Activity, gradient: "gradient-warning" },
-  { label: "Bed Occupancy", value: "78%", change: "+3%", icon: BarChart3, gradient: "gradient-info" },
-];
-
-const departments = [
-  { name: "General Practice", patients: 420, revenue: 3200000, pct: 85 },
-  { name: "Cardiology", patients: 180, revenue: 2800000, pct: 72 },
-  { name: "Pediatrics", patients: 210, revenue: 1500000, pct: 60 },
-  { name: "Orthopedics", patients: 95, revenue: 2100000, pct: 45 },
-];
+import { usePatientCheckins, useHospitalBilling, useHospitalBeds } from "@/hooks/useHospitalData";
 
 export default function HospitalAnalytics() {
+  const { data: checkins = [] } = usePatientCheckins();
+  const { data: billing = [] } = useHospitalBilling();
+  const { data: beds = [] } = useHospitalBeds();
+
+  const totalPatients = checkins.length;
+  const totalRevenue = billing.reduce((s: number, b: any) => s + Number(b.total), 0);
+  const avgWait = checkins.length > 0 ? Math.round(checkins.reduce((s: number, c: any) => {
+    if (!c.checkin_time || !c.consultation_start) return s;
+    return s + (new Date(c.consultation_start).getTime() - new Date(c.checkin_time).getTime()) / 60000;
+  }, 0) / checkins.length) : 0;
+  const occupancy = beds.length > 0 ? Math.round((beds.filter((b: any) => b.status === "occupied").length / beds.length) * 100) : 0;
+
+  const kpis = [
+    { label: "Patient Volume", value: totalPatients.toLocaleString(), change: "", icon: Users, gradient: "gradient-primary" },
+    { label: "Revenue", value: `₦${(totalRevenue / 1000000).toFixed(1)}M`, change: "", icon: TrendingUp, gradient: "gradient-success" },
+    { label: "Avg Wait Time", value: `${avgWait} min`, change: "", icon: Activity, gradient: "gradient-warning" },
+    { label: "Bed Occupancy", value: `${occupancy}%`, change: "", icon: BarChart3, gradient: "gradient-info" },
+  ];
+
+  // Group by department
+  const deptMap: Record<string, { patients: number; revenue: number }> = {};
+  checkins.forEach((c: any) => {
+    const dept = c.department || "Unknown";
+    if (!deptMap[dept]) deptMap[dept] = { patients: 0, revenue: 0 };
+    deptMap[dept].patients++;
+  });
+  billing.forEach((b: any) => {
+    const dept = b.billing_type || "Unknown";
+    if (!deptMap[dept]) deptMap[dept] = { patients: 0, revenue: 0 };
+    deptMap[dept].revenue += Number(b.total);
+  });
+  const departments = Object.entries(deptMap).map(([name, d]) => ({ name, ...d, pct: totalPatients > 0 ? Math.round((d.patients / totalPatients) * 100) : 0 })).sort((a, b) => b.patients - a.patients).slice(0, 6);
+
   return (
     <HospitalLayout>
       <div className="mb-6">
@@ -29,17 +49,18 @@ export default function HospitalAnalytics() {
             <k.icon className="stat-card-icon" />
             <p className="text-sm opacity-80">{k.label}</p>
             <h3 className="text-2xl font-heading font-bold">{k.value}</h3>
-            <p className="text-xs opacity-70 mt-1">{k.change}</p>
           </div>
         ))}
       </div>
       <div className="bg-card border border-border rounded-xl p-6">
         <h3 className="text-lg font-heading font-bold mb-4">Department Performance</h3>
         <div className="space-y-4">
-          {departments.map((d) => (
+          {departments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No data yet</p>
+          ) : departments.map((d) => (
             <div key={d.name}>
               <div className="flex justify-between text-sm mb-1">
-                <span>{d.name}</span>
+                <span className="capitalize">{d.name}</span>
                 <span className="font-heading font-bold">₦{(d.revenue / 1000000).toFixed(1)}M • {d.patients} patients</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
