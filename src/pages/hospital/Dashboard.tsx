@@ -71,7 +71,6 @@ export default function HospitalDashboard() {
             <h3 className="text-2xl font-heading font-bold">{stat.value}</h3>
             <p className="text-xs opacity-70 mt-1 flex items-center gap-1">
               {stat.trend === "up" && <ArrowUpRight className="h-3 w-3" />}
-              {stat.trend === "down" && <ArrowDownRight className="h-3 w-3" />}
               {stat.subtitle}
             </p>
           </div>
