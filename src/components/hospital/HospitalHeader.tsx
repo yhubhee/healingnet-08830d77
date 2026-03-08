@@ -12,9 +12,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { useHospitalNotifications, useRealtimeNotifications, useMarkNotificationRead } from "@/hooks/useHospitalData";
+import { cn } from "@/lib/utils";
 
 export function HospitalHeader() {
   const navigate = useNavigate();
+  useRealtimeNotifications();
+  const { data: notifications = [] } = useHospitalNotifications();
+  const markRead = useMarkNotificationRead();
+
+  const unread = notifications.filter((n: any) => !n.is_read);
+  const recentNotifs = notifications.slice(0, 3);
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-background/95 backdrop-blur border-b border-border">
@@ -34,35 +42,35 @@ export function HospitalHeader() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive border-0">
-                  3
-                </Badge>
+                {unread.length > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive border-0">
+                    {unread.length > 9 ? "9+" : unread.length}
+                  </Badge>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
               <DropdownMenuLabel className="flex items-center justify-between">
                 Notifications
-                <Badge variant="secondary" className="text-xs">3 new</Badge>
+                {unread.length > 0 && <Badge variant="secondary" className="text-xs">{unread.length} new</Badge>}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex flex-col items-start gap-1 py-3 cursor-pointer">
-                <p className="font-medium text-sm">New Patient Check-in</p>
-                <p className="text-xs text-muted-foreground">Amara Obi checked in for consultation</p>
-                <span className="text-xs text-primary">5 min ago</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-1 py-3 cursor-pointer">
-                <p className="font-medium text-sm">Lab Results Ready</p>
-                <p className="text-xs text-muted-foreground">Blood panel for Patient #1024 completed</p>
-                <span className="text-xs text-primary">15 min ago</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-1 py-3 cursor-pointer">
-                <p className="font-medium text-sm">Low Stock Alert</p>
-                <p className="text-xs text-muted-foreground">Amoxicillin below reorder level</p>
-                <span className="text-xs text-warning">1h ago</span>
-              </DropdownMenuItem>
+              {recentNotifs.length === 0 ? (
+                <div className="py-4 text-center text-sm text-muted-foreground">No notifications</div>
+              ) : recentNotifs.map((n: any) => (
+                <DropdownMenuItem
+                  key={n.id}
+                  className={cn("flex flex-col items-start gap-1 py-3 cursor-pointer", !n.is_read && "bg-primary/5")}
+                  onClick={() => !n.is_read && markRead.mutate(n.id)}
+                >
+                  <p className={cn("font-medium text-sm", !n.is_read && "text-primary")}>{n.title}</p>
+                  <p className="text-xs text-muted-foreground">{n.message}</p>
+                  <span className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleTimeString()}</span>
+                </DropdownMenuItem>
+              ))}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="text-center text-primary cursor-pointer"
+                className="text-center text-primary cursor-pointer justify-center"
                 onClick={() => navigate("/hospital/notifications")}
               >
                 View all notifications
