@@ -66,6 +66,7 @@ const navGroups: NavGroup[] = [
     children: [
       { label: "Laboratory", path: "/hospital/lab", icon: Microscope },
       { label: "Pharmacy", path: "/hospital/pharmacy", icon: Pill },
+      { label: "Bed Management", path: "/hospital/beds", icon: List },
     ],
   },
 ];

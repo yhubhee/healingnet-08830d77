@@ -4,16 +4,9 @@ import { Search, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useEmrEntries } from "@/hooks/useHospitalData";
 
 const tabs = ["All Records", "Consultation Notes", "Vitals", "Diagnoses", "Lab Orders", "Procedures"];
-
-const mockEntries = [
-  { id: 1, patient: "Amara Obi", title: "Consultation Note - General Checkup", type: "consultation_note", doctor: "Dr. Adebayo", date: "2026-03-08", content: "Patient presents with mild fever and headache..." },
-  { id: 2, patient: "Chidi Nwosu", title: "Vitals Recording", type: "vitals", doctor: "Nurse Okafor", date: "2026-03-08", content: "BP: 140/90, Temp: 37.2°C, Pulse: 78 bpm" },
-  { id: 3, patient: "Fatima Bello", title: "Diagnosis - Malaria", type: "diagnosis", doctor: "Dr. Mohammed", date: "2026-03-07", content: "Confirmed malaria parasite via RDT. Prescribed ACT." },
-  { id: 4, patient: "Emeka Eze", title: "Lab Order - Full Blood Count", type: "lab_order", doctor: "Dr. Nnamdi", date: "2026-03-07", content: "Ordered FBC, ESR, and blood film" },
-  { id: 5, patient: "Ngozi Adamu", title: "Procedure - Wound Dressing", type: "procedure", doctor: "Dr. Adebayo", date: "2026-03-06", content: "Wound cleaned and redressed. Healing well." },
-];
 
 const typeColors: Record<string, string> = {
   consultation_note: "bg-primary/15 text-primary",
@@ -24,14 +17,16 @@ const typeColors: Record<string, string> = {
 };
 
 export default function HospitalEMR() {
+  const { data: entries = [], isLoading } = useEmrEntries();
   const [activeTab, setActiveTab] = useState("All Records");
   const [search, setSearch] = useState("");
 
-  const filtered = mockEntries.filter((e) => {
-    const matchSearch = e.patient.toLowerCase().includes(search.toLowerCase()) || e.title.toLowerCase().includes(search.toLowerCase());
+  const filtered = entries.filter((e: any) => {
+    const patientName = `${e.patients?.first_name || ""} ${e.patients?.last_name || ""}`;
+    const matchSearch = patientName.toLowerCase().includes(search.toLowerCase()) || e.title.toLowerCase().includes(search.toLowerCase());
     if (activeTab === "All Records") return matchSearch;
     const tabType = activeTab.toLowerCase().replace(/ /g, "_").replace(/s$/, "");
-    return matchSearch && e.type.includes(tabType);
+    return matchSearch && e.entry_type.includes(tabType);
   });
 
   return (
@@ -48,29 +43,31 @@ export default function HospitalEMR() {
 
       <div className="flex flex-wrap gap-1 mb-6">
         {tabs.map((t) => (
-          <Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>
-            {t}
-          </Button>
+          <Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>{t}</Button>
         ))}
       </div>
 
-      <div className="space-y-3">
-        {filtered.map((entry) => (
-          <div key={entry.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary transition-colors">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h4 className="font-heading font-bold text-sm">{entry.title}</h4>
-                <p className="text-xs text-muted-foreground">{entry.patient} • {entry.doctor}</p>
+      {isLoading ? <div className="text-center p-8 text-muted-foreground">Loading records...</div> : (
+        <div className="space-y-3">
+          {filtered.length === 0 ? (
+            <div className="text-center p-8 text-muted-foreground">No records found</div>
+          ) : filtered.map((entry: any) => (
+            <div key={entry.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary transition-colors">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h4 className="font-heading font-bold text-sm">{entry.title}</h4>
+                  <p className="text-xs text-muted-foreground">{entry.patients?.first_name} {entry.patients?.last_name} • {entry.doctors ? `Dr. ${entry.doctors.first_name} ${entry.doctors.last_name}` : "—"}</p>
+                </div>
+                <span className="text-xs text-muted-foreground">{new Date(entry.created_at).toLocaleDateString()}</span>
               </div>
-              <span className="text-xs text-muted-foreground">{new Date(entry.date).toLocaleDateString()}</span>
+              <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block mb-2", typeColors[entry.entry_type] || "bg-muted text-muted-foreground")}>
+                {entry.entry_type.replace(/_/g, " ")}
+              </span>
+              {entry.content && <p className="text-sm text-muted-foreground">{entry.content}</p>}
             </div>
-            <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block mb-2", typeColors[entry.type])}>
-              {entry.type.replace(/_/g, " ")}
-            </span>
-            <p className="text-sm text-muted-foreground">{entry.content}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </HospitalLayout>
   );
 }

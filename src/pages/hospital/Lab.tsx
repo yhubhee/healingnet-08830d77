@@ -3,34 +3,23 @@ import { cn } from "@/lib/utils";
 import { Microscope, Clock, FlaskConical, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useLabResults } from "@/hooks/useHospitalData";
 
-const stats = [
-  { label: "Tests Today", value: 26, icon: Microscope, gradient: "gradient-primary" },
-  { label: "Pending", value: 8, icon: Clock, gradient: "gradient-warning" },
-  { label: "In Progress", value: 5, icon: FlaskConical, gradient: "gradient-info" },
-  { label: "Completed", value: 13, icon: CheckCircle, gradient: "gradient-success" },
-];
-
-const tabs = ["Pending Orders", "In Progress", "Completed", "Sample Tracking"];
-
-const mockOrders = [
-  { id: 1, patient: "Amara Obi", tests: "Full Blood Count, Malaria RDT", category: "Hematology", sample: "Blood", doctor: "Dr. Adebayo", status: "pending" },
-  { id: 2, patient: "Chidi Nwosu", tests: "Lipid Profile", category: "Biochemistry", sample: "Blood", doctor: "Dr. Okonkwo", status: "in_progress" },
-  { id: 3, patient: "Fatima Bello", tests: "Urinalysis", category: "Microbiology", sample: "Urine", doctor: "Dr. Mohammed", status: "completed" },
-  { id: 4, patient: "Emeka Eze", tests: "ESR, Blood Film", category: "Hematology", sample: "Blood", doctor: "Dr. Nnamdi", status: "pending" },
-  { id: 5, patient: "Ngozi Adamu", tests: "Liver Function Test", category: "Biochemistry", sample: "Blood", doctor: "Dr. Adebayo", status: "in_progress" },
-];
+const tabs = ["All", "Pending", "In Progress", "Completed"];
 
 export default function HospitalLab() {
-  const [activeTab, setActiveTab] = useState("Pending Orders");
+  const { data: labResults = [], isLoading } = useLabResults();
+  const [activeTab, setActiveTab] = useState("All");
 
-  const filtered = activeTab === "Sample Tracking" ? mockOrders :
-    mockOrders.filter((o) => {
-      if (activeTab === "Pending Orders") return o.status === "pending";
-      if (activeTab === "In Progress") return o.status === "in_progress";
-      if (activeTab === "Completed") return o.status === "completed";
-      return true;
-    });
+  const filtered = activeTab === "All" ? labResults :
+    labResults.filter((o: any) => o.status === activeTab.toLowerCase().replace(/ /g, "_"));
+
+  const stats = [
+    { label: "Total Tests", value: labResults.length, icon: Microscope, gradient: "gradient-primary" },
+    { label: "Pending", value: labResults.filter((o: any) => o.status === "pending").length, icon: Clock, gradient: "gradient-warning" },
+    { label: "In Progress", value: labResults.filter((o: any) => o.status === "in_progress").length, icon: FlaskConical, gradient: "gradient-info" },
+    { label: "Completed", value: labResults.filter((o: any) => o.status === "completed").length, icon: CheckCircle, gradient: "gradient-success" },
+  ];
 
   return (
     <HospitalLayout>
@@ -51,42 +40,43 @@ export default function HospitalLab() {
 
       <div className="flex flex-wrap gap-1 mb-6">
         {tabs.map((t) => (
-          <Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>
-            {t}
-          </Button>
+          <Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>{t}</Button>
         ))}
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                {["Order #", "Patient", "Test(s)", "Category", "Sample", "Ordered By", "Status", "Actions"].map((h) => (
-                  <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((o) => (
-                <tr key={o.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
-                  <td className="p-4 font-heading font-bold text-muted-foreground">LAB-{o.id}</td>
-                  <td className="p-4 font-medium">{o.patient}</td>
-                  <td className="p-4 text-sm">{o.tests}</td>
-                  <td className="p-4 text-sm">{o.category}</td>
-                  <td className="p-4 text-sm">{o.sample}</td>
-                  <td className="p-4 text-sm">{o.doctor}</td>
-                  <td className="p-4">
-                    <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
-                      o.status === "completed" ? "bg-success/15 text-success" : o.status === "in_progress" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
-                    )}>{o.status.replace(/_/g, " ")}</span>
-                  </td>
-                  <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading lab data...</div> : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Order #", "Patient", "Tests", "Ordered By", "Date", "Status", "Actions"].map((h) => (
+                    <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No lab results</td></tr>
+                ) : filtered.map((o: any) => (
+                  <tr key={o.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
+                    <td className="p-4 font-heading font-bold text-muted-foreground">LAB-{o.id.slice(0, 4)}</td>
+                    <td className="p-4 font-medium">{o.patients?.first_name} {o.patients?.last_name}</td>
+                    <td className="p-4 text-sm">{o.lab_result_tests?.map((t: any) => t.test_name).join(", ") || "—"}</td>
+                    <td className="p-4 text-sm">{o.doctors ? `Dr. ${o.doctors.first_name} ${o.doctors.last_name}` : "—"}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</td>
+                    <td className="p-4">
+                      <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
+                        o.status === "completed" ? "bg-success/15 text-success" : o.status === "in_progress" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
+                      )}>{(o.status || "pending").replace(/_/g, " ")}</span>
+                    </td>
+                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </HospitalLayout>
   );
