@@ -1,5 +1,5 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
-import { Users, UserCheck, CreditCard, Video, Clock, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Users, UserCheck, CreditCard, Video, Clock, Activity, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePatientCheckins, useRealtimeCheckins, useHospitalDoctors, useHospitalBilling, useHospitalNotifications, useRealtimeNotifications } from "@/hooks/useHospitalData";
 

@@ -24,6 +24,7 @@ import HospitalConsultations from "./pages/hospital/Consultations";
 import HospitalMarketplace from "./pages/hospital/Marketplace";
 import HospitalNotifications from "./pages/hospital/Notifications";
 import HospitalSettings from "./pages/hospital/Settings";
+import HospitalBedManagement from "./pages/hospital/BedManagement";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
           <Route path="/hospital/marketplace" element={<HospitalMarketplace />} />
           <Route path="/hospital/notifications" element={<HospitalNotifications />} />
           <Route path="/hospital/settings" element={<HospitalSettings />} />
+          <Route path="/hospital/beds" element={<HospitalBedManagement />} />
 
           {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
