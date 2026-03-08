@@ -281,6 +281,76 @@ export type Database = {
           },
         ]
       }
+      hospital_beds: {
+        Row: {
+          assigned_at: string | null
+          bed_number: string
+          bed_type: string
+          created_at: string
+          daily_rate: number | null
+          discharged_at: string | null
+          hospital_id: string
+          id: string
+          notes: string | null
+          patient_id: string | null
+          status: string
+          updated_at: string
+          ward_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          bed_number: string
+          bed_type?: string
+          created_at?: string
+          daily_rate?: number | null
+          discharged_at?: string | null
+          hospital_id: string
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          status?: string
+          updated_at?: string
+          ward_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          bed_number?: string
+          bed_type?: string
+          created_at?: string
+          daily_rate?: number | null
+          discharged_at?: string | null
+          hospital_id?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          status?: string
+          updated_at?: string
+          ward_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_beds_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_beds_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_beds_ward_id_fkey"
+            columns: ["ward_id"]
+            isOneToOne: false
+            referencedRelation: "hospital_wards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hospital_billing: {
         Row: {
           amount: number
@@ -608,6 +678,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "hospital_staff_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospital_wards: {
+        Row: {
+          created_at: string
+          floor: string | null
+          hospital_id: string
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          total_beds: number
+          updated_at: string
+          ward_name: string
+          ward_type: string
+        }
+        Insert: {
+          created_at?: string
+          floor?: string | null
+          hospital_id: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          total_beds?: number
+          updated_at?: string
+          ward_name: string
+          ward_type?: string
+        }
+        Update: {
+          created_at?: string
+          floor?: string | null
+          hospital_id?: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          total_beds?: number
+          updated_at?: string
+          ward_name?: string
+          ward_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_wards_hospital_id_fkey"
             columns: ["hospital_id"]
             isOneToOne: false
             referencedRelation: "hospitals"
