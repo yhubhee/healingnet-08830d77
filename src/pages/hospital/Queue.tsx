@@ -3,17 +3,9 @@ import { useState } from "react";
 import { Clock, Users, Stethoscope, CheckCircle, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { usePatientCheckins, useRealtimeCheckins, useUpdateCheckin } from "@/hooks/useHospitalData";
 
 const filters = ["All", "Waiting", "In Consultation", "Checked In", "Completed"];
-
-const mockQueue = [
-  { id: 1, number: 1, name: "Amara Obi", age: 34, gender: "F", department: "General Practice", doctor: "Dr. Adebayo", status: "in_consultation", priority: "normal", type: "pre_booked", time: "9:15 AM", waitTime: "25 min" },
-  { id: 2, number: 2, name: "Chidi Nwosu", age: 56, gender: "M", department: "Cardiology", doctor: "Dr. Okonkwo", status: "waiting", priority: "priority", type: "pre_booked", time: "9:30 AM", waitTime: "40 min" },
-  { id: 3, number: 3, name: "Fatima Bello", age: 8, gender: "F", department: "Pediatrics", doctor: "Dr. Mohammed", status: "waiting", priority: "emergency", type: "walk_in", time: "9:45 AM", waitTime: "15 min" },
-  { id: 4, number: 4, name: "Emeka Eze", age: 42, gender: "M", department: "Orthopedics", doctor: "Dr. Nnamdi", status: "checked_in", priority: "normal", type: "walk_in", time: "10:00 AM", waitTime: "5 min" },
-  { id: 5, number: 5, name: "Ngozi Adamu", age: 29, gender: "F", department: "Dermatology", doctor: "—", status: "checked_in", priority: "normal", type: "walk_in", time: "10:15 AM", waitTime: "2 min" },
-  { id: 6, number: 6, name: "Ibrahim Musa", age: 65, gender: "M", department: "Internal Medicine", doctor: "Dr. Adebayo", status: "completed", priority: "normal", type: "pre_booked", time: "8:30 AM", waitTime: "—" },
-];
 
 const statusColors: Record<string, string> = {
   waiting: "bg-warning/15 text-warning",
@@ -29,18 +21,32 @@ const priorityBorder: Record<string, string> = {
 };
 
 export default function HospitalQueue() {
+  useRealtimeCheckins();
+  const { data: checkins = [], isLoading } = usePatientCheckins();
+  const updateCheckin = useUpdateCheckin();
   const [activeFilter, setActiveFilter] = useState("All");
 
   const filtered = activeFilter === "All"
-    ? mockQueue
-    : mockQueue.filter((q) => q.status === activeFilter.toLowerCase().replace(/ /g, "_"));
+    ? checkins
+    : checkins.filter((q: any) => q.status === activeFilter.toLowerCase().replace(/ /g, "_"));
 
   const stats = [
-    { label: "In Queue", value: mockQueue.filter((q) => q.status !== "completed").length, icon: Users, gradient: "gradient-primary" },
-    { label: "Waiting", value: mockQueue.filter((q) => q.status === "waiting").length, icon: Clock, gradient: "gradient-warning" },
-    { label: "In Consultation", value: mockQueue.filter((q) => q.status === "in_consultation").length, icon: Stethoscope, gradient: "gradient-info" },
-    { label: "Completed", value: mockQueue.filter((q) => q.status === "completed").length, icon: CheckCircle, gradient: "gradient-success" },
+    { label: "In Queue", value: checkins.filter((q: any) => q.status !== "completed").length, icon: Users, gradient: "gradient-primary" },
+    { label: "Waiting", value: checkins.filter((q: any) => q.status === "waiting").length, icon: Clock, gradient: "gradient-warning" },
+    { label: "In Consultation", value: checkins.filter((q: any) => q.status === "in_consultation").length, icon: Stethoscope, gradient: "gradient-info" },
+    { label: "Completed", value: checkins.filter((q: any) => q.status === "completed").length, icon: CheckCircle, gradient: "gradient-success" },
   ];
+
+  const getAge = (dob: string | null) => {
+    if (!dob) return "—";
+    return String(Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)));
+  };
+
+  const getWaitTime = (checkinTime: string | null) => {
+    if (!checkinTime) return "—";
+    const mins = Math.floor((Date.now() - new Date(checkinTime).getTime()) / 60000);
+    return mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  };
 
   return (
     <HospitalLayout>
@@ -61,67 +67,65 @@ export default function HospitalQueue() {
 
       <div className="flex flex-wrap gap-2 mb-6">
         {filters.map((f) => (
-          <Button
-            key={f}
-            variant={activeFilter === f ? "default" : "outline"}
-            size="sm"
-            className="rounded-full"
-            onClick={() => setActiveFilter(f)}
-          >
-            {f}
-          </Button>
+          <Button key={f} variant={activeFilter === f ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setActiveFilter(f)}>{f}</Button>
         ))}
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">#</th>
-                <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Patient</th>
-                <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Department</th>
-                <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Doctor</th>
-                <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Type</th>
-                <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Priority</th>
-                <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Wait Time</th>
-                <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Status</th>
-                <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((q) => (
-                <tr key={q.id} className={cn("border-b border-border/50 hover:bg-sidebar-accent transition-colors border-l-4", priorityBorder[q.priority])}>
-                  <td className="p-4 font-heading font-bold text-muted-foreground">{q.number}</td>
-                  <td className="p-4">
-                    <div className="font-medium">{q.name}</div>
-                    <div className="text-xs text-muted-foreground">{q.age}y • {q.gender} • {q.time}</div>
-                  </td>
-                  <td className="p-4 text-sm">{q.department}</td>
-                  <td className="p-4 text-sm">{q.doctor}</td>
-                  <td className="p-4">
-                    <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", q.type === "walk_in" ? "bg-warning/15 text-warning" : "bg-primary/15 text-primary")}>
-                      {q.type === "walk_in" ? "Walk-in" : "Booked"}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    {q.priority === "emergency" && <AlertTriangle className="h-4 w-4 text-destructive inline mr-1" />}
-                    <span className="text-sm capitalize">{q.priority}</span>
-                  </td>
-                  <td className="p-4 text-sm">{q.waitTime}</td>
-                  <td className="p-4">
-                    <span className={cn("text-xs font-semibold px-3 py-1 rounded-full", statusColors[q.status])}>
-                      {q.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <Button variant="outline" size="sm">View</Button>
-                  </td>
+        {isLoading ? (
+          <div className="p-8 text-center text-muted-foreground">Loading queue...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">#</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Patient</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Department</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Doctor</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Type</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Priority</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Wait Time</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Status</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No patients in queue</td></tr>
+                ) : filtered.map((q: any) => (
+                  <tr key={q.id} className={cn("border-b border-border/50 hover:bg-sidebar-accent transition-colors border-l-4", priorityBorder[q.priority || "normal"])}>
+                    <td className="p-4 font-heading font-bold text-muted-foreground">{q.queue_number || "—"}</td>
+                    <td className="p-4">
+                      <div className="font-medium">{q.patients?.first_name} {q.patients?.last_name}</div>
+                      <div className="text-xs text-muted-foreground">{getAge(q.patients?.date_of_birth)}y • {q.patients?.gender || "—"}</div>
+                    </td>
+                    <td className="p-4 text-sm">{q.department || "—"}</td>
+                    <td className="p-4 text-sm">{q.doctors ? `Dr. ${q.doctors.first_name} ${q.doctors.last_name}` : "—"}</td>
+                    <td className="p-4">
+                      <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", q.checkin_type === "walk_in" ? "bg-warning/15 text-warning" : "bg-primary/15 text-primary")}>
+                        {q.checkin_type === "walk_in" ? "Walk-in" : "Booked"}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      {q.priority === "emergency" && <AlertTriangle className="h-4 w-4 text-destructive inline mr-1" />}
+                      <span className="text-sm capitalize">{q.priority || "normal"}</span>
+                    </td>
+                    <td className="p-4 text-sm">{getWaitTime(q.checkin_time)}</td>
+                    <td className="p-4">
+                      <span className={cn("text-xs font-semibold px-3 py-1 rounded-full", statusColors[q.status] || "bg-muted text-muted-foreground")}>
+                        {q.status.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <Button variant="outline" size="sm">View</Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </HospitalLayout>
   );

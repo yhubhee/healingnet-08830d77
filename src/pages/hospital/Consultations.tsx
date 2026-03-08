@@ -1,20 +1,15 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { cn } from "@/lib/utils";
-import { Send, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
-const mockConsults = [
-  { id: 1, patient: "Amara Obi", doctor: "Dr. Specialist A", specialty: "Neurology", urgency: "high", type: "virtual", status: "pending", date: "2026-03-08" },
-  { id: 2, patient: "Chidi Nwosu", doctor: "Dr. Specialist B", specialty: "Oncology", urgency: "moderate", type: "in_person", status: "accepted", date: "2026-03-07" },
-  { id: 3, patient: "Ibrahim Musa", doctor: "Dr. Specialist C", specialty: "Nephrology", urgency: "low", type: "virtual", status: "completed", date: "2026-03-05" },
-];
+import { useConsultationRequests } from "@/hooks/useHospitalData";
 
 const tabs = ["All", "Pending", "Accepted", "Completed"];
 
 export default function HospitalConsultations() {
+  const { data: consults = [], isLoading } = useConsultationRequests();
   const [activeTab, setActiveTab] = useState("All");
-  const filtered = activeTab === "All" ? mockConsults : mockConsults.filter((c) => c.status === activeTab.toLowerCase());
+  const filtered = activeTab === "All" ? consults : consults.filter((c: any) => c.status === activeTab.toLowerCase());
 
   return (
     <HospitalLayout>
@@ -25,24 +20,31 @@ export default function HospitalConsultations() {
       <div className="flex flex-wrap gap-1 mb-6">
         {tabs.map((t) => (<Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>{t}</Button>))}
       </div>
-      <div className="space-y-3">
-        {filtered.map((c) => (
-          <div key={c.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary transition-colors">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h4 className="font-heading font-bold">{c.patient}</h4>
-                <p className="text-sm text-muted-foreground">{c.specialty} • {c.doctor}</p>
+      {isLoading ? <div className="text-center p-8 text-muted-foreground">Loading...</div> : (
+        <div className="space-y-3">
+          {filtered.length === 0 ? (
+            <div className="text-center p-8 text-muted-foreground">No consultation requests</div>
+          ) : filtered.map((c: any) => (
+            <div key={c.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary transition-colors">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h4 className="font-heading font-bold">{c.patients?.first_name} {c.patients?.last_name}</h4>
+                  <p className="text-sm text-muted-foreground">{c.specialty_needed || "—"} • {c.doctors ? `Dr. ${c.doctors.first_name} ${c.doctors.last_name}` : "—"}</p>
+                </div>
+                <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
+                  c.status === "completed" ? "bg-success/15 text-success" : c.status === "accepted" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
+                )}>{c.status || "pending"}</span>
               </div>
-              <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
-                c.status === "completed" ? "bg-success/15 text-success" : c.status === "accepted" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
-              )}>{c.status}</span>
+              <div className="flex gap-4 text-xs text-muted-foreground">
+                <span>Urgency: {c.urgency || "moderate"}</span>
+                <span>Type: {c.request_type || "virtual"}</span>
+                <span>{new Date(c.created_at).toLocaleDateString()}</span>
+              </div>
+              {c.reason && <p className="text-sm text-muted-foreground mt-2">{c.reason}</p>}
             </div>
-            <div className="flex gap-4 text-xs text-muted-foreground">
-              <span>Urgency: {c.urgency}</span><span>Type: {c.type}</span><span>{new Date(c.date).toLocaleDateString()}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </HospitalLayout>
   );
 }

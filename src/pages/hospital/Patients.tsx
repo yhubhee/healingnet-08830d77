@@ -4,19 +4,20 @@ import { Search, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const mockPatients = [
-  { id: 1, name: "Amara Obi", age: 34, gender: "F", phone: "080-1234-5678", blood_group: "O+", last_visit: "2026-03-07", status: "active" },
-  { id: 2, name: "Chidi Nwosu", age: 56, gender: "M", phone: "070-2345-6789", blood_group: "A+", last_visit: "2026-03-06", status: "active" },
-  { id: 3, name: "Fatima Bello", age: 8, gender: "F", phone: "090-3456-7890", blood_group: "B+", last_visit: "2026-03-08", status: "active" },
-  { id: 4, name: "Emeka Eze", age: 42, gender: "M", phone: "081-4567-8901", blood_group: "AB+", last_visit: "2026-03-05", status: "active" },
-  { id: 5, name: "Ngozi Adamu", age: 29, gender: "F", phone: "070-5678-9012", blood_group: "O-", last_visit: "2026-03-08", status: "active" },
-  { id: 6, name: "Ibrahim Musa", age: 65, gender: "M", phone: "080-6789-0123", blood_group: "A-", last_visit: "2026-03-01", status: "inactive" },
-];
+import { usePatients } from "@/hooks/useHospitalData";
 
 export default function HospitalPatients() {
+  const { data: patients = [], isLoading } = usePatients();
   const [search, setSearch] = useState("");
-  const filtered = mockPatients.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
+
+  const filtered = patients.filter((p: any) =>
+    `${p.first_name} ${p.last_name}`.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const getAge = (dob: string | null) => {
+    if (!dob) return "—";
+    return String(Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)));
+  };
 
   return (
     <HospitalLayout>
@@ -34,34 +35,36 @@ export default function HospitalPatients() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                {["Name", "Age/Gender", "Phone", "Blood Group", "Last Visit", "Status", "Actions"].map((h) => (
-                  <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => (
-                <tr key={p.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
-                  <td className="p-4 font-medium">{p.name}</td>
-                  <td className="p-4 text-sm">{p.age}y • {p.gender}</td>
-                  <td className="p-4 text-sm">{p.phone}</td>
-                  <td className="p-4"><span className="bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">{p.blood_group}</span></td>
-                  <td className="p-4 text-sm text-muted-foreground">{new Date(p.last_visit).toLocaleDateString()}</td>
-                  <td className="p-4">
-                    <span className={cn("text-xs font-semibold px-3 py-1 rounded-full", p.status === "active" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")}>
-                      {p.status}
-                    </span>
-                  </td>
-                  <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+        {isLoading ? (
+          <div className="p-8 text-center text-muted-foreground">Loading patients...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Name", "Age/Gender", "Phone", "Blood Group", "Last Visit", "Status", "Actions"].map((h) => (
+                    <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No patients found</td></tr>
+                ) : filtered.map((p: any) => (
+                  <tr key={p.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
+                    <td className="p-4 font-medium">{p.first_name} {p.last_name}</td>
+                    <td className="p-4 text-sm">{getAge(p.date_of_birth)}y • {p.gender || "—"}</td>
+                    <td className="p-4 text-sm">{p.phone || "—"}</td>
+                    <td className="p-4">{p.blood_group ? <span className="bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">{p.blood_group}</span> : "—"}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{new Date(p.updated_at).toLocaleDateString()}</td>
+                    <td className="p-4"><span className="text-xs font-semibold px-3 py-1 rounded-full bg-success/15 text-success">active</span></td>
+                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </HospitalLayout>
   );
