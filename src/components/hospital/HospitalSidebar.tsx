@@ -121,8 +121,8 @@ export function HospitalSidebar() {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-6 py-5 border-b border-sidebar-border shrink-0">
-          <div className="w-10 h-10 rounded-xl gradient-info flex items-center justify-center animate-pulse-glow">
-            <Building2 className="h-5 w-5 text-foreground" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center">
+            <img src={healingnetLogo} alt="HealingNet Logo" className="w-10 h-10" />
           </div>
           <div>
             <h1 className="text-xl font-heading font-bold text-foreground">HealingNet</h1>
