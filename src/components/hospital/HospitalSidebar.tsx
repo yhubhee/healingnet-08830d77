@@ -1,4 +1,5 @@
 import { useState } from "react";
+import healingnetLogo from "@/assets/healingnet-logo.png";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
