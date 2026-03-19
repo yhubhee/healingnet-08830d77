@@ -36,7 +36,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           {/* Patient Portal */}
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<HospitalPatients />} />
 
           {/* Hospital Portal */}
           <Route path="/hospital" element={<HospitalDashboard />} />
