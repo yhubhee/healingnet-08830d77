@@ -1,10 +1,10 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { useState } from "react";
-import { Search, UserPlus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePatients } from "@/hooks/useHospitalData";
+import { AddPatientDialog } from "@/components/hospital/dialogs/AddPatientDialog";
 
 export default function HospitalPatients() {
   const { data: patients = [], isLoading } = usePatients();
@@ -31,7 +31,7 @@ export default function HospitalPatients() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search patients..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Button><UserPlus className="h-4 w-4 mr-2" />Register Patient</Button>
+        <AddPatientDialog />
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">

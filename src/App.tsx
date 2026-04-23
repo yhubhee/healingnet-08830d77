@@ -3,10 +3,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ResetPassword from "./pages/ResetPassword";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { RequirePlan } from "./components/auth/RequirePlan";
 
-// Hospital pages
 import HospitalDashboard from "./pages/hospital/Dashboard";
 import HospitalQueue from "./pages/hospital/Queue";
 import HospitalDoctors from "./pages/hospital/Doctors";
@@ -26,6 +30,15 @@ import HospitalNotifications from "./pages/hospital/Notifications";
 import HospitalSettings from "./pages/hospital/Settings";
 import HospitalBedManagement from "./pages/hospital/BedManagement";
 
+import PatientDashboard from "./pages/patient/Dashboard";
+import PatientAppointments from "./pages/patient/Appointments";
+import PatientPrescriptions from "./pages/patient/Prescriptions";
+import PatientLabResults from "./pages/patient/LabResults";
+import PatientMedicalRecords from "./pages/patient/MedicalRecords";
+import PatientMessages from "./pages/patient/Messages";
+import PatientProfile from "./pages/patient/Profile";
+import PatientSettings from "./pages/patient/Settings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -35,30 +48,41 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
           {/* Patient Portal */}
-          <Route path="/" element={<HospitalPatients />} />
+          <Route path="/patient" element={<ProtectedRoute><PatientDashboard /></ProtectedRoute>} />
+          <Route path="/patient/appointments" element={<ProtectedRoute><PatientAppointments /></ProtectedRoute>} />
+          <Route path="/patient/prescriptions" element={<ProtectedRoute><PatientPrescriptions /></ProtectedRoute>} />
+          <Route path="/patient/lab-results" element={<ProtectedRoute><PatientLabResults /></ProtectedRoute>} />
+          <Route path="/patient/medical-records" element={<ProtectedRoute><PatientMedicalRecords /></ProtectedRoute>} />
+          <Route path="/patient/messages" element={<ProtectedRoute><PatientMessages /></ProtectedRoute>} />
+          <Route path="/patient/profile" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
+          <Route path="/patient/settings" element={<ProtectedRoute><PatientSettings /></ProtectedRoute>} />
 
           {/* Hospital Portal */}
-          <Route path="/hospital" element={<HospitalDashboard />} />
-          <Route path="/hospital/queue" element={<HospitalQueue />} />
-          <Route path="/hospital/doctors" element={<HospitalDoctors />} />
-          <Route path="/hospital/patients" element={<HospitalPatients />} />
-          <Route path="/hospital/billing" element={<HospitalBilling />} />
-          <Route path="/hospital/emr" element={<HospitalEMR />} />
-          <Route path="/hospital/lab" element={<HospitalLab />} />
-          <Route path="/hospital/pharmacy" element={<HospitalPharmacy />} />
-          <Route path="/hospital/surgery" element={<HospitalSurgery />} />
-          <Route path="/hospital/maternity" element={<HospitalMaternity />} />
-          <Route path="/hospital/referrals" element={<HospitalReferrals />} />
-          <Route path="/hospital/insurance" element={<HospitalInsurance />} />
-          <Route path="/hospital/analytics" element={<HospitalAnalytics />} />
-          <Route path="/hospital/consultations" element={<HospitalConsultations />} />
-          <Route path="/hospital/marketplace" element={<HospitalMarketplace />} />
-          <Route path="/hospital/notifications" element={<HospitalNotifications />} />
-          <Route path="/hospital/settings" element={<HospitalSettings />} />
-          <Route path="/hospital/beds" element={<HospitalBedManagement />} />
+          <Route path="/hospital" element={<ProtectedRoute><HospitalDashboard /></ProtectedRoute>} />
+          <Route path="/hospital/queue" element={<ProtectedRoute><HospitalQueue /></ProtectedRoute>} />
+          <Route path="/hospital/doctors" element={<ProtectedRoute><HospitalDoctors /></ProtectedRoute>} />
+          <Route path="/hospital/patients" element={<ProtectedRoute><HospitalPatients /></ProtectedRoute>} />
+          <Route path="/hospital/billing" element={<ProtectedRoute><HospitalBilling /></ProtectedRoute>} />
+          <Route path="/hospital/emr" element={<ProtectedRoute><HospitalEMR /></ProtectedRoute>} />
+          <Route path="/hospital/lab" element={<ProtectedRoute><HospitalLab /></ProtectedRoute>} />
+          <Route path="/hospital/pharmacy" element={<ProtectedRoute><HospitalPharmacy /></ProtectedRoute>} />
+          <Route path="/hospital/surgery" element={<ProtectedRoute><HospitalSurgery /></ProtectedRoute>} />
+          <Route path="/hospital/maternity" element={<ProtectedRoute><HospitalMaternity /></ProtectedRoute>} />
+          <Route path="/hospital/referrals" element={<ProtectedRoute><HospitalReferrals /></ProtectedRoute>} />
+          <Route path="/hospital/insurance" element={<ProtectedRoute><HospitalInsurance /></ProtectedRoute>} />
+          <Route path="/hospital/analytics" element={<ProtectedRoute><HospitalAnalytics /></ProtectedRoute>} />
+          <Route path="/hospital/consultations" element={<ProtectedRoute><RequirePlan plan="telemedicine"><HospitalConsultations /></RequirePlan></ProtectedRoute>} />
+          <Route path="/hospital/marketplace" element={<ProtectedRoute><RequirePlan plan="telemedicine"><HospitalMarketplace /></RequirePlan></ProtectedRoute>} />
+          <Route path="/hospital/notifications" element={<ProtectedRoute><HospitalNotifications /></ProtectedRoute>} />
+          <Route path="/hospital/settings" element={<ProtectedRoute><HospitalSettings /></ProtectedRoute>} />
+          <Route path="/hospital/beds" element={<ProtectedRoute><HospitalBedManagement /></ProtectedRoute>} />
 
-          {/* Catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

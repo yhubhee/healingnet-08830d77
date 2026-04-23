@@ -4,6 +4,7 @@ import { Clock, Users, Stethoscope, CheckCircle, AlertTriangle } from "lucide-re
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePatientCheckins, useRealtimeCheckins, useUpdateCheckin } from "@/hooks/useHospitalData";
+import { CheckInDialog } from "@/components/hospital/dialogs/CheckInDialog";
 
 const filters = ["All", "Waiting", "In Consultation", "Checked In", "Completed"];
 
@@ -50,9 +51,12 @@ export default function HospitalQueue() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">Patient Queue</h1>
-        <p className="text-muted-foreground">Real-time patient queue and wait time management</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">Patient Queue</h1>
+          <p className="text-muted-foreground">Real-time patient queue and wait time management</p>
+        </div>
+        <CheckInDialog />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -117,8 +121,9 @@ export default function HospitalQueue() {
                         {q.status.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
                       </span>
                     </td>
-                    <td className="p-4">
-                      <Button variant="outline" size="sm">View</Button>
+                    <td className="p-4 space-x-1">
+                      {q.status === "checked_in" && <Button size="sm" onClick={() => updateCheckin.mutate({ id: q.id, status: "in_consultation", consultation_start: new Date().toISOString() })}>Start</Button>}
+                      {q.status === "in_consultation" && <Button size="sm" variant="outline" onClick={() => updateCheckin.mutate({ id: q.id, status: "completed", consultation_end: new Date().toISOString() })}>Complete</Button>}
                     </td>
                   </tr>
                 ))}

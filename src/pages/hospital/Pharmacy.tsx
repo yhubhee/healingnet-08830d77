@@ -4,6 +4,7 @@ import { Pill, AlertTriangle, Package, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { usePharmacyInventory } from "@/hooks/useHospitalData";
+import { AddInventoryDialog } from "@/components/hospital/dialogs/AddInventoryDialog";
 
 const tabs = ["Inventory", "Low Stock"];
 
@@ -26,9 +27,12 @@ export default function HospitalPharmacy() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">Pharmacy</h1>
-        <p className="text-muted-foreground">Inventory management, dispensing, and stock alerts</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">Pharmacy</h1>
+          <p className="text-muted-foreground">Inventory management, dispensing, and stock alerts</p>
+        </div>
+        <AddInventoryDialog />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
