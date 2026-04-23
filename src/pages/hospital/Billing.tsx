@@ -4,6 +4,7 @@ import { CreditCard, TrendingUp, Clock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useHospitalBilling } from "@/hooks/useHospitalData";
+import { AddBillDialog } from "@/components/hospital/dialogs/AddBillDialog";
 
 const filters = ["All", "Paid", "Pending", "Partial"];
 
@@ -27,9 +28,12 @@ export default function HospitalBilling() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">Billing & Revenue</h1>
-        <p className="text-muted-foreground">Manage hospital billing, payments, and revenue tracking</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">Billing & Revenue</h1>
+          <p className="text-muted-foreground">Manage hospital billing, payments, and revenue tracking</p>
+        </div>
+        <AddBillDialog />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
