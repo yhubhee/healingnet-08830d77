@@ -18,6 +18,28 @@ export function useHospitalId() {
   });
 }
 
+// Generic mutation helper
+export function useEntityMutation(table: string, queryKey: string) {
+  const qc = useQueryClient();
+  return {
+    create: useMutation({
+      mutationFn: async (values: any) => {
+        const { data, error } = await supabase.from(table as any).insert(values).select().maybeSingle();
+        if (error) throw error;
+        return data;
+      },
+      onSuccess: () => qc.invalidateQueries({ queryKey: [queryKey] }),
+    }),
+    update: useMutation({
+      mutationFn: async ({ id, ...values }: { id: string; [k: string]: any }) => {
+        const { error } = await supabase.from(table as any).update(values).eq("id", id);
+        if (error) throw error;
+      },
+      onSuccess: () => qc.invalidateQueries({ queryKey: [queryKey] }),
+    }),
+  };
+}
+
 // ---- PATIENTS ----
 export function usePatients() {
   return useQuery({
