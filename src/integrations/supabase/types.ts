@@ -685,6 +685,42 @@ export type Database = {
           },
         ]
       }
+      hospital_subscriptions: {
+        Row: {
+          billing_cycle: string
+          created_at: string
+          expires_at: string | null
+          hospital_id: string
+          id: string
+          plan: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string
+          expires_at?: string | null
+          hospital_id: string
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string
+          expires_at?: string | null
+          hospital_id?: string
+          id?: string
+          plan?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hospital_wards: {
         Row: {
           created_at: string
@@ -1055,6 +1091,48 @@ export type Database = {
           },
         ]
       }
+      patient_appointments: {
+        Row: {
+          created_at: string
+          doctor_id: string | null
+          hospital_id: string
+          id: string
+          notes: string | null
+          patient_id: string
+          reason: string | null
+          requested_date: string
+          requested_time: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id?: string | null
+          hospital_id: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          reason?: string | null
+          requested_date: string
+          requested_time?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string | null
+          hospital_id?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          reason?: string | null
+          requested_date?: string
+          requested_time?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       patient_checkins: {
         Row: {
           assigned_doctor_id: string | null
@@ -1136,6 +1214,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      patient_messages: {
+        Row: {
+          body: string
+          created_at: string
+          from_user_id: string
+          id: string
+          is_read: boolean | null
+          subject: string | null
+          to_user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          from_user_id: string
+          id?: string
+          is_read?: boolean | null
+          subject?: string | null
+          to_user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          is_read?: boolean | null
+          subject?: string | null
+          to_user_id?: string
+        }
+        Relationships: []
       }
       patients: {
         Row: {
@@ -1345,6 +1453,57 @@ export type Database = {
           },
         ]
       }
+      prescriptions: {
+        Row: {
+          created_at: string
+          doctor_id: string | null
+          dosage: string | null
+          drug_name: string
+          duration: string | null
+          frequency: string | null
+          hospital_id: string
+          id: string
+          instructions: string | null
+          patient_id: string
+          refills_allowed: number | null
+          refills_used: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id?: string | null
+          dosage?: string | null
+          drug_name: string
+          duration?: string | null
+          frequency?: string | null
+          hospital_id: string
+          id?: string
+          instructions?: string | null
+          patient_id: string
+          refills_allowed?: number | null
+          refills_used?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string | null
+          dosage?: string | null
+          drug_name?: string
+          duration?: string | null
+          frequency?: string | null
+          hospital_id?: string
+          id?: string
+          instructions?: string | null
+          patient_id?: string
+          refills_allowed?: number | null
+          refills_used?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       surgery_records: {
         Row: {
           actual_end: string | null
@@ -1460,6 +1619,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_hospital_plan: { Args: { _hospital_id: string }; Returns: string }
       get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
       is_hospital_staff: {
         Args: { _hospital_id: string; _user_id: string }
