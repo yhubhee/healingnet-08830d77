@@ -496,6 +496,24 @@ export type Database = {
           },
         ]
       }
+      hospital_notification_prefs: {
+        Row: {
+          hospital_id: string
+          prefs: Json
+          updated_at: string
+        }
+        Insert: {
+          hospital_id: string
+          prefs?: Json
+          updated_at?: string
+        }
+        Update: {
+          hospital_id?: string
+          prefs?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hospital_notifications: {
         Row: {
           created_at: string
@@ -1620,7 +1638,12 @@ export type Database = {
     }
     Functions: {
       get_hospital_plan: { Args: { _hospital_id: string }; Returns: string }
+      get_user_doctor_id: { Args: { _user_id: string }; Returns: string }
       get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
+      is_hospital_admin: {
+        Args: { _hospital_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_hospital_staff: {
         Args: { _hospital_id: string; _user_id: string }
         Returns: boolean
