@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useEmrEntries } from "@/hooks/useHospitalData";
+import { AddEmrEntryDialog } from "@/components/hospital/dialogs/AddEmrEntryDialog";
 
 const tabs = ["All Records", "Consultation Notes", "Vitals", "Diagnoses", "Lab Orders", "Procedures"];
 
@@ -31,9 +32,12 @@ export default function HospitalEMR() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">EMR Records</h1>
-        <p className="text-muted-foreground">Electronic Medical Records — search, view, and add entries</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">EMR Records</h1>
+          <p className="text-muted-foreground">Electronic Medical Records — search, view, and add entries</p>
+        </div>
+        <AddEmrEntryDialog />
       </div>
 
       <div className="relative max-w-md mb-6">

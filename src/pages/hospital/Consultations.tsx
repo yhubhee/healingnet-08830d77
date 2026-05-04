@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useConsultationRequests } from "@/hooks/useHospitalData";
+import { CreateConsultationDialog } from "@/components/hospital/dialogs/CreateConsultationDialog";
 
 const tabs = ["All", "Pending", "Accepted", "Completed"];
 
@@ -13,9 +14,12 @@ export default function HospitalConsultations() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">Consultation Requests</h1>
-        <p className="text-muted-foreground">Request and manage external specialist consultations</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">Consultation Requests</h1>
+          <p className="text-muted-foreground">Request and manage external specialist consultations</p>
+        </div>
+        <CreateConsultationDialog />
       </div>
       <div className="flex flex-wrap gap-1 mb-6">
         {tabs.map((t) => (<Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>{t}</Button>))}

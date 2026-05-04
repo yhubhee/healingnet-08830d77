@@ -4,6 +4,7 @@ import { Microscope, Clock, FlaskConical, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useLabResults } from "@/hooks/useHospitalData";
+import { OrderLabTestDialog } from "@/components/hospital/dialogs/OrderLabTestDialog";
 
 const tabs = ["All", "Pending", "In Progress", "Completed"];
 
@@ -23,9 +24,12 @@ export default function HospitalLab() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">Laboratory</h1>
-        <p className="text-muted-foreground">Test orders, results management, sample tracking, and lab analytics</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">Laboratory</h1>
+          <p className="text-muted-foreground">Test orders, results management, sample tracking, and lab analytics</p>
+        </div>
+        <OrderLabTestDialog />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
