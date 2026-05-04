@@ -410,3 +410,97 @@ export function useHospitalStaff() {
     },
   });
 }
+
+// ---- SUBSCRIPTION ----
+export function useHospitalSubscription() {
+  return useQuery({
+    queryKey: ["hospital-subscription"],
+    queryFn: async () => {
+      const { data: hid } = await supabase.rpc("get_user_hospital_id", { _user_id: (await supabase.auth.getUser()).data.user!.id });
+      if (!hid) return null;
+      const { data } = await supabase.from("hospital_subscriptions" as any).select("*").eq("hospital_id", hid).order("started_at", { ascending: false }).limit(1).maybeSingle();
+      return data;
+    },
+  });
+}
+
+// ---- DOCTOR PORTAL ----
+export function useDoctorId() {
+  return useQuery({
+    queryKey: ["doctor-id"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase.rpc("get_user_doctor_id", { _user_id: user.id });
+      return data as string | null;
+    },
+  });
+}
+
+export function useDoctorAppointments(doctorId?: string | null) {
+  return useQuery({
+    enabled: !!doctorId,
+    queryKey: ["doctor-appointments", doctorId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("patient_appointments" as any)
+        .select("*, patients(first_name, last_name, phone)")
+        .eq("doctor_id", doctorId).order("requested_date", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+}
+
+export function useDoctorPrescriptions(doctorId?: string | null) {
+  return useQuery({
+    enabled: !!doctorId,
+    queryKey: ["doctor-prescriptions", doctorId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("prescriptions" as any)
+        .select("*, patients(first_name, last_name)")
+        .eq("doctor_id", doctorId).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+}
+
+export function useDoctorEmrEntries(doctorId?: string | null) {
+  return useQuery({
+    enabled: !!doctorId,
+    queryKey: ["doctor-emr", doctorId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("emr_entries")
+        .select("*, patients(first_name, last_name)")
+        .eq("doctor_id", doctorId).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useDoctorConsultations(doctorId?: string | null) {
+  return useQuery({
+    enabled: !!doctorId,
+    queryKey: ["doctor-consults", doctorId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("consultation_requests")
+        .select("*, patients(first_name, last_name)")
+        .eq("doctor_id", doctorId).order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useDoctorProfile(doctorId?: string | null) {
+  return useQuery({
+    enabled: !!doctorId,
+    queryKey: ["doctor-profile", doctorId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("doctors").select("*").eq("id", doctorId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
