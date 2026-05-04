@@ -1,126 +1,152 @@
 
+## Plan: Complete Platform Build-Out
 
-## Plan: Marketing Landing Page, Subscription Plans & Patient Portal in React
+This finishes the platform: every remaining hospital module gets full CRUD, a new Doctor portal is added, Analytics shows real charts, Settings gains Subscription + Staff tabs, legacy code is deleted, the marketing site stays at `/`, and the legacy `Index.tsx` (with hardcoded `upcomingAppointments` / `prescriptions`) is removed so no static demo data is shown anywhere.
 
-This plan delivers three big pieces: (1) a public marketing landing page with subscription tiers for hospitals, (2) full conversion of the patient portal to React with a real backend, and (3) wiring the remaining hospital dashboards to live data with full CRUD. The hospital dashboards are already in React — this plan completes their backend integration.
+### 1. Routing & Static Data Cleanup
 
-### 1. Public Marketing Landing Page (`/`)
+- `/` already serves `Landing.tsx` — confirm and remove any reference to `Index.tsx`.
+- **Delete `src/pages/Index.tsx`** entirely (this is the file with the hardcoded `upcomingAppointments` and `prescriptions` arrays the user pasted).
+- Audit every page for hardcoded arrays (`Doctors.tsx`, `Maternity.tsx`, `Surgery.tsx`, `Referrals.tsx`, `Insurance.tsx`, `BedManagement.tsx`, `Marketplace.tsx`) and replace with live `useHospitalData` hooks.
+- Patient `Dashboard.tsx`, `Appointments.tsx`, `Prescriptions.tsx` — verify they read from `usePatientData` only; remove any leftover demo arrays.
 
-A new public landing page at `/` (the current `/` becomes `/patient`).
+### 2. New CRUD Dialogs (Hospital)
 
-**Sections:**
-- Hero: headline, sub-copy, "Get Started Free" + "Book Demo" CTAs, dashboard mockup illustration
-- "Built for everyone" — 3 audience cards: Patients, Doctors, Hospitals (benefits per persona)
-- Feature grid: EMR, Patient Queue, Billing, Lab/Pharmacy, Maternity, Surgery, Insurance, Telemedicine, Marketplace, Analytics
-- "How it works" — 3-step flow (Sign up → Configure hospital → Onboard staff)
-- **Pricing section** with 2 hospital tiers (toggle monthly/yearly):
-  - **EMR Essentials** — Patient records, queue, billing, lab, pharmacy, basic analytics
-  - **Telemedicine Suite** — everything in Essentials + teleconsultation, doctor marketplace, external consultations, video calls, advanced analytics
-  - Patient plan: Free forever
-- Testimonials, FAQ accordion, Footer with links
-- Top nav: Logo, Features, Pricing, For Hospitals, For Patients, Login, Get Started
+Add under `src/components/hospital/dialogs/`:
 
-### 2. Auth System
+| Dialog | Module | Key fields |
+|---|---|---|
+| `AddEmrEntryDialog` | EMR | patient, entry_type, title, content, structured_data |
+| `OrderLabTestDialog` | Lab | patient, doctor, test rows (name, category, sample) |
+| `EnterLabResultDialog` | Lab | per-test result_value, unit, reference_range, is_abnormal |
+| `ScheduleSurgeryDialog` | Surgery | patient, surgeon, procedure_name, date/time, theatre, anaesthesia |
+| `UpdateSurgeryStatusDialog` | Surgery | status, op findings, complications, blood loss |
+| `RegisterAncDialog` | Maternity | patient, lmp_date, edd, gravida, para, risk_level |
+| `LogDeliveryDialog` | Maternity | delivery_date, delivery_type, baby_weight, gender, apgar |
+| `CreateReferralDialog` | Referrals | patient, type, specialty, reason, urgency, target |
+| `UpdateReferralDialog` | Referrals | status, feedback, appointment_date |
+| `FileClaimDialog` | Insurance | patient, billing link, provider, policy, claim_amount |
+| `UpdateClaimDialog` | Insurance | status, approved_amount, rejection_reason, paid_date |
+| `AssignDoctorDialog` | Doctors | doctor, employment_type, department, contract dates, salary |
+| `EditEmploymentDialog` | Doctors | edit hospital_doctors row |
+| `AddWardDialog` | Beds | ward_name, ward_type, floor, total_beds |
+| `AddBedDialog` | Beds | ward, bed_number, bed_type, daily_rate |
+| `AssignBedDialog` | Beds | patient, bed → sets status=occupied, assigned_at |
+| `DispenseDrugDialog` | Pharmacy | patient, drug, qty (decrements stock), payment_status |
+| `CreateConsultationDialog` | Consultations | patient, doctor, specialty, urgency, type, reason |
+| `UpdatePrescriptionDialog` | Prescriptions | refill, status |
 
-- `/login` and `/signup` pages (email/password + Google)
-- Signup flow asks: "Patient" or "Hospital Staff/Admin"
-- Hospital signup → onboarding wizard: hospital name, address, plan choice (EMR vs Telemedicine), creates `hospitals` row + `hospital_staff` row (admin)
-- Patient signup → creates `patients` row linked to `auth.uid()`
-- Protected route wrapper redirects unauthenticated users to `/login`
-- Role-based redirect after login: hospital staff → `/hospital`, patients → `/patient`
+Each dialog: react-hook-form, Zod validation, optimistic toast, invalidate corresponding React Query key.
 
-### 3. Subscription Plans (DB + enforcement)
+### 3. Mutations in `useHospitalData.ts`
 
-- New `hospital_subscriptions` table: `hospital_id`, `plan` (`emr` | `telemedicine`), `status`, `started_at`, `expires_at`, `billing_cycle`
-- New helper RPC `get_hospital_plan(_hospital_id uuid)`
-- Telemedicine-only routes (`/hospital/consultations`, `/hospital/marketplace`) gated by a `<RequirePlan plan="telemedicine">` wrapper that shows an upgrade screen if on EMR plan
-- Sidebar visually marks telemedicine items with a lock icon for EMR plan hospitals
-- Settings page gets a "Subscription" tab to view current plan + upgrade button
-
-### 4. Patient Portal in React (`/patient/*`)
-
-Replaces legacy HTML in `public/export/`. New routes under a `PatientLayout` (sidebar + header):
-- `/patient` — Dashboard (real data: upcoming appointments, active prescriptions, unread notifications, health metrics)
-- `/patient/appointments` — Tabs: Upcoming, Pending, Past + "Book Appointment" modal
-- `/patient/prescriptions` — Active + history, refill request action
-- `/patient/lab-results` — View results with values/ranges
-- `/patient/medical-records` — Personal EMR view
-- `/patient/messages` — Messages from doctors
-- `/patient/profile` — Edit profile, emergency contact, insurance
-- `/patient/settings` — Notifications, privacy, password
-
-### 5. Hospital Dashboard Backend Wiring (CRUD)
-
-Hospital pages exist as React shells. This plan adds full create/edit/delete dialogs and connects every page to live data:
-
-| Page | Actions added |
-|---|---|
-| Patients | Add patient dialog, edit, search, filter |
-| Queue | Check-in patient dialog, call next, mark in-consultation, complete |
-| Doctors | Assign doctor (link from `doctors` to `hospital_doctors`), edit employment, deactivate |
-| EMR | Create entry dialog (note, diagnosis, prescription, vitals), view per-patient timeline |
-| Lab | Order test dialog, enter results dialog with multiple test rows |
-| Pharmacy | Add inventory item, dispense drug dialog, low-stock alerts |
-| Billing | Create bill dialog, mark paid, payment method, record |
-| Surgery | Schedule surgery, update status (scheduled→ongoing→completed), op notes |
-| Maternity | Register ANC patient, log delivery, update gestational age |
-| Referrals | Create referral, accept/reject, feedback |
-| Insurance | File claim, update status, link to billing |
-| Consultations | (Telemedicine) Create request, accept, generate meeting link |
-| Marketplace | (Telemedicine) Browse external doctors, request consult |
-| Beds | Add ward, add bed, assign patient, discharge |
-| Notifications | Mark read, mark all read (already wired) |
-| Settings | Hospital profile, staff list, subscription tab |
-| Analytics | Real charts: patient flow (last 30d), revenue trend, top diagnoses, doctor utilization |
-
-Realtime subscriptions extended to: `hospital_billing`, `lab_results`, `pharmacy_inventory`, `consultation_requests`.
-
-### 6. Patient ↔ Hospital data linkage
-
-- `patient_appointments` table (new): `patient_id`, `hospital_id`, `doctor_id`, `requested_date`, `status` — bridges patient bookings to hospital queue
-- `prescriptions` table (new): `patient_id`, `doctor_id`, `hospital_id`, `drug_name`, `dosage`, `frequency`, `duration`, `refills_allowed`, `status` — feeds both patient prescription view and pharmacy dispensing
-- `patient_messages` table (new): `from_user_id`, `to_user_id`, `subject`, `body`, `is_read`
-
-### 7. Cleanup
-
-- Delete legacy `backend/` folder (Node/EJS) and `public/export/*` HTML files — fully replaced by React
-- Delete `public/hospital-dashboard.html`, `public/hospital-login.html`
-- Move root-level patient redirect: `/` → marketing site, `/patient` → patient dashboard, `/hospital` stays
-
----
-
-### Technical Details
-
-**Routing changes (`src/App.tsx`):**
-```
-/                       → Landing (public)
-/login, /signup         → Auth (public)
-/patient/*              → PatientLayout (auth required, role=patient)
-/hospital/*             → HospitalLayout (auth required, role=staff, plan-gated for telemedicine)
+Add `useMutation` hooks for every entity above (insert + update). Pattern:
+```ts
+export const useCreateEmrEntry = () => {
+  const qc = useQueryClient();
+  const { hospitalId } = useHospitalContext();
+  return useMutation({
+    mutationFn: async (input) => {
+      const { error } = await supabase.from("emr_entries").insert({ ...input, hospital_id: hospitalId });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["emr_entries"] }),
+  });
+};
 ```
 
-**New tables (migrations):**
-- `hospital_subscriptions(hospital_id, plan, status, billing_cycle, started_at, expires_at)` with RLS: staff of hospital can read, only admins update
-- `patient_appointments(...)` with RLS: patient owns rows + staff of target hospital can manage
-- `prescriptions(...)` with RLS: patient reads own + hospital staff manage
-- `patient_messages(...)` with RLS: sender/recipient only
-- RPC `get_hospital_plan(hospital_id) returns text`
+### 4. Doctor Portal (new)
 
-**New components/files:**
-- `src/pages/Landing.tsx`, `src/pages/Login.tsx`, `src/pages/Signup.tsx`, `src/pages/HospitalOnboarding.tsx`
-- `src/pages/patient/{Dashboard,Appointments,Prescriptions,LabResults,MedicalRecords,Messages,Profile,Settings}.tsx`
-- `src/layouts/PatientLayout.tsx`, `src/components/patient/PatientSidebar.tsx`, `PatientHeader.tsx`
-- `src/components/landing/{Hero,Features,Pricing,Audiences,HowItWorks,FAQ,Footer,Nav}.tsx`
-- `src/components/auth/{ProtectedRoute,RequirePlan,RoleGate}.tsx`
-- `src/components/hospital/dialogs/*` — Add/Edit dialogs for each entity (Patient, Bill, LabOrder, Prescription, Surgery, etc.)
-- `src/hooks/useAuth.ts`, `src/hooks/usePatientData.ts`, `src/hooks/useSubscription.ts`
-- Mutations added to `useHospitalData.ts` for every entity
+New top-level area `/doctor/*`:
 
-**Auth approach:** Email/password + Google via Lovable Cloud. `onAuthStateChange` listener in a top-level `AuthProvider`. Password reset page at `/reset-password` included.
+- **Auth**: signup role `doctor` → creates `doctors` row linked to `auth.uid()` (extend `handle_new_user` trigger).
+- **New table** `doctor_hospital_access` already exists indirectly via `hospital_doctors.doctor_id` — add a helper `get_user_doctor_id(uuid)` security-definer function and RLS so doctors can read their own appointments, prescriptions, EMR entries, consultations.
+- **Layout**: `DoctorLayout` with sidebar (Dashboard, My Patients, Appointments, Prescriptions, Lab Orders, Consultations, Profile).
+- **Pages**:
+  - `Dashboard` — today's appointments, pending consult requests, active patients count, recent EMR entries
+  - `Appointments` — list assigned appointments, accept/decline, mark complete
+  - `Patients` — patients the doctor has seen (derived from emr_entries / checkins.assigned_doctor_id)
+  - `Prescriptions` — write new prescription dialog, list past
+  - `LabOrders` — orders this doctor has placed
+  - `Consultations` — incoming external consult requests, accept + add meeting link/notes
+  - `Profile` — edit doctors row, marketplace availability toggle (writes to `doctor_marketplace`)
 
-**Plan gating:** `RequirePlan` reads `useSubscription()` and renders `<UpgradePrompt />` if plan insufficient. Sidebar items get a lock badge when plan is EMR.
+Login redirect: doctor → `/doctor`, patient → `/patient`, hospital staff → `/hospital`.
 
-**Out of scope (this round):** Real payment processing for subscriptions (stub the upgrade flow with a "Contact Sales" / "Coming Soon" modal — actual Stripe/Paddle integration can be added later when the user requests it). Video call infrastructure (teleconsultation generates a placeholder meeting link).
+### 5. Settings → Subscription + Staff
 
-**Estimated scope:** ~45 new files, ~5 migrations, full rewrite of `src/App.tsx`, deletion of `backend/` and legacy `public/export/`.
+Convert `Settings.tsx` to tabs:
 
+1. **General** (existing hospital info form — make Save actually call update; currently Save button does nothing).
+2. **Subscription**: shows current plan from `hospital_subscriptions`, plan comparison, "Upgrade to Telemedicine" button → opens contact-sales modal (no payment yet, per prior scope).
+3. **Staff**: lists `hospital_staff` rows, "Invite Staff" dialog (creates a pending invite — for now inserts a placeholder row since `hospital_staff` insert is blocked by RLS; add policy "Admins can insert staff" via security-definer admin check), edit role, deactivate.
+4. **Notifications** (existing toggles — persist to a new `hospital_notification_prefs` JSON column or local table).
+
+DB additions: RLS policy allowing hospital admins (role='admin') to insert/update/delete `hospital_staff` for their hospital; helper `is_hospital_admin(uuid)`.
+
+### 6. Real Analytics Charts
+
+Use `recharts` (already supported via `src/components/ui/chart.tsx`).
+
+- **Patient flow (last 30 days)** — line chart from `patient_checkins` grouped by `date(checkin_time)`.
+- **Revenue trend (last 30 days)** — area chart from `hospital_billing` grouped by `date(created_at)`, split paid vs pending.
+- **Top diagnoses** — bar chart from `emr_entries` where `entry_type='diagnosis'`, top 8 titles.
+- **Doctor utilization** — horizontal bar of patients seen per doctor (`patient_checkins.assigned_doctor_id`).
+- **Department mix** — donut from `patient_checkins.department`.
+- **Bed occupancy gauge** — from `hospital_beds` status.
+
+All queries client-side via React Query; no edge function needed.
+
+### 7. Legacy Code Cleanup
+
+Delete:
+- `backend/` (entire Express/EJS server — replaced by Supabase + React)
+- `public/export/` (entire folder of legacy HTML/CSS partials)
+- `public/hospital-dashboard.html`, `public/hospital-login.html`
+- `src/pages/Index.tsx`
+
+Keep `index.html` (Vite entry) untouched.
+
+### 8. Database Migration Summary
+
+```sql
+-- Doctor portal helpers
+CREATE FUNCTION get_user_doctor_id(_uid uuid) RETURNS uuid ...;
+CREATE FUNCTION is_hospital_admin(_uid uuid, _hid uuid) RETURNS boolean ...;
+
+-- Update handle_new_user to support 'doctor' and 'staff' roles
+-- (patient already handled)
+
+-- RLS additions
+CREATE POLICY "Doctor view own appts" ON patient_appointments
+  FOR SELECT USING (doctor_id = get_user_doctor_id(auth.uid()));
+CREATE POLICY "Doctor view own emr" ON emr_entries
+  FOR SELECT USING (doctor_id = get_user_doctor_id(auth.uid()));
+CREATE POLICY "Doctor view own prescriptions" ON prescriptions
+  FOR SELECT USING (doctor_id = get_user_doctor_id(auth.uid()));
+CREATE POLICY "Doctor accept consults" ON consultation_requests
+  FOR UPDATE USING (doctor_id = get_user_doctor_id(auth.uid()));
+CREATE POLICY "Admin manage staff" ON hospital_staff
+  FOR ALL USING (is_hospital_admin(auth.uid(), hospital_id));
+
+-- Hospital info update policy
+CREATE POLICY "Admin update hospital" ON hospitals
+  FOR UPDATE USING (is_hospital_admin(auth.uid(), id));
+
+-- Optional: notification preferences
+CREATE TABLE hospital_notification_prefs (
+  hospital_id uuid PRIMARY KEY,
+  prefs jsonb NOT NULL DEFAULT '{}'::jsonb,
+  updated_at timestamptz DEFAULT now()
+);
+```
+
+### 9. Out of Scope (this round)
+
+- Real payment processing for plan upgrades (still "Contact Sales" stub).
+- Real video calling (consultation `meeting_link` stays a placeholder URL).
+- Email invites for staff (insert row only; email delivery deferred).
+
+### Estimated Scope
+
+~20 new dialog files, ~7 doctor portal files, ~6 chart components, 1 migration, deletion of `backend/` and `public/export/`, full rewrite of `Settings.tsx` and `Analytics.tsx`, and removal of `Index.tsx`.

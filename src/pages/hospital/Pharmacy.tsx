@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { usePharmacyInventory } from "@/hooks/useHospitalData";
 import { AddInventoryDialog } from "@/components/hospital/dialogs/AddInventoryDialog";
+import { DispenseDrugDialog } from "@/components/hospital/dialogs/DispenseDrugDialog";
 
 const tabs = ["Inventory", "Low Stock"];
 
@@ -32,7 +33,7 @@ export default function HospitalPharmacy() {
           <h1 className="text-2xl font-heading font-bold mb-1">Pharmacy</h1>
           <p className="text-muted-foreground">Inventory management, dispensing, and stock alerts</p>
         </div>
-        <AddInventoryDialog />
+        <div className="flex gap-2"><DispenseDrugDialog /><AddInventoryDialog /></div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

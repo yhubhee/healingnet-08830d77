@@ -1,13 +1,10 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { useState } from "react";
-import { Award, Star, Briefcase, UserPlus } from "lucide-react";
+import { Award, Star, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useHospitalDoctors } from "@/hooks/useHospitalData";
+import { AssignDoctorDialog } from "@/components/hospital/dialogs/AssignDoctorDialog";
 
 const typeColors: Record<string, string> = {
   full_time: "bg-primary/15 text-primary",
@@ -39,22 +36,8 @@ export default function HospitalDoctors() {
             <Button key={f} variant={activeFilter === f ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setActiveFilter(f)}>{f}</Button>
           ))}
         </div>
-        <Dialog>
-          <DialogTrigger asChild><Button><UserPlus className="h-4 w-4 mr-2" />Add Doctor</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Add Doctor to Hospital</DialogTitle></DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div><Label>Doctor ID</Label><Input placeholder="Enter doctor ID" /></div>
-              <div><Label>Employment Type</Label>
-                <Select><SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                  <SelectContent><SelectItem value="full_time">Full-time</SelectItem><SelectItem value="visiting_consultant">Visiting Consultant</SelectItem><SelectItem value="locum">Locum</SelectItem></SelectContent>
-                </Select>
-              </div>
-              <div><Label>Department</Label><Input placeholder="e.g., Cardiology" /></div>
-              <Button className="w-full">Add Doctor</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <AssignDoctorDialog />
+
       </div>
 
       {isLoading ? (

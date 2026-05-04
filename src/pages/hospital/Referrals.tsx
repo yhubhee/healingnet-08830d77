@@ -4,6 +4,7 @@ import { Share2, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useHospitalReferrals } from "@/hooks/useHospitalData";
+import { CreateReferralDialog } from "@/components/hospital/dialogs/CreateReferralDialog";
 
 const tabs = ["All", "Outgoing", "Incoming", "Internal"];
 const urgencyColors: Record<string, string> = { routine: "bg-success/15 text-success", urgent: "bg-warning/15 text-warning", emergency: "bg-destructive/15 text-destructive" };
@@ -20,9 +21,12 @@ export default function HospitalReferrals() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">Referrals</h1>
-        <p className="text-muted-foreground">Manage patient referrals — incoming, outgoing, and internal</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">Referrals</h1>
+          <p className="text-muted-foreground">Manage patient referrals — incoming, outgoing, and internal</p>
+        </div>
+        <CreateReferralDialog />
       </div>
 
       <div className="flex flex-wrap gap-1 mb-6">
