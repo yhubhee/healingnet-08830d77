@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { useInsuranceClaims } from "@/hooks/useHospitalData";
+import { FileClaimDialog } from "@/components/hospital/dialogs/FileClaimDialog";
 
 const tabs = ["Claims", "HMO Partners", "Verification"];
 
@@ -28,9 +29,12 @@ export default function HospitalInsurance() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">Insurance & HMO</h1>
-        <p className="text-muted-foreground">Manage insurance claims, HMO partnerships, and patient coverage</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">Insurance & HMO</h1>
+          <p className="text-muted-foreground">Manage insurance claims, HMO partnerships, and patient coverage</p>
+        </div>
+        <FileClaimDialog />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

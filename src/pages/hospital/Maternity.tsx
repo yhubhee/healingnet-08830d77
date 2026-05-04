@@ -4,6 +4,7 @@ import { Baby, Heart, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useMaternityRecords } from "@/hooks/useHospitalData";
+import { RegisterAncDialog } from "@/components/hospital/dialogs/RegisterAncDialog";
 
 const tabs = ["ANC Register", "Labour Ward", "Delivered", "Postnatal"];
 const riskColors: Record<string, string> = { low: "bg-success/15 text-success", moderate: "bg-warning/15 text-warning", high: "bg-destructive/15 text-destructive" };
@@ -26,9 +27,12 @@ export default function HospitalMaternity() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">Maternity</h1>
-        <p className="text-muted-foreground">Antenatal care, labour monitoring, delivery records, and postnatal follow-up</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">Maternity</h1>
+          <p className="text-muted-foreground">Antenatal care, labour monitoring, delivery records, and postnatal follow-up</p>
+        </div>
+        <RegisterAncDialog />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
