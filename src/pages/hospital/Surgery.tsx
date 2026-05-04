@@ -4,6 +4,7 @@ import { Scissors, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useSurgeryRecords } from "@/hooks/useHospitalData";
+import { ScheduleSurgeryDialog } from "@/components/hospital/dialogs/ScheduleSurgeryDialog";
 
 const tabs = ["All", "Scheduled", "In Progress", "Completed"];
 
@@ -23,9 +24,12 @@ export default function HospitalSurgery() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold mb-1">Surgery</h1>
-        <p className="text-muted-foreground">Operating theatre schedules, surgical records, and post-op monitoring</p>
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-heading font-bold mb-1">Surgery</h1>
+          <p className="text-muted-foreground">Operating theatre schedules, surgical records, and post-op monitoring</p>
+        </div>
+        <ScheduleSurgeryDialog />
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
