@@ -28,8 +28,8 @@ export function FormDialog({ title, triggerLabel = "Add", triggerIcon, trigger, 
   );
 }
 
-export async function handleSubmit<T>(
-  promise: Promise<{ error: any }>,
+export async function handleSubmit(
+  promise: PromiseLike<{ error: any }>,
   opts: { toast: any; close: () => void; qc: any; invalidate: string[]; successMsg?: string }
 ) {
   const { error } = await promise;
