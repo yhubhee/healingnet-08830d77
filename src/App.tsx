@@ -39,6 +39,14 @@ import PatientMessages from "./pages/patient/Messages";
 import PatientProfile from "./pages/patient/Profile";
 import PatientSettings from "./pages/patient/Settings";
 
+import DoctorDashboard from "./pages/doctor/Dashboard";
+import DoctorAppointments from "./pages/doctor/Appointments";
+import DoctorPatients from "./pages/doctor/Patients";
+import DoctorPrescriptions from "./pages/doctor/Prescriptions";
+import DoctorLabOrders from "./pages/doctor/LabOrders";
+import DoctorConsultations from "./pages/doctor/Consultations";
+import DoctorProfile from "./pages/doctor/Profile";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -62,6 +70,15 @@ const App = () => (
           <Route path="/patient/messages" element={<ProtectedRoute><PatientMessages /></ProtectedRoute>} />
           <Route path="/patient/profile" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
           <Route path="/patient/settings" element={<ProtectedRoute><PatientSettings /></ProtectedRoute>} />
+
+          {/* Doctor Portal */}
+          <Route path="/doctor" element={<ProtectedRoute><DoctorDashboard /></ProtectedRoute>} />
+          <Route path="/doctor/appointments" element={<ProtectedRoute><DoctorAppointments /></ProtectedRoute>} />
+          <Route path="/doctor/patients" element={<ProtectedRoute><DoctorPatients /></ProtectedRoute>} />
+          <Route path="/doctor/prescriptions" element={<ProtectedRoute><DoctorPrescriptions /></ProtectedRoute>} />
+          <Route path="/doctor/lab-orders" element={<ProtectedRoute><DoctorLabOrders /></ProtectedRoute>} />
+          <Route path="/doctor/consultations" element={<ProtectedRoute><DoctorConsultations /></ProtectedRoute>} />
+          <Route path="/doctor/profile" element={<ProtectedRoute><DoctorProfile /></ProtectedRoute>} />
 
           {/* Hospital Portal */}
           <Route path="/hospital" element={<ProtectedRoute><HospitalDashboard /></ProtectedRoute>} />

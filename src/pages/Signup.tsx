@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, User, Building2 } from "lucide-react";
+import { Heart, User, Building2, Stethoscope } from "lucide-react";
 
-type Role = "patient" | "hospital";
+type Role = "patient" | "hospital" | "doctor";
 
 export default function Signup() {
   const [params] = useSearchParams();
@@ -19,6 +19,7 @@ export default function Signup() {
   const [hospitalName, setHospitalName] = useState("");
   const [hospitalAddress, setHospitalAddress] = useState("");
   const [hospitalPhone, setHospitalPhone] = useState("");
+  const [specialty, setSpecialty] = useState("");
   const [plan, setPlan] = useState<"emr" | "telemedicine">((params.get("plan") as any) || "emr");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ export default function Signup() {
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { first_name: firstName, last_name: lastName, role },
+        data: { first_name: firstName, last_name: lastName, role, specialty },
       },
     });
     if (error || !signUp.user) {
@@ -59,6 +60,10 @@ export default function Signup() {
       toast({ title: "Welcome to HealingNet!", description: "Your hospital is ready." });
       setLoading(false);
       navigate("/hospital");
+    } else if (role === "doctor") {
+      toast({ title: "Doctor account created!", description: "Welcome to HealingNet." });
+      setLoading(false);
+      navigate("/doctor");
     } else {
       toast({ title: "Account created!", description: "Welcome to HealingNet." });
       setLoading(false);
@@ -78,13 +83,18 @@ export default function Signup() {
           </Link>
           <h1 className="text-3xl font-heading font-bold text-center mb-2">Get started with HealingNet</h1>
           <p className="text-muted-foreground text-center mb-8">Choose how you'll use the platform</p>
-          <div className="grid md:grid-cols-2 gap-4">
-            <button onClick={() => setRole("patient")} className="bg-card border-2 border-border hover:border-primary rounded-2xl p-8 text-left transition-colors">
+          <div className="grid md:grid-cols-3 gap-4">
+            <button onClick={() => setRole("patient")} className="bg-card border-2 border-border hover:border-primary rounded-2xl p-6 text-left transition-colors">
               <div className="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center mb-4"><User className="w-6 h-6 text-info" /></div>
               <h3 className="font-heading font-bold text-lg mb-1">I'm a Patient</h3>
               <p className="text-sm text-muted-foreground">Book appointments, view records & message doctors. Free forever.</p>
             </button>
-            <button onClick={() => setRole("hospital")} className="bg-card border-2 border-border hover:border-primary rounded-2xl p-8 text-left transition-colors">
+            <button onClick={() => setRole("doctor")} className="bg-card border-2 border-border hover:border-primary rounded-2xl p-6 text-left transition-colors">
+              <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-4"><Stethoscope className="w-6 h-6 text-success" /></div>
+              <h3 className="font-heading font-bold text-lg mb-1">I'm a Doctor</h3>
+              <p className="text-sm text-muted-foreground">Manage your patients, prescriptions & telemedicine consults.</p>
+            </button>
+            <button onClick={() => setRole("hospital")} className="bg-card border-2 border-border hover:border-primary rounded-2xl p-6 text-left transition-colors">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4"><Building2 className="w-6 h-6 text-primary" /></div>
               <h3 className="font-heading font-bold text-lg mb-1">I represent a Hospital</h3>
               <p className="text-sm text-muted-foreground">Set up your hospital, choose a plan & onboard your team.</p>
@@ -109,8 +119,8 @@ export default function Signup() {
         </Link>
         <div className="bg-card border border-border rounded-2xl p-8">
           <button onClick={() => setRole(null)} className="text-sm text-muted-foreground hover:text-foreground mb-4">← Change role</button>
-          <h1 className="text-2xl font-heading font-bold mb-1">{role === "hospital" ? "Create your hospital account" : "Create your patient account"}</h1>
-          <p className="text-muted-foreground text-sm mb-6">{role === "hospital" ? "Set up your hospital in under 2 minutes" : "Free forever — no credit card needed"}</p>
+          <h1 className="text-2xl font-heading font-bold mb-1">{role === "hospital" ? "Create your hospital account" : role === "doctor" ? "Create your doctor account" : "Create your patient account"}</h1>
+          <p className="text-muted-foreground text-sm mb-6">{role === "hospital" ? "Set up your hospital in under 2 minutes" : role === "doctor" ? "Join the network and reach more patients" : "Free forever — no credit card needed"}</p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div><Label>First name</Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required /></div>
@@ -118,6 +128,9 @@ export default function Signup() {
             </div>
             <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
             <div><Label>Password</Label><Input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+            {role === "doctor" && (
+              <div><Label>Specialty</Label><Input value={specialty} onChange={(e) => setSpecialty(e.target.value)} placeholder="e.g., Cardiology" required /></div>
+            )}
             {role === "hospital" && (
               <>
                 <div className="border-t border-border pt-4 mt-4">
