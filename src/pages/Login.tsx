@@ -22,8 +22,10 @@ export default function Login() {
 
   async function routeByRole(userId: string) {
     const { data: hospId } = await supabase.rpc("get_user_hospital_id", { _user_id: userId });
-    if (hospId) navigate("/hospital");
-    else navigate("/patient");
+    if (hospId) return navigate("/hospital");
+    const { data: docId } = await supabase.rpc("get_user_doctor_id", { _user_id: userId });
+    if (docId) return navigate("/doctor");
+    navigate("/patient");
   }
 
   async function handleLogin(e: React.FormEvent) {

@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useLabResults } from "@/hooks/useHospitalData";
 import { OrderLabTestDialog } from "@/components/hospital/dialogs/OrderLabTestDialog";
+import { EnterLabResultDialog } from "@/components/hospital/dialogs/EnterLabResultDialog";
 
 const tabs = ["All", "Pending", "In Progress", "Completed"];
 
 export default function HospitalLab() {
   const { data: labResults = [], isLoading } = useLabResults();
   const [activeTab, setActiveTab] = useState("All");
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const filtered = activeTab === "All" ? labResults :
     labResults.filter((o: any) => o.status === activeTab.toLowerCase().replace(/ /g, "_"));
@@ -74,7 +76,7 @@ export default function HospitalLab() {
                         o.status === "completed" ? "bg-success/15 text-success" : o.status === "in_progress" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
                       )}>{(o.status || "pending").replace(/_/g, " ")}</span>
                     </td>
-                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+                    <td className="p-4"><Button variant="outline" size="sm" onClick={() => setSelectedOrder(o)}>{o.status === "completed" ? "View" : "Enter Results"}</Button></td>
                   </tr>
                 ))}
               </tbody>
@@ -82,6 +84,7 @@ export default function HospitalLab() {
           </div>
         )}
       </div>
+      <EnterLabResultDialog order={selectedOrder} open={!!selectedOrder} onClose={() => setSelectedOrder(null)} />
     </HospitalLayout>
   );
 }
