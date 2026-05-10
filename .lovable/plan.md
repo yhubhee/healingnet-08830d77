@@ -1,47 +1,81 @@
-# Fix `/` route + expand landing page
+## Plan: Dedicated marketing pages with detailed content
 
-## Root cause
+Right now the landing page is a single long scroll with anchor sections (`#about`, `#services`, etc.). You want **real, dedicated pages** that explain each topic in depth — the problem it solves, how HealingNet solves it, and how it's applied in a Nigerian hospital context.
 
-`index.html` currently contains the entire legacy static hospital dashboard (sidebar, hardcoded "Amara Obi / Yusuf Bello / Ngozi Eze" queue, etc.) instead of being a Vite entry point. Because `index.html` is what Vite serves at `/`, the React `<Landing />` route in `App.tsx` never mounts. That's why you still see the hardcoded names.
+### What gets built
 
-## Changes
+Six new full pages, each with its own route, hero, deep content sections, and CTA. All share the existing `LandingNav` + `LandingFooter` so navigation feels consistent.
 
-### 1. Rewrite `index.html` (clean React entry)
-Replace the 568-line legacy markup with a standard Vite + React shell:
-- Proper SEO `<title>`, meta description, OG tags for HealingNet
-- Single `<div id="root"></div>` and `<script type="module" src="/src/main.tsx"></script>`
-- Remove all `<link>` to deleted `/export/*.css`, all sidebar/queue/doctor markup, and the `lucide@latest` CDN script
-- Keep favicon + viewport meta
+| Route | Page | Focus |
+|---|---|---|
+| `/` | Landing (existing, trimmed) | Keep as marketing home — Hero + brief teasers + CTA. Remove duplicated long sections that now live on dedicated pages. |
+| `/about` | About | Story, mission, the Nigerian healthcare problems we tackle, our approach, team values, by-the-numbers. |
+| `/services` | Services | Each of the 12 modules explained: **Problem → Solution → How it's applied**. Grouped by Hospitals / Doctors / Patients. |
+| `/features` | Features | Cross-cutting platform capabilities: real-time queue, AI triage, role-based access, NHIS/HMO billing, analytics, multi-portal sync, offline-tolerant flows. |
+| `/pricing` | Pricing | Existing pricing block + detailed plan comparison table, FAQ on billing, "what counts as a staff seat", upgrade path. |
+| `/faq` | FAQ | Expanded Q&A grouped by category (Security, Billing, Setup, Patients, Integrations). |
+| `/contact` | Contact | Contact info, office (Lagos), email/phone, working hours, sales vs support routing, simple contact form (writes to a `contact_messages` table). |
 
-Result: `/` will now render the React `<Landing />` component (already wired in `App.tsx`).
+### Content depth per service (example shape)
 
-### 2. Expand the Landing page
+For each module on `/services` we'll write a self-contained block like:
 
-`src/pages/Landing.tsx` currently composes: Nav, Hero, Audiences, Features, HowItWorks, Pricing, FAQ, Footer. Add:
+```text
+Patient Queue
+─────────────
+The problem: In most Nigerian hospitals patients sit on benches for
+hours with no visibility into where they are in line. Staff manage
+order on paper, leading to disputes and missed patients.
 
-- **`src/components/landing/About.tsx`** — "About HealingNet" section: mission, the problem in Nigerian healthcare (queue chaos, paper records, fragmented care), the solution, key stats. Anchor `#about`.
-- **`src/components/landing/Services.tsx`** — Service catalog grouped by audience:
-  - For Hospitals: EMR, Queue, Billing, Lab, Pharmacy, Maternity, Surgery, Insurance, Bed Mgmt, Analytics
-  - For Doctors: Patient roster, e-Prescriptions, Lab orders, Teleconsult, External consult marketplace
-  - For Patients: Book appointments, AI triage, Medical records, Lab results, Prescriptions refills, Messaging
-  Anchor `#services`.
-- **`src/components/landing/Contact.tsx`** — Simple contact block (email, phone placeholder, "Book a demo" CTA → `/signup`). Anchor `#contact`.
+How HealingNet solves it: A live, shared digital queue. Front-desk
+checks patients in, the system auto-routes to the right doctor by
+specialty/urgency, and every screen shows current position in real time.
 
-### 3. Update `Nav.tsx`
-Add nav links: Home (`/`), About (`#about`), Services (`#services`), Features (`#features`), Pricing (`#pricing`), FAQ (`#faq`), Contact (`#contact`). Keep Login / Get Started buttons.
+How it's applied: Receptionist taps "Check In" → patient gets a number
+→ doctor sees their queue update instantly → patient (or family) can
+track status from the patient portal or a waiting-room display.
+```
 
-### 4. Update `Footer.tsx`
-Add the same anchor links in footer columns so About/Services/Contact are reachable from the footer.
+Same structure for: EMR, Billing, Lab, Pharmacy, Maternity, Surgery, Insurance/HMO, Telemedicine, Doctor Marketplace, Analytics, Bed Management, Staff Management, AI Triage.
 
-### 5. Update `Landing.tsx`
-Compose new order: Nav → Hero → About → Audiences → Services → Features → HowItWorks → Pricing → FAQ → Contact → Footer.
+### Navigation changes
 
-## Out of scope
-- No backend, schema, or hospital/doctor/patient dashboard changes.
-- No real contact form submission (CTA links to signup / mailto).
-- Brand colors and tokens already defined in `index.css` are reused — no design system changes.
+- `Nav.tsx`: change anchor links (`#about`, `#services`, …) to `<Link>` routes (`/about`, `/services`, …). Highlight active route.
+- `Footer.tsx`: same swap from anchors to routes.
+- Mobile menu: add a hamburger sheet (currently `md:flex` only).
 
-## Files touched
-- Rewrite: `index.html`
-- Edit: `src/pages/Landing.tsx`, `src/components/landing/Nav.tsx`, `src/components/landing/Footer.tsx`
-- Create: `src/components/landing/About.tsx`, `src/components/landing/Services.tsx`, `src/components/landing/Contact.tsx`
+### Routing
+
+- Add 6 new routes in `src/App.tsx` under the public section, each rendering the same shell (`LandingNav` + page + `LandingFooter`).
+- Add SEO `<title>` and `<meta description>` per page using a small `<PageMeta>` helper (no extra deps).
+
+### Contact form (lightweight)
+
+- New table `contact_messages (id, name, email, subject, message, created_at)` with RLS allowing anonymous inserts only.
+- Form posts via Supabase client; success → toast + reset.
+- Internal viewing of messages is out of scope this round (we can add a hospital-admin inbox later).
+
+### Out of scope
+
+- Blog / case studies / careers pages
+- Live chat widget
+- Translations (English only)
+- Payment processing on `/pricing` (still "Contact sales" / signup CTA)
+- Any changes to hospital/doctor/patient portals
+
+### Files touched
+
+**New**
+- `src/pages/About.tsx`, `Services.tsx`, `Features.tsx`, `Pricing.tsx`, `FAQ.tsx`, `Contact.tsx`
+- `src/components/landing/PageHero.tsx` (shared page header)
+- `src/components/landing/PageMeta.tsx` (title/description)
+- `src/components/landing/MobileMenu.tsx`
+- `supabase/migrations/<ts>_contact_messages.sql`
+
+**Edited**
+- `src/App.tsx` (routes)
+- `src/components/landing/Nav.tsx` + `Footer.tsx` (route links, mobile menu)
+- `src/pages/Landing.tsx` (trim duplicated sections, keep Hero + condensed teasers + CTA)
+
+**Removed/inlined**
+- The standalone section components (`About.tsx`, `Services.tsx`, `Contact.tsx` under `components/landing/`) get superseded by the new full pages and can be deleted or kept as small teaser variants on the home page — I'll keep slim teaser versions on `/` and put the full content on the dedicated pages.
