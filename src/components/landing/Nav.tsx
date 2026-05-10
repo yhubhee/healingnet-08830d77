@@ -1,6 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
+import { MobileMenu } from "./MobileMenu";
+import { cn } from "@/lib/utils";
+
+const links = [
+  ["Home", "/"],
+  ["About", "/about"],
+  ["Services", "/services"],
+  ["Features", "/features"],
+  ["Pricing", "/pricing"],
+  ["FAQ", "/faq"],
+  ["Contact", "/contact"],
+];
 
 export function LandingNav() {
   return (
@@ -12,18 +24,24 @@ export function LandingNav() {
           </div>
           HealingNet
         </Link>
-        <nav className="hidden md:flex items-center gap-5 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-          <a href="#about" className="hover:text-foreground transition-colors">About</a>
-          <a href="#services" className="hover:text-foreground transition-colors">Services</a>
-          <a href="#features" className="hover:text-foreground transition-colors">Features</a>
-          <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-          <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
-          <a href="#contact" className="hover:text-foreground transition-colors">Contact</a>
+        <nav className="hidden md:flex items-center gap-5 text-sm">
+          {links.map(([label, href]) => (
+            <NavLink
+              key={href}
+              to={href}
+              end={href === "/"}
+              className={({ isActive }) =>
+                cn("transition-colors", isActive ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground")
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" size="sm"><Link to="/login">Login</Link></Button>
-          <Button asChild size="sm"><Link to="/signup">Get Started</Link></Button>
+          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex"><Link to="/login">Login</Link></Button>
+          <Button asChild size="sm" className="hidden sm:inline-flex"><Link to="/signup">Get Started</Link></Button>
+          <MobileMenu />
         </div>
       </div>
     </header>

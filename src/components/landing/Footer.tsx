@@ -13,18 +13,24 @@ export function LandingFooter() {
               </div>
               HealingNet
             </Link>
-            <p className="text-sm text-muted-foreground">Modern healthcare operations, simplified.</p>
+            <p className="text-sm text-muted-foreground">Modern healthcare operations, simplified for Nigerian hospitals.</p>
           </div>
           {[
-            { title: "Product", links: [["Features", "#features"], ["Services", "#services"], ["Pricing", "#pricing"], ["For Hospitals", "#audiences"]] },
-            { title: "Company", links: [["About", "#about"], ["Contact", "#contact"], ["Email us", "mailto:hello@healingnet.app"]] },
-            { title: "Resources", links: [["FAQ", "#faq"], ["Login", "/login"], ["Sign up", "/signup"]] },
+            { title: "Product", links: [["Features", "/features"], ["Services", "/services"], ["Pricing", "/pricing"]] },
+            { title: "Company", links: [["About", "/about"], ["Contact", "/contact"], ["Email us", "mailto:hello@healingnet.app"]] },
+            { title: "Resources", links: [["FAQ", "/faq"], ["Login", "/login"], ["Sign up", "/signup"]] },
           ].map((col) => (
             <div key={col.title}>
               <h4 className="font-heading font-bold mb-3 text-sm">{col.title}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {col.links.map(([label, href]) => (
-                  <li key={label}><a href={href} className="hover:text-foreground transition-colors">{label}</a></li>
+                  <li key={label}>
+                    {href.startsWith("/") ? (
+                      <Link to={href} className="hover:text-foreground transition-colors">{label}</Link>
+                    ) : (
+                      <a href={href} className="hover:text-foreground transition-colors">{label}</a>
+                    )}
+                  </li>
                 ))}
               </ul>
             </div>
