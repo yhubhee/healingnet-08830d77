@@ -16,9 +16,9 @@ export function LandingFooter() {
             <p className="text-sm text-muted-foreground">Modern healthcare operations, simplified.</p>
           </div>
           {[
-            { title: "Product", links: [["Features", "#features"], ["Pricing", "#pricing"], ["For Hospitals", "#audiences"]] },
-            { title: "Company", links: [["About", "#"], ["Contact", "mailto:hello@healingnet.app"], ["Careers", "#"]] },
-            { title: "Resources", links: [["Documentation", "#"], ["FAQ", "#faq"], ["Privacy", "#"]] },
+            { title: "Product", links: [["Features", "#features"], ["Services", "#services"], ["Pricing", "#pricing"], ["For Hospitals", "#audiences"]] },
+            { title: "Company", links: [["About", "#about"], ["Contact", "#contact"], ["Email us", "mailto:hello@healingnet.app"]] },
+            { title: "Resources", links: [["FAQ", "#faq"], ["Login", "/login"], ["Sign up", "/signup"]] },
           ].map((col) => (
             <div key={col.title}>
               <h4 className="font-heading font-bold mb-3 text-sm">{col.title}</h4>
