@@ -1,41 +1,40 @@
 import { DoctorLayout } from "@/layouts/DoctorLayout";
-import { useDoctorId, useDoctorConsultations } from "@/hooks/useHospitalData";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { mockDoctorConsultRequests } from "@/lib/mockData";
+import { Video, FileText, Building2, Check, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function DoctorConsultations() {
-  const { data: docId } = useDoctorId();
-  const { data: consults = [] } = useDoctorConsultations(docId);
-  const qc = useQueryClient(); const { toast } = useToast();
-
-  async function action(id: string, status: string) {
-    const updates: any = { status };
-    if (status === "accepted") updates.meeting_link = `https://meet.healingnet.app/${id.slice(0,8)}`;
-    await supabase.from("consultation_requests").update(updates).eq("id", id);
-    toast({ title: "Updated" });
-    qc.invalidateQueries({ queryKey: ["doctor-consults"] });
-  }
-
   return (
     <DoctorLayout>
-      <h1 className="text-2xl font-heading font-bold mb-6">Consultation Requests</h1>
-      <div className="space-y-3">
-        {consults.map((c: any) => (
-          <div key={c.id} className="bg-card border border-border rounded-xl p-4">
-            <div className="flex justify-between mb-2">
-              <h4 className="font-heading font-bold">{c.patients?.first_name} {c.patients?.last_name}</h4>
-              <span className="text-xs px-2 py-0.5 rounded bg-muted">{c.status}</span>
-            </div>
-            <p className="text-sm text-muted-foreground mb-3">{c.specialty_needed} • {c.urgency} • {c.reason}</p>
-            {c.meeting_link && <a className="text-primary text-sm" href={c.meeting_link} target="_blank" rel="noreferrer">Join meeting</a>}
-            {c.status === "pending" && (
-              <div className="flex gap-2 mt-2">
-                <Button size="sm" onClick={() => action(c.id, "accepted")}>Accept</Button>
-                <Button size="sm" variant="outline" onClick={() => action(c.id, "declined")}>Decline</Button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-heading font-bold">Consultation Requests</h1>
+        <p className="text-muted-foreground text-sm">External consults from other hospitals via the Care Zone marketplace</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {mockDoctorConsultRequests.map((c) => (
+          <div key={c.id} className="bg-card border border-border rounded-xl p-5">
+            <div className="flex items-start gap-3">
+              <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center",
+                c.type === "virtual" ? "bg-info/10 text-info" : "bg-warning/10 text-warning")}>
+                {c.type === "virtual" ? <Video className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
               </div>
-            )}
+              <div className="flex-1">
+                <h3 className="font-heading font-bold">{c.patient}</h3>
+                <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="w-3 h-3" />{c.hospital}</p>
+              </div>
+              <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium",
+                c.urgency === "urgent" ? "bg-destructive/15 text-destructive" :
+                c.urgency === "moderate" ? "bg-warning/15 text-warning" : "bg-muted text-muted-foreground")}>{c.urgency}</span>
+            </div>
+            <p className="text-sm mt-3 italic text-muted-foreground">"{c.reason}"</p>
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-border">
+              <div><div className="text-xs text-muted-foreground">Proposed fee</div><div className="font-bold text-primary">₦{c.fee.toLocaleString()}</div></div>
+              <div className="flex gap-2">
+                <button className="px-3 py-1.5 text-sm border border-border rounded-lg flex items-center gap-1"><X className="w-3.5 h-3.5" />Decline</button>
+                <button className="px-3 py-1.5 text-sm bg-success text-success-foreground rounded-lg flex items-center gap-1"><Check className="w-3.5 h-3.5" />Accept</button>
+              </div>
+            </div>
           </div>
         ))}
       </div>
