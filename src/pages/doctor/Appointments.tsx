@@ -1,42 +1,41 @@
 import { DoctorLayout } from "@/layouts/DoctorLayout";
-import { useDoctorId, useDoctorAppointments } from "@/hooks/useHospitalData";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { mockDoctorTodayAppointments } from "@/lib/mockData";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Calendar, Clock, Video, Check, X } from "lucide-react";
+
+const statuses = ["all", "scheduled", "waiting", "in_progress", "completed"] as const;
 
 export default function DoctorAppointments() {
-  const { data: docId } = useDoctorId();
-  const { data: appts = [] } = useDoctorAppointments(docId);
-  const qc = useQueryClient(); const { toast } = useToast();
-
-  async function update(id: string, status: string) {
-    await supabase.from("patient_appointments").update({ status }).eq("id", id);
-    toast({ title: "Updated" });
-    qc.invalidateQueries({ queryKey: ["doctor-appointments"] });
-  }
-
+  const [filter, setFilter] = useState<typeof statuses[number]>("all");
+  const list = filter === "all" ? mockDoctorTodayAppointments : mockDoctorTodayAppointments.filter((a) => a.status === filter);
   return (
     <DoctorLayout>
-      <h1 className="text-2xl font-heading font-bold mb-6">Appointments</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-heading font-bold">Appointments</h1>
+        <p className="text-muted-foreground text-sm">Manage your daily schedule</p>
+      </div>
+
+      <div className="flex gap-1 mb-5 bg-muted/30 p-1 rounded-lg w-fit flex-wrap">
+        {statuses.map((s) => <button key={s} onClick={() => setFilter(s)} className={cn("px-3 py-1.5 rounded-md text-sm capitalize", filter === s ? "bg-card shadow" : "text-muted-foreground")}>{s.replace("_", " ")}</button>)}
+      </div>
+
       <div className="space-y-3">
-        {appts.length === 0 ? <p className="text-muted-foreground">No appointments yet</p> :
-          appts.map((a: any) => (
-            <div key={a.id} className="bg-card border border-border rounded-xl p-4 flex justify-between items-center">
-              <div>
-                <h4 className="font-heading font-bold">{a.patients?.first_name} {a.patients?.last_name}</h4>
-                <p className="text-sm text-muted-foreground">{a.requested_date} {a.requested_time} • {a.reason}</p>
-                <span className="text-xs px-2 py-0.5 rounded bg-muted">{a.status}</span>
-              </div>
-              <div className="flex gap-2">
-                {a.status === "pending" && <>
-                  <Button size="sm" onClick={() => update(a.id, "approved")}>Accept</Button>
-                  <Button size="sm" variant="outline" onClick={() => update(a.id, "rejected")}>Decline</Button>
-                </>}
-                {a.status === "approved" && <Button size="sm" onClick={() => update(a.id, "completed")}>Complete</Button>}
-              </div>
+        {list.map((a) => (
+          <div key={a.id} className="bg-card border border-border rounded-xl p-5 flex items-start gap-4 flex-wrap">
+            <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Clock className="w-5 h-5" /></div>
+            <div className="flex-1 min-w-[200px]">
+              <h3 className="font-heading font-bold">{a.patient} <span className="text-xs text-muted-foreground font-normal">• {a.age}{a.gender}</span></h3>
+              <p className="text-sm text-muted-foreground">{a.reason}</p>
+              <div className="flex gap-3 mt-2 text-xs text-muted-foreground"><span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />Today</span><span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{a.time}</span></div>
             </div>
-          ))}
+            <div className="flex gap-2">
+              {a.status === "scheduled" && <><button className="px-3 py-1.5 text-sm bg-success text-success-foreground rounded-lg flex items-center gap-1"><Check className="w-3.5 h-3.5" />Accept</button><button className="px-3 py-1.5 text-sm border border-border rounded-lg flex items-center gap-1"><X className="w-3.5 h-3.5" />Decline</button></>}
+              {a.status === "waiting" && <button className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg">Start consult</button>}
+              {a.status === "in_progress" && <button className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg">Continue</button>}
+            </div>
+          </div>
+        ))}
       </div>
     </DoctorLayout>
   );
