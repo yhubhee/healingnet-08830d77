@@ -92,6 +92,7 @@ const App = () => (
           <Route path="/doctor/lab-orders" element={<ProtectedRoute><DoctorLabOrders /></ProtectedRoute>} />
           <Route path="/doctor/consultations" element={<ProtectedRoute><DoctorConsultations /></ProtectedRoute>} />
           <Route path="/doctor/profile" element={<ProtectedRoute><DoctorProfile /></ProtectedRoute>} />
+          <Route path="/doctor/verification" element={<ProtectedRoute><DoctorVerification /></ProtectedRoute>} />
 
           {/* Hospital Portal */}
           <Route path="/hospital" element={<ProtectedRoute><HospitalDashboard /></ProtectedRoute>} />
