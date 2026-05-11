@@ -1,92 +1,73 @@
-import { useState } from "react";
 import { PatientLayout } from "@/layouts/PatientLayout";
-import { usePatientAppointments, usePatientProfile, useHospitalsList } from "@/hooks/usePatientData";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { mockPatientAppointments } from "@/lib/mockData";
+import { Calendar, Clock, MapPin, Video, User, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Plus } from "lucide-react";
 
-const tabs = ["Upcoming", "Pending", "Past"];
+const tabs = ["upcoming", "past", "cancelled"] as const;
 
 export default function PatientAppointments() {
-  const { data: appts = [], isLoading } = usePatientAppointments();
-  const { data: profile } = usePatientProfile();
-  const { data: hospitals = [] } = useHospitalsList();
-  const [tab, setTab] = useState("Upcoming");
-  const [open, setOpen] = useState(false);
-  const [hospitalId, setHospitalId] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [reason, setReason] = useState("");
-  const { toast } = useToast();
-  const qc = useQueryClient();
-
-  const filtered = appts.filter((a: any) => {
-    if (tab === "Upcoming") return a.status === "accepted";
-    if (tab === "Pending") return a.status === "pending";
-    return ["completed", "cancelled", "rejected"].includes(a.status);
+  const [tab, setTab] = useState<typeof tabs[number]>("upcoming");
+  const filtered = mockPatientAppointments.filter((a) => {
+    if (tab === "upcoming") return ["pending", "accepted"].includes(a.status);
+    if (tab === "past") return a.status === "completed";
+    return a.status === "cancelled";
   });
 
-  async function book(e: React.FormEvent) {
-    e.preventDefault();
-    if (!profile) return;
-    const { error } = await supabase.from("patient_appointments" as any).insert({
-      patient_id: profile.id, hospital_id: hospitalId, requested_date: date, requested_time: time || null, reason,
-    });
-    if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
-    toast({ title: "Appointment requested" });
-    setOpen(false); setHospitalId(""); setDate(""); setTime(""); setReason("");
-    qc.invalidateQueries({ queryKey: ["patient-appointments"] });
-  }
+  const statusBadge = (s: string) => {
+    const map: Record<string, string> = {
+      pending: "bg-warning/15 text-warning",
+      accepted: "bg-success/15 text-success",
+      completed: "bg-muted text-muted-foreground",
+      cancelled: "bg-destructive/15 text-destructive",
+    };
+    return map[s] || "bg-muted";
+  };
 
   return (
     <PatientLayout>
-      <div className="flex justify-between items-center mb-6">
-        <div><h1 className="text-2xl font-heading font-bold">My Appointments</h1><p className="text-muted-foreground">Manage your bookings</p></div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="w-4 h-4 mr-2" />Book Appointment</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Book an Appointment</DialogTitle></DialogHeader>
-            <form onSubmit={book} className="space-y-4">
-              <div><Label>Hospital</Label>
-                <Select value={hospitalId} onValueChange={setHospitalId}>
-                  <SelectTrigger><SelectValue placeholder="Select hospital" /></SelectTrigger>
-                  <SelectContent>{hospitals.map((h: any) => <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label>Date</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required /></div>
-                <div><Label>Time</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
-              </div>
-              <div><Label>Reason</Label><Textarea value={reason} onChange={(e) => setReason(e.target.value)} /></div>
-              <Button type="submit" className="w-full">Request Appointment</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-heading font-bold">Appointments</h1>
+          <p className="text-muted-foreground text-sm">Manage your bookings and consultations</p>
+        </div>
+        <button className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium hover:bg-primary/90"><Plus className="w-4 h-4" />Book new</button>
       </div>
-      <div className="flex gap-1 mb-6">
-        {tabs.map((t) => <Button key={t} variant={tab === t ? "default" : "secondary"} size="sm" onClick={() => setTab(t)}>{t}</Button>)}
+
+      <div className="flex gap-1 mb-5 bg-muted/30 p-1 rounded-lg w-fit">
+        {tabs.map((t) => (
+          <button key={t} onClick={() => setTab(t)} className={cn("px-4 py-1.5 rounded-md text-sm capitalize", tab === t ? "bg-card text-foreground shadow" : "text-muted-foreground")}>{t}</button>
+        ))}
       </div>
-      {isLoading ? <p className="text-muted-foreground p-8 text-center">Loading…</p> :
-        filtered.length === 0 ? <p className="text-muted-foreground p-8 text-center">No appointments</p> :
-        <div className="space-y-3">{filtered.map((a: any) => (
-          <div key={a.id} className="bg-card border border-border rounded-xl p-5">
-            <div className="flex justify-between mb-1">
-              <h4 className="font-heading font-bold">{a.hospitals?.name || "—"}</h4>
-              <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
-                a.status === "accepted" ? "bg-success/15 text-success" : a.status === "pending" ? "bg-warning/15 text-warning" : "bg-muted text-muted-foreground")}>{a.status}</span>
+
+      <div className="space-y-3">
+        {filtered.length === 0 && <p className="text-muted-foreground text-sm py-12 text-center">No {tab} appointments.</p>}
+        {filtered.map((a) => (
+          <div key={a.id} className="bg-card border border-border rounded-xl p-5 flex flex-wrap items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              {a.type === "Telemedicine" ? <Video className="w-5 h-5" /> : <User className="w-5 h-5" />}
             </div>
-            <p className="text-sm text-muted-foreground">{a.requested_date} {a.requested_time || ""}</p>
-            {a.reason && <p className="text-sm mt-2">{a.reason}</p>}
+            <div className="flex-1 min-w-[220px]">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-heading font-bold">{a.doctor}</h3>
+                <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium capitalize", statusBadge(a.status))}>{a.status}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">{a.specialty}</p>
+              <p className="text-sm mt-1">{a.reason}</p>
+              <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{a.hospital}</span>
+                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(a.date).toDateString()}</span>
+                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{a.time}</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {tab === "upcoming" && a.type === "Telemedicine" && <button className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg">Join</button>}
+              {tab === "upcoming" && <button className="px-3 py-1.5 text-sm border border-border rounded-lg">Reschedule</button>}
+              {tab === "past" && <button className="px-3 py-1.5 text-sm border border-border rounded-lg">View notes</button>}
+            </div>
           </div>
-        ))}</div>}
+        ))}
+      </div>
     </PatientLayout>
   );
 }

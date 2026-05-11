@@ -184,49 +184,79 @@ export type Database = {
         Row: {
           bio: string | null
           created_at: string
+          credential_documents: Json | null
+          current_practice: Json | null
           email: string | null
           first_name: string
           id: string
           is_available: boolean | null
           last_name: string
+          license_council: string | null
+          license_expiry: string | null
+          license_number: string | null
           phone: string | null
           profile_image_url: string | null
           rating: number | null
+          reference_contact: Json | null
           specialty: string | null
           updated_at: string
           user_id: string | null
+          verification_rejection_reason: string | null
+          verification_reviewed_at: string | null
+          verification_status: string
+          verification_submitted_at: string | null
           years_experience: number | null
         }
         Insert: {
           bio?: string | null
           created_at?: string
+          credential_documents?: Json | null
+          current_practice?: Json | null
           email?: string | null
           first_name: string
           id?: string
           is_available?: boolean | null
           last_name: string
+          license_council?: string | null
+          license_expiry?: string | null
+          license_number?: string | null
           phone?: string | null
           profile_image_url?: string | null
           rating?: number | null
+          reference_contact?: Json | null
           specialty?: string | null
           updated_at?: string
           user_id?: string | null
+          verification_rejection_reason?: string | null
+          verification_reviewed_at?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
           years_experience?: number | null
         }
         Update: {
           bio?: string | null
           created_at?: string
+          credential_documents?: Json | null
+          current_practice?: Json | null
           email?: string | null
           first_name?: string
           id?: string
           is_available?: boolean | null
           last_name?: string
+          license_council?: string | null
+          license_expiry?: string | null
+          license_number?: string | null
           phone?: string | null
           profile_image_url?: string | null
           rating?: number | null
+          reference_contact?: Json | null
           specialty?: string | null
           updated_at?: string
           user_id?: string | null
+          verification_rejection_reason?: string | null
+          verification_reviewed_at?: string | null
+          verification_status?: string
+          verification_submitted_at?: string | null
           years_experience?: number | null
         }
         Relationships: []
