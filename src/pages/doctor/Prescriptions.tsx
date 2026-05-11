@@ -1,57 +1,35 @@
 import { DoctorLayout } from "@/layouts/DoctorLayout";
-import { useDoctorId, useDoctorPrescriptions, useHospitalId, usePatients } from "@/hooks/useHospitalData";
-import { useState } from "react";
-import { FormDialog, handleSubmit } from "@/components/hospital/dialogs/FormDialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { mockDoctorPrescriptions } from "@/lib/mockData";
+import { Plus, Pill } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function DoctorPrescriptions() {
-  const { data: docId } = useDoctorId();
-  const { data: rx = [] } = useDoctorPrescriptions(docId);
-  const { data: patients = [] } = usePatients();
-  const { data: hospitalId } = useHospitalId();
-  const [f, setF] = useState<any>({});
-  const { toast } = useToast(); const qc = useQueryClient();
-
   return (
     <DoctorLayout>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-heading font-bold">Prescriptions</h1>
-        <FormDialog title="Write Prescription" triggerLabel="New Prescription">
-          {(close) => (
-            <form onSubmit={async (e) => { e.preventDefault();
-              await handleSubmit(supabase.from("prescriptions").insert({ ...f, doctor_id: docId, hospital_id: hospitalId }), { toast, close, qc, invalidate: ["doctor-prescriptions"] });
-              setF({});
-            }} className="space-y-3">
-              <div><Label>Patient</Label>
-                <Select value={f.patient_id} onValueChange={(v) => setF({ ...f, patient_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>{patients.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}</SelectContent>
-                </Select></div>
-              <div><Label>Drug</Label><Input required value={f.drug_name || ""} onChange={(e) => setF({ ...f, drug_name: e.target.value })} /></div>
-              <div className="grid grid-cols-3 gap-2">
-                <div><Label>Dosage</Label><Input value={f.dosage || ""} onChange={(e) => setF({ ...f, dosage: e.target.value })} /></div>
-                <div><Label>Frequency</Label><Input value={f.frequency || ""} onChange={(e) => setF({ ...f, frequency: e.target.value })} /></div>
-                <div><Label>Duration</Label><Input value={f.duration || ""} onChange={(e) => setF({ ...f, duration: e.target.value })} /></div>
-              </div>
-              <div><Label>Refills</Label><Input type="number" value={f.refills_allowed || 0} onChange={(e) => setF({ ...f, refills_allowed: +e.target.value })} /></div>
-              <Button type="submit" className="w-full">Save</Button>
-            </form>
-          )}
-        </FormDialog>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-heading font-bold">Prescriptions</h1>
+          <p className="text-muted-foreground text-sm">All prescriptions you've issued</p>
+        </div>
+        <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg inline-flex items-center gap-2 font-medium"><Plus className="w-4 h-4" />New prescription</button>
       </div>
-      <div className="space-y-3">
-        {rx.map((r: any) => (
-          <div key={r.id} className="bg-card border border-border rounded-xl p-4">
-            <h4 className="font-heading font-bold">{r.drug_name} — {r.dosage}</h4>
-            <p className="text-sm text-muted-foreground">{r.patients?.first_name} {r.patients?.last_name} • {r.frequency} • {r.duration}</p>
-          </div>
-        ))}
+
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-muted/30 text-xs text-muted-foreground"><tr><th className="text-left p-3">Drug</th><th className="text-left p-3">Patient</th><th className="text-left p-3">Frequency</th><th className="text-left p-3">Duration</th><th className="text-left p-3">Date</th><th className="text-left p-3">Status</th></tr></thead>
+          <tbody>
+            {mockDoctorPrescriptions.map((r) => (
+              <tr key={r.id} className="border-t border-border hover:bg-muted/20">
+                <td className="p-3"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-success/10 text-success flex items-center justify-center"><Pill className="w-4 h-4" /></div><span className="font-medium text-sm">{r.drug}</span></div></td>
+                <td className="p-3 text-sm">{r.patient}</td>
+                <td className="p-3 text-sm text-muted-foreground">{r.frequency}</td>
+                <td className="p-3 text-sm text-muted-foreground">{r.duration}</td>
+                <td className="p-3 text-sm text-muted-foreground">{r.date}</td>
+                <td className="p-3"><span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", r.status === "active" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")}>{r.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </DoctorLayout>
   );
