@@ -52,6 +52,7 @@ import DoctorPrescriptions from "./pages/doctor/Prescriptions";
 import DoctorLabOrders from "./pages/doctor/LabOrders";
 import DoctorConsultations from "./pages/doctor/Consultations";
 import DoctorProfile from "./pages/doctor/Profile";
+import DoctorVerification from "./pages/doctor/Verification";
 
 const queryClient = new QueryClient();
 
