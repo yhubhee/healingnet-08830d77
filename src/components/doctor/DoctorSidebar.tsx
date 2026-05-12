@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Calendar, Users, Pill, FlaskConical, MessageSquare, User, LogOut, Heart } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, Pill, FlaskConical, MessageSquare, User, LogOut, Heart, Settings } from "lucide-react";
 import { signOut } from "@/hooks/useAuth";
 
 const items = [
@@ -10,6 +10,7 @@ const items = [
   { label: "Lab Orders", path: "/doctor/lab-orders", icon: FlaskConical },
   { label: "Consultations", path: "/doctor/consultations", icon: MessageSquare },
   { label: "Profile", path: "/doctor/profile", icon: User },
+  { label: "Settings", path: "/doctor/settings", icon: Settings },
 ];
 
 export function DoctorSidebar() {
