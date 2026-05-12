@@ -44,6 +44,7 @@ import PatientMedicalRecords from "./pages/patient/MedicalRecords";
 import PatientMessages from "./pages/patient/Messages";
 import PatientProfile from "./pages/patient/Profile";
 import PatientSettings from "./pages/patient/Settings";
+import PatientTriage from "./pages/patient/Triage";
 
 import DoctorDashboard from "./pages/doctor/Dashboard";
 import DoctorAppointments from "./pages/doctor/Appointments";
@@ -53,6 +54,7 @@ import DoctorLabOrders from "./pages/doctor/LabOrders";
 import DoctorConsultations from "./pages/doctor/Consultations";
 import DoctorProfile from "./pages/doctor/Profile";
 import DoctorVerification from "./pages/doctor/Verification";
+import DoctorSettings from "./pages/doctor/Settings";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +85,7 @@ const App = () => (
           <Route path="/patient/messages" element={<ProtectedRoute><PatientMessages /></ProtectedRoute>} />
           <Route path="/patient/profile" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
           <Route path="/patient/settings" element={<ProtectedRoute><PatientSettings /></ProtectedRoute>} />
+          <Route path="/patient/triage" element={<ProtectedRoute><PatientTriage /></ProtectedRoute>} />
 
           {/* Doctor Portal */}
           <Route path="/doctor" element={<ProtectedRoute><DoctorDashboard /></ProtectedRoute>} />
@@ -93,6 +96,7 @@ const App = () => (
           <Route path="/doctor/consultations" element={<ProtectedRoute><DoctorConsultations /></ProtectedRoute>} />
           <Route path="/doctor/profile" element={<ProtectedRoute><DoctorProfile /></ProtectedRoute>} />
           <Route path="/doctor/verification" element={<ProtectedRoute><DoctorVerification /></ProtectedRoute>} />
+          <Route path="/doctor/settings" element={<ProtectedRoute><DoctorSettings /></ProtectedRoute>} />
 
           {/* Hospital Portal */}
           <Route path="/hospital" element={<ProtectedRoute><HospitalDashboard /></ProtectedRoute>} />
