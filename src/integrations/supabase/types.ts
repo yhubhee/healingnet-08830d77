@@ -123,6 +123,48 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_availability: {
+        Row: {
+          accepts_in_person: boolean
+          accepts_virtual: boolean
+          created_at: string
+          day_of_week: number
+          doctor_id: string
+          end_time: string
+          hospital_id: string | null
+          id: string
+          is_available: boolean
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          accepts_in_person?: boolean
+          accepts_virtual?: boolean
+          created_at?: string
+          day_of_week: number
+          doctor_id: string
+          end_time?: string
+          hospital_id?: string | null
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Update: {
+          accepts_in_person?: boolean
+          accepts_virtual?: boolean
+          created_at?: string
+          day_of_week?: number
+          doctor_id?: string
+          end_time?: string
+          hospital_id?: string | null
+          id?: string
+          is_available?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctor_marketplace: {
         Row: {
           bio_for_marketplace: string | null
@@ -179,6 +221,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      doctor_settings: {
+        Row: {
+          accepts_virtual_global: boolean
+          availability_mode: string
+          created_at: string
+          doctor_id: string
+          is_currently_available: boolean
+          language: string | null
+          notification_prefs: Json
+          timezone: string | null
+          updated_at: string
+          virtual_consultation_fee: number | null
+        }
+        Insert: {
+          accepts_virtual_global?: boolean
+          availability_mode?: string
+          created_at?: string
+          doctor_id: string
+          is_currently_available?: boolean
+          language?: string | null
+          notification_prefs?: Json
+          timezone?: string | null
+          updated_at?: string
+          virtual_consultation_fee?: number | null
+        }
+        Update: {
+          accepts_virtual_global?: boolean
+          availability_mode?: string
+          created_at?: string
+          doctor_id?: string
+          is_currently_available?: boolean
+          language?: string | null
+          notification_prefs?: Json
+          timezone?: string | null
+          updated_at?: string
+          virtual_consultation_fee?: number | null
+        }
+        Relationships: []
       }
       doctors: {
         Row: {
@@ -851,7 +932,9 @@ export type Database = {
           email: string | null
           id: string
           is_active: boolean | null
+          lat: number | null
           license_number: string | null
+          lng: number | null
           logo_url: string | null
           name: string
           phone: string | null
@@ -865,7 +948,9 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean | null
+          lat?: number | null
           license_number?: string | null
+          lng?: number | null
           logo_url?: string | null
           name: string
           phone?: string | null
@@ -879,7 +964,9 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean | null
+          lat?: number | null
           license_number?: string | null
+          lng?: number | null
           logo_url?: string | null
           name?: string
           phone?: string | null
@@ -1688,6 +1775,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      triage_sessions: {
+        Row: {
+          chosen_doctor_id: string | null
+          chosen_hospital_id: string | null
+          created_at: string
+          duration: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          notes: string | null
+          patient_id: string
+          recommended_hospitals: Json | null
+          recommended_specialty: string | null
+          severity_score: number | null
+          severity_self: number | null
+          status: string
+          symptoms: Json
+          updated_at: string
+          urgency: string | null
+        }
+        Insert: {
+          chosen_doctor_id?: string | null
+          chosen_hospital_id?: string | null
+          created_at?: string
+          duration?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          patient_id: string
+          recommended_hospitals?: Json | null
+          recommended_specialty?: string | null
+          severity_score?: number | null
+          severity_self?: number | null
+          status?: string
+          symptoms?: Json
+          updated_at?: string
+          urgency?: string | null
+        }
+        Update: {
+          chosen_doctor_id?: string | null
+          chosen_hospital_id?: string | null
+          created_at?: string
+          duration?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          patient_id?: string
+          recommended_hospitals?: Json | null
+          recommended_specialty?: string | null
+          severity_score?: number | null
+          severity_self?: number | null
+          status?: string
+          symptoms?: Json
+          updated_at?: string
+          urgency?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

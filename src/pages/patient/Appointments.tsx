@@ -1,28 +1,45 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useState } from "react";
-import { mockPatientAppointments } from "@/lib/mockData";
-import { Calendar, Clock, MapPin, Video, User, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
+import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = ["upcoming", "past", "cancelled"] as const;
 
 export default function PatientAppointments() {
   const [tab, setTab] = useState<typeof tabs[number]>("upcoming");
-  const filtered = mockPatientAppointments.filter((a) => {
-    if (tab === "upcoming") return ["pending", "accepted"].includes(a.status);
-    if (tab === "past") return a.status === "completed";
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["patient", "appointments"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data: p } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
+      if (!p) return [];
+      const { data: appts } = await supabase
+        .from("patient_appointments")
+        .select("*, doctors(first_name,last_name,specialty), hospitals(name)")
+        .eq("patient_id", p.id)
+        .order("requested_date", { ascending: false });
+      return appts || [];
+    },
+  });
+
+  const filtered = (data || []).filter((a: any) => {
+    if (tab === "upcoming") return ["pending", "accepted", "confirmed"].includes(a.status);
+    if (tab === "past") return ["completed", "done"].includes(a.status);
     return a.status === "cancelled";
   });
 
-  const statusBadge = (s: string) => {
-    const map: Record<string, string> = {
-      pending: "bg-warning/15 text-warning",
-      accepted: "bg-success/15 text-success",
-      completed: "bg-muted text-muted-foreground",
-      cancelled: "bg-destructive/15 text-destructive",
-    };
-    return map[s] || "bg-muted";
-  };
+  const statusBadge = (s: string) => ({
+    pending: "bg-warning/15 text-warning",
+    accepted: "bg-success/15 text-success",
+    confirmed: "bg-success/15 text-success",
+    completed: "bg-muted text-muted-foreground",
+    cancelled: "bg-destructive/15 text-destructive",
+  } as Record<string, string>)[s] || "bg-muted";
 
   return (
     <PatientLayout>
@@ -31,7 +48,9 @@ export default function PatientAppointments() {
           <h1 className="text-2xl font-heading font-bold">Appointments</h1>
           <p className="text-muted-foreground text-sm">Manage your bookings and consultations</p>
         </div>
-        <button className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium hover:bg-primary/90"><Plus className="w-4 h-4" />Book new</button>
+        <div className="flex gap-2">
+          <Link to="/patient/triage" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium"><Stethoscope className="w-4 h-4" />Start AI triage</Link>
+        </div>
       </div>
 
       <div className="flex gap-1 mb-5 bg-muted/30 p-1 rounded-lg w-fit">
@@ -40,34 +59,37 @@ export default function PatientAppointments() {
         ))}
       </div>
 
-      <div className="space-y-3">
-        {filtered.length === 0 && <p className="text-muted-foreground text-sm py-12 text-center">No {tab} appointments.</p>}
-        {filtered.map((a) => (
-          <div key={a.id} className="bg-card border border-border rounded-xl p-5 flex flex-wrap items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              {a.type === "Telemedicine" ? <Video className="w-5 h-5" /> : <User className="w-5 h-5" />}
+      {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
+        <div className="space-y-3">
+          {filtered.length === 0 && (
+            <div className="bg-card border border-border rounded-xl p-12 text-center">
+              <Calendar className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground text-sm mb-4">No {tab} appointments yet.</p>
+              {tab === "upcoming" && <Link to="/patient/triage" className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm"><Plus className="w-4 h-4" />Book your first appointment</Link>}
             </div>
-            <div className="flex-1 min-w-[220px]">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-heading font-bold">{a.doctor}</h3>
-                <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium capitalize", statusBadge(a.status))}>{a.status}</span>
+          )}
+          {filtered.map((a: any) => {
+            const doc = a.doctors ? `Dr. ${a.doctors.first_name} ${a.doctors.last_name}` : "Awaiting assignment";
+            return (
+              <div key={a.id} className="bg-card border border-border rounded-xl p-5 flex flex-wrap items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0"><User className="w-5 h-5" /></div>
+                <div className="flex-1 min-w-[220px]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-heading font-bold">{doc}</h3>
+                    <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium capitalize", statusBadge(a.status))}>{a.status}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{a.doctors?.specialty || "—"}</p>
+                  {a.reason && <p className="text-sm mt-1">{a.reason}</p>}
+                  <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{a.hospitals?.name || "—"}</span>
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(a.requested_date).toDateString()}</span>
+                    {a.requested_time && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{a.requested_time}</span>}
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">{a.specialty}</p>
-              <p className="text-sm mt-1">{a.reason}</p>
-              <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{a.hospital}</span>
-                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(a.date).toDateString()}</span>
-                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{a.time}</span>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {tab === "upcoming" && a.type === "Telemedicine" && <button className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-lg">Join</button>}
-              {tab === "upcoming" && <button className="px-3 py-1.5 text-sm border border-border rounded-lg">Reschedule</button>}
-              {tab === "past" && <button className="px-3 py-1.5 text-sm border border-border rounded-lg">View notes</button>}
-            </div>
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>}
     </PatientLayout>
   );
 }

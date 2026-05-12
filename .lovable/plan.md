@@ -1,78 +1,83 @@
+# Plan: Doctor Settings + Availability, Patient AI Triage, Real Data
 
-## Goal
-Make every page in the Patient and Doctor portals visually complete using hardcoded mock data, so you can review the UI/UX before wiring real data. Also add a verification step for doctors who sign up directly (without being added by a hospital).
+## 1. Doctor Availability & Settings
 
-## Part 1 — Patient Portal Pages (hardcoded UI)
+**New DB tables (migration):**
+- `doctor_availability` — per-doctor weekly schedule per hospital (or global):
+  - `doctor_id`, `hospital_id` (nullable = global), `day_of_week` (0–6), `start_time`, `end_time`, `is_available` (bool), `accepts_virtual` (bool), `accepts_in_person` (bool)
+  - unique (`doctor_id`, `hospital_id`, `day_of_week`)
+- `doctor_settings` — single row per doctor:
+  - `doctor_id` PK, `availability_mode` ('global' | 'per_hospital'), `accepts_virtual_global` (bool), `is_currently_available` (bool, the master on/off toggle), `virtual_consultation_fee`, `notification_prefs` (jsonb), `language`, `timezone`
+- RLS: doctor manages own rows; authenticated can SELECT (so hospitals/patients see availability).
 
-All pages use the existing `PatientLayout` (sidebar + header). Each gets a polished UI with mock data inline (no DB calls for now — current `usePatientData` hooks will be bypassed with local arrays).
+**New page `/doctor/settings`** (`src/pages/doctor/Settings.tsx`):
+- Tabs: **Availability**, **Hospitals**, **Notifications**, **Account**.
+- Availability tab:
+  - Master "Currently accepting patients" switch.
+  - Mode picker: **Global schedule** vs **Per-hospital schedule**.
+  - When global: Mon–Sun grid with start/end time, available toggle, virtual toggle, in-person toggle.
+  - When per-hospital: dropdown of hospitals doctor is in (`hospital_doctors` join), each with its own weekly grid.
+  - "Open for virtual / online consultation" toggle (writes `accepts_virtual_global` and per-row).
+- Notifications tab: email/SMS/in-app prefs (jsonb).
+- Account tab: change password, language, timezone, sign-out.
 
-| Page | Contents |
-|---|---|
-| `/patient` Dashboard | Greeting, 4 stat cards, next appointment card, active prescriptions list, recent lab result, health tips |
-| `/patient/appointments` | Tabs (Upcoming / Past / Cancelled), appointment cards with doctor, hospital, date, status badge, "Book new" CTA |
-| `/patient/prescriptions` | Active vs Completed tabs, drug card (name, dosage, frequency, refills left, prescriber, refill button) |
-| `/patient/lab-results` | Result cards grouped by date, normal/abnormal badges, "View details" expanding panel with test rows |
-| `/patient/medical-records` | Timeline of EMR entries (consultation notes, diagnoses, vitals, immunizations) with type icons |
-| `/patient/messages` | Two-pane chat: doctor list left, conversation right, message composer |
-| `/patient/profile` | Personal info card, medical info (blood group, genotype AA/AS/SS, allergies), emergency contact, insurance/NHIS |
-| `/patient/settings` | Notification toggles, privacy, language, password change |
+**Sidebar** (`DoctorSidebar.tsx`): add **Settings** entry (Settings icon) → `/doctor/settings`.
 
-## Part 2 — Doctor Portal Pages (hardcoded UI)
+**Dashboard quick toggle** (`pages/doctor/Dashboard.tsx`): add small "Available now" switch + link to Settings.
 
-Uses existing `DoctorLayout`.
+**Routing**: register `/doctor/settings` in `App.tsx`.
 
-| Page | Contents |
-|---|---|
-| `/doctor` Dashboard | Greeting, 4 KPI cards, today's schedule list, pending consult requests, recent patients |
-| `/doctor/appointments` | Calendar-ish list, accept/decline/start consult actions, filter by status |
-| `/doctor/patients` | Searchable patient list with last visit, condition tags; click → mini profile drawer |
-| `/doctor/prescriptions` | List of issued Rx, "New prescription" button opens form dialog |
-| `/doctor/lab-orders` | Pending vs Completed tabs, order rows with results when ready |
-| `/doctor/consultations` | External/marketplace consult requests, accept + add meeting link |
-| `/doctor/profile` | Editable bio, specialty, fees, availability toggle, marketplace settings, **verification status badge** |
+## 2. Patient AI-Assisted Triage (4-step)
 
-## Part 3 — Doctor Verification Flow (self-signup)
+**New table `triage_sessions`:**
+- `patient_id`, `symptoms` (jsonb array), `duration`, `severity_self` (1–10), `severity_score` (1–10 computed), `recommended_specialty`, `urgency` ('routine' | 'soon' | 'urgent' | 'emergency'), `recommended_hospitals` (jsonb), `chosen_hospital_id`, `chosen_doctor_id`, `status`, `lat`, `lng`.
 
-Problem: doctors added by a hospital are implicitly trusted. A doctor who self-signs-up has no employer vouching for them, so we must collect credentials before they can access patient data or appear in the marketplace.
+**Add to `hospitals` table** (migration): `lat numeric`, `lng numeric` so Haversine works (nullable).
 
-### UX flow
-1. Doctor signs up → lands on `/doctor` dashboard.
-2. If `verification_status !== 'approved'`, show a full-width **VerificationGate** banner/screen blocking access to clinical pages, with a "Submit credentials" CTA.
-3. CTA opens `/doctor/verification` form with fields:
-   - Medical license number + issuing council (e.g., MDCN)
-   - License expiry date
-   - Specialty + years of experience
-   - Current/last hospital of practice (name, city, role, dates)
-   - Document uploads: medical certificate, license card, government ID, passport photo
-   - Optional: 1 professional reference (name, hospital, phone)
-4. On submit → status becomes `pending_review`. Banner changes to "Under review — typically 24–48h".
-5. Admin (hospital admin role) reviews via a new `/hospital/doctor-verifications` page (out of scope for this round if you prefer — say so and I'll defer).
+**New rule engine** `src/lib/triage/engine.ts`:
+- Rule table mapping symptom keywords → likely specialties + base severity weights (e.g. chest pain → Cardiology, +6; chest pain + sweating + arm pain → +9 emergency; rash → Dermatology +2; pregnancy bleeding → Obstetrics +8).
+- `scoreSeverity(symptoms, duration, selfScore)` → 1–10.
+- `routeSpecialty(symptoms)` → specialty string.
+- `urgencyFromScore(score)` → routine/soon/urgent/emergency.
 
-### Status states
-`unverified` → `pending_review` → `approved` | `rejected` (with reason shown to doctor + resubmit option)
+**Haversine matcher** `src/lib/triage/proximity.ts`:
+- `haversineKm(a, b)` standard formula.
+- `rankHospitals(userLatLng, hospitals, specialty)` — filter hospitals that have a doctor of that specialty (via `hospital_doctors` + `doctors.specialty`), sort by distance, cap at 5.
 
-### Gating rules
-- `unverified` / `rejected`: only Profile + Verification pages accessible
-- `pending_review`: read-only access to dashboard, no patient PHI, no marketplace listing
-- `approved`: full access; marketplace toggle becomes available
+**New page `/patient/triage`** (`src/pages/patient/Triage.tsx`) — 4-step chat UI:
+1. **Symptom chips** (Fever, Cough, Chest pain, Headache, Bleeding, Rash, Vomiting, Pain — multi-select + free text).
+2. **Duration & self-rated severity** (Today / Few days / Weeks; slider 1–10).
+3. **Triage result card**: severity score, urgency badge, recommended specialty, plain-language guidance ("Seek emergency care now" if ≥ 9).
+4. **Hospital match**: requests browser geolocation, ranks hospitals by Haversine; user picks one → opens existing booking flow that creates a `patient_appointments` row (specialty/doctor pre-filled).
 
-## Technical Notes
+Wire CTA on `/patient` dashboard: replace the "Book new" button with "Start AI Triage" + secondary "Book directly".
 
-- New file `src/lib/mockData.ts` exports typed mock arrays (appointments, prescriptions, labs, EMR, messages, patients, consults).
-- New `src/components/doctor/VerificationGate.tsx` wraps doctor portal pages.
-- New `src/pages/doctor/Verification.tsx` form page; uploads handled with Supabase Storage bucket `doctor-credentials` (private, RLS: doctor uploads/reads own; hospital admins read).
-- DB migration adds to `doctors` table: `verification_status text default 'unverified'`, `license_number`, `license_council`, `license_expiry`, `verification_submitted_at`, `verification_reviewed_at`, `verification_rejection_reason`, `current_practice jsonb`, `credential_documents jsonb` (storage paths), `reference_contact jsonb`.
-- Add `verification_status` index. Auto-set `verification_status='approved'` for doctors created via hospital invite (existing path) so we don't break current flows.
-- Update marketplace SELECT policy to require `verification_status='approved'`.
-- Routes: add `/doctor/verification` in `App.tsx`.
+## 3. Remove Hardcoded Mock Data
 
-## Out of Scope (this round)
-- Wiring patient/doctor pages to real Supabase data (mock only for now, by your request).
-- Admin-side verification review queue UI (mention only — add in a follow-up if you want).
-- Telemedicine video integration, payments, real notifications.
+Replace `mockData.ts` reads with live Supabase queries (React Query) on:
+- **Patient**: `Dashboard`, `Appointments`, `Prescriptions`, `LabResults` (+ `lab_result_tests`), `MedicalRecords` (`emr_entries`), `Messages` (`patient_messages`), `Profile` (`patients`).
+- **Doctor**: `Dashboard` (today's `patient_appointments` where `doctor_id = me`, pending `consultation_requests`, distinct patients), `Appointments`, `Patients` (distinct patients from appointments + checkins), `Prescriptions`, `LabOrders` (`lab_results` ordered_by me), `Consultations`, `Profile`.
+
+Empty states: every page gets a friendly "No data yet" card instead of mock fallbacks. `mockData.ts` is deleted.
+
+## Technical details
+
+- All new tables: RLS enabled, doctor/patient owns own rows, hospital staff can read where relevant.
+- Time storage: `time` columns; render in user locale.
+- Geolocation: `navigator.geolocation.getCurrentPosition` with graceful fallback to city dropdown.
+- React Query keys: `['doctor','availability', doctorId]`, `['patient','appointments', patientId]`, etc.
+- Validation: zod on all settings forms.
+- No new external deps.
 
 ## Files
-**New**: `src/lib/mockData.ts`, `src/pages/patient/{Appointments,Prescriptions,LabResults,MedicalRecords,Messages,Profile,Settings}.tsx` (rebuild contents), `src/pages/doctor/{Appointments,Patients,Prescriptions,LabOrders,Consultations,Profile,Verification}.tsx` (rebuild contents), `src/components/doctor/VerificationGate.tsx`, migration for `doctors` columns + storage bucket.
-**Edited**: `src/pages/patient/Dashboard.tsx`, `src/pages/doctor/Dashboard.tsx`, `src/App.tsx` (add verification route + gate), `src/layouts/DoctorLayout.tsx` (mount gate).
 
-Confirm and I'll build it. Tell me if you'd also like the hospital-admin verification review screen included now.
+**New**: migration; `src/pages/doctor/Settings.tsx`; `src/pages/patient/Triage.tsx`; `src/lib/triage/engine.ts`; `src/lib/triage/proximity.ts`; `src/hooks/useDoctorAvailability.ts`; `src/hooks/useTriage.ts`.
+
+**Edited**: `App.tsx`, `DoctorSidebar.tsx`, `pages/doctor/Dashboard.tsx`, `pages/doctor/Profile.tsx` (remove mock fallback), all patient pages, all doctor pages.
+
+**Deleted**: `src/lib/mockData.ts`.
+
+## Out of scope
+- Real-time presence/“online now” indicator beyond the master switch.
+- LLM-based triage (rule engine only, as specified).
+- Admin UI for setting hospital lat/lng (will accept manual values via existing hospital settings page; can be added later).
