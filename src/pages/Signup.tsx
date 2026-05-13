@@ -43,20 +43,23 @@ export default function Signup() {
     }
 
     if (role === "hospital") {
-      // Create hospital + staff row + subscription
-      const { data: hosp, error: hErr } = await supabase
-        .from("hospitals")
-        .insert({ name: hospitalName, address: hospitalAddress, phone: hospitalPhone, email })
-        .select()
-        .single();
-      if (hErr || !hosp) {
-        setLoading(false);
-        return toast({ title: "Hospital creation failed", description: hErr?.message, variant: "destructive" });
+      // Ensure session is established before calling the RPC (auto-confirm signups)
+      if (!signUp.session) {
+        await supabase.auth.signInWithPassword({ email, password });
       }
-      await supabase.from("hospital_staff").insert({
-        user_id: signUp.user.id, hospital_id: hosp.id, first_name: firstName, last_name: lastName, email, role: "admin",
+      const { error: hErr } = await supabase.rpc("create_hospital_with_admin" as any, {
+        _name: hospitalName,
+        _address: hospitalAddress,
+        _phone: hospitalPhone,
+        _email: email,
+        _first_name: firstName,
+        _last_name: lastName,
+        _plan: plan,
       });
-      await supabase.from("hospital_subscriptions" as any).insert({ hospital_id: hosp.id, plan, status: "active", billing_cycle: "monthly" });
+      if (hErr) {
+        setLoading(false);
+        return toast({ title: "Hospital creation failed", description: hErr.message, variant: "destructive" });
+      }
       toast({ title: "Welcome to HealingNet!", description: "Your hospital is ready." });
       setLoading(false);
       navigate("/hospital");
