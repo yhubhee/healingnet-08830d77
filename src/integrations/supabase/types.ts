@@ -1841,6 +1841,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_hospital_with_admin: {
+        Args: {
+          _address: string
+          _email: string
+          _first_name: string
+          _last_name: string
+          _name: string
+          _phone: string
+          _plan: string
+        }
+        Returns: string
+      }
       get_hospital_plan: { Args: { _hospital_id: string }; Returns: string }
       get_user_doctor_id: { Args: { _user_id: string }; Returns: string }
       get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
