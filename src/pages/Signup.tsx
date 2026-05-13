@@ -43,26 +43,25 @@ export default function Signup() {
     }
 
     if (role === "hospital") {
-      // Ensure session is established before calling the RPC (auto-confirm signups)
-      if (!signUp.session) {
-        await supabase.auth.signInWithPassword({ email, password });
-      }
-      const { error: hErr } = await supabase.rpc("create_hospital_with_admin" as any, {
-        _name: hospitalName,
-        _address: hospitalAddress,
-        _phone: hospitalPhone,
-        _email: email,
-        _first_name: firstName,
-        _last_name: lastName,
-        _plan: plan,
+      const { data: fnData, error: hErr } = await supabase.functions.invoke("create-hospital", {
+        body: {
+          user_id: signUp.user.id,
+          email,
+          name: hospitalName,
+          address: hospitalAddress,
+          phone: hospitalPhone,
+          first_name: firstName,
+          last_name: lastName,
+          plan,
+        },
       });
-      if (hErr) {
+      if (hErr || (fnData as any)?.error) {
         setLoading(false);
-        return toast({ title: "Hospital creation failed", description: hErr.message, variant: "destructive" });
+        return toast({ title: "Hospital creation failed", description: hErr?.message || (fnData as any)?.error || "Try again", variant: "destructive" });
       }
-      toast({ title: "Welcome to HealingNet!", description: "Your hospital is ready." });
+      toast({ title: "Welcome to HealingNet!", description: signUp.session ? "Your hospital is ready." : "Check your email to confirm, then sign in." });
       setLoading(false);
-      navigate("/hospital");
+      navigate(signUp.session ? "/hospital" : "/login");
     } else if (role === "doctor") {
       toast({ title: "Doctor account created!", description: "Welcome to HealingNet." });
       setLoading(false);
