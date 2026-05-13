@@ -1,83 +1,66 @@
-# Plan: Doctor Settings + Availability, Patient AI Triage, Real Data
+## 1. Fix "Not authenticated" hospital signup
 
-## 1. Doctor Availability & Settings
+**Root cause:** Email confirmation is on, so `supabase.auth.signUp` returns no session. The fallback `signInWithPassword` then fails (`invalid_credentials`) because the email isn't confirmed yet. The RPC `create_hospital_with_admin` requires `auth.uid()` and rejects with "Not authenticated".
 
-**New DB tables (migration):**
-- `doctor_availability` — per-doctor weekly schedule per hospital (or global):
-  - `doctor_id`, `hospital_id` (nullable = global), `day_of_week` (0–6), `start_time`, `end_time`, `is_available` (bool), `accepts_virtual` (bool), `accepts_in_person` (bool)
-  - unique (`doctor_id`, `hospital_id`, `day_of_week`)
-- `doctor_settings` — single row per doctor:
-  - `doctor_id` PK, `availability_mode` ('global' | 'per_hospital'), `accepts_virtual_global` (bool), `is_currently_available` (bool, the master on/off toggle), `virtual_consultation_fee`, `notification_prefs` (jsonb), `language`, `timezone`
-- RLS: doctor manages own rows; authenticated can SELECT (so hospitals/patients see availability).
+**Fix:** Move hospital creation into an edge function `create-hospital` that:
+- Verifies the just-created user via the service-role client (looks up by email + checks `user_metadata.role === "hospital"`).
+- Inserts hospital + admin staff + subscription using service role (bypasses RLS).
+- Returns the new hospital id.
 
-**New page `/doctor/settings`** (`src/pages/doctor/Settings.tsx`):
-- Tabs: **Availability**, **Hospitals**, **Notifications**, **Account**.
-- Availability tab:
-  - Master "Currently accepting patients" switch.
-  - Mode picker: **Global schedule** vs **Per-hospital schedule**.
-  - When global: Mon–Sun grid with start/end time, available toggle, virtual toggle, in-person toggle.
-  - When per-hospital: dropdown of hospitals doctor is in (`hospital_doctors` join), each with its own weekly grid.
-  - "Open for virtual / online consultation" toggle (writes `accepts_virtual_global` and per-row).
-- Notifications tab: email/SMS/in-app prefs (jsonb).
-- Account tab: change password, language, timezone, sign-out.
+Signup flow becomes: `signUp` → call edge function with the new `user.id` → show "Check your email to confirm" toast → redirect to `/login`.
 
-**Sidebar** (`DoctorSidebar.tsx`): add **Settings** entry (Settings icon) → `/doctor/settings`.
+This works regardless of whether email confirmation is on, and removes the auth race condition.
 
-**Dashboard quick toggle** (`pages/doctor/Dashboard.tsx`): add small "Available now" switch + link to Settings.
+## 2. Rebuild Triage as "AI Nurse" (Infermedica-style)
 
-**Routing**: register `/doctor/settings` in `App.tsx`.
+Replace the current rule-based `src/pages/patient/Triage.tsx` with a 4-step LLM-driven wizard backed by Lovable AI.
 
-## 2. Patient AI-Assisted Triage (4-step)
+### Step 1 — Demographics
+- On mount, fetch the patient row. If `date_of_birth` and `gender` are both present, auto-fill and skip to Step 2.
+- Otherwise show Age (number) + Biological Sex (male/female) form. On submit, write back to `patients` (compute a DOB from age = Jan 1 of year `today - age` if user only knows age).
 
-**New table `triage_sessions`:**
-- `patient_id`, `symptoms` (jsonb array), `duration`, `severity_self` (1–10), `severity_score` (1–10 computed), `recommended_specialty`, `urgency` ('routine' | 'soon' | 'urgent' | 'emergency'), `recommended_hospitals` (jsonb), `chosen_hospital_id`, `chosen_doctor_id`, `status`, `lat`, `lng`.
+### Step 2 — Initial symptoms (free text)
+- Large textarea: "Describe what you're feeling…"
+- Submit → loading state "Analyzing your symptoms…" → calls edge function `triage-nurse` with `{ stage: "parse", age, sex, text }`.
+- LLM (google/gemini-2.5-flash) returns structured `evidence: [{id, name, present:true}]` + initial `differential` candidates via tool calling.
 
-**Add to `hospitals` table** (migration): `lat numeric`, `lng numeric` so Haversine works (nullable).
+### Step 3 — Dynamic diagnostic interview
+- One card at a time with question + Yes / No / I don't know buttons.
+- Each answer → calls `triage-nurse` with `{ stage: "next", age, sex, evidence }` → returns either next `question` or `should_stop: true`.
+- Progress bar increments (cap ~8 questions, or stop early if confidence high).
+- LLM is instructed to behave like Infermedica's diagnostic engine: ask the highest-information-gain question, never repeat, stop when one condition dominates or red flag detected.
 
-**New rule engine** `src/lib/triage/engine.ts`:
-- Rule table mapping symptom keywords → likely specialties + base severity weights (e.g. chest pain → Cardiology, +6; chest pain + sweating + arm pain → +9 emergency; rash → Dermatology +2; pregnancy bleeding → Obstetrics +8).
-- `scoreSeverity(symptoms, duration, selfScore)` → 1–10.
-- `routeSpecialty(symptoms)` → specialty string.
-- `urgencyFromScore(score)` → routine/soon/urgent/emergency.
+### Step 4 — Results & care navigation (2-column dashboard)
+- Left column: ranked **possible conditions** (top 3-5 with probability bar + plain-language description).
+- Right column: **care navigation** — triage level (self-care / GP / urgent / emergency), recommended specialty, then the existing hospital-matching list (reuses `rankHospitals` + Haversine) with "Book" buttons.
+- Saves full session to `triage_sessions` (already exists).
 
-**Haversine matcher** `src/lib/triage/proximity.ts`:
-- `haversineKm(a, b)` standard formula.
-- `rankHospitals(userLatLng, hospitals, specialty)` — filter hospitals that have a doctor of that specialty (via `hospital_doctors` + `doctors.specialty`), sort by distance, cap at 5.
-
-**New page `/patient/triage`** (`src/pages/patient/Triage.tsx`) — 4-step chat UI:
-1. **Symptom chips** (Fever, Cough, Chest pain, Headache, Bleeding, Rash, Vomiting, Pain — multi-select + free text).
-2. **Duration & self-rated severity** (Today / Few days / Weeks; slider 1–10).
-3. **Triage result card**: severity score, urgency badge, recommended specialty, plain-language guidance ("Seek emergency care now" if ≥ 9).
-4. **Hospital match**: requests browser geolocation, ranks hospitals by Haversine; user picks one → opens existing booking flow that creates a `patient_appointments` row (specialty/doctor pre-filled).
-
-Wire CTA on `/patient` dashboard: replace the "Book new" button with "Start AI Triage" + secondary "Book directly".
-
-## 3. Remove Hardcoded Mock Data
-
-Replace `mockData.ts` reads with live Supabase queries (React Query) on:
-- **Patient**: `Dashboard`, `Appointments`, `Prescriptions`, `LabResults` (+ `lab_result_tests`), `MedicalRecords` (`emr_entries`), `Messages` (`patient_messages`), `Profile` (`patients`).
-- **Doctor**: `Dashboard` (today's `patient_appointments` where `doctor_id = me`, pending `consultation_requests`, distinct patients), `Appointments`, `Patients` (distinct patients from appointments + checkins), `Prescriptions`, `LabOrders` (`lab_results` ordered_by me), `Consultations`, `Profile`.
-
-Empty states: every page gets a friendly "No data yet" card instead of mock fallbacks. `mockData.ts` is deleted.
+### Edge function `triage-nurse`
+- Single endpoint, three stages: `parse`, `next`, `final`.
+- Uses Lovable AI (`LOVABLE_API_KEY` already configured) with tool-calling for structured JSON.
+- System prompt frames it as a cautious medical triage nurse (not diagnostic), always surfaces red flags, avoids prescribing.
+- Returns 429/402 errors gracefully to the client.
 
 ## Technical details
 
-- All new tables: RLS enabled, doctor/patient owns own rows, hospital staff can read where relevant.
-- Time storage: `time` columns; render in user locale.
-- Geolocation: `navigator.geolocation.getCurrentPosition` with graceful fallback to city dropdown.
-- React Query keys: `['doctor','availability', doctorId]`, `['patient','appointments', patientId]`, etc.
-- Validation: zod on all settings forms.
-- No new external deps.
+**Files to create**
+- `supabase/functions/create-hospital/index.ts`
+- `supabase/functions/triage-nurse/index.ts`
+- `src/lib/triage/nurseClient.ts` (thin client wrapping the edge function calls)
 
-## Files
+**Files to edit**
+- `src/pages/Signup.tsx` — replace RPC call with `supabase.functions.invoke("create-hospital", …)`; on success route to `/login` (or `/hospital` if session is present).
+- `src/pages/patient/Triage.tsx` — full rewrite: 4-step wizard, demographics gate, LLM interview loop, two-column results.
+- Keep `src/lib/triage/proximity.ts` and reuse `rankHospitals`.
+- The old `src/lib/triage/engine.ts` becomes a fallback used only if the edge function errors.
 
-**New**: migration; `src/pages/doctor/Settings.tsx`; `src/pages/patient/Triage.tsx`; `src/lib/triage/engine.ts`; `src/lib/triage/proximity.ts`; `src/hooks/useDoctorAvailability.ts`; `src/hooks/useTriage.ts`.
+**No DB schema changes required.** `patients.date_of_birth`/`gender` and `triage_sessions` already exist.
 
-**Edited**: `App.tsx`, `DoctorSidebar.tsx`, `pages/doctor/Dashboard.tsx`, `pages/doctor/Profile.tsx` (remove mock fallback), all patient pages, all doctor pages.
-
-**Deleted**: `src/lib/mockData.ts`.
+**Security**
+- `create-hospital` validates the caller's email matches the looked-up user and that role metadata is `hospital`. Service role usage stays inside the function.
+- `triage-nurse` is JWT-verified (default) so only authenticated patients call it.
 
 ## Out of scope
-- Real-time presence/“online now” indicator beyond the master switch.
-- LLM-based triage (rule engine only, as specified).
-- Admin UI for setting hospital lat/lng (will accept manual values via existing hospital settings page; can be added later).
+- No changes to doctor/hospital portals.
+- No new tables.
+- No paid Infermedica API — uses Lovable AI only.
