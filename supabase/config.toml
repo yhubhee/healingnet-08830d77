@@ -1,1 +1,4 @@
 project_id = "cjjbfrckrfuaqyrkmbfn"
+
+[functions.create-hospital]
+verify_jwt = false

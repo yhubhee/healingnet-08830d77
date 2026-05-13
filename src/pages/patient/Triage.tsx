@@ -1,101 +1,213 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { runTriage, SYMPTOM_CHIPS, TriageResult } from "@/lib/triage/engine";
 import { rankHospitals, RankedHospital } from "@/lib/triage/proximity";
-import { Loader2, MapPin, AlertTriangle, ArrowRight, ArrowLeft, CheckCircle2, Stethoscope } from "lucide-react";
+import {
+  Loader2, MapPin, AlertTriangle, ArrowRight, ArrowLeft, CheckCircle2,
+  Stethoscope, Activity, HelpCircle, Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
+
+type Sex = "male" | "female";
+interface Evidence { id: string; name: string; present: boolean }
+interface Question { id: string; text: string; explanation?: string }
+interface Condition { name: string; probability: number; description?: string }
+interface NurseResponse {
+  new_evidence?: Evidence[];
+  next_question?: Question;
+  should_stop: boolean;
+  differential: Condition[];
+  triage_level: string;
+  triage_label: string;
+  recommended_specialty: string;
+  red_flags?: string[];
+  guidance: string;
+}
+
+const TRIAGE_STYLE: Record<string, { label: string; cls: string }> = {
+  self_care: { label: "Self-care", cls: "bg-success/10 border-success/30 text-success" },
+  consultation: { label: "See a GP soon", cls: "bg-info/10 border-info/30 text-info" },
+  consultation_24: { label: "See a GP within 24h", cls: "bg-warning/10 border-warning/30 text-warning" },
+  emergency_ambulance: { label: "Call an ambulance", cls: "bg-destructive/10 border-destructive/30 text-destructive" },
+  emergency: { label: "Emergency — go to A&E", cls: "bg-destructive/10 border-destructive/30 text-destructive" },
+};
+
+const MAX_QUESTIONS = 8;
 
 export default function PatientTriage() {
   const nav = useNavigate();
   const [step, setStep] = useState(1);
-  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [patient, setPatient] = useState<any>(null);
+  const [age, setAge] = useState<number | "">("");
+  const [sex, setSex] = useState<Sex | "">("");
+  const [savingDemo, setSavingDemo] = useState(false);
+
   const [freeText, setFreeText] = useState("");
-  const [duration, setDuration] = useState<"today" | "few_days" | "weeks">("few_days");
-  const [selfSeverity, setSelfSeverity] = useState(5);
-  const [result, setResult] = useState<TriageResult | null>(null);
+  const [parsing, setParsing] = useState(false);
+
+  const [evidence, setEvidence] = useState<Evidence[]>([]);
+  const [askedIds, setAskedIds] = useState<string[]>([]);
+  const [currentQ, setCurrentQ] = useState<Question | null>(null);
+  const [answering, setAnswering] = useState(false);
+  const [latestResp, setLatestResp] = useState<NurseResponse | null>(null);
+
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [hospitals, setHospitals] = useState<RankedHospital[]>([]);
   const [loadingHospitals, setLoadingHospitals] = useState(false);
   const [booking, setBooking] = useState<string | null>(null);
 
-  function toggle(sym: string) {
-    setSymptoms((prev) => prev.includes(sym) ? prev.filter((s) => s !== sym) : [...prev, sym]);
+  const progress = useMemo(
+    () => Math.min(100, Math.round((askedIds.length / MAX_QUESTIONS) * 100)),
+    [askedIds.length],
+  );
+
+  // Load patient + demographics gate
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: p } = await supabase.from("patients").select("*").eq("user_id", user.id).maybeSingle();
+      setPatient(p);
+      if (p) {
+        if (p.date_of_birth) {
+          const yrs = Math.floor((Date.now() - new Date(p.date_of_birth).getTime()) / (365.25 * 864e5));
+          setAge(yrs);
+        }
+        if (p.gender === "male" || p.gender === "female") setSex(p.gender);
+        if (p.date_of_birth && (p.gender === "male" || p.gender === "female")) {
+          setStep(2);
+        }
+      }
+    })();
+  }, []);
+
+  async function saveDemographics() {
+    if (!patient || age === "" || !sex) return;
+    setSavingDemo(true);
+    try {
+      const dobYear = new Date().getFullYear() - Number(age);
+      const dob = patient.date_of_birth || `${dobYear}-01-01`;
+      const { error } = await supabase.from("patients")
+        .update({ date_of_birth: dob, gender: sex })
+        .eq("id", patient.id);
+      if (error) throw error;
+      setStep(2);
+    } catch (e: any) {
+      toast.error(e.message || "Could not save");
+    } finally {
+      setSavingDemo(false);
+    }
   }
 
-  function compute() {
-    const r = runTriage({ symptoms, freeText, duration, selfSeverity });
-    setResult(r);
-    setStep(3);
+  async function callNurse(payload: any): Promise<NurseResponse | null> {
+    const { data, error } = await supabase.functions.invoke("triage-nurse", { body: payload });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "AI nurse unavailable");
+      return null;
+    }
+    return data as NurseResponse;
   }
 
-  async function loadHospitals(r: TriageResult) {
+  async function startInterview() {
+    if (!freeText.trim()) return;
+    setParsing(true);
+    const r = await callNurse({ stage: "parse", age, sex, free_text: freeText });
+    setParsing(false);
+    if (!r) return;
+    const ev = r.new_evidence || [];
+    setEvidence(ev);
+    setLatestResp(r);
+    if (r.should_stop || !r.next_question) {
+      setStep(4);
+      loadResults(r);
+    } else {
+      setCurrentQ(r.next_question);
+      setAskedIds([r.next_question.id]);
+      setStep(3);
+    }
+  }
+
+  async function answer(value: "yes" | "no" | "unknown") {
+    if (!currentQ) return;
+    setAnswering(true);
+    let nextEvidence = evidence;
+    if (value !== "unknown") {
+      nextEvidence = [...evidence, { id: currentQ.id, name: currentQ.text, present: value === "yes" }];
+      setEvidence(nextEvidence);
+    }
+    const forceStop = askedIds.length >= MAX_QUESTIONS;
+    const r = await callNurse({
+      stage: "next", age, sex, evidence: nextEvidence, asked_ids: askedIds,
+    });
+    setAnswering(false);
+    if (!r) return;
+    setLatestResp(r);
+    if (r.should_stop || forceStop || !r.next_question) {
+      setCurrentQ(null);
+      setStep(4);
+      loadResults(r);
+    } else {
+      setCurrentQ(r.next_question);
+      setAskedIds((prev) => [...prev, r.next_question!.id]);
+    }
+  }
+
+  async function loadResults(r: NurseResponse) {
     setLoadingHospitals(true);
     try {
+      let c = coords;
+      if (!c && navigator.geolocation) {
+        c = await new Promise((res) => navigator.geolocation.getCurrentPosition(
+          (p) => res({ lat: p.coords.latitude, lng: p.coords.longitude }),
+          () => res(null as any),
+          { timeout: 4000 },
+        ));
+        if (c) setCoords(c);
+      }
       const { data: hs } = await supabase.from("hospitals").select("id, name, city, lat, lng").eq("is_active", true);
-      const { data: docs } = await supabase.from("doctors").select("id, specialty").ilike("specialty", `%${r.specialty}%`);
+      const { data: docs } = await supabase.from("doctors").select("id, specialty").ilike("specialty", `%${r.recommended_specialty}%`);
       const docIds = (docs || []).map((d: any) => d.id);
       const { data: hd } = docIds.length
         ? await supabase.from("hospital_doctors").select("hospital_id").in("doctor_id", docIds).eq("is_active", true)
         : { data: [] as any[] };
-      const set = new Set((hd || []).map((r: any) => r.hospital_id));
-      setHospitals(rankHospitals(coords, (hs || []) as any, set));
-    } catch (e: any) {
-      toast.error("Failed to load hospitals");
+      const set = new Set((hd || []).map((x: any) => x.hospital_id));
+      setHospitals(rankHospitals(c, (hs || []) as any, set));
+
+      // Save session
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && patient) {
+        await supabase.from("triage_sessions").insert({
+          patient_id: patient.id,
+          symptoms: evidence.map((e) => `${e.name}:${e.present ? "yes" : "no"}`).concat(freeText ? [freeText] : []),
+          severity_self: 0,
+          severity_score: Math.round(((r.differential[0]?.probability || 0.3) * 10)),
+          recommended_specialty: r.recommended_specialty,
+          urgency: r.triage_level,
+          recommended_hospitals: r as any,
+          lat: c?.lat ?? null, lng: c?.lng ?? null,
+        } as any);
+      }
     } finally {
       setLoadingHospitals(false);
     }
   }
 
-  useEffect(() => {
-    if (step === 4 && result) {
-      if (!coords && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (p) => setCoords({ lat: p.coords.latitude, lng: p.coords.longitude }),
-          () => loadHospitals(result),
-        );
-      } else {
-        loadHospitals(result);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, coords]);
-
   async function bookAt(hospitalId: string) {
-    if (!result) return;
+    if (!latestResp || !patient) return;
     setBooking(hospitalId);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Please sign in"); nav("/login"); return; }
-      const { data: patient } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
-      if (!patient) { toast.error("Patient profile not found"); return; }
-
-      // Save triage session
-      await supabase.from("triage_sessions").insert({
-        patient_id: patient.id,
-        symptoms: [...symptoms, ...(freeText ? [freeText] : [])],
-        duration,
-        severity_self: selfSeverity,
-        severity_score: result.severity,
-        recommended_specialty: result.specialty,
-        urgency: result.urgency,
-        recommended_hospitals: hospitals,
-        chosen_hospital_id: hospitalId,
-        lat: coords?.lat ?? null,
-        lng: coords?.lng ?? null,
-      } as any);
-
-      // Create appointment request
-      const today = new Date();
-      const offsetDays = result.urgency === "emergency" ? 0 : result.urgency === "urgent" ? 1 : result.urgency === "soon" ? 3 : 7;
-      const date = new Date(today.getTime() + offsetDays * 24 * 3600 * 1000);
+      const offsetDays = latestResp.triage_level.startsWith("emergency") ? 0
+        : latestResp.triage_level === "consultation_24" ? 1
+        : latestResp.triage_level === "consultation" ? 3 : 7;
+      const date = new Date(Date.now() + offsetDays * 864e5);
       const { error } = await supabase.from("patient_appointments").insert({
         patient_id: patient.id,
         hospital_id: hospitalId,
         requested_date: date.toISOString().slice(0, 10),
-        reason: `[AI Triage] ${result.specialty} • Severity ${result.severity}/10 • Symptoms: ${symptoms.join(", ")}${freeText ? ` • ${freeText}` : ""}`,
+        reason: `[AI Nurse] ${latestResp.recommended_specialty} • ${latestResp.triage_label}`,
         status: "pending",
       } as any);
       if (error) throw error;
@@ -110,10 +222,12 @@ export default function PatientTriage() {
 
   return (
     <PatientLayout>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-heading font-bold flex items-center gap-2"><Stethoscope className="w-6 h-6 text-primary" />AI Symptom Triage</h1>
-          <p className="text-muted-foreground text-sm">Answer a few questions — we'll match you to the right specialty and nearest hospital.</p>
+          <h1 className="text-2xl font-heading font-bold flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" /> AI Nurse — Symptom Triage
+          </h1>
+          <p className="text-muted-foreground text-sm">An LLM-powered medical triage assistant. Not a diagnosis — guidance only.</p>
         </div>
 
         {/* Stepper */}
@@ -123,108 +237,150 @@ export default function PatientTriage() {
           ))}
         </div>
 
+        {/* STEP 1: Demographics */}
         {step === 1 && (
           <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="font-heading font-bold mb-1">Step 1 of 4 — What are you feeling?</h2>
-            <p className="text-sm text-muted-foreground mb-4">Tap all that apply.</p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {SYMPTOM_CHIPS.map((s) => (
-                <button key={s} onClick={() => toggle(s)}
-                  className={cn("px-3 py-1.5 rounded-full text-sm border transition-colors",
-                    symptoms.includes(s) ? "bg-primary text-primary-foreground border-primary" : "border-border hover:border-primary/50")}>
-                  {s}
-                </button>
-              ))}
+            <h2 className="font-heading font-bold mb-1">Step 1 of 4 — A bit about you</h2>
+            <p className="text-sm text-muted-foreground mb-4">We use this to personalise the triage.</p>
+            <div className="grid sm:grid-cols-2 gap-4 mb-4">
+              <label className="text-sm">Age
+                <input type="number" min={0} max={120} value={age}
+                  onChange={(e) => setAge(e.target.value === "" ? "" : Number(e.target.value))}
+                  className="mt-1 w-full bg-background border border-border rounded-lg p-2" />
+              </label>
+              <div className="text-sm">
+                <span>Biological sex</span>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {(["male", "female"] as Sex[]).map((s) => (
+                    <button key={s} type="button" onClick={() => setSex(s)}
+                      className={cn("p-2 rounded-lg border capitalize",
+                        sex === s ? "bg-primary text-primary-foreground border-primary" : "border-border")}>{s}</button>
+                  ))}
+                </div>
+              </div>
             </div>
-            <label className="text-sm">Anything else? (optional)
-              <textarea value={freeText} onChange={(e) => setFreeText(e.target.value)}
-                placeholder="e.g. pain radiates to my left arm; pregnant 28 weeks; child age 5…"
-                className="mt-1 w-full bg-background border border-border rounded-lg p-2 text-sm" rows={3} maxLength={500} />
-            </label>
-            <div className="flex justify-end mt-4">
-              <button disabled={symptoms.length === 0 && !freeText.trim()} onClick={() => setStep(2)}
+            <div className="flex justify-end">
+              <button disabled={age === "" || !sex || savingDemo} onClick={saveDemographics}
                 className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg disabled:opacity-40">
-                Continue <ArrowRight className="w-4 h-4" />
+                {savingDemo ? "Saving…" : <>Continue <ArrowRight className="w-4 h-4" /></>}
               </button>
             </div>
           </div>
         )}
 
+        {/* STEP 2: Initial symptoms */}
         {step === 2 && (
           <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="font-heading font-bold mb-1">Step 2 of 4 — How long & how bad?</h2>
-            <p className="text-sm text-muted-foreground mb-4">Helps us judge urgency.</p>
-            <div className="mb-4">
-              <p className="text-sm mb-2">How long has this been going on?</p>
-              <div className="flex gap-2 flex-wrap">
-                {[["today", "Today"], ["few_days", "A few days"], ["weeks", "Weeks or longer"]].map(([k, l]) => (
-                  <button key={k} onClick={() => setDuration(k as any)}
-                    className={cn("px-3 py-1.5 rounded-lg text-sm border", duration === k ? "bg-primary text-primary-foreground border-primary" : "border-border")}>{l}</button>
-                ))}
-              </div>
-            </div>
-            <div className="mb-4">
-              <div className="flex justify-between text-sm mb-1"><span>How severe does it feel? (1–10)</span><span className="font-bold">{selfSeverity}</span></div>
-              <input type="range" min={1} max={10} value={selfSeverity} onChange={(e) => setSelfSeverity(Number(e.target.value))} className="w-full" />
-            </div>
+            <h2 className="font-heading font-bold mb-1">Step 2 of 4 — Tell us what's wrong</h2>
+            <p className="text-sm text-muted-foreground mb-4">In your own words. Mention what you feel, when it started, anything that makes it worse or better.</p>
+            <textarea value={freeText} onChange={(e) => setFreeText(e.target.value)} rows={6} maxLength={1500}
+              placeholder="e.g. For the past 2 days I've had a sharp pain in the lower right side of my belly, with nausea and a low fever…"
+              className="w-full bg-background border border-border rounded-lg p-3 text-sm" />
             <div className="flex justify-between mt-4">
               <button onClick={() => setStep(1)} className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-border"><ArrowLeft className="w-4 h-4" />Back</button>
-              <button onClick={compute} className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg">Get assessment <ArrowRight className="w-4 h-4" /></button>
+              <button onClick={startInterview} disabled={!freeText.trim() || parsing}
+                className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg disabled:opacity-40">
+                {parsing ? (<><Loader2 className="w-4 h-4 animate-spin" /> Analysing symptoms…</>)
+                  : (<>Start interview <ArrowRight className="w-4 h-4" /></>)}
+              </button>
             </div>
+            {parsing && <p className="text-xs text-muted-foreground mt-3">NLP parsing your text into clinical concepts…</p>}
           </div>
         )}
 
-        {step === 3 && result && (
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="font-heading font-bold mb-3">Step 3 of 4 — Your assessment</h2>
-            <div className={cn("rounded-xl p-4 border mb-4",
-              result.urgency === "emergency" ? "bg-destructive/10 border-destructive/30 text-destructive"
-                : result.urgency === "urgent" ? "bg-warning/10 border-warning/30"
-                : result.urgency === "soon" ? "bg-info/10 border-info/30"
-                : "bg-success/10 border-success/30")}>
-              <div className="flex items-center gap-2 mb-1">
-                {result.urgency === "emergency" && <AlertTriangle className="w-5 h-5" />}
-                <span className="font-bold uppercase text-xs tracking-wider">{result.urgency}</span>
-                <span className="ml-auto font-heading text-2xl">{result.severity}/10</span>
+        {/* STEP 3: Diagnostic interview */}
+        {step === 3 && currentQ && (
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                <span>Question {askedIds.length} of up to {MAX_QUESTIONS}</span>
+                <span>{progress}%</span>
               </div>
-              <p className="text-sm">{result.guidance}</p>
+              <Progress value={progress} className="h-2" />
             </div>
-            <div className="space-y-2 text-sm">
-              <Row label="Recommended specialty" value={result.specialty} />
-              <Row label="Severity score" value={`${result.severity}/10`} />
-              <Row label="Urgency" value={result.urgency} />
-              <Row label="Symptoms" value={symptoms.join(", ") || "—"} />
-            </div>
-            <div className="flex justify-between mt-5">
-              <button onClick={() => setStep(2)} className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-border"><ArrowLeft className="w-4 h-4" />Back</button>
-              <button onClick={() => setStep(4)} className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg">Find a hospital <ArrowRight className="w-4 h-4" /></button>
+            <div className="bg-card border border-border rounded-xl p-8">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-primary mb-3">
+                <Activity className="w-4 h-4" /> Diagnostic question
+              </div>
+              <h2 className="font-heading text-xl font-bold mb-2">{currentQ.text}</h2>
+              {currentQ.explanation && <p className="text-sm text-muted-foreground mb-6">{currentQ.explanation}</p>}
+              <div className="grid grid-cols-3 gap-3 mt-6">
+                <AnswerBtn disabled={answering} onClick={() => answer("yes")} label="Yes" tone="success" />
+                <AnswerBtn disabled={answering} onClick={() => answer("no")} label="No" tone="destructive" />
+                <AnswerBtn disabled={answering} onClick={() => answer("unknown")} label="I don't know" tone="muted" />
+              </div>
+              {answering && <p className="text-xs text-muted-foreground mt-4 flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> AI nurse thinking…</p>}
             </div>
           </div>
         )}
 
-        {step === 4 && result && (
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h2 className="font-heading font-bold mb-3">Step 4 of 4 — Closest matching hospitals</h2>
-            <p className="text-sm text-muted-foreground mb-4">Ranked by specialty match and distance from you.</p>
-            {loadingHospitals && <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" />Finding hospitals…</div>}
-            {!loadingHospitals && hospitals.length === 0 && <p className="text-sm text-muted-foreground">No hospitals found yet.</p>}
-            <div className="space-y-2">
-              {hospitals.map((h) => (
-                <div key={h.id} className="flex items-center gap-3 p-3 rounded-lg border border-border">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center"><MapPin className="w-5 h-5" /></div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium flex items-center gap-2">{h.name}{h.hasSpecialty && <CheckCircle2 className="w-4 h-4 text-success" />}</div>
-                    <div className="text-xs text-muted-foreground">{h.city || "—"} {h.distanceKm != null && `• ${h.distanceKm.toFixed(1)} km away`} {h.hasSpecialty ? "• Has " + result.specialty : "• Specialty match unconfirmed"}</div>
-                  </div>
-                  <button onClick={() => bookAt(h.id)} disabled={booking === h.id}
-                    className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm disabled:opacity-50">
-                    {booking === h.id ? "Booking…" : "Book"}
-                  </button>
-                </div>
-              ))}
+        {/* STEP 4: Results */}
+        {step === 4 && latestResp && (
+          <div className="space-y-4">
+            <div className={cn("rounded-xl p-5 border", TRIAGE_STYLE[latestResp.triage_level]?.cls || "bg-muted")}>
+              <div className="flex items-center gap-2 mb-1">
+                {latestResp.triage_level.startsWith("emergency") && <AlertTriangle className="w-5 h-5" />}
+                <span className="uppercase tracking-wider text-xs font-bold">{TRIAGE_STYLE[latestResp.triage_level]?.label || latestResp.triage_level}</span>
+              </div>
+              <h2 className="font-heading text-xl font-bold">{latestResp.triage_label}</h2>
+              <p className="text-sm mt-1 opacity-90">{latestResp.guidance}</p>
+              {latestResp.red_flags && latestResp.red_flags.length > 0 && (
+                <ul className="mt-3 text-sm space-y-1">
+                  {latestResp.red_flags.map((r, i) => <li key={i} className="flex items-start gap-1"><AlertTriangle className="w-3 h-3 mt-1 shrink-0" />{r}</li>)}
+                </ul>
+              )}
             </div>
-            <div className="flex justify-between mt-5">
-              <button onClick={() => setStep(3)} className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-border"><ArrowLeft className="w-4 h-4" />Back</button>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Conditions */}
+              <div className="bg-card border border-border rounded-xl p-5">
+                <h3 className="font-heading font-bold mb-3 flex items-center gap-2"><Stethoscope className="w-4 h-4 text-primary" /> Possible conditions</h3>
+                <p className="text-xs text-muted-foreground mb-3">Ranked by likelihood from your responses. Not a diagnosis.</p>
+                <div className="space-y-3">
+                  {latestResp.differential.slice(0, 5).map((c, i) => {
+                    const pct = Math.round(c.probability * 100);
+                    return (
+                      <div key={i}>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="font-medium">{c.name}</span>
+                          <span className="text-muted-foreground">{pct}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+                        </div>
+                        {c.description && <p className="text-xs text-muted-foreground mt-1">{c.description}</p>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Care navigation */}
+              <div className="bg-card border border-border rounded-xl p-5">
+                <h3 className="font-heading font-bold mb-1 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Care navigation</h3>
+                <p className="text-xs text-muted-foreground mb-3">Recommended specialty: <span className="text-foreground font-medium">{latestResp.recommended_specialty}</span></p>
+                {loadingHospitals && <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" />Finding hospitals…</div>}
+                {!loadingHospitals && hospitals.length === 0 && <p className="text-sm text-muted-foreground">No hospitals found.</p>}
+                <div className="space-y-2">
+                  {hospitals.slice(0, 6).map((h) => (
+                    <div key={h.id} className="flex items-center gap-3 p-2 rounded-lg border border-border">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm flex items-center gap-1">{h.name}{h.hasSpecialty && <CheckCircle2 className="w-3 h-3 text-success" />}</div>
+                        <div className="text-xs text-muted-foreground truncate">{h.city || "—"}{h.distanceKm != null && ` • ${h.distanceKm.toFixed(1)} km`}</div>
+                      </div>
+                      <button onClick={() => bookAt(h.id)} disabled={booking === h.id}
+                        className="bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs disabled:opacity-50">
+                        {booking === h.id ? "…" : "Book"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between">
+              <button onClick={() => { setStep(2); setEvidence([]); setAskedIds([]); setCurrentQ(null); setLatestResp(null); setHospitals([]); }}
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-border"><ArrowLeft className="w-4 h-4" />Start over</button>
             </div>
           </div>
         )}
@@ -233,6 +389,19 @@ export default function PatientTriage() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return <div className="flex justify-between gap-4 capitalize"><span className="text-muted-foreground">{label}</span><span className="font-medium text-right">{value}</span></div>;
+function AnswerBtn({ label, onClick, disabled, tone }: { label: string; onClick: () => void; disabled?: boolean; tone: "success" | "destructive" | "muted" }) {
+  const cls = tone === "success" ? "border-success/50 hover:bg-success/10 text-success"
+    : tone === "destructive" ? "border-destructive/50 hover:bg-destructive/10 text-destructive"
+    : "border-border hover:bg-muted text-muted-foreground";
+  return (
+    <button disabled={disabled} onClick={onClick}
+      className={cn("p-4 rounded-xl border-2 font-medium transition-colors disabled:opacity-50", cls)}>
+      <div className="flex items-center justify-center gap-2">
+        {tone === "success" && <CheckCircle2 className="w-4 h-4" />}
+        {tone === "destructive" && <span className="text-lg leading-none">✕</span>}
+        {tone === "muted" && <HelpCircle className="w-4 h-4" />}
+        {label}
+      </div>
+    </button>
+  );
 }
