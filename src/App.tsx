@@ -55,6 +55,8 @@ import DoctorConsultations from "./pages/doctor/Consultations";
 import DoctorProfile from "./pages/doctor/Profile";
 import DoctorVerification from "./pages/doctor/Verification";
 import DoctorSettings from "./pages/doctor/Settings";
+import DoctorMessages from "./pages/doctor/Messages";
+import DoctorPatientDetail from "./pages/doctor/PatientDetail";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +93,8 @@ const App = () => (
           <Route path="/doctor" element={<ProtectedRoute><DoctorDashboard /></ProtectedRoute>} />
           <Route path="/doctor/appointments" element={<ProtectedRoute><DoctorAppointments /></ProtectedRoute>} />
           <Route path="/doctor/patients" element={<ProtectedRoute><DoctorPatients /></ProtectedRoute>} />
+          <Route path="/doctor/patients/:id" element={<ProtectedRoute><DoctorPatientDetail /></ProtectedRoute>} />
+          <Route path="/doctor/messages" element={<ProtectedRoute><DoctorMessages /></ProtectedRoute>} />
           <Route path="/doctor/prescriptions" element={<ProtectedRoute><DoctorPrescriptions /></ProtectedRoute>} />
           <Route path="/doctor/lab-orders" element={<ProtectedRoute><DoctorLabOrders /></ProtectedRoute>} />
           <Route path="/doctor/consultations" element={<ProtectedRoute><DoctorConsultations /></ProtectedRoute>} />
