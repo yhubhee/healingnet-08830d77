@@ -1,66 +1,85 @@
-## 1. Fix "Not authenticated" hospital signup
+# Doctor Portal — Full Functionality Plan
 
-**Root cause:** Email confirmation is on, so `supabase.auth.signUp` returns no session. The fallback `signInWithPassword` then fails (`invalid_credentials`) because the email isn't confirmed yet. The RPC `create_hospital_with_admin` requires `auth.uid()` and rejects with "Not authenticated".
+Make every page in the doctor portal interactive and deployment-ready. Today most pages render lists; this plan adds the actions, dialogs, navigation, and missing pages doctors need to actually work.
 
-**Fix:** Move hospital creation into an edge function `create-hospital` that:
-- Verifies the just-created user via the service-role client (looks up by email + checks `user_metadata.role === "hospital"`).
-- Inserts hospital + admin staff + subscription using service role (bypasses RLS).
-- Returns the new hospital id.
+## 1. Dashboard (`/doctor`)
+- Add **Quick Actions** row: New Prescription, Order Lab Test, Message Patient, View Schedule.
+- Make today's appointment rows clickable → opens the new Appointment Detail drawer.
+- Add a "Next 7 days" mini calendar strip.
+- Add unread-message + pending-lab badges to stat cards.
+- Pull verification banner if status ≠ approved.
 
-Signup flow becomes: `signUp` → call edge function with the new `user.id` → show "Check your email to confirm" toast → redirect to `/login`.
+## 2. Appointments (`/doctor/appointments`)
+- Row click → **Appointment Detail Drawer** with patient summary, vitals (latest check-in), reason, history.
+- Actions on pending: **Accept / Decline** (with optional note). Accepting writes `status=accepted` and creates a hospital notification.
+- Actions on accepted: **Start consultation** (creates an `emr_entries` draft and routes to detail), **Reschedule** (date/time dialog), **Cancel** (with reason).
+- Actions on completed: **View notes**.
+- Add date-range and search filters; calendar/list toggle.
 
-This works regardless of whether email confirmation is on, and removes the auth race condition.
+## 3. My Patients (`/doctor/patients`)
+- Row click → **Patient Profile page** `/doctor/patients/:id` with tabs:
+  - **Overview** — demographics, allergies, genotype, blood group, last visit.
+  - **History** — past appointments + check-ins timeline.
+  - **EMR** — entries authored by anyone in shared hospitals; "Add note" opens dialog (uses `emr_entries`).
+  - **Prescriptions** — list + "New prescription" dialog.
+  - **Lab orders** — list + "Order test" dialog.
+  - **Messages** — thread with patient.
+- Quick actions on row hover: Message, New Rx, Order Lab.
 
-## 2. Rebuild Triage as "AI Nurse" (Infermedica-style)
+## 4. Prescriptions (`/doctor/prescriptions`)
+- **New Prescription** dialog: patient picker (from my-patients), drug autocomplete from `pharmacy_inventory` of the doctor's hospital(s), dosage, frequency, duration, refills, instructions.
+- Row actions: **Renew** (clones with reset refills), **Discontinue** (status=cancelled), **Print** (printable view).
+- Status filter tabs (active / completed / cancelled), search by drug or patient.
 
-Replace the current rule-based `src/pages/patient/Triage.tsx` with a 4-step LLM-driven wizard backed by Lovable AI.
+## 5. Lab Orders (`/doctor/lab-orders`)
+- **Order Test** dialog: patient picker, category, test selection (multi), priority, clinical notes → inserts `lab_results` + `lab_result_tests`.
+- Row click → **Result Detail** modal showing tests, values, abnormal flags, attachments.
+- Actions: **Cancel order** (pending only), **Re-order**, **Message patient about result**.
 
-### Step 1 — Demographics
-- On mount, fetch the patient row. If `date_of_birth` and `gender` are both present, auto-fill and skip to Step 2.
-- Otherwise show Age (number) + Biological Sex (male/female) form. On submit, write back to `patients` (compute a DOB from age = Jan 1 of year `today - age` if user only knows age).
+## 6. Consultations (`/doctor/consultations`) — Care Zone marketplace
+- Pending row actions: **Accept** (sets meeting_link if virtual; uses Jitsi URL generated from id), **Decline** (with reason), **Propose new time**.
+- Accepted: **Join virtual room** button (opens meeting link), **Complete consultation** (writes summary back).
+- Filters: type (virtual/in-person), urgency, status.
 
-### Step 2 — Initial symptoms (free text)
-- Large textarea: "Describe what you're feeling…"
-- Submit → loading state "Analyzing your symptoms…" → calls edge function `triage-nurse` with `{ stage: "parse", age, sex, text }`.
-- LLM (google/gemini-2.5-flash) returns structured `evidence: [{id, name, present:true}]` + initial `differential` candidates via tool calling.
+## 7. New page: Messages (`/doctor/messages`)
+- Two-pane inbox built on `patient_messages` (left: patient threads, right: thread).
+- Compose to any of my patients. Realtime via `supabase.channel`.
+- Add Messages icon + unread badge to sidebar.
 
-### Step 3 — Dynamic diagnostic interview
-- One card at a time with question + Yes / No / I don't know buttons.
-- Each answer → calls `triage-nurse` with `{ stage: "next", age, sex, evidence }` → returns either next `question` or `should_stop: true`.
-- Progress bar increments (cap ~8 questions, or stop early if confidence high).
-- LLM is instructed to behave like Infermedica's diagnostic engine: ask the highest-information-gain question, never repeat, stop when one condition dominates or red flag detected.
+## 8. Profile (`/doctor/profile`)
+- Make **Edit** button open an edit dialog: avatar upload (to `doctor-credentials` or new bucket), bio, phone, years_experience, languages.
+- Marketplace card becomes editable: toggles + fee inputs (writes to `doctor_marketplace`, upserts row if missing). Locked unless verified.
+- Remove the hardcoded fallback (`Adaobi Okonkwo`) — show empty state instead.
 
-### Step 4 — Results & care navigation (2-column dashboard)
-- Left column: ranked **possible conditions** (top 3-5 with probability bar + plain-language description).
-- Right column: **care navigation** — triage level (self-care / GP / urgent / emergency), recommended specialty, then the existing hospital-matching list (reuses `rankHospitals` + Haversine) with "Book" buttons.
-- Saves full session to `triage_sessions` (already exists).
+## 9. Settings (`/doctor/settings`)
+- Already exists; small additions:
+  - Per-day fee override (optional) on schedule rows.
+  - **Block time / leave** mini-section (writes day rows with `is_available=false`).
+  - Validation: end > start; warn if no day enabled.
+- No schema change.
 
-### Edge function `triage-nurse`
-- Single endpoint, three stages: `parse`, `next`, `final`.
-- Uses Lovable AI (`LOVABLE_API_KEY` already configured) with tool-calling for structured JSON.
-- System prompt frames it as a cautious medical triage nurse (not diagnostic), always surfaces red flags, avoids prescribing.
-- Returns 429/402 errors gracefully to the client.
+## 10. Verification (`/doctor/verification`)
+- Keep as is. Surface current status + rejection reason banner on entry.
 
-## Technical details
+## 11. Sidebar
+- Add **Messages** entry. Show unread badges for Messages, Appointments (pending), Consultations (pending).
+- Pull badge counts via realtime subscriptions.
 
-**Files to create**
-- `supabase/functions/create-hospital/index.ts`
-- `supabase/functions/triage-nurse/index.ts`
-- `src/lib/triage/nurseClient.ts` (thin client wrapping the edge function calls)
+## 12. Cross-cutting
+- Shared `PatientPicker`, `DrugPicker`, `LabTestPicker`, `ConfirmDialog` components in `src/components/doctor/`.
+- All writes go through React Query mutations with optimistic invalidations; toast on success/error.
+- Remove every remaining hardcoded fallback in doctor pages.
+- Empty states + loading skeletons on every list.
 
-**Files to edit**
-- `src/pages/Signup.tsx` — replace RPC call with `supabase.functions.invoke("create-hospital", …)`; on success route to `/login` (or `/hospital` if session is present).
-- `src/pages/patient/Triage.tsx` — full rewrite: 4-step wizard, demographics gate, LLM interview loop, two-column results.
-- Keep `src/lib/triage/proximity.ts` and reuse `rankHospitals`.
-- The old `src/lib/triage/engine.ts` becomes a fallback used only if the edge function errors.
+## Technical Notes
+- Routes added: `/doctor/patients/:id`, `/doctor/messages`.
+- DB: no schema changes required. Existing tables (`patient_appointments`, `prescriptions`, `lab_results`, `lab_result_tests`, `consultation_requests`, `emr_entries`, `patient_messages`, `doctor_marketplace`, `doctor_availability`, `doctor_settings`) cover everything. RLS already permits these doctor writes via `get_user_doctor_id(auth.uid())`.
+- Virtual meeting links: use `https://meet.jit.si/healingnet-{consultationId}` (no key needed) for v1.
+- Realtime: enable on `patient_messages`, `patient_appointments`, `consultation_requests` (publication add).
+- Print prescription: dedicated route `/doctor/prescriptions/:id/print` with print stylesheet.
 
-**No DB schema changes required.** `patients.date_of_birth`/`gender` and `triage_sessions` already exist.
-
-**Security**
-- `create-hospital` validates the caller's email matches the looked-up user and that role metadata is `hospital`. Service role usage stays inside the function.
-- `triage-nurse` is JWT-verified (default) so only authenticated patients call it.
-
-## Out of scope
-- No changes to doctor/hospital portals.
-- No new tables.
-- No paid Infermedica API — uses Lovable AI only.
+## Out of Scope
+- Doctor-side billing/payouts.
+- Video SDK beyond Jitsi link.
+- Push/SMS delivery (in-app + email prefs only; actual SMS not wired).
+- Doctor portal mobile-app shell.
