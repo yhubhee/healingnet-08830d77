@@ -23,7 +23,7 @@ export default function DoctorConsultations() {
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "consultations", ctx?.doctor?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("consultation_requests").select("*, patients(first_name,last_name)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
+      const { data } = await supabase.from("consultation_requests").select("*, patients(first_name,last_name,phone)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
       return data || [];
     },
   });
