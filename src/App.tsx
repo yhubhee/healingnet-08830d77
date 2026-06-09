@@ -57,6 +57,7 @@ import DoctorVerification from "./pages/doctor/Verification";
 import DoctorSettings from "./pages/doctor/Settings";
 import DoctorMessages from "./pages/doctor/Messages";
 import DoctorPatientDetail from "./pages/doctor/PatientDetail";
+import VideoConsult from "./pages/VideoConsult";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,9 @@ const App = () => (
           <Route path="/patient/profile" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
           <Route path="/patient/settings" element={<ProtectedRoute><PatientSettings /></ProtectedRoute>} />
           <Route path="/patient/triage" element={<ProtectedRoute><PatientTriage /></ProtectedRoute>} />
+
+          <Route path="/consult/:id" element={<ProtectedRoute><VideoConsult /></ProtectedRoute>} />
+
 
           {/* Doctor Portal */}
           <Route path="/doctor" element={<ProtectedRoute><DoctorDashboard /></ProtectedRoute>} />
