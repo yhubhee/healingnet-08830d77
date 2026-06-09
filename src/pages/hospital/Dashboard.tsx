@@ -1,7 +1,10 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { Users, UserCheck, CreditCard, Video, Clock, Activity, ArrowUpRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { usePatientCheckins, useRealtimeCheckins, useHospitalDoctors, useHospitalBilling, useHospitalNotifications, useRealtimeNotifications } from "@/hooks/useHospitalData";
+import { usePatientCheckins, useRealtimeCheckins, useHospitalDoctors, useHospitalBilling, useHospitalNotifications, useRealtimeNotifications, useHospitalId } from "@/hooks/useHospitalData";
 
 const statusColors: Record<string, string> = {
   waiting: "bg-warning/15 text-warning",
