@@ -36,8 +36,7 @@ export default function DoctorConsultations() {
     qc.invalidateQueries({ queryKey: ["doctor", "consultations"] });
   }
   async function accept(c: any) {
-    const link = c.request_type === "virtual" ? `https://meet.jit.si/healingnet-${c.id}` : null;
-    await update(c.id, { status: "accepted", meeting_link: link }, "Accepted");
+    await update(c.id, { status: "accepted" }, "Accepted");
   }
   async function complete() {
     if (!notesFor) return;
