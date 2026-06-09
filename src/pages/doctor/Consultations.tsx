@@ -75,10 +75,13 @@ export default function DoctorConsultations() {
                   <Button size="sm" onClick={() => accept(c)}><CheckCircle2 className="w-4 h-4" />Accept</Button>
                   <Button size="sm" variant="outline" onClick={() => update(c.id, { status: "cancelled" }, "Declined")}><XCircle className="w-4 h-4" />Decline</Button>
                 </>)}
-                {c.status === "accepted" && (<>
-                  {c.meeting_link && <a href={c.meeting_link} target="_blank" rel="noreferrer"><Button size="sm"><ExternalLink className="w-4 h-4" />Join room</Button></a>}
+                {c.status === "accepted" && c.request_type === "virtual" && (<>
+                  <JoinCallButton consultationId={c.id} meetingLink={c.meeting_link} patientPhone={c.patients?.phone} patientName={c.patients ? `${c.patients.first_name} ${c.patients.last_name}` : undefined} scheduledFor={c.scheduled_for} />
                   <Button size="sm" variant="outline" onClick={() => { setNotesFor(c); setNote(c.doctor_notes || ""); }}>Complete</Button>
                 </>)}
+                {c.status === "accepted" && c.request_type !== "virtual" && (
+                  <Button size="sm" variant="outline" onClick={() => { setNotesFor(c); setNote(c.doctor_notes || ""); }}>Complete</Button>
+                )}
                 {c.status === "completed" && c.doctor_notes && <span className="text-xs text-muted-foreground">Notes: {c.doctor_notes.slice(0, 80)}</span>}
                 <span className={cn("ml-auto text-xs capitalize px-2 py-0.5 rounded-full", c.status === "pending" ? "bg-warning/15 text-warning" : c.status === "accepted" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")}>{c.status}</span>
               </div>
