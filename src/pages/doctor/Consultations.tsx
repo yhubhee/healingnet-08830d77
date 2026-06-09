@@ -2,13 +2,14 @@ import { DoctorLayout } from "@/layouts/DoctorLayout";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Video, FileText, MessageSquare, Loader2, ExternalLink, CheckCircle2, XCircle } from "lucide-react";
+import { Video, FileText, MessageSquare, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
+import { JoinCallButton } from "@/components/JoinCallButton";
 
 const filters = ["all", "pending", "accepted", "completed", "cancelled"] as const;
 
