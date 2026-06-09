@@ -88,15 +88,16 @@ export default function HospitalDashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
-          <div key={stat.label} className={cn("relative rounded-xl p-5 text-foreground overflow-hidden card-hover", stat.gradient)}>
+          <Link to={stat.href} key={stat.label} className={cn("relative rounded-xl p-5 text-foreground overflow-hidden card-hover block", stat.gradient)}>
             <stat.icon className="stat-card-icon" />
+            {(stat as any).live && <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-destructive/90 text-destructive-foreground px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />Live</span>}
             <p className="text-sm opacity-80 mb-1">{stat.label}</p>
             <h3 className="text-2xl font-heading font-bold">{stat.value}</h3>
             <p className="text-xs opacity-70 mt-1 flex items-center gap-1">
               {stat.trend === "up" && <ArrowUpRight className="h-3 w-3" />}
               {stat.subtitle}
             </p>
-          </div>
+          </Link>
         ))}
       </div>
 
