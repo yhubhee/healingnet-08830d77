@@ -1,85 +1,109 @@
-# Doctor Portal — Full Functionality Plan
+## Honest take on "native WebRTC vs Daily.co"
 
-Make every page in the doctor portal interactive and deployment-ready. Today most pages render lists; this plan adds the actions, dialogs, navigation, and missing pages doctors need to actually work.
+Native WebRTC is free but for a real telehealth product it is the wrong call:
 
-## 1. Dashboard (`/doctor`)
-- Add **Quick Actions** row: New Prescription, Order Lab Test, Message Patient, View Schedule.
-- Make today's appointment rows clickable → opens the new Appointment Detail drawer.
-- Add a "Next 7 days" mini calendar strip.
-- Add unread-message + pending-lab badges to stat cards.
-- Pull verification banner if status ≠ approved.
+- **TURN servers — yes, mandatory.** ~15-20% of users (corporate networks, symmetric NAT, mobile carriers) cannot connect peer-to-peer. You'd need to run/pay for a TURN relay (coturn, Twilio NTS, Metered, Xirsys). That's the part people underestimate.
+- **No recording.** Browser MediaRecorder only captures the local stream; recording both sides means a server-side mixer (LiveKit Egress, Daily recording, AWS Chime). Building this is weeks of work.
+- **No transcription, no waiting room, no >2 participants, no network resilience, no mobile SDK.**
+- **HIPAA/clinical compliance posture is on you.**
 
-## 2. Appointments (`/doctor/appointments`)
-- Row click → **Appointment Detail Drawer** with patient summary, vitals (latest check-in), reason, history.
-- Actions on pending: **Accept / Decline** (with optional note). Accepting writes `status=accepted` and creates a hospital notification.
-- Actions on accepted: **Start consultation** (creates an `emr_entries` draft and routes to detail), **Reschedule** (date/time dialog), **Cancel** (with reason).
-- Actions on completed: **View notes**.
-- Add date-range and search filters; calendar/list toggle.
+**Recommendation:** Use **Daily.co** as the default. It bundles TURN, cloud recording, transcription, waiting rooms, and a drop-in iframe. Free tier = 10k participant-mins/month, perfect for launch. WhatsApp (wa.me link) and Jitsi stay as fallbacks. No native WebRTC.
 
-## 3. My Patients (`/doctor/patients`)
-- Row click → **Patient Profile page** `/doctor/patients/:id` with tabs:
-  - **Overview** — demographics, allergies, genotype, blood group, last visit.
-  - **History** — past appointments + check-ins timeline.
-  - **EMR** — entries authored by anyone in shared hospitals; "Add note" opens dialog (uses `emr_entries`).
-  - **Prescriptions** — list + "New prescription" dialog.
-  - **Lab orders** — list + "Order test" dialog.
-  - **Messages** — thread with patient.
-- Quick actions on row hover: Message, New Rx, Order Lab.
+---
 
-## 4. Prescriptions (`/doctor/prescriptions`)
-- **New Prescription** dialog: patient picker (from my-patients), drug autocomplete from `pharmacy_inventory` of the doctor's hospital(s), dosage, frequency, duration, refills, instructions.
-- Row actions: **Renew** (clones with reset refills), **Discontinue** (status=cancelled), **Print** (printable view).
-- Status filter tabs (active / completed / cancelled), search by drug or patient.
+## Plan
 
-## 5. Lab Orders (`/doctor/lab-orders`)
-- **Order Test** dialog: patient picker, category, test selection (multi), priority, clinical notes → inserts `lab_results` + `lab_result_tests`.
-- Row click → **Result Detail** modal showing tests, values, abnormal flags, attachments.
-- Actions: **Cancel order** (pending only), **Re-order**, **Message patient about result**.
+### 1. Hospital dashboard — replace Revenue card with Telemedicine card
+File: `src/pages/hospital/Dashboard.tsx`
 
-## 6. Consultations (`/doctor/consultations`) — Care Zone marketplace
-- Pending row actions: **Accept** (sets meeting_link if virtual; uses Jitsi URL generated from id), **Decline** (with reason), **Propose new time**.
-- Accepted: **Join virtual room** button (opens meeting link), **Complete consultation** (writes summary back).
-- Filters: type (virtual/in-person), urgency, status.
+New card shows:
+- Today's scheduled video consults (count)
+- Active rooms right now (live)
+- Pending consult requests
+- Click → `/hospital/consultations`
 
-## 7. New page: Messages (`/doctor/messages`)
-- Two-pane inbox built on `patient_messages` (left: patient threads, right: thread).
-- Compose to any of my patients. Realtime via `supabase.channel`.
-- Add Messages icon + unread badge to sidebar.
+### 2. Daily.co integration
 
-## 8. Profile (`/doctor/profile`)
-- Make **Edit** button open an edit dialog: avatar upload (to `doctor-credentials` or new bucket), bio, phone, years_experience, languages.
-- Marketplace card becomes editable: toggles + fee inputs (writes to `doctor_marketplace`, upserts row if missing). Locked unless verified.
-- Remove the hardcoded fallback (`Adaobi Okonkwo`) — show empty state instead.
+**Setup (you do once):**
+1. Sign up at daily.co → pick subdomain **`healingnet`** (not the lovable URL — Daily wants a short slug). Rooms become `healingnet.daily.co/visit-xyz`.
+2. Copy your Daily API key from Developers → API keys.
+3. I'll prompt you to paste it as secret `DAILY_API_KEY`.
 
-## 9. Settings (`/doctor/settings`)
-- Already exists; small additions:
-  - Per-day fee override (optional) on schedule rows.
-  - **Block time / leave** mini-section (writes day rows with `is_available=false`).
-  - Validation: end > start; warn if no day enabled.
-- No schema change.
+**New edge function `daily-room`:**
+- `POST { action: "create", consultation_id, doctor_name, patient_name, scheduled_for }` → creates a private Daily room with 2-hour expiry, returns `{ room_url, room_name }`, saves to `consultation_requests.meeting_link`.
+- `POST { action: "token", room_name, user_name, is_owner }` → returns short-lived meeting token (owner = doctor → can start/stop recording).
+- `POST { action: "delete", room_name }` → cleanup.
 
-## 10. Verification (`/doctor/verification`)
-- Keep as is. Surface current status + rejection reason banner on entry.
+**New embedded video page** `src/pages/VideoConsult.tsx` (route `/consult/:id`):
+- Uses `@daily-co/daily-js` (or iframe with prebuilt UI for speed).
+- Fetches consult, validates user is participant, requests token, joins room.
+- Sidebar with: live **note-taking** textarea (autosaves to `consultation_requests.doctor_notes`), patient summary, prescription/lab shortcuts, end-call button.
+- Doctor sees **Record** toggle (calls Daily REST `recordings/start`).
+- After call ends → recording URL saved to consult row, doctor prompted to finalize notes.
 
-## 11. Sidebar
-- Add **Messages** entry. Show unread badges for Messages, Appointments (pending), Consultations (pending).
-- Pull badge counts via realtime subscriptions.
+### 3. WhatsApp fallback
+- Add `whatsapp_number` to consult flow (use patient phone).
+- Button on consult card: "Send via WhatsApp" → opens `https://wa.me/<digits>?text=<encoded message with meeting link>`.
+- Plain link, no API key, works immediately.
 
-## 12. Cross-cutting
-- Shared `PatientPicker`, `DrugPicker`, `LabTestPicker`, `ConfirmDialog` components in `src/components/doctor/`.
-- All writes go through React Query mutations with optimistic invalidations; toast on success/error.
-- Remove every remaining hardcoded fallback in doctor pages.
-- Empty states + loading skeletons on every list.
+### 4. Join button logic (doctor + patient consult cards)
+Three buttons stacked / dropdown:
+- **Start video call** (primary) → Daily room
+- **Send WhatsApp invite** → wa.me with meeting link
+- **Copy link** (Jitsi remains as zero-config backup if Daily key missing)
 
-## Technical Notes
-- Routes added: `/doctor/patients/:id`, `/doctor/messages`.
-- DB: no schema changes required. Existing tables (`patient_appointments`, `prescriptions`, `lab_results`, `lab_result_tests`, `consultation_requests`, `emr_entries`, `patient_messages`, `doctor_marketplace`, `doctor_availability`, `doctor_settings`) cover everything. RLS already permits these doctor writes via `get_user_doctor_id(auth.uid())`.
-- Virtual meeting links: use `https://meet.jit.si/healingnet-{consultationId}` (no key needed) for v1.
-- Realtime: enable on `patient_messages`, `patient_appointments`, `consultation_requests` (publication add).
-- Print prescription: dedicated route `/doctor/prescriptions/:id/print` with print stylesheet.
+Updates `src/pages/doctor/Consultations.tsx`, `src/pages/patient/Appointments.tsx`, `AppointmentDetailDrawer`.
 
-## Out of Scope
-- Doctor-side billing/payouts.
-- Video SDK beyond Jitsi link.
-- Push/SMS delivery (in-app + email prefs only; actual SMS not wired).
-- Doctor portal mobile-app shell.
+### 5. DB migration
+Add columns to `consultation_requests`:
+- `video_provider` text (`daily` | `jitsi` | `whatsapp`)
+- `daily_room_name` text
+- `recording_url` text
+- `recording_status` text
+- `call_started_at` timestamptz
+- `call_ended_at` timestamptz
+
+Add columns to `patient_appointments` for telemedicine appointments:
+- `is_telemedicine` boolean default false
+- `meeting_link` text
+- `daily_room_name` text
+
+### 6. Mobile responsiveness — `/doctor` dashboard
+File: `src/pages/doctor/Dashboard.tsx` + `DoctorLayout` + `DoctorSidebar`.
+
+Issues to fix:
+- Sidebar is fixed-width and pushes content off-screen on mobile → convert to slide-out Sheet drawer below `md`, with hamburger in a new top bar.
+- `main` padding `p-6` is too tight → `p-4 md:p-6`.
+- Quick-actions row wraps awkwardly → horizontal scroll on mobile.
+- 4-column stat grid → already `grid-cols-2 lg:grid-cols-4` ✅, keep.
+- "Today's Schedule" rows overflow → stack patient name above status on `<sm`.
+- Consult requests card sits beside schedule on `lg` only ✅.
+
+Same Sheet pattern applied to all doctor pages via `DoctorLayout`.
+
+### 7. Telemedicine card data source
+Query in hospital dashboard:
+```text
+- video_today: consultation_requests WHERE hospital_id=X AND request_type='virtual' AND DATE(scheduled_for)=today
+- active_now: consultation_requests WHERE call_started_at IS NOT NULL AND call_ended_at IS NULL
+- pending: consultation_requests WHERE status='pending' AND request_type='virtual'
+```
+
+---
+
+## Order of execution
+1. DB migration (consult + appointment columns).
+2. Ask you for `DAILY_API_KEY` secret.
+3. Edge function `daily-room`.
+4. Install `@daily-co/daily-js`.
+5. `VideoConsult.tsx` page + route.
+6. Update consult cards (doctor + patient) with 3-button join.
+7. Replace hospital dashboard Revenue card with Telemedicine card.
+8. Mobile-responsive pass on `DoctorLayout` + `DoctorSidebar` + `Dashboard.tsx`.
+
+## Out of scope
+- Native WebRTC + self-hosted TURN (covered above — not worth it).
+- WhatsApp Business API templated messaging (you chose wa.me link).
+- Group calls / waiting rooms beyond Daily defaults.
+- Auto-transcription (can add later — Daily supports it via one extra API flag).
+- Billing/charging per video minute.
