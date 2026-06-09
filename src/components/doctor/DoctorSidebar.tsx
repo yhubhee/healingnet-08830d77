@@ -22,7 +22,7 @@ export function DoctorSidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
+    <aside className="w-64 h-screen md:h-auto md:min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col">
       <div className="p-5 flex items-center gap-2 border-b border-sidebar-border">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
           <Heart className="w-4 h-4 text-primary-foreground" fill="currentColor" />
