@@ -16,7 +16,10 @@ export type Database = {
     Tables: {
       consultation_requests: {
         Row: {
+          call_ended_at: string | null
+          call_started_at: string | null
           created_at: string
+          daily_room_name: string | null
           doctor_id: string
           doctor_notes: string | null
           fee_agreed: number | null
@@ -27,15 +30,21 @@ export type Database = {
           preferred_date: string | null
           preferred_time: string | null
           reason: string
+          recording_status: string | null
+          recording_url: string | null
           request_type: string | null
           requesting_hospital_id: string
           specialty_needed: string | null
           status: string | null
           updated_at: string
           urgency: string | null
+          video_provider: string | null
         }
         Insert: {
+          call_ended_at?: string | null
+          call_started_at?: string | null
           created_at?: string
+          daily_room_name?: string | null
           doctor_id: string
           doctor_notes?: string | null
           fee_agreed?: number | null
@@ -46,15 +55,21 @@ export type Database = {
           preferred_date?: string | null
           preferred_time?: string | null
           reason: string
+          recording_status?: string | null
+          recording_url?: string | null
           request_type?: string | null
           requesting_hospital_id: string
           specialty_needed?: string | null
           status?: string | null
           updated_at?: string
           urgency?: string | null
+          video_provider?: string | null
         }
         Update: {
+          call_ended_at?: string | null
+          call_started_at?: string | null
           created_at?: string
+          daily_room_name?: string | null
           doctor_id?: string
           doctor_notes?: string | null
           fee_agreed?: number | null
@@ -65,12 +80,15 @@ export type Database = {
           preferred_date?: string | null
           preferred_time?: string | null
           reason?: string
+          recording_status?: string | null
+          recording_url?: string | null
           request_type?: string | null
           requesting_hospital_id?: string
           specialty_needed?: string | null
           status?: string | null
           updated_at?: string
           urgency?: string | null
+          video_provider?: string | null
         }
         Relationships: [
           {
@@ -1256,9 +1274,12 @@ export type Database = {
       patient_appointments: {
         Row: {
           created_at: string
+          daily_room_name: string | null
           doctor_id: string | null
           hospital_id: string
           id: string
+          is_telemedicine: boolean
+          meeting_link: string | null
           notes: string | null
           patient_id: string
           reason: string | null
@@ -1269,9 +1290,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          daily_room_name?: string | null
           doctor_id?: string | null
           hospital_id: string
           id?: string
+          is_telemedicine?: boolean
+          meeting_link?: string | null
           notes?: string | null
           patient_id: string
           reason?: string | null
@@ -1282,9 +1306,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          daily_room_name?: string | null
           doctor_id?: string | null
           hospital_id?: string
           id?: string
+          is_telemedicine?: boolean
+          meeting_link?: string | null
           notes?: string | null
           patient_id?: string
           reason?: string | null
