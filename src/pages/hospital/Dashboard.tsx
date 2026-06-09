@@ -1,7 +1,10 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { Users, UserCheck, CreditCard, Video, Clock, Activity, ArrowUpRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { usePatientCheckins, useRealtimeCheckins, useHospitalDoctors, useHospitalBilling, useHospitalNotifications, useRealtimeNotifications } from "@/hooks/useHospitalData";
+import { usePatientCheckins, useRealtimeCheckins, useHospitalDoctors, useHospitalBilling, useHospitalNotifications, useRealtimeNotifications, useHospitalId } from "@/hooks/useHospitalData";
 
 const statusColors: Record<string, string> = {
   waiting: "bg-warning/15 text-warning",
@@ -30,19 +33,39 @@ export default function HospitalDashboard() {
   const { data: hospitalDoctors = [] } = useHospitalDoctors();
   const { data: billing = [] } = useHospitalBilling();
   const { data: notifications = [] } = useHospitalNotifications();
+  const { data: hospitalId } = useHospitalId();
+
+  const { data: tele } = useQuery({
+    enabled: !!hospitalId,
+    queryKey: ["telemedicine-stats", hospitalId],
+    queryFn: async () => {
+      const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
+      const [today, active, pending] = await Promise.all([
+        supabase.from("consultation_requests").select("id", { count: "exact", head: true })
+          .eq("requesting_hospital_id", hospitalId).eq("request_type", "virtual")
+          .gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString()),
+        supabase.from("consultation_requests").select("id", { count: "exact", head: true })
+          .eq("requesting_hospital_id", hospitalId).not("call_started_at", "is", null).is("call_ended_at", null),
+        supabase.from("consultation_requests").select("id", { count: "exact", head: true })
+          .eq("requesting_hospital_id", hospitalId).eq("request_type", "virtual").eq("status", "pending"),
+      ]);
+      return { today: today.count || 0, active: active.count || 0, pending: pending.count || 0 };
+    },
+    refetchInterval: 30_000,
+  });
 
   const todayStr = new Date().toLocaleDateString("en-NG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   const todayCheckins = checkins.filter((c: any) => new Date(c.checkin_time).toDateString() === new Date().toDateString());
   const activeDocCount = hospitalDoctors.filter((hd: any) => hd.doctors?.is_available).length;
   const todayBilling = billing.filter((b: any) => new Date(b.created_at).toDateString() === new Date().toDateString());
-  const todayRevenue = todayBilling.reduce((sum: number, b: any) => sum + (b.payment_status === "paid" ? Number(b.total) : 0), 0);
 
   const stats = [
-    { label: "Patients Today", value: String(todayCheckins.length), subtitle: "check-ins today", icon: Users, gradient: "gradient-primary", trend: "neutral" as const },
-    { label: "Active Doctors", value: String(activeDocCount), subtitle: `${hospitalDoctors.length} total`, icon: UserCheck, gradient: "gradient-success", trend: "neutral" as const },
-    { label: "Today's Revenue", value: `₦${(todayRevenue / 1000).toFixed(0)}K`, subtitle: `${todayBilling.length} transactions`, icon: CreditCard, gradient: "gradient-warning", trend: "up" as const },
-    { label: "External Consults", value: "—", subtitle: "coming soon", icon: Video, gradient: "gradient-info", trend: "neutral" as const },
+    { label: "Patients Today", value: String(todayCheckins.length), subtitle: "check-ins today", icon: Users, gradient: "gradient-primary", trend: "neutral" as const, href: "/hospital/queue" },
+    { label: "Active Doctors", value: String(activeDocCount), subtitle: `${hospitalDoctors.length} total`, icon: UserCheck, gradient: "gradient-success", trend: "neutral" as const, href: "/hospital/doctors" },
+    { label: "Telemedicine", value: String(tele?.active || 0), subtitle: `${tele?.today || 0} today · ${tele?.pending || 0} pending`, icon: Video, gradient: "gradient-info", trend: (tele?.active || 0) > 0 ? "up" as const : "neutral" as const, href: "/hospital/consultations", live: (tele?.active || 0) > 0 },
+    { label: "External Consults", value: String(tele?.pending || 0), subtitle: "pending requests", icon: Video, gradient: "gradient-warning", trend: "neutral" as const, href: "/hospital/consultations" },
   ];
 
   const queueItems = todayCheckins.filter((c: any) => c.status !== "completed").slice(0, 5);
@@ -65,15 +88,16 @@ export default function HospitalDashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
-          <div key={stat.label} className={cn("relative rounded-xl p-5 text-foreground overflow-hidden card-hover", stat.gradient)}>
+          <Link to={stat.href} key={stat.label} className={cn("relative rounded-xl p-5 text-foreground overflow-hidden card-hover block", stat.gradient)}>
             <stat.icon className="stat-card-icon" />
+            {(stat as any).live && <span className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-destructive/90 text-destructive-foreground px-2 py-0.5 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />Live</span>}
             <p className="text-sm opacity-80 mb-1">{stat.label}</p>
             <h3 className="text-2xl font-heading font-bold">{stat.value}</h3>
             <p className="text-xs opacity-70 mt-1 flex items-center gap-1">
               {stat.trend === "up" && <ArrowUpRight className="h-3 w-3" />}
               {stat.subtitle}
             </p>
-          </div>
+          </Link>
         ))}
       </div>
 
