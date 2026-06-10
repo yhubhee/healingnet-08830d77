@@ -56,6 +56,7 @@ export default function PatientTriage() {
 
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [hospitals, setHospitals] = useState<RankedHospital[]>([]);
+  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   const [loadingHospitals, setLoadingHospitals] = useState(false);
   const [booking, setBooking] = useState<string | null>(null);
 
