@@ -1,109 +1,61 @@
-## Honest take on "native WebRTC vs Daily.co"
+## 1. New "My Letters & Reports" page
 
-Native WebRTC is free but for a real telehealth product it is the wrong call:
+**Sidebar nav** (`src/components/patient/PatientSidebar.tsx`): insert "My Letters & Reports" (FileText/Award icon) between Medical Records and Messages, route `/patient/letters`.
 
-- **TURN servers — yes, mandatory.** ~15-20% of users (corporate networks, symmetric NAT, mobile carriers) cannot connect peer-to-peer. You'd need to run/pay for a TURN relay (coturn, Twilio NTS, Metered, Xirsys). That's the part people underestimate.
-- **No recording.** Browser MediaRecorder only captures the local stream; recording both sides means a server-side mixer (LiveKit Egress, Daily recording, AWS Chime). Building this is weeks of work.
-- **No transcription, no waiting room, no >2 participants, no network resilience, no mobile SDK.**
-- **HIPAA/clinical compliance posture is on you.**
+**Route**: add `/patient/letters` → `PatientLetters` page in `src/App.tsx`.
 
-**Recommendation:** Use **Daily.co** as the default. It bundles TURN, cloud recording, transcription, waiting rooms, and a drop-in iframe. Free tier = 10k participant-mins/month, perfect for launch. WhatsApp (wa.me link) and Jitsi stay as fallbacks. No native WebRTC.
+**Database** — new table `patient_letters`:
+- `id`, `patient_id` (FK patients), `doctor_id` (FK doctors), `hospital_id`
+- `letter_type` enum: `fit_to_work`, `pregnancy_maternity`, `sick_leave`, `excuse_of_duty`, `vaccination_record`
+- `title`, `body` (text — clinical content), `issued_at` (date), `valid_until` (date, nullable)
+- `status` text: `issued` | `pending` | `expired` (default `issued`)
+- `pdf_url` (nullable — generated on demand)
+- `created_at`, `updated_at`
+- RLS: patient reads own; doctor/hospital staff who issued can read/write; service_role full. GRANTs to authenticated + service_role.
 
----
+**Page** `src/pages/patient/Letters.tsx`:
+- Fetches `patient_letters` joined with `doctors(first_name,last_name)` for the signed-in patient.
+- Renders cards with icon per type, patient-friendly title, issued date, "Dr. X", status badge color-coded (issued=success, pending=warning, expired=muted), and **Download PDF** button.
+- Download uses client-side `jspdf` to generate the letter from `body` + hospital letterhead and triggers download (no server needed). If `pdf_url` already exists, just open it.
+- Empty state: icon + "No letters or reports yet. When your doctor issues one, it will appear here."
 
-## Plan
+**Doctor side (optional minimal)**: add an "Issue Letter" button on `PatientDetail.tsx` opening a dialog with letter_type select + body textarea → inserts into `patient_letters` so the page isn't empty in practice. Keep it small — one dialog component.
 
-### 1. Hospital dashboard — replace Revenue card with Telemedicine card
-File: `src/pages/hospital/Dashboard.tsx`
+## 2. Triage hospital fallback
 
-New card shows:
-- Today's scheduled video consults (count)
-- Active rooms right now (live)
-- Pending consult requests
-- Click → `/hospital/consultations`
+In `src/pages/patient/Triage.tsx` → `loadResults`, change hospital matching logic:
 
-### 2. Daily.co integration
+1. Query doctors matching `recommended_specialty` → resolve hospitals with that specialty (current behaviour).
+2. **If zero hospitals match the specialty**, fall back to hospitals that have a "General Practice" / general practitioner doctor. Mark `hasSpecialty=false` but flag `isGeneralFallback=true` so we can label the card "General Practitioner available".
+3. After ranking, **if no hospital is within ~50 km of the user (or geo unavailable)**, show ALL active hospitals instead of an empty list.
+4. UI: show a small notice above the list when fallback is in effect ("No <specialty> available nearby — showing general practitioners" / "Showing all hospitals nationwide").
 
-**Setup (you do once):**
-1. Sign up at daily.co → pick subdomain **`healingnet`** (not the lovable URL — Daily wants a short slug). Rooms become `healingnet.daily.co/visit-xyz`.
-2. Copy your Daily API key from Developers → API keys.
-3. I'll prompt you to paste it as secret `DAILY_API_KEY`.
+Pure frontend change in `Triage.tsx` + small tweak to `rankHospitals` return type to carry `isGeneralFallback`.
 
-**New edge function `daily-room`:**
-- `POST { action: "create", consultation_id, doctor_name, patient_name, scheduled_for }` → creates a private Daily room with 2-hour expiry, returns `{ room_url, room_name }`, saves to `consultation_requests.meeting_link`.
-- `POST { action: "token", room_name, user_name, is_owner }` → returns short-lived meeting token (owner = doctor → can start/stop recording).
-- `POST { action: "delete", room_name }` → cleanup.
+## 3. WebRTC / video — clarification (no code change)
 
-**New embedded video page** `src/pages/VideoConsult.tsx` (route `/consult/:id`):
-- Uses `@daily-co/daily-js` (or iframe with prebuilt UI for speed).
-- Fetches consult, validates user is participant, requests token, joins room.
-- Sidebar with: live **note-taking** textarea (autosaves to `consultation_requests.doctor_notes`), patient summary, prescription/lab shortcuts, end-call button.
-- Doctor sees **Record** toggle (calls Daily REST `recordings/start`).
-- After call ends → recording URL saved to consult row, doctor prompted to finalize notes.
+Yes, video consultations were built — but using **Daily.co**, not raw WebRTC. The previous turn explained why: raw WebRTC requires you to run TURN servers (coturn or paid Twilio NTS) for the ~15-20% of users behind symmetric NAT, plus a server-side mixer for recording, plus your own waiting room, transcription, mobile SDK, and HIPAA compliance — that's weeks of infrastructure.
 
-### 3. WhatsApp fallback
-- Add `whatsapp_number` to consult flow (use patient phone).
-- Button on consult card: "Send via WhatsApp" → opens `https://wa.me/<digits>?text=<encoded message with meeting link>`.
-- Plain link, no API key, works immediately.
+Daily.co bundles all of that (TURN, cloud recording, knock-to-enter waiting room, transcription, mobile-ready iframe) and the free tier covers 10k participant-minutes/month. The integration lives in:
+- `supabase/functions/daily-room/index.ts` — create room / mint tokens / start+stop recording
+- `src/pages/VideoConsult.tsx` — Daily iframe + doctor note-taking sidebar (auto-saved)
+- `src/components/JoinCallButton.tsx` — Start call / WhatsApp invite / copy link
 
-### 4. Join button logic (doctor + patient consult cards)
-Three buttons stacked / dropdown:
-- **Start video call** (primary) → Daily room
-- **Send WhatsApp invite** → wa.me with meeting link
-- **Copy link** (Jitsi remains as zero-config backup if Daily key missing)
+If you still want **raw WebRTC** as an additional option, that's a separate larger project (≈1–2 weeks: signaling server via Supabase Realtime, coturn deployment, MediaRecorder for local-only recording). Tell me to proceed and I'll plan it out — otherwise Daily.co stays as the production path.
 
-Updates `src/pages/doctor/Consultations.tsx`, `src/pages/patient/Appointments.tsx`, `AppointmentDetailDrawer`.
+## 4. How the triage works (recap, no change)
 
-### 5. DB migration
-Add columns to `consultation_requests`:
-- `video_provider` text (`daily` | `jitsi` | `whatsapp`)
-- `daily_room_name` text
-- `recording_url` text
-- `recording_status` text
-- `call_started_at` timestamptz
-- `call_ended_at` timestamptz
+`/patient/triage` is a 4-step LLM-powered nurse interview:
 
-Add columns to `patient_appointments` for telemedicine appointments:
-- `is_telemedicine` boolean default false
-- `meeting_link` text
-- `daily_room_name` text
+1. **Demographics** — age + biological sex (saved to `patients` if missing).
+2. **Free-text symptoms** — patient describes the problem in their own words.
+3. **Adaptive interview** — `triage-nurse` edge function (Lovable AI Gateway, Gemini 2.5 Flash) parses the text into clinical evidence and asks up to 8 targeted yes/no/unknown questions, narrowing the differential each turn.
+4. **Results** — returns a ranked differential, an urgency level (self-care → emergency ambulance), a recommended specialty, red flags, and care navigation. The page then queries doctors of that specialty, intersects with `hospital_doctors`, ranks hospitals by Haversine distance from the user's geolocation, and lets them request an appointment that lands in `patient_appointments` with status `pending`. The full session is logged to `triage_sessions`.
 
-### 6. Mobile responsiveness — `/doctor` dashboard
-File: `src/pages/doctor/Dashboard.tsx` + `DoctorLayout` + `DoctorSidebar`.
-
-Issues to fix:
-- Sidebar is fixed-width and pushes content off-screen on mobile → convert to slide-out Sheet drawer below `md`, with hamburger in a new top bar.
-- `main` padding `p-6` is too tight → `p-4 md:p-6`.
-- Quick-actions row wraps awkwardly → horizontal scroll on mobile.
-- 4-column stat grid → already `grid-cols-2 lg:grid-cols-4` ✅, keep.
-- "Today's Schedule" rows overflow → stack patient name above status on `<sm`.
-- Consult requests card sits beside schedule on `lg` only ✅.
-
-Same Sheet pattern applied to all doctor pages via `DoctorLayout`.
-
-### 7. Telemedicine card data source
-Query in hospital dashboard:
-```text
-- video_today: consultation_requests WHERE hospital_id=X AND request_type='virtual' AND DATE(scheduled_for)=today
-- active_now: consultation_requests WHERE call_started_at IS NOT NULL AND call_ended_at IS NULL
-- pending: consultation_requests WHERE status='pending' AND request_type='virtual'
-```
-
----
-
-## Order of execution
-1. DB migration (consult + appointment columns).
-2. Ask you for `DAILY_API_KEY` secret.
-3. Edge function `daily-room`.
-4. Install `@daily-co/daily-js`.
-5. `VideoConsult.tsx` page + route.
-6. Update consult cards (doctor + patient) with 3-button join.
-7. Replace hospital dashboard Revenue card with Telemedicine card.
-8. Mobile-responsive pass on `DoctorLayout` + `DoctorSidebar` + `Dashboard.tsx`.
+After section 2 above ships, results never return an empty hospital list — they fall back to GPs and then to nationwide.
 
 ## Out of scope
-- Native WebRTC + self-hosted TURN (covered above — not worth it).
-- WhatsApp Business API templated messaging (you chose wa.me link).
-- Group calls / waiting rooms beyond Daily defaults.
-- Auto-transcription (can add later — Daily supports it via one extra API flag).
-- Billing/charging per video minute.
+- Raw WebRTC + self-hosted TURN
+- AI-generated letter content (letters use the doctor-written body)
+- Letter approval/co-signing workflow
+- Server-side PDF rendering / signed letter storage in a bucket

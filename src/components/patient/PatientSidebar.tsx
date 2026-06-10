@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation, Link } from "react-router-dom";
-import { LayoutDashboard, Calendar, Pill, FlaskConical, FileText, MessageSquare, User, Settings, LogOut, Menu, X, Heart, Stethoscope } from "lucide-react";
+import { LayoutDashboard, Calendar, Pill, FlaskConical, FileText, MessageSquare, User, Settings, LogOut, Menu, X, Heart, Stethoscope, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/hooks/useAuth";
@@ -12,6 +12,7 @@ const links = [
   { label: "Prescriptions", path: "/patient/prescriptions", icon: Pill },
   { label: "Lab Results", path: "/patient/lab-results", icon: FlaskConical },
   { label: "Medical Records", path: "/patient/medical-records", icon: FileText },
+  { label: "My Letters & Reports", path: "/patient/letters", icon: Award },
   { label: "Messages", path: "/patient/messages", icon: MessageSquare },
   { label: "Profile", path: "/patient/profile", icon: User },
   { label: "Settings", path: "/patient/settings", icon: Settings },

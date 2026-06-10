@@ -56,6 +56,7 @@ export default function PatientTriage() {
 
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [hospitals, setHospitals] = useState<RankedHospital[]>([]);
+  const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
   const [loadingHospitals, setLoadingHospitals] = useState(false);
   const [booking, setBooking] = useState<string | null>(null);
 
@@ -173,8 +174,33 @@ export default function PatientTriage() {
       const { data: hd } = docIds.length
         ? await supabase.from("hospital_doctors").select("hospital_id").in("doctor_id", docIds).eq("is_active", true)
         : { data: [] as any[] };
-      const set = new Set((hd || []).map((x: any) => x.hospital_id));
-      setHospitals(rankHospitals(c, (hs || []) as any, set));
+      let specSet = new Set((hd || []).map((x: any) => x.hospital_id));
+      let notice: string | null = null;
+
+      // Fallback 1: no hospital has the specialty → fall back to General Practice
+      if (specSet.size === 0) {
+        const { data: gpDocs } = await supabase.from("doctors").select("id").ilike("specialty", "%General%");
+        const gpIds = (gpDocs || []).map((d: any) => d.id);
+        const { data: gpHd } = gpIds.length
+          ? await supabase.from("hospital_doctors").select("hospital_id").in("doctor_id", gpIds).eq("is_active", true)
+          : { data: [] as any[] };
+        specSet = new Set((gpHd || []).map((x: any) => x.hospital_id));
+        notice = `No ${r.recommended_specialty} specialists found — showing general practitioners instead.`;
+      }
+
+      let ranked = rankHospitals(c, (hs || []) as any, specSet);
+
+      // Fallback 2: nothing within 50 km (or no geo) → show all active hospitals nationwide
+      const nearby = ranked.filter((h) => h.distanceKm != null && h.distanceKm <= 50);
+      if (nearby.length === 0) {
+        ranked = rankHospitals(null, (hs || []) as any, specSet);
+        notice = notice
+          ? `${notice} None nearby — showing all hospitals nationwide.`
+          : "No hospitals within 50 km — showing all hospitals nationwide.";
+      }
+
+      setHospitals(ranked);
+      setFallbackNotice(notice);
 
       // Save session
       const { data: { user } } = await supabase.auth.getUser();
@@ -360,6 +386,9 @@ export default function PatientTriage() {
                 <h3 className="font-heading font-bold mb-1 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Care navigation</h3>
                 <p className="text-xs text-muted-foreground mb-3">Recommended specialty: <span className="text-foreground font-medium">{latestResp.recommended_specialty}</span></p>
                 {loadingHospitals && <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" />Finding hospitals…</div>}
+                {fallbackNotice && !loadingHospitals && (
+                  <div className="text-xs bg-warning/10 text-warning border border-warning/30 rounded-lg p-2 mb-3">{fallbackNotice}</div>
+                )}
                 {!loadingHospitals && hospitals.length === 0 && <p className="text-sm text-muted-foreground">No hospitals found.</p>}
                 <div className="space-y-2">
                   {hospitals.slice(0, 6).map((h) => (
