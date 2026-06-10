@@ -36,8 +36,9 @@ export function IssueLetterDialog({ patientId, trigger }: { patientId: string; t
       const def = LETTER_TYPES.find((l) => l.value === letterType)!;
       const { error } = await supabase.from("patient_letters" as any).insert({
         patient_id: patientId,
-        doctor_id: doctor?.id ?? null,
-        hospital_id: null,
+        doctor_id: doctor?.doctor?.id ?? null,
+        hospital_id: doctor?.hospitals?.[0]?.id ?? null,
+        
         letter_type: letterType,
         title: title.trim() || def.label,
         body,
