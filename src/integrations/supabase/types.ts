@@ -1404,6 +1404,76 @@ export type Database = {
           },
         ]
       }
+      patient_letters: {
+        Row: {
+          body: string
+          created_at: string
+          doctor_id: string | null
+          hospital_id: string | null
+          id: string
+          issued_at: string
+          letter_type: string
+          patient_id: string
+          pdf_url: string | null
+          status: string
+          title: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          doctor_id?: string | null
+          hospital_id?: string | null
+          id?: string
+          issued_at?: string
+          letter_type: string
+          patient_id: string
+          pdf_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          doctor_id?: string | null
+          hospital_id?: string | null
+          id?: string
+          issued_at?: string
+          letter_type?: string
+          patient_id?: string
+          pdf_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_letters_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_letters_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_letters_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_messages: {
         Row: {
           body: string
