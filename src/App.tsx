@@ -42,6 +42,7 @@ import PatientPrescriptions from "./pages/patient/Prescriptions";
 import PatientLabResults from "./pages/patient/LabResults";
 import PatientMedicalRecords from "./pages/patient/MedicalRecords";
 import PatientMessages from "./pages/patient/Messages";
+import PatientLetters from "./pages/patient/Letters";
 import PatientProfile from "./pages/patient/Profile";
 import PatientSettings from "./pages/patient/Settings";
 import PatientTriage from "./pages/patient/Triage";
@@ -85,6 +86,7 @@ const App = () => (
           <Route path="/patient/prescriptions" element={<ProtectedRoute><PatientPrescriptions /></ProtectedRoute>} />
           <Route path="/patient/lab-results" element={<ProtectedRoute><PatientLabResults /></ProtectedRoute>} />
           <Route path="/patient/medical-records" element={<ProtectedRoute><PatientMedicalRecords /></ProtectedRoute>} />
+          <Route path="/patient/letters" element={<ProtectedRoute><PatientLetters /></ProtectedRoute>} />
           <Route path="/patient/messages" element={<ProtectedRoute><PatientMessages /></ProtectedRoute>} />
           <Route path="/patient/profile" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
           <Route path="/patient/settings" element={<ProtectedRoute><PatientSettings /></ProtectedRoute>} />

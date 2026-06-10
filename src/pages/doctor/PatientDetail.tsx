@@ -3,11 +3,12 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User } from "lucide-react";
+import { Loader2, ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NewPrescriptionDialog } from "@/components/doctor/NewPrescriptionDialog";
 import { OrderLabTestDialog } from "@/components/doctor/OrderLabTestDialog";
 import { AddEmrNoteDialog } from "@/components/doctor/AddEmrNoteDialog";
+import { IssueLetterDialog } from "@/components/doctor/IssueLetterDialog";
 
 export default function DoctorPatientDetail() {
   const { id } = useParams();
@@ -45,6 +46,7 @@ export default function DoctorPatientDetail() {
           <NewPrescriptionDialog patientId={p.id} trigger={<Button variant="outline" size="sm"><Pill className="w-4 h-4" />Rx</Button>} />
           <OrderLabTestDialog patientId={p.id} trigger={<Button variant="outline" size="sm"><FlaskConical className="w-4 h-4" />Lab</Button>} />
           <AddEmrNoteDialog patientId={p.id} trigger={<Button variant="outline" size="sm"><FileText className="w-4 h-4" />Note</Button>} />
+          <IssueLetterDialog patientId={p.id} trigger={<Button variant="outline" size="sm"><Award className="w-4 h-4" />Letter</Button>} />
           {p.user_id && <Link to={`/doctor/messages?to=${p.user_id}`}><Button size="sm"><MessageSquare className="w-4 h-4" />Message</Button></Link>}
         </div>
       </div>
