@@ -386,6 +386,9 @@ export default function PatientTriage() {
                 <h3 className="font-heading font-bold mb-1 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Care navigation</h3>
                 <p className="text-xs text-muted-foreground mb-3">Recommended specialty: <span className="text-foreground font-medium">{latestResp.recommended_specialty}</span></p>
                 {loadingHospitals && <div className="flex items-center gap-2 text-muted-foreground text-sm"><Loader2 className="w-4 h-4 animate-spin" />Finding hospitals…</div>}
+                {fallbackNotice && !loadingHospitals && (
+                  <div className="text-xs bg-warning/10 text-warning border border-warning/30 rounded-lg p-2 mb-3">{fallbackNotice}</div>
+                )}
                 {!loadingHospitals && hospitals.length === 0 && <p className="text-sm text-muted-foreground">No hospitals found.</p>}
                 <div className="space-y-2">
                   {hospitals.slice(0, 6).map((h) => (
