@@ -3,15 +3,18 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User, Award } from "lucide-react";
+import { Loader2, ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User, Award, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { NewPrescriptionDialog } from "@/components/doctor/NewPrescriptionDialog";
 import { OrderLabTestDialog } from "@/components/doctor/OrderLabTestDialog";
 import { AddEmrNoteDialog } from "@/components/doctor/AddEmrNoteDialog";
-import { IssueLetterDialog } from "@/components/doctor/IssueLetterDialog";
+import { IssueLetterDialog, LETTER_TYPES } from "@/components/doctor/IssueLetterDialog";
+import { useState } from "react";
 
 export default function DoctorPatientDetail() {
   const { id } = useParams();
+  const [fulfilLetter, setFulfilLetter] = useState<any | null>(null);
 
   const { data, isLoading } = useQuery({
     enabled: !!id,
@@ -25,6 +28,17 @@ export default function DoctorPatientDetail() {
         supabase.from("emr_entries").select("*").eq("patient_id", id!).order("created_at", { ascending: false }),
       ]);
       return { patient: patient.data, appts: appts.data || [], rx: rx.data || [], labs: labs.data || [], emr: emr.data || [] };
+    },
+  });
+
+  const { data: pendingLetters = [] } = useQuery({
+    enabled: !!id,
+    queryKey: ["pending-letters", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("patient_letters" as any)
+        .select("*").eq("patient_id", id!).eq("status", "pending")
+        .order("created_at", { ascending: false });
+      return (data || []) as any[];
     },
   });
 
