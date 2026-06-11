@@ -1,9 +1,7 @@
 import {
-  Loader2,
-  MapPin,
   AlertTriangle,
   ArrowLeft,
-  CheckCircle2,
+  ArrowRight,
   Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,14 +10,6 @@ interface Condition {
   name: string;
   probability: number;
   description?: string;
-}
-
-interface RankedHospital {
-  id: string;
-  name: string;
-  city?: string;
-  distanceKm?: number;
-  hasSpecialty: boolean;
 }
 
 interface NurseResponse {
@@ -44,19 +34,14 @@ const TRIAGE_STYLE: Record<string, { label: string; cls: string }> = {
 
 interface Props {
   triageResponse: NurseResponse;
-  hospitals: RankedHospital[];
-  fallbackNotice: string | null;
-  loadingHospitals: boolean;
   onStartOver: () => void;
-  onSelectHospital?: (hospitalId: string) => void;
+  onContinueToDoctorSelection: () => void;
 }
 
 export function TriageStep4ResultsStep({
   triageResponse,
-  hospitals,
-  fallbackNotice,
-  loadingHospitals,
   onStartOver,
+  onContinueToDoctorSelection,
 }: Props) {
   return (
     <div className="space-y-4">
@@ -107,38 +92,31 @@ export function TriageStep4ResultsStep({
           </div>
         </div>
 
-        {/* Care navigation - For now, just show specialty info. Doctor selection happens in Step 5 */}
+        {/* Next Steps */}
         <div className="bg-card border border-border rounded-xl p-5">
           <h3 className="font-heading font-bold mb-1 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-primary" /> Care navigation
+            <Stethoscope className="w-4 h-4 text-primary" /> Next steps
           </h3>
           <p className="text-xs text-muted-foreground mb-3">
             Recommended specialty: <span className="text-foreground font-medium">{triageResponse.recommended_specialty}</span>
           </p>
-          {loadingHospitals && (
-            <div className="flex items-center gap-2 text-muted-foreground text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Finding doctors…
-            </div>
-          )}
-          {fallbackNotice && !loadingHospitals && (
-            <div className="text-xs bg-warning/10 text-warning border border-warning/30 rounded-lg p-2 mb-3">
-              {fallbackNotice}
-            </div>
-          )}
-          {!loadingHospitals && (
-            <p className="text-sm text-muted-foreground">Select a doctor to continue to the next step.</p>
-          )}
+          <p className="text-sm text-muted-foreground">Select a doctor in the next step to book your appointment.</p>
         </div>
       </div>
 
-      <div className="flex justify-between">
+      <div className="flex justify-between gap-3">
         <button
           onClick={onStartOver}
           className="inline-flex items-center gap-1 px-4 py-2 rounded-lg border border-border"
         >
           <ArrowLeft className="w-4 h-4" />
           Start over
+        </button>
+        <button
+          onClick={onContinueToDoctorSelection}
+          className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg"
+        >
+          Continue to doctor selection <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>

@@ -23,7 +23,6 @@ interface Props {
 
 export function TriageStep5DoctorSelectionStep({ specialty, onSelectDoctor, onBack, loading = false }: Props) {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [fallbackMessage, setFallbackMessage] = useState<string | null>(null);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
 
   useEffect(() => {
@@ -32,33 +31,29 @@ export function TriageStep5DoctorSelectionStep({ specialty, onSelectDoctor, onBa
 
   async function loadDoctors() {
     setLoadingDoctors(true);
-    setFallbackMessage(null);
     try {
-      // Try to fetch specialists for the recommended specialty
+      // Try to fetch doctors for the recommended specialty
       const { data: specialists, error: specError } = await supabase
         .from("doctors")
         .select("id, first_name, last_name, specialty, rating, years_experience, bio, profile_image_url")
         .ilike("specialty", `%${specialty}%`)
         .order("rating", { ascending: false })
-        .limit(10);
+        .limit(50);
 
       if (specError) throw specError;
 
       if (specialists && specialists.length > 0) {
         setDoctors(specialists);
       } else {
-        // Fallback to General Practice doctors
-        const { data: gps, error: gpError } = await supabase
+        // No specialists found - show all doctors instead
+        const { data: allDoctors, error: allError } = await supabase
           .from("doctors")
           .select("id, first_name, last_name, specialty, rating, years_experience, bio, profile_image_url")
-          .ilike("specialty", "%General%")
           .order("rating", { ascending: false })
-          .limit(10);
+          .limit(50);
 
-        if (gpError) throw gpError;
-
-        setDoctors(gps || []);
-        setFallbackMessage(`No ${specialty} specialists found — showing general practitioners instead.`);
+        if (allError) throw allError;
+        setDoctors(allDoctors || []);
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to load doctors");
@@ -71,14 +66,8 @@ export function TriageStep5DoctorSelectionStep({ specialty, onSelectDoctor, onBa
     <div className="bg-card border border-border rounded-xl p-6">
       <h2 className="font-heading font-bold mb-1">Step 5 of 8 — Select your doctor</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Choose from available doctors in the <span className="font-medium text-foreground">{specialty}</span> specialty.
+        Choose a doctor from our available medical professionals.
       </p>
-
-      {fallbackMessage && (
-        <div className="text-xs bg-warning/10 text-warning border border-warning/30 rounded-lg p-2 mb-4">
-          {fallbackMessage}
-        </div>
-      )}
 
       {loadingDoctors ? (
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
@@ -86,7 +75,7 @@ export function TriageStep5DoctorSelectionStep({ specialty, onSelectDoctor, onBa
           Loading doctors…
         </div>
       ) : doctors.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No doctors found for this specialty.</p>
+        <p className="text-sm text-muted-foreground">No doctors available.</p>
       ) : (
         <div className="space-y-2 mb-4">
           {doctors.map((doctor) => (

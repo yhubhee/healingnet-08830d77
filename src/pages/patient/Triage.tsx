@@ -235,6 +235,10 @@ export default function PatientTriage() {
     setSelectedHospital(null);
   }
 
+  function handleContinueToDoctorSelection() {
+    setStep(5);
+  }
+
   async function handleSelectDoctor(doctorId: string, doctor: any) {
     setSelectedDoctorId(doctorId);
     setSelectedDoctor(doctor);
@@ -392,10 +396,8 @@ export default function PatientTriage() {
         {step === 4 && latestResp && (
           <TriageStep4ResultsStep
             triageResponse={latestResp}
-            hospitals={hospitals}
-            fallbackNotice={fallbackNotice}
-            loadingHospitals={loadingHospitals}
             onStartOver={handleStartOver}
+            onContinueToDoctorSelection={handleContinueToDoctorSelection}
           />
         )}
 
