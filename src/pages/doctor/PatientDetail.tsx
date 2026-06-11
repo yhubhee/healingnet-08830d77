@@ -65,6 +65,40 @@ export default function DoctorPatientDetail() {
         </div>
       </div>
 
+      {pendingLetters.length > 0 && (
+        <div className="bg-warning/5 border border-warning/30 rounded-xl p-4 mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Inbox className="w-4 h-4 text-warning" />
+            <h3 className="font-heading font-bold text-sm">Pending letter requests ({pendingLetters.length})</h3>
+          </div>
+          <div className="space-y-2">
+            {pendingLetters.map((l) => {
+              const def = LETTER_TYPES.find((t) => t.value === l.letter_type);
+              return (
+                <div key={l.id} className="bg-card border border-border rounded-lg p-3 flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{def?.label || l.letter_type}</span>
+                      <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30 text-xs">Pending</Badge>
+                      <span className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span>
+                    </div>
+                    {l.body && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{l.body}</p>}
+                  </div>
+                  <Button size="sm" onClick={() => setFulfilLetter(l)}>Fulfil</Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <IssueLetterDialog
+        patientId={p.id}
+        existingLetter={fulfilLetter}
+        open={!!fulfilLetter}
+        onOpenChange={(o) => !o && setFulfilLetter(null)}
+      />
+
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview"><User className="w-4 h-4 mr-1" />Overview</TabsTrigger>
