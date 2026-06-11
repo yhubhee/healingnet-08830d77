@@ -43,14 +43,31 @@ export function TriageStep8ConfirmationStep({
           : 7;
       const date = new Date(Date.now() + offsetDays * 864e5);
 
-      let meetingLink = null;
-      let dailyRoomName = null;
+      // First: Create appointment
+      const { data: appointmentData, error: appointmentError } = await supabase
+        .from("patient_appointments")
+        .insert({
+          patient_id: patient.id,
+          doctor_id: doctorId,
+          hospital_id: visitType === "in-person" ? hospitalId : null,
+          requested_date: date.toISOString().slice(0, 10),
+          reason: `[AI Nurse] ${specialty} • ${triageLabel}`,
+          status: "pending",
+          is_telemedicine: visitType === "telemedicine",
+        } as any)
+        .select("id")
+        .single();
 
-      // Create Daily room for telemedicine
+      if (appointmentError) throw appointmentError;
+
+      const appointmentId = appointmentData?.id;
+
+      // Second: Create Daily room for telemedicine (if needed)
       if (visitType === "telemedicine") {
-        const { data: roomData, error: roomError } = await supabase.functions.invoke("daily-room", {
+        const { error: roomError } = await supabase.functions.invoke("daily-room", {
           body: {
             action: "create",
+            appointment_id: appointmentId,
             doctor_name: `Dr. ${doctorName}`,
             patient_name: patient.first_name,
           },
@@ -59,25 +76,7 @@ export function TriageStep8ConfirmationStep({
         if (roomError) {
           throw new Error("Failed to create video room: " + (roomError.message || "Unknown error"));
         }
-
-        meetingLink = roomData?.meeting_link;
-        dailyRoomName = roomData?.daily_room_name;
       }
-
-      // Insert appointment
-      const { error: appointmentError } = await supabase.from("patient_appointments").insert({
-        patient_id: patient.id,
-        doctor_id: doctorId,
-        hospital_id: visitType === "in-person" ? hospitalId : null,
-        requested_date: date.toISOString().slice(0, 10),
-        reason: `[AI Nurse] ${specialty} • ${triageLabel}`,
-        status: "pending",
-        is_telemedicine: visitType === "telemedicine",
-        meeting_link: meetingLink,
-        daily_room_name: dailyRoomName,
-      } as any);
-
-      if (appointmentError) throw appointmentError;
 
       toast.success("Appointment booked successfully!");
       nav("/patient/appointments");
