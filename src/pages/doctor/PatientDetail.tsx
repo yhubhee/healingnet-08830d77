@@ -3,15 +3,18 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User, Award } from "lucide-react";
+import { Loader2, ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User, Award, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { NewPrescriptionDialog } from "@/components/doctor/NewPrescriptionDialog";
 import { OrderLabTestDialog } from "@/components/doctor/OrderLabTestDialog";
 import { AddEmrNoteDialog } from "@/components/doctor/AddEmrNoteDialog";
-import { IssueLetterDialog } from "@/components/doctor/IssueLetterDialog";
+import { IssueLetterDialog, LETTER_TYPES } from "@/components/doctor/IssueLetterDialog";
+import { useState } from "react";
 
 export default function DoctorPatientDetail() {
   const { id } = useParams();
+  const [fulfilLetter, setFulfilLetter] = useState<any | null>(null);
 
   const { data, isLoading } = useQuery({
     enabled: !!id,
@@ -25,6 +28,17 @@ export default function DoctorPatientDetail() {
         supabase.from("emr_entries").select("*").eq("patient_id", id!).order("created_at", { ascending: false }),
       ]);
       return { patient: patient.data, appts: appts.data || [], rx: rx.data || [], labs: labs.data || [], emr: emr.data || [] };
+    },
+  });
+
+  const { data: pendingLetters = [] } = useQuery({
+    enabled: !!id,
+    queryKey: ["pending-letters", id],
+    queryFn: async () => {
+      const { data } = await supabase.from("patient_letters" as any)
+        .select("*").eq("patient_id", id!).eq("status", "pending")
+        .order("created_at", { ascending: false });
+      return (data || []) as any[];
     },
   });
 
@@ -50,6 +64,40 @@ export default function DoctorPatientDetail() {
           {p.user_id && <Link to={`/doctor/messages?to=${p.user_id}`}><Button size="sm"><MessageSquare className="w-4 h-4" />Message</Button></Link>}
         </div>
       </div>
+
+      {pendingLetters.length > 0 && (
+        <div className="bg-warning/5 border border-warning/30 rounded-xl p-4 mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Inbox className="w-4 h-4 text-warning" />
+            <h3 className="font-heading font-bold text-sm">Pending letter requests ({pendingLetters.length})</h3>
+          </div>
+          <div className="space-y-2">
+            {pendingLetters.map((l) => {
+              const def = LETTER_TYPES.find((t) => t.value === l.letter_type);
+              return (
+                <div key={l.id} className="bg-card border border-border rounded-lg p-3 flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm">{def?.label || l.letter_type}</span>
+                      <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30 text-xs">Pending</Badge>
+                      <span className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleDateString()}</span>
+                    </div>
+                    {l.body && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{l.body}</p>}
+                  </div>
+                  <Button size="sm" onClick={() => setFulfilLetter(l)}>Fulfil</Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <IssueLetterDialog
+        patientId={p.id}
+        existingLetter={fulfilLetter}
+        open={!!fulfilLetter}
+        onOpenChange={(o) => !o && setFulfilLetter(null)}
+      />
 
       <Tabs defaultValue="overview">
         <TabsList>
