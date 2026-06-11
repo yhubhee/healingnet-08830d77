@@ -5,9 +5,10 @@ import { usePatientProfile } from "@/hooks/usePatientData";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, FileText, Plane, Baby, BedDouble, FileSignature, Syringe, Inbox } from "lucide-react";
+import { Download, FileText, Plane, Baby, BedDouble, FileSignature, Syringe, Inbox, Plus } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
+import { RequestLetterDialog } from "@/components/patient/RequestLetterDialog";
 
 const TYPE_META: Record<string, { label: string; Icon: any }> = {
   fit_to_work: { label: "Fit-to-Work / Fit-to-Travel Letter", Icon: Plane },
@@ -75,9 +76,16 @@ export default function PatientLetters() {
   return (
     <PatientLayout>
       <div className="max-w-5xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-heading font-bold flex items-center gap-2"><FileText className="w-6 h-6 text-primary" />My Letters & Reports</h1>
-          <p className="text-sm text-muted-foreground">Official medical documents issued to you by your doctor.</p>
+        <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-heading font-bold flex items-center gap-2"><FileText className="w-6 h-6 text-primary" />My Letters & Reports</h1>
+            <p className="text-sm text-muted-foreground">Official medical documents issued to you by your doctor.</p>
+          </div>
+          {profile?.id && (
+            <RequestLetterDialog patientId={profile.id} trigger={
+              <Button size="sm"><Plus className="w-4 h-4" />Request a letter</Button>
+            } />
+          )}
         </div>
 
         {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
