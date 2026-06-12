@@ -71,7 +71,7 @@ export function PatientDetailDrawer({ patient, onClose }: Props) {
     enabled: open,
     queryKey: ["pd-bed", pid],
     queryFn: async () => {
-      const { data } = await supabase.from("hospital_beds").select("bed_number, ward_id").eq("current_patient_id", pid).maybeSingle();
+      const { data } = await supabase.from("hospital_beds").select("bed_number, ward_id").eq("patient_id", pid).is("discharged_at", null).maybeSingle();
       if (!data) return null;
       const { data: ward } = await supabase.from("hospital_wards").select("ward_name").eq("id", (data as any).ward_id).maybeSingle();
       return { ...(data as any), ward_name: (ward as any)?.ward_name };
