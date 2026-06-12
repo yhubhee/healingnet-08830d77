@@ -16,8 +16,9 @@ const statusColors: Record<string, string> = {
 };
 
 const priorityBorder: Record<string, string> = {
-  normal: "border-l-primary",
-  priority: "border-l-warning",
+  routine: "border-l-primary",
+  soon: "border-l-warning",
+  urgent: "border-l-yellow-500",
   emergency: "border-l-destructive",
 };
 
@@ -88,7 +89,7 @@ export default function HospitalQueue() {
                   <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Department</th>
                   <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Doctor</th>
                   <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Type</th>
-                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Priority</th>
+                  <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Urgency</th>
                   <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Wait Time</th>
                   <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Status</th>
                   <th className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Actions</th>
@@ -98,7 +99,7 @@ export default function HospitalQueue() {
                 {filtered.length === 0 ? (
                   <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No patients in queue</td></tr>
                 ) : filtered.map((q: any) => (
-                  <tr key={q.id} className={cn("border-b border-border/50 hover:bg-sidebar-accent transition-colors border-l-4", priorityBorder[q.priority || "normal"])}>
+                  <tr key={q.id} className={cn("border-b border-border/50 hover:bg-sidebar-accent transition-colors border-l-4", priorityBorder[q.urgency || "routine"])}>
                     <td className="p-4 font-heading font-bold text-muted-foreground">{q.queue_number || "—"}</td>
                     <td className="p-4">
                       <div className="font-medium">{q.patients?.first_name} {q.patients?.last_name}</div>
@@ -112,8 +113,8 @@ export default function HospitalQueue() {
                       </span>
                     </td>
                     <td className="p-4">
-                      {q.priority === "emergency" && <AlertTriangle className="h-4 w-4 text-destructive inline mr-1" />}
-                      <span className="text-sm capitalize">{q.priority || "normal"}</span>
+                      {q.urgency === "emergency" && <AlertTriangle className="h-4 w-4 text-destructive inline mr-1" />}
+                      <span className="text-sm capitalize">{q.urgency || "routine"}</span>
                     </td>
                     <td className="p-4 text-sm">{getWaitTime(q.checkin_time)}</td>
                     <td className="p-4">
