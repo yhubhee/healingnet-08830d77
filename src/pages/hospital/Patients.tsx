@@ -5,10 +5,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePatients } from "@/hooks/useHospitalData";
 import { AddPatientDialog } from "@/components/hospital/dialogs/AddPatientDialog";
+import { PatientDetailDrawer } from "@/components/hospital/PatientDetailDrawer";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+const STATUS_OPTIONS = [
+  { value: "outpatient", label: "Outpatient", color: "bg-success/15 text-success" },
+  { value: "inpatient", label: "Inpatient", color: "bg-primary/15 text-primary" },
+  { value: "admitted", label: "Admitted", color: "bg-primary/15 text-primary" },
+  { value: "under_observation", label: "Under Observation", color: "bg-warning/15 text-warning" },
+  { value: "critical", label: "Critical", color: "bg-destructive/15 text-destructive" },
+  { value: "discharged", label: "Discharged", color: "bg-muted text-muted-foreground" },
+  { value: "transferred", label: "Transferred", color: "bg-muted text-muted-foreground" },
+  { value: "deceased", label: "Deceased", color: "bg-destructive/15 text-destructive" },
+];
+
+const statusColor = (s: string) => STATUS_OPTIONS.find((o) => o.value === s)?.color || "bg-muted text-muted-foreground";
 
 export default function HospitalPatients() {
   const { data: patients = [], isLoading } = usePatients();
   const [search, setSearch] = useState("");
+  const [active, setActive] = useState<any>(null);
+  const qc = useQueryClient();
 
   const filtered = patients.filter((p: any) =>
     `${p.first_name} ${p.last_name}`.toLowerCase().includes(search.toLowerCase())
@@ -16,8 +37,15 @@ export default function HospitalPatients() {
 
   const getAge = (dob: string | null) => {
     if (!dob) return "—";
-    return String(Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)));
+    return String(Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 864e5)));
   };
+
+  async function updateStatus(id: string, status: string) {
+    const { error } = await supabase.from("patients").update({ status }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Status updated");
+    qc.invalidateQueries({ queryKey: ["patients"] });
+  }
 
   return (
     <HospitalLayout>
@@ -57,8 +85,21 @@ export default function HospitalPatients() {
                     <td className="p-4 text-sm">{p.phone || "—"}</td>
                     <td className="p-4">{p.blood_group ? <span className="bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">{p.blood_group}</span> : "—"}</td>
                     <td className="p-4 text-sm text-muted-foreground">{new Date(p.updated_at).toLocaleDateString()}</td>
-                    <td className="p-4"><span className="text-xs font-semibold px-3 py-1 rounded-full bg-success/15 text-success">active</span></td>
-                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+                    <td className="p-4">
+                      <Select value={p.status || "outpatient"} onValueChange={(v) => updateStatus(p.id, v)}>
+                        <SelectTrigger className={cn("h-8 w-[170px] text-xs font-semibold rounded-full border-0", statusColor(p.status || "outpatient"))}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </td>
+                    <td className="p-4">
+                      <Button variant="outline" size="sm" onClick={() => setActive(p)}>View</Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -66,6 +107,8 @@ export default function HospitalPatients() {
           </div>
         )}
       </div>
+
+      <PatientDetailDrawer patient={active} onClose={() => setActive(null)} />
     </HospitalLayout>
   );
 }
