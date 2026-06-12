@@ -1,8 +1,9 @@
-import { CheckCircle2, Loader2, Hospital, Video } from "lucide-react";
+import { CheckCircle2, Loader2, Hospital, Video, Calendar as CalIcon, Clock } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 interface Props {
   patient: any;
@@ -14,6 +15,9 @@ interface Props {
   visitType: "in-person" | "telemedicine";
   hospitalId?: string;
   hospitalName?: string;
+  selectedDate: Date | null;
+  selectedTime: string | null;
+  onBack: () => void;
 }
 
 export function TriageStep8ConfirmationStep({
