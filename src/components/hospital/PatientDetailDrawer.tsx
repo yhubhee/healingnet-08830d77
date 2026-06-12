@@ -71,8 +71,10 @@ export function PatientDetailDrawer({ patient, onClose }: Props) {
     enabled: open,
     queryKey: ["pd-bed", pid],
     queryFn: async () => {
-      const { data } = await supabase.from("hospital_beds").select("bed_number, ward_id, hospital_wards(ward_name)").eq("current_patient_id", pid).maybeSingle();
-      return data;
+      const { data } = await supabase.from("hospital_beds").select("bed_number, ward_id").eq("current_patient_id", pid).maybeSingle();
+      if (!data) return null;
+      const { data: ward } = await supabase.from("hospital_wards").select("ward_name").eq("id", (data as any).ward_id).maybeSingle();
+      return { ...(data as any), ward_name: (ward as any)?.ward_name };
     },
   });
 
@@ -127,7 +129,7 @@ export function PatientDetailDrawer({ patient, onClose }: Props) {
 
             {bed && (
               <Section icon={Bed} title="Active Admission">
-                <Field label="Ward / Bed" value={`${(bed as any).hospital_wards?.ward_name || "Ward"} • Bed ${(bed as any).bed_number}`} />
+                <Field label="Ward / Bed" value={`${(bed as any).ward_name || "Ward"} • Bed ${(bed as any).bed_number}`} />
               </Section>
             )}
 
