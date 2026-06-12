@@ -112,7 +112,7 @@ export default function DoctorSettings() {
     if (!doctorId || !settings) return;
     setSaving(true);
     try {
-      const { error: sErr } = await supabase.from("doctor_settings").upsert(settings as any);
+      const { error: sErr } = await supabase.from("doctor_settings").upsert(settings as any, { onConflict: "doctor_id" });
       if (sErr) throw sErr;
 
       const keys = settings.availability_mode === "global" ? ["global"] : hospitals.map((h) => h.id);
