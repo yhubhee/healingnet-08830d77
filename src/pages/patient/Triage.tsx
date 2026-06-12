@@ -14,6 +14,7 @@ import { TriageStep5DoctorSelectionStep } from "@/components/triage/TriageStep5D
 import { TriageStep6VisitTypeStep } from "@/components/triage/TriageStep6VisitTypeStep";
 import { TriageStep7HospitalSelectionStep } from "@/components/triage/TriageStep7HospitalSelectionStep";
 import { TriageStep8ConfirmationStep } from "@/components/triage/TriageStep8ConfirmationStep";
+import { TriageStep7_5DateTimeStep } from "@/components/triage/TriageStep7_5DateTimeStep";
 
 type Sex = "male" | "female";
 interface Evidence { id: string; name: string; present: boolean }
@@ -62,6 +63,8 @@ export default function PatientTriage() {
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(null);
   const [selectedHospital, setSelectedHospital] = useState<any>(null);
   const [hospitalsForDoctor, setHospitalsForDoctor] = useState<RankedHospital[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // Load patient + demographics gate
   useEffect(() => {
