@@ -1,92 +1,88 @@
-# Three fixes
+# Plan
 
-## 1. Why your hospital never appears after triage (root cause)
+## Part 1 — Date & time selection in triage booking
 
-The `hospitals` table RLS only allows **hospital staff** to read it:
+Today Step 8 auto-picks a date and never sets a time, so two patients can collide on the same doctor. We add a real scheduling step.
 
-> `Staff can view their hospital — using is_hospital_staff(auth.uid(), id)`
+### New Step 7.5 — "Pick a date & time" (shown for both visit types)
+A new component `TriageStep7_5DateTimeStep.tsx` inserted before confirmation:
 
-So when a **patient** runs triage, `select from hospitals` returns an empty array — even with the "nationwide" fallback, there is literally nothing to show. Your one "Home Hospital" is invisible to patients.
+- Reads the doctor's weekly schedule from `doctor_availability` (the doctor already sets this in their dashboard).
+- Filters rows for the chosen visit type using `accepts_virtual` / `accepts_in_person`, and (for in-person) the chosen `hospital_id`.
+- Calendar (shadcn Calendar in a popover):
+  - Disables dates earlier than today.
+  - Disables dates whose `day_of_week` has no availability row.
+  - Soft-caps to the triage urgency window (emergency = today only, 24h = today/tomorrow, routine = 7 days, etc.) but the user can still see the limit explained.
+- Time slots: once a date is picked, generate 30-min slots between `start_time` and `end_time` of that day's availability row(s). For each slot:
+  - Query `patient_appointments` where `doctor_id = X`, `requested_date = date`, `status in ('pending','accepted','confirmed')` and mark matching `requested_time` as **Taken** (disabled).
+  - Show remaining slots as selectable chips.
+- "No slots on this day" empty state with link to pick another date.
 
-**Fix:** add a public/anon read policy that exposes only safe, directory-style fields. The table already contains `name, address, city, state, phone, email, logo_url, license_number, is_active, lat, lng` — these are the fields a patient needs to discover and book. We will:
+### Confirmation step
+`TriageStep8ConfirmationStep` receives `selectedDate` and `selectedTime` props, shows them in the summary, and inserts them as `requested_date` / `requested_time`.
 
-- Add an `anon, authenticated` `SELECT` policy on `hospitals` limited to `is_active = true`.
-- Also add a public read policy on `hospital_doctors` and `doctors` (basic fields only — `first_name, last_name, specialty, rating, years_experience, profile_image_url, is_available`) so the specialty match in triage works for patients.
+### Race-condition safety (DB)
+A partial unique index prevents two active bookings on the same doctor/date/time:
 
-The patient-side queries already only select non-sensitive columns, so no view rewrite is needed.
-
-## 2. Hospital location not editable in the UI
-
-Hospital Settings → General currently only edits `name, phone, email, address, license_number`. We will extend that form with:
-
-- **City** (text)
-- **State** (text)
-- **Latitude / Longitude** (number inputs)
-- **"Use my current location"** button — calls `navigator.geolocation.getCurrentPosition` and fills lat/lng so the admin doesn't have to look them up.
-- A small caption: *"Location is used to match nearby patients during AI triage."*
-
-`saveInfo()` updated to persist these fields.
-
-## 3. Patients can request a letter
-
-On `/patient/letters`, add a **"Request a letter"** button (top-right of the page header). It opens a dialog:
-
-- **Letter type** select (Fit-to-Work, Pregnancy & Maternity, Sick Leave, Excuse of Duty, Vaccination Record)
-- **Reason / notes** textarea (what the patient needs it for, dates, employer, etc.)
-- **Preferred doctor** (optional) — dropdown of doctors the patient has previously seen (derived from `patient_appointments` / `emr_entries`); falls back to "Any available doctor".
-
-Submitting inserts into `patient_letters` with:
-- `patient_id` = the patient
-- `letter_type`, `title` = `"Request: <type label>"`, `body` = the patient's notes
-- `status = 'pending'`
-- `doctor_id` / `hospital_id` = chosen doctor and their hospital (nullable)
-- `issued_at = today` (placeholder; doctor will overwrite when issuing)
-
-Pending requests already render in the existing card grid with the **"Pending"** badge and a disabled Download button — so the patient sees the request show up immediately.
-
-### Doctor side
-On the doctor's `PatientDetail` page, the **Issue Letter** dialog already exists. We will:
-- Add a small "Pending requests" list above the issue button, showing the patient's `status='pending'` letters with the requested type + notes, and a **Fulfil** button that pre-fills the IssueLetterDialog with that letter's id (updating instead of inserting on save, flipping status to `issued`).
-
-### RLS / permissions
-- `patient_letters` already allows patients to **read** their own rows. We need to also allow them to **INSERT** their own rows, restricted to `status = 'pending'` and `patient_id` mapping to `auth.uid()`. A new policy:
-  - `INSERT WITH CHECK (patient_id IN (select id from patients where user_id = auth.uid()) AND status = 'pending')`
-
-## Technical section
-
-**Files**
-- `supabase/migrations/<new>.sql` — new policies on `hospitals`, `doctors`, `hospital_doctors`, `patient_letters`.
-- `src/pages/hospital/Settings.tsx` — extend form fields + geolocation button.
-- `src/pages/patient/Letters.tsx` — add header button + dialog.
-- `src/components/patient/RequestLetterDialog.tsx` — new.
-- `src/components/doctor/IssueLetterDialog.tsx` — accept optional `existingLetterId` to fulfil pending requests (UPDATE path).
-- `src/pages/doctor/PatientDetail.tsx` — render pending-request list above Issue Letter button.
-
-**Policies to add (SQL sketch)**
 ```sql
--- Public hospital directory
-create policy "Public can view active hospitals"
-on public.hospitals for select to anon, authenticated
-using (is_active = true);
-
--- Public doctor directory
-create policy "Public can view doctors"
-on public.doctors for select to anon, authenticated using (true);
-
-create policy "Public can view hospital-doctor links"
-on public.hospital_doctors for select to anon, authenticated
-using (is_active = true);
-
--- Patient can request a letter (pending only)
-create policy "Patients can request letters"
-on public.patient_letters for insert to authenticated
-with check (
-  status = 'pending'
-  and patient_id in (select id from patients where user_id = auth.uid())
-);
+CREATE UNIQUE INDEX patient_appointments_doctor_slot_unique
+ON public.patient_appointments (doctor_id, requested_date, requested_time)
+WHERE status IN ('pending','accepted','confirmed');
 ```
 
+If two patients confirm the same slot simultaneously, the second insert errors and we show "That slot was just booked — please choose another time."
+
+### Triage.tsx wiring
+Add `selectedDate` / `selectedTime` state, render the new step between 7 and 8, pass through. For telemedicine flow (which skips hospital pick), still show the new step.
+
+## Part 2 — Hospital "Patients" page: editable status + working View
+
+### Schema change
+Add a `status` column to `public.patients`:
+
+```sql
+ALTER TABLE public.patients
+  ADD COLUMN status text NOT NULL DEFAULT 'outpatient';
+```
+
+Allowed values used in the UI dropdown:
+- `outpatient` (default)
+- `inpatient`
+- `admitted`
+- `discharged`
+- `under_observation`
+- `critical`
+- `deceased`
+- `transferred`
+
+(Stored as free text so hospitals can extend later; UI restricts to this list.)
+
+### Patients table UI
+- Replace the static green "active" badge with a `Select` bound to `patients.status`. Color-coded badges (green=outpatient/discharged, blue=inpatient/admitted, amber=under_observation, red=critical, grey=transferred/deceased). On change → `update patients set status=… where id=…` then invalidate the `usePatients` query.
+- "View" button opens a new `PatientDetailDrawer` (right-side `Sheet`).
+
+### PatientDetailDrawer content
+Pulls one patient + related records and shows the data hospital staff actually need:
+
+- **Identity**: full name, DOB/age, gender, phone, email, address (city/state).
+- **Medical**: blood group, genotype, allergies (from latest emr entry if present), current status (editable in drawer too).
+- **Insurance & emergency contact**: provider + policy #, NHIS if any, emergency contact name/phone.
+- **Recent appointments** (last 5 from `patient_appointments` with doctor name + status).
+- **Active prescriptions** (count + list from `prescriptions` where `status='active'`).
+- **Recent lab results** (last 3 from `lab_results`).
+- **Active admission** (if `hospital_beds` has a bed assigned to this patient → ward/bed #).
+- **Outstanding bills** (sum of `hospital_billing` where unpaid).
+- Quick actions row: "Add EMR entry", "New prescription", "Assign bed", "Create bill" (re-use existing dialogs).
+
+## Technical Notes
+
+- Files created: `src/components/triage/TriageStep7_5DateTimeStep.tsx`, `src/components/hospital/PatientDetailDrawer.tsx`.
+- Files edited: `src/pages/patient/Triage.tsx`, `src/components/triage/TriageStep8ConfirmationStep.tsx`, `src/pages/hospital/Patients.tsx`.
+- Migrations: add `patients.status` column + the unique partial index on `patient_appointments`.
+- Use existing shadcn `Calendar`, `Popover`, `Select`, `Sheet`, `Badge`.
+- All reads stay within current RLS (doctor_availability and patient_appointments are already readable to authenticated patients for their own context; we'll add a public `SELECT` policy on `doctor_availability` if it isn't there yet, scoped to `is_available = true`).
+
 ## Out of scope
-- Map picker UI for hospital lat/lng (text inputs + "use current location" only).
-- Notifying doctors/hospitals via email/push when a letter is requested (in-app pending list only).
-- Patient editing/cancelling a submitted request.
+- Doctor-side blocking of individual one-off dates (holiday/leave) — only weekly recurring availability is honored.
+- Rescheduling/cancellation UI for the patient after booking.
+- SMS/email reminders for the chosen time.
