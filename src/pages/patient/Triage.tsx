@@ -14,6 +14,7 @@ import { TriageStep5DoctorSelectionStep } from "@/components/triage/TriageStep5D
 import { TriageStep6VisitTypeStep } from "@/components/triage/TriageStep6VisitTypeStep";
 import { TriageStep7HospitalSelectionStep } from "@/components/triage/TriageStep7HospitalSelectionStep";
 import { TriageStep8ConfirmationStep } from "@/components/triage/TriageStep8ConfirmationStep";
+import { TriageStep7_5DateTimeStep } from "@/components/triage/TriageStep7_5DateTimeStep";
 
 type Sex = "male" | "female";
 interface Evidence { id: string; name: string; present: boolean }
@@ -62,6 +63,8 @@ export default function PatientTriage() {
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(null);
   const [selectedHospital, setSelectedHospital] = useState<any>(null);
   const [hospitalsForDoctor, setHospitalsForDoctor] = useState<RankedHospital[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   // Load patient + demographics gate
   useEffect(() => {
@@ -247,12 +250,13 @@ export default function PatientTriage() {
 
   async function handleSelectVisitType(visitType: "in-person" | "telemedicine") {
     setSelectedVisitType(visitType);
+    setSelectedDate(null);
+    setSelectedTime(null);
 
     if (visitType === "telemedicine") {
-      // Skip hospital selection for telemedicine
-      setStep(8);
+      // Skip hospital selection, go straight to date/time picker
+      setStep(75);
     } else {
-      // Load hospitals for selected doctor
       setStep(7);
       await loadHospitalsForDoctor(selectedDoctorId!);
     }
@@ -296,10 +300,11 @@ export default function PatientTriage() {
 
   async function handleSelectHospital(hospitalId: string) {
     setSelectedHospitalId(hospitalId);
-    // Find hospital details from hospitalsForDoctor
     const hospital = hospitalsForDoctor.find(h => h.id === hospitalId);
     setSelectedHospital(hospital);
-    setStep(8);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setStep(75);
   }
 
   function handleBackFromStep5() {
@@ -318,11 +323,12 @@ export default function PatientTriage() {
   }
 
   function handleBackFromStep8() {
-    if (selectedVisitType === "telemedicine") {
-      setStep(6);
-    } else {
-      setStep(7);
-    }
+    setStep(75);
+  }
+
+  function handleBackFromDateTime() {
+    if (selectedVisitType === "telemedicine") setStep(6);
+    else setStep(7);
   }
 
   function handleTryAnotherDoctor() {
@@ -338,7 +344,7 @@ export default function PatientTriage() {
     setSelectedVisitType("telemedicine");
     setSelectedHospitalId(null);
     setSelectedHospital(null);
-    setStep(8);
+    setStep(75);
   }
 
   return (
@@ -432,6 +438,22 @@ export default function PatientTriage() {
           />
         )}
 
+        {/* STEP 7.5: Date & Time Selection */}
+        {step === 75 && selectedDoctor && selectedVisitType && latestResp && (
+          <TriageStep7_5DateTimeStep
+            doctorId={selectedDoctorId!}
+            doctorName={`${selectedDoctor.first_name} ${selectedDoctor.last_name}`}
+            visitType={selectedVisitType}
+            hospitalId={selectedHospitalId}
+            triageLevel={latestResp.triage_level}
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            onSelect={(d, t) => { setSelectedDate(d); setSelectedTime(t); }}
+            onBack={handleBackFromDateTime}
+            onContinue={() => setStep(8)}
+          />
+        )}
+
         {/* STEP 8: Confirmation & Booking */}
         {step === 8 && latestResp && selectedDoctor && selectedVisitType && (
           <TriageStep8ConfirmationStep
@@ -444,6 +466,9 @@ export default function PatientTriage() {
             visitType={selectedVisitType}
             hospitalId={selectedHospitalId}
             hospitalName={selectedHospital?.name}
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            onBack={handleBackFromStep8}
           />
         )}
       </div>
