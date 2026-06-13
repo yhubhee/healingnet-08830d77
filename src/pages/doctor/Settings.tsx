@@ -115,7 +115,8 @@ export default function DoctorSettings() {
       const { error: sErr } = await supabase.from("doctor_settings").upsert(settings as any, { onConflict: "doctor_id" });
       if (sErr) throw sErr;
 
-      const keys = settings.availability_mode === "global" ? ["global"] : hospitals.map((h) => h.id);
+      const isGlobal = settings.availability_mode === "global";
+      const keys = isGlobal ? ["global"] : hospitals.map((h) => h.id);
       const rows = keys.flatMap((k) => slots[k] || []).map((s) => ({
         doctor_id: s.doctor_id,
         hospital_id: s.hospital_id,
@@ -126,10 +127,28 @@ export default function DoctorSettings() {
         accepts_virtual: s.accepts_virtual,
         accepts_in_person: s.accepts_in_person,
       }));
-      if (rows.length) {
-        const { error: aErr } = await supabase
+
+      // Delete existing rows scoped to what we're about to save, then insert.
+      // The table's unique index uses COALESCE(hospital_id, ...), which Postgres
+      // can't match via ON CONFLICT's column list, so we avoid upsert here.
+      if (isGlobal) {
+        const { error: dErr } = await supabase
           .from("doctor_availability")
-          .upsert(rows as any, { onConflict: "doctor_id,hospital_id,day_of_week" });
+          .delete()
+          .eq("doctor_id", doctorId)
+          .is("hospital_id", null);
+        if (dErr) throw dErr;
+      } else if (hospitals.length) {
+        const { error: dErr } = await supabase
+          .from("doctor_availability")
+          .delete()
+          .eq("doctor_id", doctorId)
+          .in("hospital_id", hospitals.map((h) => h.id));
+        if (dErr) throw dErr;
+      }
+
+      if (rows.length) {
+        const { error: aErr } = await supabase.from("doctor_availability").insert(rows as any);
         if (aErr) throw aErr;
       }
       toast.success("Settings saved");
@@ -139,6 +158,7 @@ export default function DoctorSettings() {
       setSaving(false);
     }
   }
+
 
   if (loading) return <DoctorLayout><div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div></DoctorLayout>;
   if (!settings) return <DoctorLayout><p className="text-muted-foreground">Doctor profile not found.</p></DoctorLayout>;
