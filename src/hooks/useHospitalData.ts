@@ -504,3 +504,28 @@ export function useDoctorProfile(doctorId?: string | null) {
     },
   });
 }
+
+// ---- HOSPITAL-SPECIFIC PATIENTS ----
+export function useHospitalPatients(hospitalId?: string | null) {
+  return useQuery({
+    enabled: !!hospitalId,
+    queryKey: ["hospital-patients", hospitalId],
+    queryFn: async () => {
+      const { data: checkins, error } = await supabase
+        .from("patient_checkins")
+        .select("patient_id")
+        .eq("hospital_id", hospitalId)
+        .order("checkin_time", { ascending: false });
+      if (error) throw error;
+      const patientIds = Array.from(new Set((checkins || []).map(c => c.patient_id)));
+      if (!patientIds.length) return [];
+      const { data: patients, error: pError } = await supabase
+        .from("patients")
+        .select("*")
+        .in("id", patientIds)
+        .order("created_at", { ascending: false });
+      if (pError) throw pError;
+      return patients || [];
+    },
+  });
+}
