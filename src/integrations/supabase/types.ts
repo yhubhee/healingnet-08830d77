@@ -1336,10 +1336,10 @@ export type Database = {
           id: string
           notes: string | null
           patient_id: string
-          priority: string | null
           queue_number: number | null
           status: string
           updated_at: string
+          urgency: string | null
           vitals: Json | null
         }
         Insert: {
@@ -1355,10 +1355,10 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id: string
-          priority?: string | null
           queue_number?: number | null
           status?: string
           updated_at?: string
+          urgency?: string | null
           vitals?: Json | null
         }
         Update: {
@@ -1374,10 +1374,10 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id?: string
-          priority?: string | null
           queue_number?: number | null
           status?: string
           updated_at?: string
+          urgency?: string | null
           vitals?: Json | null
         }
         Relationships: [
