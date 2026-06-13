@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { usePatients } from "@/hooks/useHospitalData";
+import { usePatients, useHospitalId, useHospitalPatients } from "@/hooks/useHospitalData";
 import { AddPatientDialog } from "@/components/hospital/dialogs/AddPatientDialog";
 import { PatientDetailDrawer } from "@/components/hospital/PatientDetailDrawer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,17 +27,29 @@ const statusColor = (s: string) => STATUS_OPTIONS.find((o) => o.value === s)?.co
 
 export default function HospitalPatients() {
   const { data: patients = [], isLoading } = usePatients();
+  const { data: hospitalId } = useHospitalId();
+  const { data: hospitalPatients = [] } = useHospitalPatients(hospitalId);
   const [search, setSearch] = useState("");
   const [active, setActive] = useState<any>(null);
+  const [filterType, setFilterType] = useState<"all" | "hospital">("all");
   const qc = useQueryClient();
 
-  const filtered = patients.filter((p: any) =>
-    `${p.first_name} ${p.last_name}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const hospitalPatientIds = new Set(hospitalPatients.map((p: any) => p.id));
+
+  const filtered = patients.filter((p: any) => {
+    const matchesSearch = `${p.first_name} ${p.last_name}`.toLowerCase().includes(search.toLowerCase());
+    const isHospitalPatient = hospitalPatientIds.has(p.id);
+    return filterType === "all" ? matchesSearch : (matchesSearch && isHospitalPatient);
+  });
 
   const getAge = (dob: string | null) => {
     if (!dob) return "—";
     return String(Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 864e5)));
+  };
+
+  const getLastVisit = (patientId: string) => {
+    const visit = hospitalPatients.find((p: any) => p.id === patientId);
+    return visit ? new Date(visit.updated_at).toLocaleDateString() : "Not visited";
   };
 
   async function updateStatus(id: string, status: string) {
@@ -59,6 +71,15 @@ export default function HospitalPatients() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search patients..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
+        <Select value={filterType} onValueChange={(v: any) => setFilterType(v)}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Patients</SelectItem>
+            <SelectItem value="hospital">Hospital Patients Only</SelectItem>
+          </SelectContent>
+        </Select>
         <AddPatientDialog />
       </div>
 
@@ -84,7 +105,7 @@ export default function HospitalPatients() {
                     <td className="p-4 text-sm">{getAge(p.date_of_birth)}y • {p.gender || "—"}</td>
                     <td className="p-4 text-sm">{p.phone || "—"}</td>
                     <td className="p-4">{p.blood_group ? <span className="bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">{p.blood_group}</span> : "—"}</td>
-                    <td className="p-4 text-sm text-muted-foreground">{new Date(p.updated_at).toLocaleDateString()}</td>
+                    <td className="p-4 text-sm text-muted-foreground">{getLastVisit(p.id)}</td>
                     <td className="p-4">
                       <Select value={p.status || "outpatient"} onValueChange={(v) => updateStatus(p.id, v)}>
                         <SelectTrigger className={cn("h-8 w-[170px] text-xs font-semibold rounded-full border-0", statusColor(p.status || "outpatient"))}>
