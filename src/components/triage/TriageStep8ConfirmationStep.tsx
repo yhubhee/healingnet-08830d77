@@ -80,7 +80,7 @@ export function TriageStep8ConfirmationStep({
       const appointmentId = appointmentData?.id;
 
       if (visitType === "telemedicine") {
-        const { error: roomError } = await supabase.functions.invoke("daily-room", {
+        const { data: roomData, error: roomError } = await supabase.functions.invoke("daily-room", {
           body: {
             action: "create",
             appointment_id: appointmentId,
@@ -91,6 +91,17 @@ export function TriageStep8ConfirmationStep({
 
         if (roomError) {
           throw new Error("Failed to create video room: " + (roomError.message || "Unknown error"));
+        }
+
+        // Store meeting link and room name in appointment
+        if (roomData?.meeting_link || roomData?.room_name) {
+          await supabase
+            .from("patient_appointments")
+            .update({
+              meeting_link: roomData?.meeting_link,
+              daily_room_name: roomData?.room_name,
+            })
+            .eq("id", appointmentId);
         }
       }
 
