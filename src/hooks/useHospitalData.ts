@@ -90,7 +90,41 @@ export function useUpdateCheckin() {
       const { error } = await supabase.from("patient_checkins").update(updates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["patient-checkins"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patient-checkins"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor", "checkins"] });
+      queryClient.invalidateQueries({ queryKey: ["hospital-notifications"] });
+    },
+  });
+}
+
+export function useCallInPatient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (checkinId: string) => {
+      const { data: checkin } = await supabase.from("patient_checkins").select("*").eq("id", checkinId).single();
+      if (!checkin) throw new Error("Checkin not found");
+
+      const { error } = await supabase.from("patient_checkins").update({ status: "called" }).eq("id", checkinId);
+      if (error) throw error;
+
+      const { data: patient } = await supabase.from("patients").select("first_name, last_name").eq("id", checkin.patient_id).single();
+      const { data: doctor } = await supabase.from("doctors").select("first_name, last_name").eq("id", checkin.assigned_doctor_id).single();
+
+      // Create notification for hospital staff
+      await supabase.from("hospital_notifications").insert({
+        hospital_id: checkin.hospital_id,
+        title: "Patient Called In",
+        message: `Dr. ${doctor?.first_name} ${doctor?.last_name} called in ${patient?.first_name} ${patient?.last_name}`,
+        type: "call_in",
+        related_patient_id: checkin.patient_id,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["patient-checkins"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor", "checkins"] });
+      queryClient.invalidateQueries({ queryKey: ["hospital-notifications"] });
+    },
   });
 }
 

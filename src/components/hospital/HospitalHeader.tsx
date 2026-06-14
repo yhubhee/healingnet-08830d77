@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { useHospitalNotifications, useRealtimeNotifications, useMarkNotificationRead } from "@/hooks/useHospitalData";
+import { useNotificationSound } from "@/hooks/useNotificationSound";
 import { cn } from "@/lib/utils";
 
 export function HospitalHeader() {
@@ -20,9 +22,17 @@ export function HospitalHeader() {
   useRealtimeNotifications();
   const { data: notifications = [] } = useHospitalNotifications();
   const markRead = useMarkNotificationRead();
+  const { playSound } = useNotificationSound();
 
   const unread = notifications.filter((n: any) => !n.is_read);
   const recentNotifs = notifications.slice(0, 3);
+
+  useEffect(() => {
+    const callInNotif = unread.find((n: any) => n.type === "call_in");
+    if (callInNotif) {
+      playSound();
+    }
+  }, [unread, playSound]);
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-background/95 backdrop-blur border-b border-border">
@@ -57,17 +67,32 @@ export function HospitalHeader() {
               <DropdownMenuSeparator />
               {recentNotifs.length === 0 ? (
                 <div className="py-4 text-center text-sm text-muted-foreground">No notifications</div>
-              ) : recentNotifs.map((n: any) => (
-                <DropdownMenuItem
-                  key={n.id}
-                  className={cn("flex flex-col items-start gap-1 py-3 cursor-pointer", !n.is_read && "bg-primary/5")}
-                  onClick={() => !n.is_read && markRead.mutate(n.id)}
-                >
-                  <p className={cn("font-medium text-sm", !n.is_read && "text-primary")}>{n.title}</p>
-                  <p className="text-xs text-muted-foreground">{n.message}</p>
-                  <span className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleTimeString()}</span>
-                </DropdownMenuItem>
-              ))}
+              ) : recentNotifs.map((n: any) => {
+                const typeIcons: Record<string, string> = {
+                  checkin: "🟢",
+                  call_in: "☎️",
+                  lab: "🔬",
+                  pharmacy: "💊",
+                  billing: "💳",
+                  consultation: "📋",
+                  emergency: "🚨",
+                  system: "⚙️"
+                };
+                return (
+                  <DropdownMenuItem
+                    key={n.id}
+                    className={cn("flex flex-col items-start gap-1 py-3 cursor-pointer", !n.is_read && "bg-primary/5")}
+                    onClick={() => !n.is_read && markRead.mutate(n.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{typeIcons[n.type] || "📌"}</span>
+                      <p className={cn("font-medium text-sm", !n.is_read && "text-primary")}>{n.title}</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{n.message}</p>
+                    <span className="text-xs text-muted-foreground">{new Date(n.created_at).toLocaleTimeString()}</span>
+                  </DropdownMenuItem>
+                );
+              })}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-center text-primary cursor-pointer justify-center"

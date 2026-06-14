@@ -70,7 +70,7 @@ export default function EMRTypeDetail() {
         <Input placeholder="Search by patient or title..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      <div className="space-y-3">
+        <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center p-12 text-muted-foreground bg-card border border-border rounded-xl">
             No {info.label.toLowerCase()} records found
@@ -84,10 +84,62 @@ export default function EMRTypeDetail() {
               </div>
               <span className="text-xs text-muted-foreground">{new Date(entry.created_at).toLocaleDateString()}</span>
             </div>
-            <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block mb-2", info.color)}>
+            <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider inline-block mb-3", info.color)}>
               {info.label}
             </span>
-            {entry.content && <p className="text-sm text-muted-foreground mt-2">{entry.content}</p>}
+
+            {entry.entry_type === "vitals" && entry.vital_data && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 p-3 bg-muted/20 rounded-lg">
+                {entry.vital_data.systolic && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">BP</p>
+                    <p className="font-semibold">{entry.vital_data.systolic}/{entry.vital_data.diastolic}</p>
+                  </div>
+                )}
+                {entry.vital_data.heart_rate && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">HR</p>
+                    <p className="font-semibold">{entry.vital_data.heart_rate} bpm</p>
+                  </div>
+                )}
+                {entry.vital_data.temperature && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Temp</p>
+                    <p className="font-semibold">{entry.vital_data.temperature}°C</p>
+                  </div>
+                )}
+                {entry.vital_data.oxygen_saturation && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">O₂ Sat</p>
+                    <p className="font-semibold">{entry.vital_data.oxygen_saturation}%</p>
+                  </div>
+                )}
+                {entry.vital_data.respiratory_rate && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">RR</p>
+                    <p className="font-semibold">{entry.vital_data.respiratory_rate} /min</p>
+                  </div>
+                )}
+                {entry.vital_data.blood_glucose && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Glucose</p>
+                    <p className="font-semibold">{entry.vital_data.blood_glucose} mg/dL</p>
+                  </div>
+                )}
+                {entry.vital_data.weight && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Weight</p>
+                    <p className="font-semibold">{entry.vital_data.weight} kg</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {entry.content && (
+              <div className="text-sm text-muted-foreground prose prose-sm max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: entry.content }} />
+              </div>
+            )}
           </div>
         ))}
       </div>
