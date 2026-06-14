@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import healingnetLogo from "@/assets/healingnet-logo.png";
 import { NavLink, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LayoutDashboard,
   Users,
@@ -45,7 +47,7 @@ const navGroups: NavGroup[] = [
     icon: Users,
     children: [
       { label: "All Patients", path: "/hospital/patients", icon: List },
-      { label: "Patient Queue", path: "/hospital/queue", icon: Clock, badge: 12 },
+      { label: "Patient Queue", path: "/hospital/queue", icon: Clock },
       { label: "Maternity", path: "/hospital/maternity", icon: Baby },
       { label: "Surgery", path: "/hospital/surgery", icon: Scissors },
       { label: "Referrals", path: "/hospital/referrals", icon: Share2 },
@@ -85,6 +87,19 @@ export function HospitalSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<string[]>(["Patients", "Doctors"]);
   const location = useLocation();
+
+  // Fetch queue count dynamically
+  const { data: queueCount = 0 } = useQuery({
+    queryKey: ["queue-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("patient_checkins")
+        .select("id", { count: "exact", head: true })
+        .neq("status", "completed");
+      return count || 0;
+    },
+    refetchInterval: 30_000,
+  });
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) =>
@@ -187,6 +202,11 @@ export function HospitalSidebar() {
                       >
                         <child.icon className="h-4 w-4" />
                         <span className="flex-1">{child.label}</span>
+                        {child.label === "Patient Queue" && queueCount > 0 && (
+                          <span className="bg-destructive text-destructive-foreground text-xs font-bold px-1.5 py-0.5 rounded-full">
+                            {queueCount}
+                          </span>
+                        )}
                         {child.badge && (
                           <span className="bg-destructive text-destructive-foreground text-xs font-bold px-1.5 py-0.5 rounded-full">
                             {child.badge}
