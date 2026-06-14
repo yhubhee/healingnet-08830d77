@@ -2,12 +2,11 @@ import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, ArrowLeft } from "lucide-react";
+import { Search, ArrowLeft, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmrEntries } from "@/hooks/useHospitalData";
-import { AddEmrEntryDialog } from "@/components/hospital/dialogs/AddEmrEntryDialog";
 import { cn } from "@/lib/utils";
 
 const TYPE_INFO: Record<string, { label: string; icon: string; color: string; description: string }> = {
@@ -61,7 +60,9 @@ export default function EMRTypeDetail() {
             </div>
             <p className="text-muted-foreground">{info.description}</p>
           </div>
-          <AddEmrEntryDialog />
+          <Button asChild>
+            <a href="/hospital/emr/add"><Plus className="w-4 h-4 mr-2" />New Entry</a>
+          </Button>
         </div>
       </div>
 

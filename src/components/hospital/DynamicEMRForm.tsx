@@ -131,7 +131,7 @@ export function DynamicEMRForm({ entryType, patientId, onPatientChange, onSubmit
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save Vitals"}
+          {isLoading ? "Saving..." : "Add Vitals"}
         </Button>
       </form>
     );
@@ -159,7 +159,7 @@ export function DynamicEMRForm({ entryType, patientId, onPatientChange, onSubmit
         />
       </div>
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Saving..." : "Save Entry"}
+        {isLoading ? "Saving..." : "Add Entry"}
       </Button>
     </form>
   );
