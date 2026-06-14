@@ -23,6 +23,7 @@ import HospitalDoctors from "./pages/hospital/Doctors";
 import HospitalPatients from "./pages/hospital/Patients";
 import HospitalBilling from "./pages/hospital/Billing";
 import HospitalEMR from "./pages/hospital/EMR";
+import AddEMREntry from "./pages/hospital/AddEMREntry";
 import EMRTypeDetail from "./pages/hospital/EMRTypeDetail";
 import HospitalLab from "./pages/hospital/Lab";
 import HospitalPharmacy from "./pages/hospital/Pharmacy";
@@ -116,6 +117,7 @@ const App = () => (
           <Route path="/hospital/patients" element={<ProtectedRoute><HospitalPatients /></ProtectedRoute>} />
           <Route path="/hospital/billing" element={<ProtectedRoute><HospitalBilling /></ProtectedRoute>} />
           <Route path="/hospital/emr" element={<ProtectedRoute><HospitalEMR /></ProtectedRoute>} />
+          <Route path="/hospital/emr/add" element={<ProtectedRoute><AddEMREntry /></ProtectedRoute>} />
           <Route path="/hospital/emr/:type" element={<ProtectedRoute><EMRTypeDetail /></ProtectedRoute>} />
           <Route path="/hospital/lab" element={<ProtectedRoute><HospitalLab /></ProtectedRoute>} />
           <Route path="/hospital/pharmacy" element={<ProtectedRoute><HospitalPharmacy /></ProtectedRoute>} />

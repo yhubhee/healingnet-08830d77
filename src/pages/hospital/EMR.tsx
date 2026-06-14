@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useEmrEntries } from "@/hooks/useHospitalData";
-import { AddEmrEntryDialog } from "@/components/hospital/dialogs/AddEmrEntryDialog";
 import { Link } from "react-router-dom";
 
 const tabs = ["All Records", "Consultation Notes", "Vitals", "Diagnoses", "Lab Orders", "Procedures"];
@@ -52,7 +51,9 @@ export default function HospitalEMR() {
           <h1 className="text-2xl font-heading font-bold mb-1">EMR Records</h1>
           <p className="text-muted-foreground">Electronic Medical Records — search, view, and add entries</p>
         </div>
-        <AddEmrEntryDialog />
+        <Link to="/hospital/emr/add">
+          <Button>New Entry</Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
