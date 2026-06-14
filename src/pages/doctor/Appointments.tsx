@@ -20,7 +20,7 @@ export default function DoctorAppointments() {
     queryKey: ["doctor", "appointments", ctx?.doctor?.id],
     queryFn: async () => {
       const { data } = await supabase.from("patient_appointments")
-        .select("*, patients(id,first_name,last_name,gender,date_of_birth,user_id)")
+        .select("*, patients(id,first_name,last_name,gender,date_of_birth,user_id), hospitals(name)")
         .eq("doctor_id", ctx!.doctor.id).order("requested_date", { ascending: false });
       return data || [];
     },

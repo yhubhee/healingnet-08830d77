@@ -101,8 +101,8 @@ export default function PatientAppointments() {
                     <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(a.requested_date).toDateString()}</span>
                     {a.requested_time && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{a.requested_time}</span>}
                   </div>
-                  {isTelemedicine && a.meeting_link && (
-                    <div className="mt-3">
+                  {isTelemedicine && a.meeting_link && a.status !== "cancelled" && (
+                    <div className="mt-3 flex gap-2">
                       <a
                         href={a.meeting_link}
                         target="_blank"
@@ -110,7 +110,7 @@ export default function PatientAppointments() {
                         className="inline-flex items-center gap-1 text-xs bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-lg transition-colors"
                       >
                         <Video className="w-3 h-3" />
-                        Join Consultation
+                        {["pending", "accepted", "confirmed"].includes(a.status) ? "Join Consultation" : "View Recording"}
                       </a>
                     </div>
                   )}
