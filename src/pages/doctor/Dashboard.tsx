@@ -147,6 +147,7 @@ export default function DoctorDashboard() {
               </Link>
             ))}
           </div>}
+      </div>
 
       <AppointmentDetailDrawer appointment={active} onClose={() => setActive(null)} />
     </DoctorLayout>
