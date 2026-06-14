@@ -2,14 +2,16 @@ import { DoctorLayout } from "@/layouts/DoctorLayout";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Users, MessageSquare, TrendingUp, Loader2, Pill, FlaskConical, Mail, Clock } from "lucide-react";
+import { Calendar, Users, MessageSquare, TrendingUp, Loader2, Pill, FlaskConical, Mail, Clock, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useDoctor, useDoctorBadges } from "@/hooks/useDoctor";
+import { useCallInPatient } from "@/hooks/useHospitalData";
 import { NewPrescriptionDialog } from "@/components/doctor/NewPrescriptionDialog";
 import { OrderLabTestDialog } from "@/components/doctor/OrderLabTestDialog";
 import { AppointmentDetailDrawer } from "@/components/doctor/AppointmentDetailDrawer";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DoctorDashboard() {
   const { data: ctx, isLoading: ctxLoading } = useDoctor();
@@ -17,6 +19,8 @@ export default function DoctorDashboard() {
   const { data: badges } = useDoctorBadges(doc?.id, ctx?.user?.id);
   const [active, setActive] = useState<any>(null);
   const qc = useQueryClient();
+  const { toast } = useToast();
+  const callInMutation = useCallInPatient();
 
   useEffect(() => {
     if (!doc?.id) return;
@@ -121,12 +125,29 @@ export default function DoctorDashboard() {
           {!checkins?.length ? <p className="text-sm text-muted-foreground py-6 text-center">No patients checked in.</p> :
             <div className="space-y-2">
               {checkins.slice(0, 5).map((c: any) => (
-                <div key={c.id} className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-success/20 text-success flex items-center justify-center text-xs font-bold">#{c.queue_number}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm">{c.patients?.first_name} {c.patients?.last_name}</div>
-                    <div className="text-xs text-muted-foreground">{c.urgency}</div>
+                <div key={c.id} className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg justify-between">
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="w-8 h-8 rounded-full bg-success/20 text-success flex items-center justify-center text-xs font-bold">#{c.queue_number}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{c.patients?.first_name} {c.patients?.last_name}</div>
+                      <div className="text-xs text-muted-foreground">{c.urgency}</div>
+                    </div>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => {
+                      callInMutation.mutate(c.id, {
+                        onSuccess: () => toast({ title: "Success", description: `Called in ${c.patients?.first_name}` }),
+                        onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+                      });
+                    }}
+                    disabled={callInMutation.isPending}
+                    className="gap-1"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span className="hidden sm:inline">Call In</span>
+                  </Button>
                 </div>
               ))}
             </div>}

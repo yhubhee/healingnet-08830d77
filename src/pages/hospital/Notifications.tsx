@@ -1,10 +1,21 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 import { useHospitalNotifications, useRealtimeNotifications, useMarkNotificationRead, useMarkAllNotificationsRead, useHospitalId } from "@/hooks/useHospitalData";
+import { useNotificationSound } from "@/hooks/useNotificationSound";
 
-const typeIcons: Record<string, string> = { checkin: "🟢", lab: "🔬", pharmacy: "💊", billing: "💳", consultation: "📋", emergency: "🚨", system: "⚙️" };
+const typeIcons: Record<string, string> = {
+  checkin: "🟢",
+  call_in: "☎️",
+  lab: "🔬",
+  pharmacy: "💊",
+  billing: "💳",
+  consultation: "📋",
+  emergency: "🚨",
+  system: "⚙️"
+};
 
 export default function HospitalNotifications() {
   useRealtimeNotifications();
@@ -12,6 +23,14 @@ export default function HospitalNotifications() {
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const { data: hospitalId } = useHospitalId();
+  const { playSound } = useNotificationSound();
+
+  useEffect(() => {
+    const callInNotif = notifications.find((n: any) => n.type === "call_in" && !n.is_read);
+    if (callInNotif) {
+      playSound();
+    }
+  }, [notifications, playSound]);
 
   return (
     <HospitalLayout>

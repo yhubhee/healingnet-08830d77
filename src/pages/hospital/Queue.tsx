@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { usePatientCheckins, useRealtimeCheckins, useUpdateCheckin } from "@/hooks/useHospitalData";
 import { CheckInDialog } from "@/components/hospital/dialogs/CheckInDialog";
 
-const filters = ["All", "Waiting", "In Consultation", "Checked In", "Completed"];
+const filters = ["All", "Waiting", "Called", "In Consultation", "Checked In", "Completed"];
 
 const statusColors: Record<string, string> = {
   waiting: "bg-warning/15 text-warning",
+  called: "bg-info/15 text-info",
   in_consultation: "bg-primary/15 text-primary",
   checked_in: "bg-success/15 text-success",
   completed: "bg-muted text-muted-foreground",
@@ -35,7 +36,7 @@ export default function HospitalQueue() {
   const stats = [
     { label: "In Queue", value: checkins.filter((q: any) => q.status !== "completed").length, icon: Users, gradient: "gradient-primary" },
     { label: "Waiting", value: checkins.filter((q: any) => q.status === "waiting").length, icon: Clock, gradient: "gradient-warning" },
-    { label: "In Consultation", value: checkins.filter((q: any) => q.status === "in_consultation").length, icon: Stethoscope, gradient: "gradient-info" },
+    { label: "Called", value: checkins.filter((q: any) => q.status === "called").length, icon: Stethoscope, gradient: "gradient-info" },
     { label: "Completed", value: checkins.filter((q: any) => q.status === "completed").length, icon: CheckCircle, gradient: "gradient-success" },
   ];
 
@@ -123,6 +124,7 @@ export default function HospitalQueue() {
                       </span>
                     </td>
                     <td className="p-4 space-x-1">
+                      {q.status === "called" && <Button size="sm" onClick={() => updateCheckin.mutate({ id: q.id, status: "in_consultation", consultation_start: new Date().toISOString() })}>Acknowledge</Button>}
                       {q.status === "checked_in" && <Button size="sm" onClick={() => updateCheckin.mutate({ id: q.id, status: "in_consultation", consultation_start: new Date().toISOString() })}>Start</Button>}
                       {q.status === "in_consultation" && <Button size="sm" variant="outline" onClick={() => updateCheckin.mutate({ id: q.id, status: "completed", consultation_end: new Date().toISOString() })}>Complete</Button>}
                     </td>
