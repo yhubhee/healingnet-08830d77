@@ -8,28 +8,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { usePatients, useHospitalId } from "@/hooks/useHospitalData";
+import { useHospitalId } from "@/hooks/useHospitalData";
+import { PatientPicker } from "../PatientPicker";
 
 const ENTRY_TYPES = ["consultation_note","vitals","diagnosis","lab_order","procedure","prescription","allergy","immunization","discharge_summary"];
 
 export function AddEmrEntryDialog() {
   const [f, setF] = useState<any>({ entry_type: "consultation_note" });
-  const { toast } = useToast(); const qc = useQueryClient();
-  const { data: patients = [] } = usePatients();
+  const { toast } = useToast();
+  const qc = useQueryClient();
   const { data: hospitalId } = useHospitalId();
+
   return (
     <FormDialog title="Add EMR Entry" triggerLabel="New Entry">
       {(close) => (
-        <form onSubmit={async (e) => { e.preventDefault();
+        <form onSubmit={async (e) => {
+          e.preventDefault();
           await handleSubmit(supabase.from("emr_entries").insert({ ...f, hospital_id: hospitalId }), { toast, close, qc, invalidate: ["emr-entries"], successMsg: "EMR entry added" });
           setF({ entry_type: "consultation_note" });
         }} className="space-y-3">
-          <div><Label>Patient</Label>
-            <Select value={f.patient_id} onValueChange={(v) => setF({ ...f, patient_id: v })}>
-              <SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger>
-              <SelectContent>{patients.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
+          <PatientPicker value={f.patient_id || ""} onChange={(v) => setF({ ...f, patient_id: v })} />
           <div><Label>Type</Label>
             <Select value={f.entry_type} onValueChange={(v) => setF({ ...f, entry_type: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -38,7 +36,7 @@ export function AddEmrEntryDialog() {
           </div>
           <div><Label>Title</Label><Input required value={f.title || ""} onChange={(e) => setF({ ...f, title: e.target.value })} /></div>
           <div><Label>Content / Notes</Label><Textarea rows={4} value={f.content || ""} onChange={(e) => setF({ ...f, content: e.target.value })} /></div>
-          <Button type="submit" className="w-full">Save Entry</Button>
+          <Button type="submit" className="w-full" disabled={!f.patient_id}>Save Entry</Button>
         </form>
       )}
     </FormDialog>

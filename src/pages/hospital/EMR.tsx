@@ -1,13 +1,23 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { useState } from "react";
-import { Search, FileText } from "lucide-react";
+import { Search, FileText, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useEmrEntries } from "@/hooks/useHospitalData";
 import { AddEmrEntryDialog } from "@/components/hospital/dialogs/AddEmrEntryDialog";
+import { Link } from "react-router-dom";
 
 const tabs = ["All Records", "Consultation Notes", "Vitals", "Diagnoses", "Lab Orders", "Procedures"];
+
+const types = [
+  { id: "consultation_note", label: "Consultation Notes", icon: "📝", count: 0 },
+  { id: "vitals", label: "Vitals", icon: "💓", count: 0 },
+  { id: "diagnosis", label: "Diagnoses", icon: "🔍", count: 0 },
+  { id: "lab_order", label: "Lab Orders", icon: "🧪", count: 0 },
+  { id: "procedure", label: "Procedures", icon: "🏥", count: 0 },
+  { id: "prescription", label: "Prescriptions", icon: "💊", count: 0 },
+];
 
 const typeColors: Record<string, string> = {
   consultation_note: "bg-primary/15 text-primary",
@@ -21,6 +31,11 @@ export default function HospitalEMR() {
   const { data: entries = [], isLoading } = useEmrEntries();
   const [activeTab, setActiveTab] = useState("All Records");
   const [search, setSearch] = useState("");
+
+  const typeCounts = types.map(t => ({
+    ...t,
+    count: entries.filter((e: any) => e.entry_type === t.id).length
+  }));
 
   const filtered = entries.filter((e: any) => {
     const patientName = `${e.patients?.first_name || ""} ${e.patients?.last_name || ""}`;
@@ -38,6 +53,18 @@ export default function HospitalEMR() {
           <p className="text-muted-foreground">Electronic Medical Records — search, view, and add entries</p>
         </div>
         <AddEmrEntryDialog />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+        {typeCounts.map(t => (
+          <Link key={t.id} to={`/hospital/emr/${t.id}`}>
+            <div className="bg-card border border-border rounded-lg p-4 text-center hover:border-primary transition-colors cursor-pointer">
+              <div className="text-2xl mb-2">{t.icon}</div>
+              <div className="text-xs font-semibold text-muted-foreground">{t.label}</div>
+              <div className="text-lg font-bold text-primary mt-1">{t.count}</div>
+            </div>
+          </Link>
+        ))}
       </div>
 
       <div className="relative max-w-md mb-6">

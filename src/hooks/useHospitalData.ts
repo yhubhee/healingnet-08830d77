@@ -125,6 +125,17 @@ export function useHospitalDoctors() {
 
 // ---- EMR ----
 export function useEmrEntries() {
+  const qc = useQueryClient();
+  useEffect(() => {
+    const channel = supabase
+      .channel("realtime-emr")
+      .on("postgres_changes", { event: "*", schema: "public", table: "emr_entries" }, () => {
+        qc.invalidateQueries({ queryKey: ["emr-entries"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
   return useQuery({
     queryKey: ["emr-entries"],
     queryFn: async () => {
@@ -505,8 +516,22 @@ export function useDoctorProfile(doctorId?: string | null) {
   });
 }
 
-// ---- HOSPITAL-SPECIFIC PATIENTS ----
 export function useHospitalPatients(hospitalId?: string | null) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!hospitalId) return;
+    const channel = supabase
+      .channel(`realtime-checkins-${hospitalId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "patient_checkins" }, (payload) => {
+        if (payload.new?.hospital_id === hospitalId || payload.old?.hospital_id === hospitalId) {
+          qc.invalidateQueries({ queryKey: ["hospital-patients", hospitalId] });
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [hospitalId, qc]);
+
   return useQuery({
     enabled: !!hospitalId,
     queryKey: ["hospital-patients", hospitalId],
