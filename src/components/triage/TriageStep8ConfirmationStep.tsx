@@ -45,12 +45,22 @@ export function TriageStep8ConfirmationStep({
     setConfirming(true);
 
     try {
+      // Get doctor's hospital (use for both in-person and telemedicine)
+      const { data: doctorData } = await supabase
+        .from("hospital_doctors")
+        .select("hospital_id")
+        .eq("doctor_id", doctorId)
+        .limit(1)
+        .single();
+
+      const finalHospitalId = visitType === "in-person" ? hospitalId : doctorData?.hospital_id;
+
       const { data: appointmentData, error: appointmentError } = await supabase
         .from("patient_appointments")
         .insert({
           patient_id: patient.id,
           doctor_id: doctorId,
-          hospital_id: visitType === "in-person" ? hospitalId : null,
+          hospital_id: finalHospitalId,
           requested_date: format(selectedDate, "yyyy-MM-dd"),
           requested_time: selectedTime,
           reason: `[AI Nurse] ${specialty} • ${triageLabel}`,

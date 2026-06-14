@@ -88,7 +88,7 @@ export default function HospitalEMR() {
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h4 className="font-heading font-bold text-sm">{entry.title}</h4>
-                  <p className="text-xs text-muted-foreground">{entry.patients?.first_name} {entry.patients?.last_name} • {entry.doctors ? `Dr. ${entry.doctors.first_name} ${entry.doctors.last_name}` : "—"}</p>
+                  <p className="text-xs text-muted-foreground">{entry.patients?.first_name} {entry.patients?.last_name} • {entry.patients?.id ? entry.patients.id.slice(0, 8) : "—"} • {entry.doctors ? `Dr. ${entry.doctors.first_name} ${entry.doctors.last_name}` : "—"}</p>
                 </div>
                 <span className="text-xs text-muted-foreground">{new Date(entry.created_at).toLocaleDateString()}</span>
               </div>
