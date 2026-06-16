@@ -15,14 +15,41 @@ export default function DoctorAppointments() {
   const [q, setQ] = useState("");
   const [active, setActive] = useState<any>(null);
   const { data: ctx } = useDoctor();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "appointments", ctx?.doctor?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("patient_appointments")
-        .select("*, patients(id,first_name,last_name,gender,date_of_birth,user_id), hospitals(name)")
-        .eq("doctor_id", ctx!.doctor.id).order("requested_date", { ascending: false });
-      return data || [];
+      if (!ctx?.doctor?.id) return [];
+      try {
+        // Fetch appointments without complex joins first
+        const { data: appts, error: fetchError } = await supabase
+          .from("patient_appointments")
+          .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, meeting_link, daily_room_name")
+          .eq("doctor_id", ctx.doctor.id)
+          .order("requested_date", { ascending: false });
+
+        if (fetchError) {
+          console.error("Error fetching doctor appointments:", fetchError);
+          return [];
+        }
+
+        if (!appts || appts.length === 0) return [];
+
+        // Fetch patient data separately to avoid join issues
+        const patientIds = [...new Set(appts.map((a: any) => a.patient_id).filter(Boolean))];
+        const { data: patients } = patientIds.length > 0
+          ? await supabase.from("patients").select("id, first_name, last_name, gender, date_of_birth, user_id").in("id", patientIds)
+          : Promise.resolve({ data: [] });
+
+        const patientMap = new Map((patients || []).map((p: any) => [p.id, p]));
+        return appts.map((a: any) => ({
+          ...a,
+          patients: patientMap.get(a.patient_id),
+        }));
+      } catch (err) {
+        console.error("Unexpected error fetching appointments:", err);
+        return [];
+      }
     },
   });
   const list = (data || []).filter((a: any) => {
@@ -45,6 +72,7 @@ export default function DoctorAppointments() {
         </div>
       </div>
 
+      {error && <div className="bg-destructive/15 text-destructive p-3 rounded-lg text-sm mb-4">Error: {error.message}</div>}
       {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
         list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Calendar className="w-10 h-10 mx-auto mb-2" />No {filter === "all" ? "" : filter} appointments.</div> :
         <div className="space-y-3">
