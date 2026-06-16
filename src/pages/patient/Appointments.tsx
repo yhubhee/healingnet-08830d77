@@ -11,18 +11,21 @@ const tabs = ["upcoming", "past", "cancelled"] as const;
 export default function PatientAppointments() {
   const [tab, setTab] = useState<typeof tabs[number]>("upcoming");
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["patient", "appointments"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
       const { data: p } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
       if (!p) return [];
-      const { data: appts } = await supabase
+      const { data: appts, error: fetchError } = await supabase
         .from("patient_appointments")
-        .select("*, doctors(first_name,last_name,specialty), hospitals(name), is_telemedicine, meeting_link, daily_room_name")
+        .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, meeting_link, daily_room_name, doctors(id,first_name,last_name,specialty), hospitals(id,name)")
         .eq("patient_id", p.id)
         .order("requested_date", { ascending: false });
+      if (fetchError) {
+        console.error("Error fetching patient appointments:", fetchError);
+      }
       return appts || [];
     },
   });
