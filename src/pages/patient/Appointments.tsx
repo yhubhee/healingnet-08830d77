@@ -14,19 +14,51 @@ export default function PatientAppointments() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["patient", "appointments"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data: p } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
-      if (!p) return [];
-      const { data: appts, error: fetchError } = await supabase
-        .from("patient_appointments")
-        .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, meeting_link, daily_room_name, doctors(id,first_name,last_name,specialty), hospitals(id,name)")
-        .eq("patient_id", p.id)
-        .order("requested_date", { ascending: false });
-      if (fetchError) {
-        console.error("Error fetching patient appointments:", fetchError);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
+        const { data: p } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
+        if (!p) return [];
+
+        // Fetch appointments without complex joins
+        const { data: appts, error: fetchError } = await supabase
+          .from("patient_appointments")
+          .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, meeting_link, daily_room_name")
+          .eq("patient_id", p.id)
+          .order("requested_date", { ascending: false });
+
+        if (fetchError) {
+          console.error("Error fetching patient appointments:", fetchError);
+          return [];
+        }
+
+        if (!appts || appts.length === 0) return [];
+
+        // Fetch doctor and hospital data separately
+        const doctorIds = [...new Set(appts.map((a: any) => a.doctor_id).filter(Boolean))];
+        const hospitalIds = [...new Set(appts.map((a: any) => a.hospital_id).filter(Boolean))];
+
+        const [doctorsRes, hospitalsRes] = await Promise.all([
+          doctorIds.length > 0
+            ? supabase.from("doctors").select("id, first_name, last_name, specialty").in("id", doctorIds)
+            : Promise.resolve({ data: [] }),
+          hospitalIds.length > 0
+            ? supabase.from("hospitals").select("id, name").in("id", hospitalIds)
+            : Promise.resolve({ data: [] }),
+        ]);
+
+        const doctorMap = new Map((doctorsRes.data || []).map((d: any) => [d.id, d]));
+        const hospitalMap = new Map((hospitalsRes.data || []).map((h: any) => [h.id, h]));
+
+        return appts.map((a: any) => ({
+          ...a,
+          doctors: a.doctor_id ? doctorMap.get(a.doctor_id) : null,
+          hospitals: a.hospital_id ? hospitalMap.get(a.hospital_id) : null,
+        }));
+      } catch (err) {
+        console.error("Unexpected error fetching patient appointments:", err);
+        return [];
       }
-      return appts || [];
     },
   });
 
@@ -62,6 +94,7 @@ export default function PatientAppointments() {
         ))}
       </div>
 
+      {error && <div className="bg-destructive/15 text-destructive p-3 rounded-lg text-sm mb-4">Error: {error.message}</div>}
       {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
         <div className="space-y-3">
           {filtered.length === 0 && (
