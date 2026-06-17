@@ -26,7 +26,7 @@ export default function PatientMedicalRecords() {
       if (!user) return [];
       const { data: p } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
       if (!p) return [];
-      const { data } = await supabase.from("emr_entries").select("*, doctors(first_name,last_name)").eq("patient_id", p.id).order("created_at", { ascending: false });
+      const { data } = await supabase.from("emr_entries").select("*, doctors(first_name,last_name), vital_data").eq("patient_id", p.id).order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -51,7 +51,54 @@ export default function PatientMedicalRecords() {
                 <div className="bg-card border border-border rounded-xl p-5">
                   <h3 className="font-heading font-bold">{r.title}</h3>
                   <p className="text-xs text-muted-foreground capitalize">{r.entry_type} • {new Date(r.created_at).toLocaleDateString()} {r.doctors && `• Dr. ${r.doctors.first_name} ${r.doctors.last_name}`}</p>
-                  {r.content && <p className="text-sm text-muted-foreground mt-3">{r.content}</p>}
+                  {r.entry_type === "vitals" && r.vital_data ? (
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {r.vital_data.systolic && r.vital_data.diastolic && (
+                        <div className="text-sm">
+                          <p className="text-xs text-muted-foreground">BP</p>
+                          <p className="font-semibold">{r.vital_data.systolic}/{r.vital_data.diastolic}</p>
+                        </div>
+                      )}
+                      {r.vital_data.heart_rate && (
+                        <div className="text-sm">
+                          <p className="text-xs text-muted-foreground">HR</p>
+                          <p className="font-semibold">{r.vital_data.heart_rate} bpm</p>
+                        </div>
+                      )}
+                      {r.vital_data.temperature && (
+                        <div className="text-sm">
+                          <p className="text-xs text-muted-foreground">Temp</p>
+                          <p className="font-semibold">{r.vital_data.temperature}°C</p>
+                        </div>
+                      )}
+                      {r.vital_data.oxygen_saturation && (
+                        <div className="text-sm">
+                          <p className="text-xs text-muted-foreground">O₂ Sat</p>
+                          <p className="font-semibold">{r.vital_data.oxygen_saturation}%</p>
+                        </div>
+                      )}
+                      {r.vital_data.respiratory_rate && (
+                        <div className="text-sm">
+                          <p className="text-xs text-muted-foreground">RR</p>
+                          <p className="font-semibold">{r.vital_data.respiratory_rate} /min</p>
+                        </div>
+                      )}
+                      {r.vital_data.blood_glucose && (
+                        <div className="text-sm">
+                          <p className="text-xs text-muted-foreground">Glucose</p>
+                          <p className="font-semibold">{r.vital_data.blood_glucose} mg/dL</p>
+                        </div>
+                      )}
+                      {r.vital_data.weight && (
+                        <div className="text-sm">
+                          <p className="text-xs text-muted-foreground">Weight</p>
+                          <p className="font-semibold">{r.vital_data.weight} kg</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    r.content && <p className="text-sm text-muted-foreground mt-3">{r.content}</p>
+                  )}
                 </div>
               </div>
             );

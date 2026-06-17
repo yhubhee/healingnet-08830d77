@@ -27,6 +27,8 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
     toast.success(msg);
     qc.invalidateQueries({ queryKey: ["doctor", "appointments"] });
     qc.invalidateQueries({ queryKey: ["doctor", "dashboard"] });
+    qc.invalidateQueries({ queryKey: ["patient", "appointments"] });
+    qc.invalidateQueries({ queryKey: ["patient-appointments"] });
     onClose();
   }
 
