@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { Calendar, Clock, User, CheckCircle2, XCircle, Loader2, Play, MessageSquare, Video, ExternalLink } from "lucide-react";
 import { NewPrescriptionDialog } from "./NewPrescriptionDialog";
 import { OrderLabTestDialog } from "./OrderLabTestDialog";
+import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
+import { DoctorReferralDialog } from "./DoctorReferralDialog";
 
 export function AppointmentDetailDrawer({ appointment, onClose }: { appointment: any | null; onClose: () => void }) {
   const [note, setNote] = useState("");
@@ -79,6 +81,10 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
 
           <div className="text-xs">Current status: <span className="capitalize font-medium">{a.status}</span></div>
 
+          {["pending", "accepted", "confirmed"].includes(a.status) && (
+            <RescheduleAppointmentDialog appointment={a} trigger={<Button variant="outline" className="w-full">Reschedule Appointment</Button>} />
+          )}
+
           <Textarea placeholder="Add a note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
 
           <div className="space-y-2">
@@ -93,15 +99,17 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
                 <Button disabled={saving} onClick={startCall} className="w-full"><Video className="w-4 h-4" />Join video call</Button>
                 <Textarea placeholder="Add consultation summary..." value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
                 <Button disabled={saving || !note.trim()} onClick={completeCall} className="w-full bg-success text-success-foreground hover:bg-success/90"><CheckCircle2 className="w-4 h-4" />Complete consultation</Button>
+                <DoctorReferralDialog patientId={a.patient_id} trigger={<Button variant="outline" className="w-full">Refer to another doctor</Button>} />
                 <Button disabled={saving} variant="outline" className="w-full" onClick={() => update({ status: "cancelled" }, "Cancelled")}>Cancel appointment</Button>
               </>
             )}
             {a.status === "accepted" && !isTelemedicine && (
               <>
                 <Button disabled={saving} onClick={() => update({ status: "completed" }, "Completed")} className="w-full"><Play className="w-4 h-4" />Complete consultation</Button>
-                <div className="grid grid-cols-2 gap-2">
-                  <NewPrescriptionDialog patientId={a.patient_id} trigger={<Button variant="outline">+ Rx</Button>} />
-                  <OrderLabTestDialog patientId={a.patient_id} trigger={<Button variant="outline">+ Lab</Button>} />
+                <div className="grid grid-cols-3 gap-2">
+                  <NewPrescriptionDialog patientId={a.patient_id} trigger={<Button variant="outline" size="sm">+ Rx</Button>} />
+                  <OrderLabTestDialog patientId={a.patient_id} trigger={<Button variant="outline" size="sm">+ Lab</Button>} />
+                  <DoctorReferralDialog patientId={a.patient_id} trigger={<Button variant="outline" size="sm">Refer</Button>} />
                 </div>
                 <Button disabled={saving} variant="outline" className="w-full" onClick={() => update({ status: "cancelled" }, "Cancelled")}>Cancel appointment</Button>
               </>

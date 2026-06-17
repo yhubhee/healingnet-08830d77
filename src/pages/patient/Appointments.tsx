@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Loader2, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
+import { Button } from "@/components/ui/button";
 
 const tabs = ["upcoming", "past", "cancelled"] as const;
 
@@ -148,6 +150,14 @@ export default function PatientAppointments() {
                         <Video className="w-3 h-3" />
                         {["pending", "accepted", "confirmed"].includes(a.status) ? "Join Consultation" : "View Recording"}
                       </a>
+                    </div>
+                  )}
+                  {["pending", "accepted", "confirmed"].includes(a.status) && (
+                    <div className="mt-3 flex gap-2">
+                      <RescheduleAppointmentDialog
+                        appointment={a}
+                        trigger={<Button variant="outline" size="sm">Reschedule</Button>}
+                      />
                     </div>
                   )}
                 </div>
