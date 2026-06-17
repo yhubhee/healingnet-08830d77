@@ -35,7 +35,7 @@ export function useDoctorBadges(doctorId?: string, userId?: string) {
   return useQuery({
     enabled: !!doctorId,
     queryKey: ["doctor", "badges", doctorId],
-    refetchInterval: 30000,
+    refetchInterval: 10000,
     queryFn: async () => {
       const [appts, cons, msgs] = await Promise.all([
         supabase.from("patient_appointments").select("id", { count: "exact", head: true }).eq("doctor_id", doctorId!).eq("status", "pending"),
