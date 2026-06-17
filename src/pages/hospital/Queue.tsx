@@ -104,7 +104,7 @@ export default function HospitalQueue() {
                     <td className="p-4 font-heading font-bold text-muted-foreground">{q.queue_number || "—"}</td>
                     <td className="p-4">
                       <div className="font-medium">{q.patients?.first_name} {q.patients?.last_name}</div>
-                      <div className="text-xs text-muted-foreground">{getAge(q.patients?.date_of_birth)}y • {q.patients?.gender || "—"}</div>
+                      <div className="text-xs text-muted-foreground">{getAge(q.patients?.date_of_birth)}y • {q.patients?.gender || "—"} • {q.patients?.id || "—"}</div>
                     </td>
                     <td className="p-4 text-sm">{q.department || "—"}</td>
                     <td className="p-4 text-sm">{q.doctors ? `Dr. ${q.doctors.first_name} ${q.doctors.last_name}` : "—"}</td>

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Calendar, Clock, Loader2, Search } from "lucide-react";
 import { useDoctor } from "@/hooks/useDoctor";
 import { AppointmentDetailDrawer } from "@/components/doctor/AppointmentDetailDrawer";
+import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
 import { Input } from "@/components/ui/input";
 
 const statuses = ["all", "pending", "accepted", "completed", "cancelled"] as const;
@@ -77,22 +78,27 @@ export default function DoctorAppointments() {
         list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Calendar className="w-10 h-10 mx-auto mb-2" />No {filter === "all" ? "" : filter} appointments.</div> :
         <div className="space-y-3">
           {list.map((a: any) => (
-            <button key={a.id} onClick={() => setActive(a)} className="w-full text-left bg-card border border-border rounded-xl p-5 flex items-start gap-4 flex-wrap hover:border-primary/40 transition-colors">
-              <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Clock className="w-5 h-5" /></div>
-              <div className="flex-1 min-w-[200px]">
+            <div key={a.id} className="w-full bg-card border border-border rounded-xl p-5 flex items-start gap-4 flex-wrap hover:border-primary/40 transition-colors">
+              <button onClick={() => setActive(a)} className="flex-1 min-w-[200px] text-left">
+                <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-2"><Clock className="w-5 h-5" /></div>
                 <h3 className="font-heading font-bold">{a.patients ? `${a.patients.first_name} ${a.patients.last_name}` : "Patient"}</h3>
                 {a.reason && <p className="text-sm text-muted-foreground">{a.reason}</p>}
                 <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(a.requested_date).toDateString()}</span>
                   {a.requested_time && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{a.requested_time}</span>}
                 </div>
+              </button>
+              <div className="flex flex-col gap-2 shrink-0">
+                <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium capitalize",
+                  a.status === "pending" ? "bg-warning/15 text-warning" :
+                  a.status === "accepted" ? "bg-success/15 text-success" :
+                  a.status === "cancelled" ? "bg-destructive/15 text-destructive" :
+                  "bg-muted text-muted-foreground")}>{a.status}</span>
+                {["pending", "accepted", "confirmed"].includes(a.status) && (
+                  <RescheduleAppointmentDialog appointment={a} />
+                )}
               </div>
-              <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium capitalize",
-                a.status === "pending" ? "bg-warning/15 text-warning" :
-                a.status === "accepted" ? "bg-success/15 text-success" :
-                a.status === "cancelled" ? "bg-destructive/15 text-destructive" :
-                "bg-muted text-muted-foreground")}>{a.status}</span>
-            </button>
+            </div>
           ))}
         </div>}
 
