@@ -24,13 +24,36 @@ export default function DoctorDashboard() {
 
   useEffect(() => {
     if (!doc?.id) return;
-    const channel = supabase
-      .channel(`realtime-checkins-${doc.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "patient_checkins" }, () => {
-        qc.invalidateQueries({ queryKey: ["doctor", "checkins", doc.id] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    const channels = [
+      supabase
+        .channel(`realtime-checkins-${doc.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "patient_checkins" }, () => {
+          qc.invalidateQueries({ queryKey: ["doctor", "checkins", doc.id] });
+        })
+        .subscribe(),
+      supabase
+        .channel(`realtime-appointments-${doc.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "patient_appointments" }, () => {
+          qc.invalidateQueries({ queryKey: ["doctor", "dashboard", doc.id] });
+        })
+        .subscribe(),
+      supabase
+        .channel(`realtime-consultations-${doc.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "consultation_requests" }, () => {
+          qc.invalidateQueries({ queryKey: ["doctor", "dashboard", doc.id] });
+          qc.invalidateQueries({ queryKey: ["doctor", "badges", doc.id] });
+        })
+        .subscribe(),
+      supabase
+        .channel(`realtime-messages-${doc.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "patient_messages" }, () => {
+          qc.invalidateQueries({ queryKey: ["doctor", "badges", doc.id] });
+        })
+        .subscribe(),
+    ];
+
+    return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
   }, [doc?.id, qc]);
 
   const { data: dash, isLoading } = useQuery({
@@ -87,9 +110,9 @@ export default function DoctorDashboard() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {cards.map((c) => (
-          <div key={c.label} className="bg-card border border-border rounded-xl p-5">
-            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3", c.color)}><c.icon className="w-5 h-5" /></div>
+        {cards.map((c, i) => (
+          <div key={c.label} className="bg-card border border-border rounded-xl p-5 animate-fade-in transition-transform hover:scale-105 hover:shadow-lg" style={{ animationDelay: `${i * 100}ms` }}>
+            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform", c.color)}><c.icon className="w-5 h-5" /></div>
             <div className="text-2xl font-heading font-bold">{c.value}</div>
             <div className="text-xs text-muted-foreground">{c.label}</div>
           </div>
@@ -97,15 +120,15 @@ export default function DoctorDashboard() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-5">
-        <div className="bg-card border border-border rounded-xl p-5 lg:col-span-2">
+        <div className="bg-card border border-border rounded-xl p-5 lg:col-span-2 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "100ms" }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-heading font-bold flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" />Today's Schedule</h3>
             <Link to="/doctor/appointments" className="text-sm text-primary">View all</Link>
           </div>
           {!dash?.today?.length ? <p className="text-sm text-muted-foreground py-6 text-center">No appointments today.</p> :
             <div className="space-y-2">
-              {dash.today.map((a: any) => (
-                <button key={a.id} onClick={() => setActive(a)} className="w-full text-left flex items-center gap-3 p-3 rounded-lg hover:bg-muted/20">
+              {dash.today.map((a: any, i) => (
+                <button key={a.id} onClick={() => setActive(a)} className="w-full text-left flex items-center gap-3 p-3 rounded-lg hover:bg-muted/20 transition-colors animate-fade-in" style={{ animationDelay: `${200 + i * 50}ms` }}>
                   <div className="w-12 text-center text-sm font-bold">{a.requested_time?.slice(0, 5) || "—"}</div>
                   <div className="flex-1">
                     <div className="font-medium text-sm">{a.patients ? `${a.patients.first_name} ${a.patients.last_name}` : "Patient"}</div>
@@ -117,15 +140,15 @@ export default function DoctorDashboard() {
             </div>}
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="bg-card border border-border rounded-xl p-5 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "200ms" }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-heading font-bold flex items-center gap-2"><Clock className="w-4 h-4 text-success" />Queue</h3>
             <span className="text-xs bg-success/15 text-success px-2 py-1 rounded-full font-semibold">{checkins.length}</span>
           </div>
           {!checkins?.length ? <p className="text-sm text-muted-foreground py-6 text-center">No patients checked in.</p> :
             <div className="space-y-2">
-              {checkins.slice(0, 5).map((c: any) => (
-                <div key={c.id} className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg justify-between">
+              {checkins.slice(0, 5).map((c: any, i) => (
+                <div key={c.id} className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg justify-between transition-all hover:bg-muted/50 animate-fade-in" style={{ animationDelay: `${250 + i * 50}ms` }}>
                   <div className="flex items-center gap-2 flex-1">
                     <div className="w-8 h-8 rounded-full bg-success/20 text-success flex items-center justify-center text-xs font-bold">#{c.queue_number}</div>
                     <div className="flex-1 min-w-0">
@@ -154,15 +177,15 @@ export default function DoctorDashboard() {
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-5 mt-5">
+      <div className="bg-card border border-border rounded-xl p-5 mt-5 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "300ms" }}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-heading font-bold flex items-center gap-2"><MessageSquare className="w-4 h-4 text-warning" />Consult Requests</h3>
           <Link to="/doctor/consultations" className="text-sm text-primary">View all</Link>
         </div>
         {!dash?.pending?.length ? <p className="text-sm text-muted-foreground py-6 text-center">No pending requests.</p> :
           <div className="space-y-3">
-            {dash.pending.slice(0, 3).map((c: any) => (
-              <Link to="/doctor/consultations" key={c.id} className="block border-b border-border last:border-0 pb-3 last:pb-0">
+            {dash.pending.slice(0, 3).map((c: any, i) => (
+              <Link to="/doctor/consultations" key={c.id} className="block border-b border-border last:border-0 pb-3 last:pb-0 transition-colors hover:text-primary animate-fade-in" style={{ animationDelay: `${350 + i * 50}ms` }}>
                 <div className="font-medium text-sm">{c.patients ? `${c.patients.first_name} ${c.patients.last_name}` : "Patient"}</div>
                 <div className="text-xs text-muted-foreground italic mt-1">"{c.reason}"</div>
               </Link>
