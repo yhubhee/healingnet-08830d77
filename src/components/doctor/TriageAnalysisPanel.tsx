@@ -35,16 +35,15 @@ export function TriageAnalysisPanel({ triageSession, loading = false }: Props) {
   const session = triageSession as any;
   const triageResp = session.recommended_hospitals;
 
-  // Map urgency/triage_level to display label
+  // Map database urgency back to display labels
   const URGENCY_LABELS: Record<string, { label: string; color: string }> = {
-    self_care: { label: "Self-care", color: "bg-success/10 text-success border-success/30" },
-    consultation: { label: "See a GP soon", color: "bg-info/10 text-info border-info/30" },
-    consultation_24: { label: "See a GP within 24h", color: "bg-warning/10 text-warning border-warning/30" },
-    emergency_ambulance: { label: "Call ambulance", color: "bg-destructive/10 text-destructive border-destructive/30" },
+    routine: { label: "Self-care", color: "bg-success/10 text-success border-success/30" },
+    soon: { label: "See a doctor soon", color: "bg-info/10 text-info border-info/30" },
+    urgent: { label: "Urgent - See doctor within 24h", color: "bg-warning/10 text-warning border-warning/30" },
     emergency: { label: "Emergency", color: "bg-destructive/10 text-destructive border-destructive/30" },
   };
 
-  const urgencyStyle = URGENCY_LABELS[session.urgency] || URGENCY_LABELS.consultation;
+  const urgencyStyle = URGENCY_LABELS[session.urgency] || URGENCY_LABELS.soon;
 
   return (
     <div className="space-y-4">
@@ -94,23 +93,6 @@ export function TriageAnalysisPanel({ triageSession, loading = false }: Props) {
           {typeof session.symptoms === "string" ? session.symptoms : session.symptoms?.[session.symptoms.length - 1] || "—"}
         </p>
       </div>
-
-      {/* Q&A Session */}
-      {session.recommended_hospitals?.interview_history && session.recommended_hospitals.interview_history.length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-4">
-          <h4 className="font-heading font-bold text-sm mb-3 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-primary" /> Q&A Session
-          </h4>
-          <div className="space-y-3 text-sm">
-            {session.recommended_hospitals.interview_history.map((q: any, i: number) => (
-              <div key={i} className="pb-3 border-b border-border last:border-0">
-                <div className="font-medium text-muted-foreground mb-1">Q: {q.question || "—"}</div>
-                <div className="text-foreground">A: {q.answer || "—"}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Differential Diagnosis */}
       {triageResp?.differential && triageResp.differential.length > 0 && (
