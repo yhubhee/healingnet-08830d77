@@ -1,10 +1,11 @@
-import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Loader2, SkipForward } from "lucide-react";
 
 interface Props {
   freeText: string;
   onFreeTextChange: (text: string) => void;
   onContinue: () => void;
   onBack: () => void;
+  onSkip: () => void;
   loading?: boolean;
 }
 
@@ -13,14 +14,28 @@ export function TriageStep2SymptomsStep({
   onFreeTextChange,
   onContinue,
   onBack,
+  onSkip,
   loading = false,
 }: Props) {
   return (
     <div className="bg-card border border-border rounded-xl p-6">
-      <h2 className="font-heading font-bold mb-1">Step 2 of 8 — Tell us what's wrong</h2>
-      <p className="text-sm text-muted-foreground mb-4">
-        In your own words. Mention what you feel, when it started, anything that makes it worse or better.
-      </p>
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h2 className="font-heading font-bold mb-1">Step 2 of 8 — Tell us what's wrong</h2>
+          <p className="text-sm text-muted-foreground">
+            In your own words. Mention what you feel, when it started, anything that makes it worse or better.
+          </p>
+        </div>
+        <button
+          onClick={onSkip}
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:border-muted-foreground transition-colors"
+          title="Skip the AI triage and manually select a doctor"
+        >
+          <SkipForward className="w-3 h-3" />
+          Skip
+        </button>
+      </div>
+
       <textarea
         value={freeText}
         onChange={(e) => onFreeTextChange(e.target.value)}

@@ -15,16 +15,25 @@ import { TriageStep6VisitTypeStep } from "@/components/triage/TriageStep6VisitTy
 import { TriageStep7HospitalSelectionStep } from "@/components/triage/TriageStep7HospitalSelectionStep";
 import { TriageStep8ConfirmationStep } from "@/components/triage/TriageStep8ConfirmationStep";
 import { TriageStep7_5DateTimeStep } from "@/components/triage/TriageStep7_5DateTimeStep";
+import { SkipTriageModal } from "@/components/triage/SkipTriageModal";
 
 type Sex = "male" | "female";
 interface Evidence { id: string; name: string; present: boolean }
-interface Question { id: string; text: string; explanation?: string }
+interface Question {
+  id: string;
+  text: string;
+  explanation?: string;
+  type?: "boolean" | "multiple_choice" | "scale" | "duration" | "open_text";
+  options?: string[] | [string, string];
+  unit?: string;
+}
 interface Condition { name: string; probability: number; description?: string }
 interface NurseResponse {
   new_evidence?: Evidence[];
   next_question?: Question;
   should_stop: boolean;
   differential: Condition[];
+  severity_score?: number;
   triage_level: string;
   triage_label: string;
   recommended_specialty: string;
@@ -44,6 +53,7 @@ export default function PatientTriage() {
 
   const [freeText, setFreeText] = useState("");
   const [parsing, setParsing] = useState(false);
+  const [skipTriageOpen, setSkipTriageOpen] = useState(false);
 
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [askedIds, setAskedIds] = useState<string[]>([]);
@@ -132,14 +142,23 @@ export default function PatientTriage() {
     }
   }
 
-  async function answer(value: "yes" | "no" | "unknown") {
+  async function answer(value: string | number) {
     if (!currentQ) return;
     setAnswering(true);
     let nextEvidence = evidence;
-    if (value !== "unknown") {
-      nextEvidence = [...evidence, { id: currentQ.id, name: currentQ.text, present: value === "yes" }];
+
+    // Convert answer to evidence based on question type
+    if (currentQ.type === "boolean") {
+      if (value !== "unknown") {
+        nextEvidence = [...evidence, { id: currentQ.id, name: currentQ.text, present: value === "yes" }];
+        setEvidence(nextEvidence);
+      }
+    } else {
+      // For other question types, store the answer value as evidence
+      nextEvidence = [...evidence, { id: currentQ.id, name: `${currentQ.text}: ${value}`, present: true }];
       setEvidence(nextEvidence);
     }
+
     const forceStop = askedIds.length >= MAX_QUESTIONS;
     const r = await callNurse({
       stage: "next", age, sex, evidence: nextEvidence, asked_ids: askedIds,
@@ -210,7 +229,7 @@ export default function PatientTriage() {
           patient_id: patient.id,
           symptoms: evidence.map((e) => `${e.name}:${e.present ? "yes" : "no"}`).concat(freeText ? [freeText] : []),
           severity_self: 0,
-          severity_score: Math.round(((r.differential[0]?.probability || 0.3) * 10)),
+          severity_score: r.severity_score || Math.round(((r.differential[0]?.probability || 0.3) * 10)),
           recommended_specialty: r.recommended_specialty,
           urgency: r.triage_level,
           recommended_hospitals: r as any,
@@ -230,7 +249,6 @@ export default function PatientTriage() {
     setLatestResp(null);
     setHospitals([]);
     setFallbackNotice(null);
-    // Reset selection states
     setSelectedDoctorId(null);
     setSelectedDoctor(null);
     setSelectedVisitType(null);
@@ -239,6 +257,25 @@ export default function PatientTriage() {
   }
 
   function handleContinueToDoctorSelection() {
+    setStep(5);
+  }
+
+  function handleSkip() {
+    setSkipTriageOpen(true);
+  }
+
+  function handleConfirmSkip() {
+    setSkipTriageOpen(false);
+    // Set default response with General Practice specialty
+    const defaultResp: NurseResponse = {
+      should_stop: true,
+      differential: [],
+      triage_level: "consultation",
+      triage_label: "See a doctor",
+      recommended_specialty: "General Practice",
+      guidance: "Please select a doctor for your consultation.",
+    };
+    setLatestResp(defaultResp);
     setStep(5);
   }
 
@@ -383,6 +420,7 @@ export default function PatientTriage() {
             onFreeTextChange={setFreeText}
             onContinue={startInterview}
             onBack={() => setStep(1)}
+            onSkip={handleSkip}
             loading={parsing}
           />
         )}
@@ -471,6 +509,13 @@ export default function PatientTriage() {
             onBack={handleBackFromStep8}
           />
         )}
+
+        {/* Skip Triage Modal */}
+        <SkipTriageModal
+          open={skipTriageOpen}
+          onClose={() => setSkipTriageOpen(false)}
+          onConfirm={handleConfirmSkip}
+        />
       </div>
     </PatientLayout>
   );

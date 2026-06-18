@@ -1,18 +1,24 @@
 import { CheckCircle2, HelpCircle, Loader2, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { TriageQuestionMultipleChoice } from "./TriageQuestionMultipleChoice";
+import { TriageQuestionScale } from "./TriageQuestionScale";
+import { TriageQuestionDuration } from "./TriageQuestionDuration";
 
 interface Question {
   id: string;
   text: string;
   explanation?: string;
+  type?: "boolean" | "multiple_choice" | "scale" | "duration" | "open_text";
+  options?: string[] | [string, string];
+  unit?: string;
 }
 
 interface Props {
   question: Question;
   askedCount: number;
   maxQuestions: number;
-  onAnswer: (value: "yes" | "no" | "unknown") => void;
+  onAnswer: (value: string | number) => void;
   loading?: boolean;
 }
 
@@ -51,6 +57,46 @@ function AnswerBtn({
 }
 
 export function TriageStep3InterviewStep({ question, askedCount, maxQuestions, onAnswer, loading = false }: Props) {
+  const questionType = question.type || "boolean";
+
+  // Dispatch to appropriate question component based on type
+  if (questionType === "multiple_choice") {
+    return (
+      <TriageQuestionMultipleChoice
+        question={question}
+        askedCount={askedCount}
+        maxQuestions={maxQuestions}
+        onAnswer={(v) => onAnswer(v)}
+        loading={loading}
+      />
+    );
+  }
+
+  if (questionType === "scale") {
+    return (
+      <TriageQuestionScale
+        question={question}
+        askedCount={askedCount}
+        maxQuestions={maxQuestions}
+        onAnswer={(v) => onAnswer(v)}
+        loading={loading}
+      />
+    );
+  }
+
+  if (questionType === "duration") {
+    return (
+      <TriageQuestionDuration
+        question={question}
+        askedCount={askedCount}
+        maxQuestions={maxQuestions}
+        onAnswer={(v) => onAnswer(v)}
+        loading={loading}
+      />
+    );
+  }
+
+  // Default: Boolean (yes/no) questions
   const progress = Math.min(100, Math.round((askedCount / maxQuestions) * 100));
 
   return (
