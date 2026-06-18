@@ -225,13 +225,23 @@ export default function PatientTriage() {
       // Save session
       const { data: { user } } = await supabase.auth.getUser();
       if (user && patient) {
+        // Map triage_level from LLM to database urgency values
+        const triageLevelMap: Record<string, string> = {
+          "self_care": "routine",
+          "consultation": "soon",
+          "consultation_24": "soon",
+          "emergency_ambulance": "emergency",
+          "emergency": "emergency",
+        };
+        const dbUrgency = triageLevelMap[r.triage_level] || "soon";
+
         await supabase.from("triage_sessions").insert({
           patient_id: patient.id,
           symptoms: evidence.map((e) => `${e.name}:${e.present ? "yes" : "no"}`).concat(freeText ? [freeText] : []),
           severity_self: 0,
           severity_score: r.severity_score || Math.round(((r.differential[0]?.probability || 0.3) * 10)),
           recommended_specialty: r.recommended_specialty,
-          urgency: r.triage_level,
+          urgency: dbUrgency,
           recommended_hospitals: r as any,
           lat: c?.lat ?? null, lng: c?.lng ?? null,
         } as any);
