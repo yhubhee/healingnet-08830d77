@@ -3,13 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User, Award, Inbox } from "lucide-react";
+import { Loader2, ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User, Award, Inbox, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NewPrescriptionDialog } from "@/components/doctor/NewPrescriptionDialog";
 import { OrderLabTestDialog } from "@/components/doctor/OrderLabTestDialog";
 import { AddEmrNoteDialog } from "@/components/doctor/AddEmrNoteDialog";
 import { IssueLetterDialog, LETTER_TYPES } from "@/components/doctor/IssueLetterDialog";
+import { TriageAnalysisPanel } from "@/components/doctor/TriageAnalysisPanel";
 import { useState } from "react";
 
 export default function DoctorPatientDetail() {
@@ -20,14 +21,15 @@ export default function DoctorPatientDetail() {
     enabled: !!id,
     queryKey: ["doctor", "patient-detail", id],
     queryFn: async () => {
-      const [patient, appts, rx, labs, emr] = await Promise.all([
+      const [patient, appts, rx, labs, emr, triage] = await Promise.all([
         supabase.from("patients").select("*").eq("id", id!).maybeSingle(),
         supabase.from("patient_appointments").select("*").eq("patient_id", id!).order("requested_date", { ascending: false }),
         supabase.from("prescriptions").select("*").eq("patient_id", id!).order("created_at", { ascending: false }),
         supabase.from("lab_results").select("*").eq("patient_id", id!).order("created_at", { ascending: false }),
         supabase.from("emr_entries").select("*").eq("patient_id", id!).order("created_at", { ascending: false }),
+        supabase.from("triage_sessions").select("*").eq("patient_id", id!).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
-      return { patient: patient.data, appts: appts.data || [], rx: rx.data || [], labs: labs.data || [], emr: emr.data || [] };
+      return { patient: patient.data, appts: appts.data || [], rx: rx.data || [], labs: labs.data || [], emr: emr.data || [], triage: triage.data };
     },
   });
 
@@ -102,6 +104,7 @@ export default function DoctorPatientDetail() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview"><User className="w-4 h-4 mr-1" />Overview</TabsTrigger>
+          <TabsTrigger value="triage"><Stethoscope className="w-4 h-4 mr-1" />Triage</TabsTrigger>
           <TabsTrigger value="history"><Calendar className="w-4 h-4 mr-1" />History</TabsTrigger>
           <TabsTrigger value="emr"><FileText className="w-4 h-4 mr-1" />EMR</TabsTrigger>
           <TabsTrigger value="rx"><Pill className="w-4 h-4 mr-1" />Prescriptions</TabsTrigger>
@@ -118,6 +121,10 @@ export default function DoctorPatientDetail() {
           <InfoCard title="Insurance">
             <Row label="Provider" value={p.insurance_provider} /><Row label="Policy #" value={p.insurance_policy_number} />
           </InfoCard>
+        </TabsContent>
+
+        <TabsContent value="triage" className="mt-4">
+          <TriageAnalysisPanel triageSession={data?.triage} />
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">
