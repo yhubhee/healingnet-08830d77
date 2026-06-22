@@ -63,6 +63,9 @@ export default function Signup() {
       setLoading(false);
       navigate(signUp.session ? "/hospital" : "/login");
     } else if (role === "doctor") {
+      // Wait for user to be created in auth.users
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const { error: docErr } = await supabase
         .from("doctors")
         .insert({
