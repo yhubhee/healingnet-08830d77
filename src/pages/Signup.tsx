@@ -29,16 +29,31 @@ export default function Signup() {
     e.preventDefault();
     if (!role) return;
     setLoading(true);
+
+    const emailRedirectTo = window.location.origin;
+    console.log("=== SIGNUP START ===");
+    console.log("Role:", role);
+    console.log("Email:", email);
+    console.log("Email redirect URL:", emailRedirectTo);
+
     const { data: signUp, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo,
         data: { first_name: firstName, last_name: lastName, role, specialty },
       },
     });
+
+    console.log("=== AUTH SIGNUP RESPONSE ===");
+    console.log("Error:", error);
+    console.log("SignUp.user:", signUp.user);
+    console.log("SignUp.session:", signUp.session);
+    console.log("Email confirmed:", signUp.user?.email_confirmed_at);
+
     if (error || !signUp.user) {
       setLoading(false);
+      console.error("Signup failed:", error?.message);
       return toast({ title: "Signup failed", description: error?.message || "Try again", variant: "destructive" });
     }
 
@@ -63,8 +78,10 @@ export default function Signup() {
       setLoading(false);
       navigate(signUp.session ? "/hospital" : "/login");
     } else if (role === "doctor") {
+      console.log("=== DOCTOR SIGNUP ===");
       console.log("Doctor signup - signUp.user:", signUp.user);
       console.log("Doctor signup - signUp.user.id:", signUp.user?.id);
+      console.log("Has session (auto-verified):", !!signUp.session);
 
       // Wait for auth user to replicate
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -91,7 +108,16 @@ export default function Signup() {
         return toast({ title: "Doctor profile creation failed", description: docErr.message || "Try again", variant: "destructive" });
       }
 
-      toast({ title: "Doctor account created!", description: signUp.session ? "Welcome to HealingNet." : "Check your email to verify, then sign in." });
+      console.log("✓ Doctor profile created successfully");
+
+      if (signUp.session) {
+        console.log("✓ Auto-verified - user logged in immediately");
+        toast({ title: "Doctor account created!", description: "Welcome to HealingNet." });
+      } else {
+        console.log("⚠ Email verification required - check inbox for confirmation email");
+        toast({ title: "Doctor account created!", description: "Check your email to verify, then sign in." });
+      }
+
       setLoading(false);
       navigate(signUp.session ? "/doctor" : "/login");
     } else {
