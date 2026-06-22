@@ -63,9 +63,22 @@ export default function Signup() {
       setLoading(false);
       navigate(signUp.session ? "/hospital" : "/login");
     } else if (role === "doctor") {
-      toast({ title: "Doctor account created!", description: "Welcome to HealingNet." });
+      const { data: docData, error: docErr } = await supabase.functions.invoke("create-doctor", {
+        body: {
+          user_id: signUp.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          specialty,
+        },
+      });
+      if (docErr || (docData as any)?.error) {
+        setLoading(false);
+        return toast({ title: "Doctor profile creation failed", description: docErr?.message || (docData as any)?.error || "Try again", variant: "destructive" });
+      }
+      toast({ title: "Doctor account created!", description: signUp.session ? "Welcome to HealingNet." : "Check your email to verify, then sign in." });
       setLoading(false);
-      navigate("/doctor");
+      navigate(signUp.session ? "/doctor" : "/login");
     } else {
       toast({ title: "Account created!", description: "Welcome to HealingNet." });
       setLoading(false);
