@@ -24,21 +24,30 @@ export function AssignDoctorDialog() {
 
   // Fetch all doctors from the system (not just assigned ones)
   const loadDoctors = async () => {
-    const { data } = await supabase
+    console.log("Loading doctors...");
+    const { data, error } = await supabase
       .from("doctors")
       .select("*")
       .order("first_name");
+    console.log("Doctors fetched:", data, "Error:", error);
     setAllDoctors(data || []);
   };
 
   const filtered = useMemo(() => {
-    if (!search) return allDoctors;
-    return allDoctors.filter(
+    console.log("All doctors:", allDoctors);
+    console.log("Search term:", search);
+    if (!search) {
+      console.log("No search, returning all:", allDoctors);
+      return allDoctors;
+    }
+    const result = allDoctors.filter(
       (d) =>
         d.first_name.toLowerCase().includes(search.toLowerCase()) ||
         d.last_name.toLowerCase().includes(search.toLowerCase()) ||
         d.specialty?.toLowerCase().includes(search.toLowerCase())
     );
+    console.log("Filtered result:", result);
+    return result;
   }, [search, allDoctors]);
 
   const selectedDoctor = f.doctor_id ? allDoctors.find((d) => d.id === f.doctor_id) : null;
