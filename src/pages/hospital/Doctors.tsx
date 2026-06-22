@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useHospitalDoctors } from "@/hooks/useHospitalData";
 import { AssignDoctorDialog } from "@/components/hospital/dialogs/AssignDoctorDialog";
+import { EditDoctorDialog } from "@/components/hospital/dialogs/EditDoctorDialog";
+import { RemoveDoctorDialog } from "@/components/hospital/dialogs/RemoveDoctorDialog";
 
 const typeColors: Record<string, string> = {
   full_time: "bg-primary/15 text-primary",
@@ -18,6 +20,9 @@ const filterMap: Record<string, string> = { "Full-time": "full_time", Visiting: 
 export default function HospitalDoctors() {
   const { data: hospitalDoctors = [], isLoading } = useHospitalDoctors();
   const [activeFilter, setActiveFilter] = useState("All");
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [removeOpen, setRemoveOpen] = useState(false);
 
   const filtered = activeFilter === "All"
     ? hospitalDoctors
@@ -67,12 +72,19 @@ export default function HospitalDoctors() {
                 <span className={cn("w-2.5 h-2.5 rounded-full ml-auto", d.doctors?.is_available ? "bg-success shadow-[0_0_6px] shadow-success" : "bg-muted-foreground")} />
               </div>
               <div className="flex gap-2 pt-4 border-t border-border">
-                <Button variant="outline" size="sm" className="flex-1">Edit</Button>
-                <Button variant="ghost" size="sm" className="flex-1 text-destructive hover:text-destructive">Remove</Button>
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => { setSelectedDoctor(d); setEditOpen(true); }}>Edit</Button>
+                <Button variant="ghost" size="sm" className="flex-1 text-destructive hover:text-destructive" onClick={() => { setSelectedDoctor(d); setRemoveOpen(true); }}>Remove</Button>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {selectedDoctor && (
+        <>
+          <EditDoctorDialog doctor={selectedDoctor} open={editOpen} onOpenChange={setEditOpen} />
+          <RemoveDoctorDialog doctor={selectedDoctor} open={removeOpen} onOpenChange={setRemoveOpen} />
+        </>
       )}
     </HospitalLayout>
   );
