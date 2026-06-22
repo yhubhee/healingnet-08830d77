@@ -8,7 +8,7 @@ const supabase = createClient(
 interface EmailPayload {
   hospitalId: string;
   doctorName: string;
-  action: "added" | "removed" | "updated";
+  action: "added" | "removed" | "updated" | "invited";
   details?: string;
   adminEmail: string;
   doctorEmail?: string;
@@ -31,6 +31,50 @@ Deno.serve(async (req) => {
       .eq("id", hospitalId)
       .single();
 
+    if (action === "invited") {
+      // Send invitation to doctor
+      const invitationLink = `${Deno.env.get("PUBLIC_URL")}/doctor/invitations`;
+      const { error } = await supabase.auth.admin.sendRawEmail({
+        email: doctorEmail!,
+        subject: `Invitation: Join ${hospital?.name || "HealingNet"}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px;">
+            <h2 style="color: #4CAF50;">You've Been Invited!</h2>
+            <p>Hello Dr. ${doctorName},</p>
+            <p>
+              ${hospital?.name || "A hospital"} has invited you to join their medical team.
+              <strong>This invitation requires your acceptance.</strong>
+            </p>
+            <p style="margin: 30px 0;">
+              <a href="${invitationLink}" style="
+                display: inline-block;
+                background-color: #4CAF50;
+                color: white;
+                padding: 12px 30px;
+                text-decoration: none;
+                border-radius: 4px;
+                font-weight: bold;
+              ">
+                View & Respond to Invitation
+              </a>
+            </p>
+            <p style="color: #666; font-size: 12px;">
+              Sent from HealingNet Doctor Management System
+            </p>
+          </div>
+        `,
+      });
+
+      if (error) console.error("Invitation email error:", error);
+      return new Response(
+        JSON.stringify({ success: true, message: "Invitation sent" }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
     // Notify hospital admin
     const adminSubject =
       action === "added"
@@ -46,8 +90,6 @@ Deno.serve(async (req) => {
           ? `Dr. ${doctorName} has been removed from ${hospital?.name || "your hospital"}.`
           : `Dr. ${doctorName}'s information has been updated at ${hospital?.name || "your hospital"}.\n\nChanges: ${details}`;
 
-    // Send email via Supabase Auth email service
-    // Note: This uses Supabase's built-in email service. For production, consider using Resend, SendGrid, etc.
     const { error: adminEmailError } = await supabase.auth.admin.sendRawEmail({
       email: adminEmail,
       subject: adminSubject,
@@ -64,39 +106,6 @@ Deno.serve(async (req) => {
 
     if (adminEmailError) {
       console.error("Admin email error:", adminEmailError);
-    }
-
-    // Notify doctor if email provided and action is add/update
-    if (doctorEmail && (action === "added" || action === "updated")) {
-      const doctorSubject =
-        action === "added"
-          ? `Welcome to ${hospital?.name || "HealingNet"}!`
-          : `Your Information Updated at ${hospital?.name || "HealingNet"}`;
-
-      const doctorMessage =
-        action === "added"
-          ? `You have been assigned to ${hospital?.name || "our hospital"}. Log in to HealingNet to view your assignment details.`
-          : `Your information at ${hospital?.name || "our hospital"} has been updated. Please log in to verify the changes.`;
-
-      const { error: doctorEmailError } = await supabase.auth.admin.sendRawEmail(
-        {
-          email: doctorEmail,
-          subject: doctorSubject,
-          html: `
-            <div style="font-family: Arial, sans-serif; color: #333;">
-              <h2 style="color: #4CAF50;">${doctorSubject}</h2>
-              <p>${doctorMessage}</p>
-              <p style="color: #666; font-size: 12px;">
-                Sent from HealingNet Doctor Management System
-              </p>
-            </div>
-          `,
-        }
-      );
-
-      if (doctorEmailError) {
-        console.error("Doctor email error:", doctorEmailError);
-      }
     }
 
     return new Response(
