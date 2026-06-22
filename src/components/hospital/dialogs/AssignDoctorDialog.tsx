@@ -53,7 +53,7 @@ export function AssignDoctorDialog() {
   const selectedDoctor = f.doctor_id ? allDoctors.find((d) => d.id === f.doctor_id) : null;
 
   return (
-    <FormDialog title="Invite Doctor" triggerLabel="Add Doctor" onOpen={() => loadDoctors()}>
+    <FormDialog title="Invite Doctor" triggerLabel="Add Doctor" onOpenChange={(open) => open && loadDoctors()}>
       {(close) => (
         <form
           onSubmit={async (e) => {

@@ -10,13 +10,20 @@ interface Props {
   trigger?: ReactNode;
   children: (close: () => void) => ReactNode;
   size?: "md" | "lg" | "xl";
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function FormDialog({ title, triggerLabel = "Add", triggerIcon, trigger, children, size = "lg" }: Props) {
+export function FormDialog({ title, triggerLabel = "Add", triggerIcon, trigger, children, size = "lg", onOpenChange }: Props) {
   const [open, setOpen] = useState(false);
   const sizeClass = size === "xl" ? "max-w-2xl" : size === "lg" ? "max-w-lg" : "max-w-md";
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    onOpenChange?.(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || <Button>{triggerIcon || <Plus className="w-4 h-4 mr-2" />}{triggerLabel}</Button>}
       </DialogTrigger>
