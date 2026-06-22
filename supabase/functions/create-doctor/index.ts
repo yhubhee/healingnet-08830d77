@@ -1,27 +1,33 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-);
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 Deno.serve(async (req) => {
-  if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const { user_id, first_name, last_name, email, specialty } = await req.json();
 
+    if (!user_id || !first_name || !last_name || !email) {
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     // Create doctor profile
-    const { data, error } = await supabase
+    const { data, error } = await admin
       .from("doctors")
       .insert({
         user_id,
         first_name,
         last_name,
         email,
-        specialty,
+        specialty: specialty || "General Practice",
         is_available: true,
       })
       .select()
@@ -35,8 +41,8 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ success: true, data }),
       {
-        headers: { "Content-Type": "application/json" },
         status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   } catch (error) {
@@ -47,9 +53,10 @@ Deno.serve(async (req) => {
         error: error instanceof Error ? error.message : "Failed to create doctor profile",
       }),
       {
-        headers: { "Content-Type": "application/json" },
         status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
 });
+
