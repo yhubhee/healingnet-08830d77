@@ -63,23 +63,34 @@ export default function Signup() {
       setLoading(false);
       navigate(signUp.session ? "/hospital" : "/login");
     } else if (role === "doctor") {
-      // Wait for user to be created in auth.users
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log("Doctor signup - signUp.user:", signUp.user);
+      console.log("Doctor signup - signUp.user.id:", signUp.user?.id);
+
+      // Wait for auth user to replicate
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create doctor profile with explicit null check
+      const doctorData = {
+        user_id: signUp.user.id || null,
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        specialty: specialty || "General Practice",
+        is_available: true,
+      };
+
+      console.log("Inserting doctor with data:", doctorData);
 
       const { error: docErr } = await supabase
         .from("doctors")
-        .insert({
-          user_id: signUp.user.id,
-          first_name: firstName,
-          last_name: lastName,
-          email,
-          specialty: specialty || "General Practice",
-          is_available: true,
-        });
+        .insert(doctorData);
+
       if (docErr) {
+        console.error("Doctor insert error:", docErr);
         setLoading(false);
         return toast({ title: "Doctor profile creation failed", description: docErr.message || "Try again", variant: "destructive" });
       }
+
       toast({ title: "Doctor account created!", description: signUp.session ? "Welcome to HealingNet." : "Check your email to verify, then sign in." });
       setLoading(false);
       navigate(signUp.session ? "/doctor" : "/login");
