@@ -18,7 +18,7 @@ export function AssignDoctorDialog() {
     <FormDialog title="Assign Doctor" triggerLabel="Add Doctor">
       {(close) => (
         <form onSubmit={async (e) => { e.preventDefault();
-          await handleSubmit(supabase.from("hospital_doctors").insert({ ...f, hospital_id: hospitalId }), { toast, close, qc, invalidate: ["hospital-doctors"] });
+          await handleSubmit(supabase.from("hospital_doctors").insert({ ...f, hospital_id: hospitalId, is_active: true }), { toast, close, qc, invalidate: ["hospital-doctors"] });
         }} className="space-y-3">
           <div><Label>Doctor</Label>
             <Select value={f.doctor_id} onValueChange={(v) => setF({ ...f, doctor_id: v })}>
