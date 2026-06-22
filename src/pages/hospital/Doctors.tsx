@@ -61,9 +61,16 @@ export default function HospitalDoctors() {
                   <h3 className="font-heading font-bold">Dr. {d.doctors?.first_name} {d.doctors?.last_name}</h3>
                   <p className="text-sm text-muted-foreground">{d.doctors?.specialty || "—"}</p>
                 </div>
-                <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider", typeColors[d.employment_type] || "bg-muted text-muted-foreground")}>
-                  {typeLabels[d.employment_type] || d.employment_type}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider", typeColors[d.employment_type] || "bg-muted text-muted-foreground")}>
+                    {typeLabels[d.employment_type] || d.employment_type}
+                  </span>
+                  <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider",
+                    d.status === "pending" ? "bg-yellow-100 text-yellow-700" : d.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  )}>
+                    {d.status || "active"}
+                  </span>
+                </div>
               </div>
               <div className="flex flex-wrap gap-3 mb-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1"><Award className="h-3.5 w-3.5" />{d.doctors?.years_experience || 0} yrs</span>
