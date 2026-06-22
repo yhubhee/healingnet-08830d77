@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Calendar, Users, Pill, FlaskConical, MessageSquare, User, LogOut, Heart, Settings, Mail } from "lucide-react";
+import { LayoutDashboard, Calendar, Users, Pill, FlaskConical, MessageSquare, User, LogOut, Heart, Settings, Mail, Bell, FileText } from "lucide-react";
 import { signOut } from "@/hooks/useAuth";
 import { useDoctor, useDoctorBadges } from "@/hooks/useDoctor";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,8 @@ export function DoctorSidebar() {
     { label: "Prescriptions", path: "/doctor/prescriptions", icon: Pill },
     { label: "Lab Orders", path: "/doctor/lab-orders", icon: FlaskConical },
     { label: "Consultations", path: "/doctor/consultations", icon: MessageSquare, badge: badges?.consultations },
+    { label: "Invitations", path: "/doctor/invitations", icon: FileText },
+    { label: "Notifications", path: "/doctor/notifications", icon: Bell },
     { label: "Messages", path: "/doctor/messages", icon: Mail, badge: badges?.messages },
     { label: "Profile", path: "/doctor/profile", icon: User },
     { label: "Settings", path: "/doctor/settings", icon: Settings },
