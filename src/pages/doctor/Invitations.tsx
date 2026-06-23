@@ -59,7 +59,7 @@ export default function DoctorInvitations() {
     }
   }
 
-  async function handleAccept(invitationId: string, hospitalId: string) {
+  async function handleAccept(invitationId: string) {
     try {
       console.log("Accepting invitation:", invitationId);
       const { error } = await supabase
@@ -73,37 +73,11 @@ export default function DoctorInvitations() {
       }
 
       console.log("Invitation accepted successfully");
-      const { data: hospital } = await supabase
-        .from("hospitals")
-        .select("name")
-        .eq("id", hospitalId)
-        .single();
-
-      const { data: admin } = await supabase
-        .from("hospital_staff")
-        .select("email")
-        .eq("hospital_id", hospitalId)
-        .eq("role", "admin")
-        .limit(1)
-        .single();
-
-      fetch(new URL("/functions/v1/send-doctor-notification", import.meta.env.VITE_SUPABASE_URL).toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          hospitalId,
-          doctorName: "A doctor",
-          action: "added",
-          adminEmail: admin?.email || "",
-          details: `Dr. accepted assignment at ${hospital?.name}`,
-        }),
-      }).catch(() => {});
-
-      toast.success("Invitation accepted!");
+      toast({ title: "Invitation accepted!" });
       loadInvitations();
     } catch (err: any) {
       console.error("handleAccept error:", err);
-      toast.error("Failed to accept invitation");
+      toast({ title: "Failed to accept invitation", variant: "destructive" });
     }
   }
 
@@ -121,11 +95,11 @@ export default function DoctorInvitations() {
       }
 
       console.log("Invitation declined successfully");
-      toast.success("Invitation declined");
+      toast({ title: "Invitation declined" });
       loadInvitations();
     } catch (err: any) {
       console.error("handleDecline error:", err);
-      toast.error("Failed to decline invitation");
+      toast({ title: "Failed to decline invitation", variant: "destructive" });
     }
   }
 
@@ -205,7 +179,7 @@ export default function DoctorInvitations() {
                     </Button>
                     <Button
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => handleAccept(inv.id, inv.hospital_id)}
+                      onClick={() => handleAccept(inv.id)}
                     >
                       Accept
                     </Button>

@@ -59,7 +59,7 @@ export function AssignDoctorDialog() {
           onSubmit={async (e) => {
             e.preventDefault();
             if (!f.doctor_id) {
-              toast.error("Please select a doctor");
+              toast({ title: "Please select a doctor", variant: "destructive" });
               return;
             }
             const doctorData = allDoctors.find((d) => d.id === f.doctor_id);
