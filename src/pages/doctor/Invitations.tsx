@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DoctorLayout } from "@/layouts/DoctorLayout";
 
 export default function DoctorInvitations() {
   const [invitations, setInvitations] = useState<any[]>([]);
@@ -60,13 +61,18 @@ export default function DoctorInvitations() {
 
   async function handleAccept(invitationId: string, hospitalId: string) {
     try {
+      console.log("Accepting invitation:", invitationId);
       const { error } = await supabase
         .from("hospital_doctors")
         .update({ status: "active" })
         .eq("id", invitationId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Update error:", error);
+        throw error;
+      }
 
+      console.log("Invitation accepted successfully");
       const { data: hospital } = await supabase
         .from("hospitals")
         .select("name")
@@ -96,30 +102,40 @@ export default function DoctorInvitations() {
       toast.success("Invitation accepted!");
       loadInvitations();
     } catch (err: any) {
+      console.error("handleAccept error:", err);
       toast.error("Failed to accept invitation");
     }
   }
 
   async function handleDecline(invitationId: string) {
     try {
+      console.log("Declining invitation:", invitationId);
       const { error } = await supabase
         .from("hospital_doctors")
         .update({ status: "declined" })
         .eq("id", invitationId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Update error:", error);
+        throw error;
+      }
+
+      console.log("Invitation declined successfully");
       toast.success("Invitation declined");
       loadInvitations();
     } catch (err: any) {
+      console.error("handleDecline error:", err);
       toast.error("Failed to decline invitation");
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading invitations...</p>
-      </div>
+      <DoctorLayout>
+        <div className="flex items-center justify-center p-12">
+          <p className="text-muted-foreground">Loading invitations...</p>
+        </div>
+      </DoctorLayout>
     );
   }
 
@@ -128,8 +144,8 @@ export default function DoctorInvitations() {
   const declined = invitations.filter((i) => i.status === "declined");
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <DoctorLayout>
+      <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Hospital Invitations</h1>
           <p className="text-muted-foreground">
@@ -140,20 +156,20 @@ export default function DoctorInvitations() {
         {pending.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Clock className="h-5 w-5 text-yellow-500" />
+              <Clock className="h-5 w-5 text-yellow-600" />
               Pending Invitations ({pending.length})
             </h2>
             {pending.map((inv) => (
-              <Card key={inv.id} className="border-yellow-200 bg-yellow-50">
+              <Card key={inv.id} className="border-yellow-300 bg-yellow-100">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle>{inv.hospitals.name}</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="text-slate-900">{inv.hospitals.name}</CardTitle>
+                      <CardDescription className="text-slate-700">
                         {inv.hospitals.city} • {inv.hospitals.phone}
                       </CardDescription>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full">
+                    <span className="text-xs font-semibold px-2 py-1 bg-yellow-200 text-yellow-900 rounded-full">
                       Awaiting Response
                     </span>
                   </div>
@@ -161,34 +177,34 @@ export default function DoctorInvitations() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Employment</p>
-                      <p className="font-medium capitalize">
+                      <p className="text-slate-700 font-medium">Employment</p>
+                      <p className="font-semibold text-slate-900 capitalize">
                         {inv.employment_type.replace("_", " ")}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Department</p>
-                      <p className="font-medium">{inv.department || "—"}</p>
+                      <p className="text-slate-700 font-medium">Department</p>
+                      <p className="font-semibold text-slate-900">{inv.department || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Salary</p>
-                      <p className="font-medium">₦{inv.salary?.toLocaleString() || "—"}</p>
+                      <p className="text-slate-700 font-medium">Salary</p>
+                      <p className="font-semibold text-slate-900">₦{inv.salary?.toLocaleString() || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Commission</p>
-                      <p className="font-medium">{inv.commission_rate || 0}%</p>
+                      <p className="text-slate-700 font-medium">Commission</p>
+                      <p className="font-semibold text-slate-900">{inv.commission_rate || 0}%</p>
                     </div>
                   </div>
                   <div className="flex gap-2 pt-4">
                     <Button
                       variant="outline"
-                      className="flex-1"
+                      className="flex-1 border-slate-300 text-slate-900 hover:bg-slate-100"
                       onClick={() => handleDecline(inv.id)}
                     >
                       Decline
                     </Button>
                     <Button
-                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                       onClick={() => handleAccept(inv.id, inv.hospital_id)}
                     >
                       Accept
@@ -203,20 +219,20 @@ export default function DoctorInvitations() {
         {accepted.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-green-600" />
               Accepted ({accepted.length})
             </h2>
             {accepted.map((inv) => (
-              <Card key={inv.id} className="border-green-200 bg-green-50">
+              <Card key={inv.id} className="border-green-300 bg-green-100">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle>{inv.hospitals.name}</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="text-slate-900">{inv.hospitals.name}</CardTitle>
+                      <CardDescription className="text-slate-700">
                         {inv.hospitals.city} • {inv.hospitals.phone}
                       </CardDescription>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                    <span className="text-xs font-semibold px-2 py-1 bg-green-200 text-green-900 rounded-full">
                       Active
                     </span>
                   </div>
@@ -224,22 +240,22 @@ export default function DoctorInvitations() {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Employment</p>
-                      <p className="font-medium capitalize">
+                      <p className="text-slate-700 font-medium">Employment</p>
+                      <p className="font-semibold text-slate-900 capitalize">
                         {inv.employment_type.replace("_", " ")}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Department</p>
-                      <p className="font-medium">{inv.department || "—"}</p>
+                      <p className="text-slate-700 font-medium">Department</p>
+                      <p className="font-semibold text-slate-900">{inv.department || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Salary</p>
-                      <p className="font-medium">₦{inv.salary?.toLocaleString() || "—"}</p>
+                      <p className="text-slate-700 font-medium">Salary</p>
+                      <p className="font-semibold text-slate-900">₦{inv.salary?.toLocaleString() || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Commission</p>
-                      <p className="font-medium">{inv.commission_rate || 0}%</p>
+                      <p className="text-slate-700 font-medium">Commission</p>
+                      <p className="font-semibold text-slate-900">{inv.commission_rate || 0}%</p>
                     </div>
                   </div>
                 </CardContent>
@@ -251,20 +267,20 @@ export default function DoctorInvitations() {
         {declined.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-500" />
+              <XCircle className="h-5 w-5 text-red-600" />
               Declined ({declined.length})
             </h2>
             {declined.map((inv) => (
-              <Card key={inv.id} className="border-red-200 bg-red-50 opacity-75">
+              <Card key={inv.id} className="border-red-300 bg-red-100">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle>{inv.hospitals.name}</CardTitle>
-                      <CardDescription>
+                      <CardTitle className="text-slate-900">{inv.hospitals.name}</CardTitle>
+                      <CardDescription className="text-slate-700">
                         {inv.hospitals.city} • {inv.hospitals.phone}
                       </CardDescription>
                     </div>
-                    <span className="text-xs font-semibold px-2 py-1 bg-red-100 text-red-700 rounded-full">
+                    <span className="text-xs font-semibold px-2 py-1 bg-red-200 text-red-900 rounded-full">
                       Declined
                     </span>
                   </div>
@@ -285,6 +301,6 @@ export default function DoctorInvitations() {
           </Card>
         )}
       </div>
-    </div>
+    </DoctorLayout>
   );
 }
