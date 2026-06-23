@@ -62,6 +62,15 @@ export default function DoctorInvitations() {
   async function handleAccept(invitationId: string) {
     try {
       console.log("Accepting invitation:", invitationId);
+
+      // Verify the current status before update
+      const { data: before } = await supabase
+        .from("hospital_doctors")
+        .select("status")
+        .eq("id", invitationId)
+        .single();
+      console.log("Status BEFORE update:", before?.status);
+
       const { error } = await supabase
         .from("hospital_doctors")
         .update({ status: "active" })
@@ -72,10 +81,18 @@ export default function DoctorInvitations() {
         throw error;
       }
 
+      // Verify the status changed after update
+      const { data: after } = await supabase
+        .from("hospital_doctors")
+        .select("status")
+        .eq("id", invitationId)
+        .single();
+      console.log("Status AFTER update:", after?.status);
+
       console.log("Invitation accepted successfully, reloading...");
       toast({ title: "Invitation accepted!" });
       await loadInvitations();
-      console.log("Invitations reloaded:", invitations);
+      console.log("Invitations reloaded, total count:", invitations.length);
     } catch (err: any) {
       console.error("handleAccept error:", err);
       toast({ title: "Failed to accept invitation", variant: "destructive" });
@@ -85,6 +102,14 @@ export default function DoctorInvitations() {
   async function handleDecline(invitationId: string) {
     try {
       console.log("Declining invitation:", invitationId);
+
+      const { data: before } = await supabase
+        .from("hospital_doctors")
+        .select("status")
+        .eq("id", invitationId)
+        .single();
+      console.log("Status BEFORE update:", before?.status);
+
       const { error } = await supabase
         .from("hospital_doctors")
         .update({ status: "declined" })
@@ -95,10 +120,17 @@ export default function DoctorInvitations() {
         throw error;
       }
 
+      const { data: after } = await supabase
+        .from("hospital_doctors")
+        .select("status")
+        .eq("id", invitationId)
+        .single();
+      console.log("Status AFTER update:", after?.status);
+
       console.log("Invitation declined successfully, reloading...");
       toast({ title: "Invitation declined" });
       await loadInvitations();
-      console.log("Invitations reloaded:", invitations);
+      console.log("Invitations reloaded, total count:", invitations.length);
     } catch (err: any) {
       console.error("handleDecline error:", err);
       toast({ title: "Failed to decline invitation", variant: "destructive" });
