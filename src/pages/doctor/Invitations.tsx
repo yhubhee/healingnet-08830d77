@@ -30,7 +30,7 @@ export default function DoctorInvitations() {
         .single();
 
       if (!doctor) {
-        toast.error("Doctor profile not found");
+        toast({ title: "Doctor profile not found", variant: "destructive" });
         return;
       }
 
@@ -52,7 +52,7 @@ export default function DoctorInvitations() {
 
       setInvitations(data || []);
     } catch (err: any) {
-      toast.error("Failed to load invitations");
+      toast({ title: "Failed to load invitations", variant: "destructive" });
       console.error(err);
     } finally {
       setLoading(false);
@@ -72,9 +72,10 @@ export default function DoctorInvitations() {
         throw error;
       }
 
-      console.log("Invitation accepted successfully");
+      console.log("Invitation accepted successfully, reloading...");
       toast({ title: "Invitation accepted!" });
-      loadInvitations();
+      await loadInvitations();
+      console.log("Invitations reloaded:", invitations);
     } catch (err: any) {
       console.error("handleAccept error:", err);
       toast({ title: "Failed to accept invitation", variant: "destructive" });
@@ -94,9 +95,10 @@ export default function DoctorInvitations() {
         throw error;
       }
 
-      console.log("Invitation declined successfully");
+      console.log("Invitation declined successfully, reloading...");
       toast({ title: "Invitation declined" });
-      loadInvitations();
+      await loadInvitations();
+      console.log("Invitations reloaded:", invitations);
     } catch (err: any) {
       console.error("handleDecline error:", err);
       toast({ title: "Failed to decline invitation", variant: "destructive" });
@@ -171,8 +173,7 @@ export default function DoctorInvitations() {
                   </div>
                   <div className="flex gap-2 pt-4">
                     <Button
-                      variant="outline"
-                      className="flex-1 border-slate-300 text-slate-900 hover:bg-slate-100"
+                      className="flex-1 bg-slate-700 hover:bg-slate-800 text-white"
                       onClick={() => handleDecline(inv.id)}
                     >
                       Decline
