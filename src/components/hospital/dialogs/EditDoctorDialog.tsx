@@ -39,7 +39,8 @@ export function EditDoctorDialog({ doctor, open, onOpenChange }: Props) {
         .eq("id", doctor.id);
 
       if (error) throw error;
-      toast.success("Doctor updated successfully");
+
+      toast({ title: "Doctor updated successfully" });
       qc.invalidateQueries({ queryKey: ["hospital-doctors"] });
 
       const details = [];
@@ -58,26 +59,27 @@ export function EditDoctorDialog({ doctor, open, onOpenChange }: Props) {
           .select("email")
           .eq("hospital_id", doctor.hospital_id)
           .eq("role", "admin")
-          .limit(1)
-          .single();
+          .limit(1);
 
-        fetch(new URL("/functions/v1/send-doctor-notification", import.meta.env.VITE_SUPABASE_URL).toString(), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            hospitalId: doctor.hospital_id,
-            doctorName: `${doctor.doctors?.first_name} ${doctor.doctors?.last_name}`,
-            action: "updated",
-            details: details.join("; "),
-            adminEmail: admin?.email || "",
-            doctorEmail: doctor.doctors?.email,
-          }),
-        }).catch(() => {});
+        if (admin && admin.length > 0) {
+          fetch(new URL("/functions/v1/send-doctor-notification", import.meta.env.VITE_SUPABASE_URL).toString(), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              hospitalId: doctor.hospital_id,
+              doctorName: `${doctor.doctors?.first_name} ${doctor.doctors?.last_name}`,
+              action: "updated",
+              details: details.join("; "),
+              adminEmail: admin[0]?.email || "",
+              doctorEmail: doctor.doctors?.email,
+            }),
+          }).catch(() => {});
+        }
       }
 
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to update doctor");
+      toast({ title: "Failed to update doctor", description: err.message, variant: "destructive" });
     }
   }
 

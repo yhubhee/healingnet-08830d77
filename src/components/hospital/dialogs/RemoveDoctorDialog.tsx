@@ -21,7 +21,8 @@ export function RemoveDoctorDialog({ doctor, open, onOpenChange }: Props) {
         .eq("id", doctor.id);
 
       if (error) throw error;
-      toast.success("Doctor removed successfully");
+
+      toast({ title: "Doctor removed successfully" });
       qc.invalidateQueries({ queryKey: ["hospital-doctors"] });
 
       const { data: admin } = await supabase
@@ -29,23 +30,24 @@ export function RemoveDoctorDialog({ doctor, open, onOpenChange }: Props) {
         .select("email")
         .eq("hospital_id", doctor.hospital_id)
         .eq("role", "admin")
-        .limit(1)
-        .single();
+        .limit(1);
 
-      fetch(new URL("/functions/v1/send-doctor-notification", import.meta.env.VITE_SUPABASE_URL).toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          hospitalId: doctor.hospital_id,
-          doctorName: `${doctor.doctors?.first_name} ${doctor.doctors?.last_name}`,
-          action: "removed",
-          adminEmail: admin?.email || "",
-        }),
-      }).catch(() => {});
+      if (admin && admin.length > 0) {
+        fetch(new URL("/functions/v1/send-doctor-notification", import.meta.env.VITE_SUPABASE_URL).toString(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            hospitalId: doctor.hospital_id,
+            doctorName: `${doctor.doctors?.first_name} ${doctor.doctors?.last_name}`,
+            action: "removed",
+            adminEmail: admin[0]?.email || "",
+          }),
+        }).catch(() => {});
+      }
 
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to remove doctor");
+      toast({ title: "Failed to remove doctor", description: err.message, variant: "destructive" });
     }
   }
 
