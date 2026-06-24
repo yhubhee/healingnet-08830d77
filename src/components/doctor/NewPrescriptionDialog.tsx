@@ -29,6 +29,7 @@ export function NewPrescriptionDialog({ trigger, patientId: lockedPatientId }: {
     if (!form.drug_name) return toast.error("Drug name required");
     if (!hospitalId) return toast.error("You're not linked to any hospital yet");
     setSaving(true);
+    console.log("📝 Creating prescription:", { patient_id: patientId, doctor_id: ctx!.doctor.id, hospital_id: hospitalId });
     const { error } = await supabase.from("prescriptions").insert({
       patient_id: patientId, doctor_id: ctx!.doctor.id, hospital_id: hospitalId,
       drug_name: form.drug_name, dosage: form.dosage, frequency: form.frequency,
@@ -36,7 +37,11 @@ export function NewPrescriptionDialog({ trigger, patientId: lockedPatientId }: {
       status: "active",
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      console.error("❌ Prescription creation error:", error);
+      return toast.error(error.message);
+    }
+    console.log("✅ Prescription created successfully");
     toast.success("Prescription issued");
     qc.invalidateQueries({ queryKey: ["doctor", "prescriptions"] });
     qc.invalidateQueries({ queryKey: ["doctor", "patient-detail"] });

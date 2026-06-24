@@ -22,7 +22,10 @@ export default function DoctorPrescriptions() {
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "prescriptions", ctx?.doctor?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("prescriptions").select("*, patients(first_name,last_name)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
+      console.log("🔍 DoctorPrescriptions: Doctor ID:", ctx?.doctor?.id);
+      const { data, error } = await supabase.from("prescriptions").select("*, patients(first_name,last_name)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
+      console.log("🔍 Doctor prescriptions query:", { count: data?.length, error, doctor_id: ctx?.doctor?.id });
+      if (error) console.error("❌ Doctor prescriptions error:", error);
       return data || [];
     },
   });
