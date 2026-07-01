@@ -375,6 +375,7 @@ export type Database = {
           structured_data: Json | null
           title: string
           updated_at: string
+          vital_data: Json | null
         }
         Insert: {
           attachments?: Json | null
@@ -390,6 +391,7 @@ export type Database = {
           structured_data?: Json | null
           title: string
           updated_at?: string
+          vital_data?: Json | null
         }
         Update: {
           attachments?: Json | null
@@ -405,6 +407,7 @@ export type Database = {
           structured_data?: Json | null
           title?: string
           updated_at?: string
+          vital_data?: Json | null
         }
         Relationships: [
           {
@@ -603,6 +606,7 @@ export type Database = {
           is_active: boolean | null
           notes: string | null
           salary: number | null
+          status: string | null
           updated_at: string
         }
         Insert: {
@@ -618,6 +622,7 @@ export type Database = {
           is_active?: boolean | null
           notes?: string | null
           salary?: number | null
+          status?: string | null
           updated_at?: string
         }
         Update: {
@@ -633,6 +638,7 @@ export type Database = {
           is_active?: boolean | null
           notes?: string | null
           salary?: number | null
+          status?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1764,7 +1770,29 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_prescriptions_doctor"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_prescriptions_hospital"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_prescriptions_patient"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       surgery_records: {
         Row: {
