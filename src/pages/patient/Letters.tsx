@@ -5,7 +5,7 @@ import { usePatientProfile } from "@/hooks/usePatientData";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, FileText, Plane, Baby, BedDouble, FileSignature, Syringe, Inbox, Plus } from "lucide-react";
+import { Download, FileText, Plane, Baby, BedDouble, FileSignature, Syringe, Inbox, Plus, FlaskConical } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { RequestLetterDialog } from "@/components/patient/RequestLetterDialog";
@@ -16,6 +16,7 @@ const TYPE_META: Record<string, { label: string; Icon: any }> = {
   sick_leave: { label: "Sick Leave Letter", Icon: BedDouble },
   excuse_of_duty: { label: "Excuse of Duty Letter", Icon: FileSignature },
   vaccination_record: { label: "Vaccination Record", Icon: Syringe },
+  lab_report: { label: "Laboratory Report", Icon: FlaskConical },
 };
 
 const STATUS_VARIANT: Record<string, string> = {
