@@ -1,78 +1,220 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PatientPicker } from "./PatientPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useDoctor, useDoctorPatients } from "@/hooks/useDoctor";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, FlaskConical, X, Plus } from "lucide-react";
+import { Loader2, FlaskConical, X, Plus, Search, ChevronDown } from "lucide-react";
+import { LAB_CATALOG, LAB_BUNDLES, LAB_CATEGORIES, findCatalogTest, type LabCategory } from "@/lib/lab/catalog";
+import { cn } from "@/lib/utils";
 
 export function OrderLabTestDialog({ trigger, patientId: lockedPatientId }: { trigger: React.ReactNode; patientId?: string }) {
   const [open, setOpen] = useState(false);
   const { data: ctx } = useDoctor();
   const { data: patients = [] } = useDoctorPatients(ctx?.doctor?.id);
   const [patientId, setPatientId] = useState<string | null>(lockedPatientId || null);
-  const [tests, setTests] = useState<string[]>([""]);
-  const [category, setCategory] = useState("Haematology");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [customs, setCustoms] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [openCats, setOpenCats] = useState<Record<string, boolean>>({ Hematology: true });
   const qc = useQueryClient();
 
   useEffect(() => { if (lockedPatientId) setPatientId(lockedPatientId); }, [lockedPatientId]);
   const hospitalId = ctx?.hospitals?.[0]?.id;
 
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return LAB_CATALOG;
+    return LAB_CATALOG.filter((t) =>
+      t.name.toLowerCase().includes(q) ||
+      t.category.toLowerCase().includes(q) ||
+      t.parameters.some((p) => p.name.toLowerCase().includes(q)),
+    );
+  }, [search]);
+
+  const grouped = useMemo(() => {
+    const map: Record<string, typeof LAB_CATALOG> = {};
+    LAB_CATEGORIES.forEach((c) => (map[c] = []));
+    filtered.forEach((t) => { (map[t.category] ||= []).push(t); });
+    return map;
+  }, [filtered]);
+
+  function toggleTest(id: string) {
+    setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
+  }
+  function applyBundle(ids: string[]) {
+    setSelected((s) => Array.from(new Set([...s, ...ids])));
+  }
+  function updateCustom(i: number, v: string) {
+    setCustoms((c) => c.map((x, j) => j === i ? v : x));
+  }
+
   async function submit() {
     if (!patientId) return toast.error("Choose a patient");
-    const clean = tests.map((t) => t.trim()).filter(Boolean);
-    if (!clean.length) return toast.error("Add at least one test");
+    const cleanCustoms = customs.map((c) => c.trim()).filter(Boolean);
+    if (!selected.length && !cleanCustoms.length) return toast.error("Select at least one test");
     if (!hospitalId) return toast.error("You're not linked to any hospital yet");
     setSaving(true);
     const { data: lr, error } = await supabase.from("lab_results").insert({
       patient_id: patientId, hospital_id: hospitalId, ordered_by: ctx!.doctor.id, notes, status: "pending",
     }).select().single();
     if (error || !lr) { setSaving(false); return toast.error(error?.message || "Failed"); }
-    const { error: tErr } = await supabase.from("lab_result_tests").insert(clean.map((t) => ({ lab_result_id: lr.id, test_name: t, category_name: category })));
+
+    const rows: any[] = [];
+    selected.forEach((id) => {
+      const t = findCatalogTest(id);
+      if (!t) return;
+      rows.push({
+        lab_result_id: lr.id,
+        test_name: t.name,
+        category_name: t.category,
+        catalog_test_id: t.id,
+        is_custom: false,
+      });
+    });
+    cleanCustoms.forEach((name) => {
+      rows.push({
+        lab_result_id: lr.id,
+        test_name: name,
+        category_name: "Custom",
+        catalog_test_id: null,
+        is_custom: true,
+      });
+    });
+    const { error: tErr } = await supabase.from("lab_result_tests").insert(rows);
     setSaving(false);
     if (tErr) return toast.error(tErr.message);
-    toast.success("Lab order created");
+    toast.success(`Lab order created (${rows.length} test${rows.length > 1 ? "s" : ""})`);
     qc.invalidateQueries({ queryKey: ["doctor", "labs"] });
     qc.invalidateQueries({ queryKey: ["doctor", "patient-detail"] });
+    qc.invalidateQueries({ queryKey: ["lab-results"] });
     setOpen(false);
-    setTests([""]); setNotes("");
+    setSelected([]); setCustoms([]); setNotes(""); setSearch("");
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="flex items-center gap-2"><FlaskConical className="w-4 h-4 text-warning" />Order Lab Tests</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          {!lockedPatientId && (<div><Label>Patient</Label><PatientPicker patients={patients as any} value={patientId} onChange={setPatientId} /></div>)}
-          <div><Label>Category</Label>
-            <select className="w-full border border-input bg-background rounded-md h-10 px-3 text-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {["Haematology", "Chemistry", "Microbiology", "Serology", "Urinalysis", "Imaging", "Histopathology", "Other"].map((c) => <option key={c}>{c}</option>)}
-            </select>
-          </div>
+        <div className="space-y-4">
+          {!lockedPatientId && (
+            <div><Label>Patient</Label><PatientPicker patients={patients as any} value={patientId} onChange={setPatientId} /></div>
+          )}
+
+          {/* Quick-pick bundles */}
           <div>
-            <Label>Tests</Label>
-            <div className="space-y-2">
-              {tests.map((t, i) => (
-                <div key={i} className="flex gap-2">
-                  <Input value={t} onChange={(e) => setTests(tests.map((x, j) => j === i ? e.target.value : x))} placeholder="e.g. FBC" />
-                  {tests.length > 1 && <Button variant="ghost" size="icon" onClick={() => setTests(tests.filter((_, j) => j !== i))}><X className="w-4 h-4" /></Button>}
-                </div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Quick bundles</Label>
+            <div className="flex gap-2 flex-wrap mt-1.5">
+              {LAB_BUNDLES.map((b) => (
+                <button key={b.id} type="button" onClick={() => applyBundle(b.testIds)}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition">
+                  + {b.name}
+                </button>
               ))}
-              <Button variant="outline" size="sm" onClick={() => setTests([...tests, ""])}><Plus className="w-4 h-4" />Add test</Button>
             </div>
           </div>
-          <div><Label>Clinical notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Reason for order" /></div>
-          <div className="flex justify-end gap-2 pt-2">
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search tests…" className="pl-9" />
+          </div>
+
+          {/* Selected chips */}
+          {(selected.length > 0 || customs.some(Boolean)) && (
+            <div className="border border-border rounded-lg p-3 bg-muted/30">
+              <div className="text-xs font-semibold text-muted-foreground mb-2">
+                Selected ({selected.length + customs.filter(Boolean).length})
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {selected.map((id) => {
+                  const t = findCatalogTest(id);
+                  if (!t) return null;
+                  return (
+                    <span key={id} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium">
+                      {t.name}
+                      <button type="button" onClick={() => toggleTest(id)}><X className="w-3 h-3" /></button>
+                    </span>
+                  );
+                })}
+                {customs.map((c, i) => c.trim() && (
+                  <span key={`c-${i}`} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-warning/15 text-warning text-xs font-medium">
+                    {c} <span className="opacity-60">(custom)</span>
+                    <button type="button" onClick={() => setCustoms(customs.filter((_, j) => j !== i))}><X className="w-3 h-3" /></button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Category list */}
+          <div className="space-y-1.5 border border-border rounded-lg divide-y divide-border">
+            {LAB_CATEGORIES.map((cat) => {
+              const items = grouped[cat] || [];
+              if (!items.length) return null;
+              const isOpen = openCats[cat] ?? !!search;
+              return (
+                <Collapsible key={cat} open={isOpen} onOpenChange={(o) => setOpenCats({ ...openCats, [cat]: o })}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2.5 hover:bg-muted/40 text-left">
+                    <span className="text-sm font-semibold">{cat} <span className="text-muted-foreground font-normal">({items.length})</span></span>
+                    <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition", isOpen && "rotate-180")} />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="px-3 pb-3 space-y-1">
+                    {items.map((t) => {
+                      const checked = selected.includes(t.id);
+                      return (
+                        <label key={t.id} className={cn("flex items-start gap-2.5 p-2 rounded-md cursor-pointer hover:bg-muted/40", checked && "bg-primary/5")}>
+                          <Checkbox checked={checked} onCheckedChange={() => toggleTest(t.id)} className="mt-0.5" />
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium">{t.name}</div>
+                            <div className="text-xs text-muted-foreground line-clamp-1">
+                              {t.parameters.slice(0, 4).map((p) => p.name).join(", ")}
+                              {t.parameters.length > 4 && ` +${t.parameters.length - 4} more`}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
+          </div>
+
+          {/* Custom tests */}
+          <div>
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">Other — specify test</Label>
+            <div className="space-y-2 mt-1.5">
+              {customs.map((c, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input value={c} onChange={(e) => updateCustom(i, e.target.value)} placeholder="e.g. HIV screening" />
+                  <Button variant="ghost" size="icon" onClick={() => setCustoms(customs.filter((_, j) => j !== i))}><X className="w-4 h-4" /></Button>
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={() => setCustoms([...customs, ""])}>
+                <Plus className="w-4 h-4" />Add custom test
+              </Button>
+            </div>
+          </div>
+
+          <div><Label>Clinical notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Reason for order, relevant history…" /></div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={submit} disabled={saving}>{saving && <Loader2 className="w-4 h-4 animate-spin" />}Send order</Button>
+            <Button onClick={submit} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Send order ({selected.length + customs.filter(Boolean).length})
+            </Button>
           </div>
         </div>
       </DialogContent>
