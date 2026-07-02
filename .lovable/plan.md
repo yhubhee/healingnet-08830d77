@@ -1,55 +1,92 @@
-# Redesign "Enter Lab Results" modal as a structured lab report
+# Lab Test Catalog + Connected Order/Result Flow
 
-## Overview
-Replace the current plain form in `EnterLabResultDialog` with a professional lab-report layout: branded header, test panel selector with preset parameters, auto-flagging results table, formatted interpretation, existing attachments box, and a "Save and generate report" action that also files the report into the patient's **My Letters & Reports** section.
+Note on login routing: the doctor-vs-hospital redirect bug was already patched in `src/pages/Login.tsx` (doctors are now matched via `get_user_doctor_id` before falling back to `hospital_staff`). If it's still happening, it's likely a stale session — sign out fully and sign back in. No further code change needed unless you can reproduce after a clean login (let me know and I'll dig deeper).
+
+---
+
+## 1. Test Catalog (data layer)
+
+New file `src/lib/lab/catalog.ts` exporting a strongly-typed catalog. No DB migration — keep it as a static config for now (fast, versionable, no extra queries).
+
+```ts
+type Param = {
+  name: string; unit?: string;
+  range?: string;                 // display text ("<200", "13.0–17.0")
+  low?: number; high?: number;    // numeric, for auto-flagging
+  ranges?: { male?: {...}, female?: {...} }; // sex-specific override
+};
+type CatalogTest = {
+  id: string;                     // "fbc", "lft", "tft", "mp", "widal"...
+  name: string;
+  category: "Hematology" | "Biochemistry" | "Lipids" | "Endocrine"
+          | "Infectious disease" | "Microbiology";
+  parameters: Param[];
+};
+type Bundle = { id: string; name: string; testIds: string[] };
+```
+
+Seed tests: **FBC, LFT, RFT, Lipid Profile, Fasting Blood Glucose, TFT, Malaria Parasite, Widal**. Hemoglobin inside FBC uses sex-specific ranges (M 13.0–17.0, F 12.0–15.5). Bundles include **Antenatal panel** (FBC + FBG + Widal + MP), **Executive check** (FBC + LFT + RFT + Lipid + FBG + TFT).
+
+The existing `src/lib/lab/panels.ts` becomes a thin wrapper that re-exports/derives from the catalog so current call sites keep working; `computeFlag` stays.
+
+## 2. Doctor's Order Screen
+
+Rebuild `src/components/doctor/OrderLabTestDialog.tsx`:
+
+- Search input filtering catalog by test name.
+- Collapsible sections per category (using existing `@/components/ui/collapsible`) with a checkbox per test.
+- Selected tests shown as chips at the top with remove buttons.
+- Quick-pick bundle buttons (chips) that toggle all tests in a bundle.
+- "Other — specify test" row with a free-text input; multiple custom rows supported.
+- Clinical notes textarea (kept).
+- On submit: insert one `lab_results` row (as today) and insert one `lab_result_tests` row per selected item:
+  - Catalog test → `test_name = catalog.name`, `category_name = catalog.category`, plus a new column `catalog_test_id` (see schema note).
+  - Custom test → `test_name = user input`, `category_name = "Custom"`, new column `is_custom = true`.
+
+**Schema addition** (single migration):
+- `lab_result_tests.catalog_test_id text NULL`
+- `lab_result_tests.is_custom boolean NOT NULL DEFAULT false`
+
+No policy changes; existing RLS already covers these rows.
+
+## 3. Hospital Result Entry (auto-populated)
+
+Edit `src/components/hospital/dialogs/EnterLabResultDialog.tsx`:
+
+- Remove the manual panel/preset selector.
+- On open, fetch `lab_result_tests` for the order and, for each row:
+  - If `catalog_test_id` is set → look it up in the catalog and render a labeled sub-table with all its parameters (name, unit, reference range pre-filled, empty result input).
+  - If `is_custom` → render one editable free-text row (parameter name, result, unit, reference range all editable).
+- Group parameter inputs under a heading per ordered test ("Full Blood Count", "Lipid Profile", "Custom: <name>").
+- Keep auto-flagging via `computeFlag` against catalog low/high (honoring sex-specific ranges based on the patient's `gender`).
+- Interpretation textarea + markdown-lite toolbar unchanged.
+
+**Persistence:** instead of one `lab_result_tests` row per ordered test, we expand into one row per parameter on save. To avoid clobbering the ordered rows, either:
+- store parameters as a JSON column, or
+- add `parent_test_id` self-reference on `lab_result_tests` and insert child rows per parameter.
+
+Plan: add `lab_result_tests.parameters jsonb NULL` (simpler, single write, easy to render in the report). The ordered row keeps its `test_name`/`catalog_test_id`; results live inside `parameters` as `[{name, result, unit, range, flag}]`.
+
+## 4. Report Generation
+
+Update the "Save and generate report" body builder in `EnterLabResultDialog.tsx`:
+
+- Iterate ordered tests. For each, output a section heading followed by a parameter table (Name • Result • Unit • Range • Flag).
+- Custom tests render the single row the user filled in.
+- Interpretation section appended at the bottom.
+- Insert one `patient_letters` row (`letter_type = "lab_report"`) as today — patient side already handles this via the earlier `TYPE_META` change.
 
 ## Files touched
-- **Edit** `src/components/hospital/dialogs/EnterLabResultDialog.tsx` — full UI rebuild + save-and-generate logic.
-- **New** `src/lib/lab/panels.ts` — lookup config for FBC, LFT, RFT, Lipid Profile panels (parameter, unit, reference range low/high or textual range). Structured so more panels can be added by dropping into the object.
-- **Edit** `src/pages/patient/Letters.tsx` — add a `lab_report` entry to `TYPE_META` (icon: `FlaskConical`) so lab reports render with the right label/icon in the patient view.
 
-No DB migration needed: the generated report is stored in existing `patient_letters` (`letter_type = "lab_report"`, `title = "Laboratory Report — LAB-XXXX"`, `body` = formatted text/HTML of header + table + interpretation, `hospital_id`, `doctor_id` from the order, `patient_id`, `status = "issued"`).
-
-## Modal structure (top → bottom)
-
-**1. Header band** (inside `DialogContent`, dark navy card matching dashboard tokens)
-- Left: hospital name (from `useHospitalData` current-hospital hook) + subtitle "Laboratory Report".
-- Right: small `FlaskConical` accent icon.
-- Two-column info grid below: **Patient**, **Lab ID** (`LAB-{order.id.slice(0,4).toUpperCase()}`), **Ordering doctor** (`Dr. …` or "—"), **Report date** (today, read-only, formatted).
-
-**2. Test panel selector**
-- shadcn `Select` labeled "Test panel" with options: Full Blood Count (FBC), Liver Function Test (LFT), Renal Function Test (RFT), Lipid Profile, plus "Custom / Ordered tests" (the default — keeps whatever `order.lab_result_tests` already contains).
-- Selecting a preset replaces the results table rows with that panel's parameters (with blank `result_value`). A confirm step warns before overwriting entered values.
-
-**3. Results table** (replaces the current test cards)
-- Columns: **Parameter**, **Result** (input), **Unit**, **Reference range**, **Flag**, row-delete button.
-- Flag auto-computed from numeric result vs. `range_low`/`range_high` in the panel config:
-  - inside → green **Normal** badge
-  - below → amber **Low**
-  - above → amber **High**
-  - non-numeric result or missing range → neutral **—**
-- "Add parameter" button under the table appends a blank editable row (name, unit, range are all editable for custom rows).
-
-**4. Clinical interpretation**
-- Textarea with a small formatting toolbar above it (**B**, *I*, • list). Toolbar buttons wrap the current selection with `**…**`, `*…*`, or prefix lines with `- ` (markdown-style, stored as text). Keeps things lightweight — no new rich-text dependency.
-
-**5. Attachments** — unchanged file upload UI.
-
-**6. Footer**
-- `Cancel` (outline) + `Save and generate report` (primary).
-- On submit:
-  1. Upsert `lab_result_tests` rows: update existing rows by id; for panel/custom rows without an id, insert new rows tied to `order.id`.
-  2. Update `lab_results` row: `status = "completed"`, `notes = interpretation`.
-  3. Build a formatted `body` string (header lines + markdown table of parameters/result/unit/range/flag + interpretation) and insert a `patient_letters` row: `letter_type = "lab_report"`, `title = "Laboratory Report — LAB-XXXX"`, `patient_id`, `hospital_id`, `doctor_id = order.ordered_by`, `status = "issued"`, `issued_at = now()`.
-  4. Invalidate `lab-results` and `patient-letters` queries, toast success, close.
-
-## Patient-side rendering
-`Letters.tsx` already renders any `patient_letters` row and offers a jsPDF fallback download. Adding `lab_report` to `TYPE_META` gives it the right label + icon; the existing PDF generator already prints hospital letterhead + title + body, so the saved report shows up as an official-looking letterhead document with no additional work.
-
-## Visual style
-All colors via existing tokens (`bg-card`, `border-border`, `text-primary`, `bg-success/15 text-success`, `bg-warning/15 text-warning`, `bg-muted`). No hardcoded colors. Consistent with current dark-navy dashboard.
+- New: `src/lib/lab/catalog.ts`
+- Edit: `src/lib/lab/panels.ts` (compat shim)
+- Edit: `src/components/doctor/OrderLabTestDialog.tsx` (full rebuild)
+- Edit: `src/components/hospital/dialogs/EnterLabResultDialog.tsx` (auto-populated table + new report builder)
+- Migration: add `catalog_test_id`, `is_custom`, `parameters` columns to `lab_result_tests`
+- Types regenerate after migration; then wire the code above
 
 ## Out of scope
-- Full WYSIWYG rich text (using lightweight markdown toolbar instead).
-- Server-side PDF generation (client-side jsPDF in Letters.tsx is reused).
-- Uploading attachment files to storage (existing dialog also doesn't persist them; keeping parity).
+
+- Moving the catalog into the DB (kept static for speed; easy to migrate later).
+- Editing catalog from the UI.
+- PDF layout changes beyond the multi-section body already produced.
