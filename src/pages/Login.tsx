@@ -21,10 +21,17 @@ export default function Login() {
   }, []);
 
   async function routeByRole(userId: string) {
-    const { data: hospId } = await supabase.rpc("get_user_hospital_id", { _user_id: userId });
-    if (hospId) return navigate("/hospital");
+    // Check doctor first — hospital_id can resolve for doctors via hospital_doctors,
+    // which would incorrectly send them to the hospital dashboard.
     const { data: docId } = await supabase.rpc("get_user_doctor_id", { _user_id: userId });
     if (docId) return navigate("/doctor");
+    const { data: staff } = await supabase
+      .from("hospital_staff")
+      .select("hospital_id")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (staff?.hospital_id) return navigate("/hospital");
     navigate("/patient");
   }
 
