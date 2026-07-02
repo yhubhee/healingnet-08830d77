@@ -1080,11 +1080,14 @@ export type Database = {
       }
       lab_result_tests: {
         Row: {
+          catalog_test_id: string | null
           category_name: string | null
           created_at: string
           id: string
           is_abnormal: boolean | null
+          is_custom: boolean
           lab_result_id: string
+          parameters: Json | null
           reference_range: string | null
           result_value: string | null
           sample_type: string | null
@@ -1092,11 +1095,14 @@ export type Database = {
           unit: string | null
         }
         Insert: {
+          catalog_test_id?: string | null
           category_name?: string | null
           created_at?: string
           id?: string
           is_abnormal?: boolean | null
+          is_custom?: boolean
           lab_result_id: string
+          parameters?: Json | null
           reference_range?: string | null
           result_value?: string | null
           sample_type?: string | null
@@ -1104,11 +1110,14 @@ export type Database = {
           unit?: string | null
         }
         Update: {
+          catalog_test_id?: string | null
           category_name?: string | null
           created_at?: string
           id?: string
           is_abnormal?: boolean | null
+          is_custom?: boolean
           lab_result_id?: string
+          parameters?: Json | null
           reference_range?: string | null
           result_value?: string | null
           sample_type?: string | null
