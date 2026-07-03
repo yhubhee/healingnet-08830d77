@@ -38,11 +38,17 @@ export default function DoctorAppointments() {
 
         // Fetch patient data separately to avoid join issues
         const patientIds = [...new Set(appts.map((a: any) => a.patient_id).filter(Boolean))];
-        const { data: patients } = patientIds.length > 0
-          ? await supabase.from("patients").select("id, first_name, last_name, gender, date_of_birth, user_id").in("id", patientIds)
-          : Promise.resolve({ data: [] });
+        let patients: any[] = [];
+        if (patientIds.length > 0) {
+          const { data: patientRows, error: patientError } = await supabase
+            .from("patients")
+            .select("id, first_name, last_name, gender, date_of_birth, user_id")
+            .in("id", patientIds);
+          if (patientError) throw patientError;
+          patients = patientRows || [];
+        }
 
-        const patientMap = new Map((patients || []).map((p: any) => [p.id, p]));
+        const patientMap = new Map(patients.map((p: any) => [p.id, p]));
         return appts.map((a: any) => ({
           ...a,
           patients: patientMap.get(a.patient_id),
