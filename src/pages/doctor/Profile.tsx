@@ -20,7 +20,12 @@ export default function DoctorProfile() {
   async function load() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return setLoading(false);
-    const { data } = await supabase.from("doctors").select("*").eq("user_id", user.id).maybeSingle();
+    const { data, error } = await supabase.from("my_doctor_profile").select("*").maybeSingle();
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
     setDoc(data);
     if (data) {
       const { data: m } = await supabase.from("doctor_marketplace").select("*").eq("doctor_id", data.id).maybeSingle();

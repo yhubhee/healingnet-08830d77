@@ -543,7 +543,11 @@ export function useDoctorProfile(doctorId?: string | null) {
     enabled: !!doctorId,
     queryKey: ["doctor-profile", doctorId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("doctors").select("*").eq("id", doctorId).maybeSingle();
+      const { data, error } = await supabase
+        .from("doctors")
+        .select("id, first_name, last_name, specialty, years_experience, rating, profile_image_url, bio, is_available, verification_status")
+        .eq("id", doctorId)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
