@@ -99,6 +99,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "consultation_requests_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "consultation_requests_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
@@ -229,6 +236,13 @@ export type Database = {
             columns: ["doctor_id"]
             isOneToOne: true
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_marketplace_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: true
+            referencedRelation: "my_doctor_profile"
             referencedColumns: ["id"]
           },
           {
@@ -422,6 +436,13 @@ export type Database = {
             columns: ["doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emr_entries_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
             referencedColumns: ["id"]
           },
           {
@@ -650,6 +671,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "hospital_doctors_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "hospital_doctors_hospital_id_fkey"
             columns: ["hospital_id"]
             isOneToOne: false
@@ -798,10 +826,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "hospital_referrals_referred_to_doctor_id_fkey"
+            columns: ["referred_to_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "hospital_referrals_referring_doctor_id_fkey"
             columns: ["referring_doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_referrals_referring_doctor_id_fkey"
+            columns: ["referring_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
             referencedColumns: ["id"]
           },
         ]
@@ -1181,6 +1223,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lab_results_ordered_by_fkey"
+            columns: ["ordered_by"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lab_results_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
@@ -1268,6 +1317,13 @@ export type Database = {
             columns: ["doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maternity_records_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
             referencedColumns: ["id"]
           },
           {
@@ -1404,6 +1460,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "patient_checkins_assigned_doctor_id_fkey"
+            columns: ["assigned_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "patient_checkins_hospital_id_fkey"
             columns: ["hospital_id"]
             isOneToOne: false
@@ -1471,6 +1534,13 @@ export type Database = {
             columns: ["doctor_id"]
             isOneToOne: false
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_letters_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
             referencedColumns: ["id"]
           },
           {
@@ -1788,6 +1858,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_prescriptions_doctor"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_prescriptions_hospital"
             columns: ["hospital_id"]
             isOneToOne: false
@@ -1891,6 +1968,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "surgery_records_anaesthetist_id_fkey"
+            columns: ["anaesthetist_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "surgery_records_hospital_id_fkey"
             columns: ["hospital_id"]
             isOneToOne: false
@@ -1909,6 +1993,13 @@ export type Database = {
             columns: ["surgeon_id"]
             isOneToOne: false
             referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "surgery_records_surgeon_id_fkey"
+            columns: ["surgeon_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
             referencedColumns: ["id"]
           },
         ]
@@ -1975,7 +2066,87 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      my_doctor_profile: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          credential_documents: Json | null
+          current_practice: Json | null
+          email: string | null
+          first_name: string | null
+          id: string | null
+          is_available: boolean | null
+          last_name: string | null
+          license_council: string | null
+          license_expiry: string | null
+          license_number: string | null
+          phone: string | null
+          profile_image_url: string | null
+          rating: number | null
+          reference_contact: Json | null
+          specialty: string | null
+          updated_at: string | null
+          user_id: string | null
+          verification_rejection_reason: string | null
+          verification_reviewed_at: string | null
+          verification_status: string | null
+          verification_submitted_at: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          credential_documents?: Json | null
+          current_practice?: Json | null
+          email?: string | null
+          first_name?: string | null
+          id?: string | null
+          is_available?: boolean | null
+          last_name?: string | null
+          license_council?: string | null
+          license_expiry?: string | null
+          license_number?: string | null
+          phone?: string | null
+          profile_image_url?: string | null
+          rating?: number | null
+          reference_contact?: Json | null
+          specialty?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_rejection_reason?: string | null
+          verification_reviewed_at?: string | null
+          verification_status?: string | null
+          verification_submitted_at?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          credential_documents?: Json | null
+          current_practice?: Json | null
+          email?: string | null
+          first_name?: string | null
+          id?: string | null
+          is_available?: boolean | null
+          last_name?: string | null
+          license_council?: string | null
+          license_expiry?: string | null
+          license_number?: string | null
+          phone?: string | null
+          profile_image_url?: string | null
+          rating?: number | null
+          reference_contact?: Json | null
+          specialty?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_rejection_reason?: string | null
+          verification_reviewed_at?: string | null
+          verification_status?: string | null
+          verification_submitted_at?: string | null
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       create_hospital_with_admin: {
