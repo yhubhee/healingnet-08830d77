@@ -45,15 +45,26 @@ export function TriageStep8ConfirmationStep({
     setConfirming(true);
 
     try {
-      // Get doctor's hospital (use for both in-person and telemedicine)
-      const { data: doctorData } = await supabase
-        .from("hospital_doctors")
-        .select("hospital_id")
-        .eq("doctor_id", doctorId)
-        .limit(1)
-        .single();
+      let finalHospitalId = hospitalId || null;
 
-      const finalHospitalId = visitType === "in-person" ? hospitalId : doctorData?.hospital_id;
+      if (visitType === "telemedicine") {
+        const { data: resolvedHospitalId, error: hospitalError } = await supabase.rpc("get_doctor_hospital_id", { _doctor_id: doctorId });
+        if (hospitalError) throw hospitalError;
+        finalHospitalId = resolvedHospitalId;
+      }
+
+      if (visitType === "in-person" && finalHospitalId) {
+        const { data: isValidHospital, error: validationError } = await supabase.rpc("is_doctor_at_hospital", {
+          _doctor_id: doctorId,
+          _hospital_id: finalHospitalId,
+        });
+        if (validationError) throw validationError;
+        if (!isValidHospital) throw new Error("This doctor is not linked to the selected hospital. Please choose another hospital or online consultation.");
+      }
+
+      if (!finalHospitalId) {
+        throw new Error("This doctor is not linked to a hospital yet, so an appointment cannot be booked.");
+      }
 
       const { data: appointmentData, error: appointmentError } = await supabase
         .from("patient_appointments")

@@ -15,7 +15,7 @@ export function VerificationGate({ children }: { children: ReactNode }) {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
-      const { data } = await supabase.from("doctors").select("verification_status, verification_rejection_reason").eq("user_id", user.id).maybeSingle();
+      const { data } = await supabase.from("my_doctor_profile").select("verification_status, verification_rejection_reason").maybeSingle();
       setStatus((data as any)?.verification_status ?? "approved");
       setReason((data as any)?.verification_rejection_reason ?? null);
       setLoading(false);

@@ -1,92 +1,55 @@
-# Lab Test Catalog + Connected Order/Result Flow
+## Current RLS snapshot
 
-Note on login routing: the doctor-vs-hospital redirect bug was already patched in `src/pages/Login.tsx` (doctors are now matched via `get_user_doctor_id` before falling back to `hospital_staff`). If it's still happening, it's likely a stale session — sign out fully and sign back in. No further code change needed unless you can reproduce after a clean login (let me know and I'll dig deeper).
+I checked the affected backend tables. RLS is enabled on all of these:
 
----
+- `doctors` — policies exist, but the recent column-level restriction means app queries using `select("*")` can fail or return no usable doctor profile data.
+- `hospital_doctors` — policies exist; some doctor self-link checks still reference `doctors` directly, which is fragile after the column/security changes.
+- `patients` — policies exist, but the broad staff policy is tied only to `get_user_hospital_id(auth.uid())`; doctors need an explicit “my patient / my hospital patient” policy.
+- `patient_appointments` — policies exist for assigned doctors and patients, but patient booking needs a reliable hospital resolution path for the selected doctor.
+- `lab_results` — policies exist for ordered-by doctor and hospital staff.
+- `lab_result_tests` — policies exist for staff and doctor-inserted lab tests, but doctor read access for test rows linked to their lab orders is incomplete.
+- `prescriptions` — policies exist for doctor-owned prescriptions and hospital prescriptions.
+- `doctor_settings` / `doctor_availability` — RLS enabled with doctor-owned policies.
 
-## 1. Test Catalog (data layer)
+## Plan
 
-New file `src/lib/lab/catalog.ts` exporting a strongly-typed catalog. No DB migration — keep it as a static config for now (fast, versionable, no extra queries).
+1. **Add safe helper functions for doctor access**
+   - Add or replace security-definer helper functions that avoid policy recursion and avoid relying on client-readable `doctors` rows:
+     - Resolve the logged-in user’s doctor id.
+     - Check whether a doctor belongs to a hospital.
+     - Check whether a patient is linked to a doctor by appointment, prescription, lab order, or shared hospital.
+   - Keep RLS enabled everywhere.
 
-```ts
-type Param = {
-  name: string; unit?: string;
-  range?: string;                 // display text ("<200", "13.0–17.0")
-  low?: number; high?: number;    // numeric, for auto-flagging
-  ranges?: { male?: {...}, female?: {...} }; // sex-specific override
-};
-type CatalogTest = {
-  id: string;                     // "fbc", "lft", "tft", "mp", "widal"...
-  name: string;
-  category: "Hematology" | "Biochemistry" | "Lipids" | "Endocrine"
-          | "Infectious disease" | "Microbiology";
-  parameters: Param[];
-};
-type Bundle = { id: string; name: string; testIds: string[] };
-```
+2. **Repair doctor RLS policies without weakening security**
+   - `doctors`: allow authenticated doctors to read their own profile row while preserving public directory access only to safe columns where possible.
+   - `hospital_doctors`: allow doctors to read their own active hospital links; keep sensitive compensation fields protected from normal doctor/patient directory reads.
+   - `patients`: add explicit doctor read access only when the patient is linked to that doctor or to that doctor’s hospital.
+   - `patient_appointments`: allow doctors to read/update appointments assigned to them and read related hospital appointments where appropriate; allow patients to create appointments only when the patient row belongs to them and the chosen hospital is a valid hospital for the selected doctor.
+   - `lab_results`: allow doctors to read their own ordered lab results and relevant hospital-linked lab orders.
+   - `lab_result_tests`: allow doctors to read test rows for lab orders they can read.
+   - `prescriptions`: ensure doctors can read/create/update prescriptions they issued and read relevant hospital-linked patient prescriptions.
 
-Seed tests: **FBC, LFT, RFT, Lipid Profile, Fasting Blood Glucose, TFT, Malaria Parasite, Widal**. Hemoglobin inside FBC uses sex-specific ranges (M 13.0–17.0, F 12.0–15.5). Bundles include **Antenatal panel** (FBC + FBG + Widal + MP), **Executive check** (FBC + LFT + RFT + Lipid + FBG + TFT).
+3. **Fix frontend doctor profile queries**
+   - Update doctor profile loading paths to stop using `select("*")` against restricted columns when not needed.
+   - Use the existing safe doctor profile view, or explicit safe column lists, for doctor dashboard/profile/verification reads.
+   - Keep sensitive credential fields available only in places that need them and only through the safe self-profile path.
 
-The existing `src/lib/lab/panels.ts` becomes a thin wrapper that re-exports/derives from the catalog so current call sites keep working; `computeFlag` stays.
+4. **Fix doctor context and patient lists**
+   - Update `useDoctor()` so it reliably loads the doctor row and active hospital links after the RLS changes.
+   - Update `useDoctorPatients()` to use the repaired policies and request the fields the UI actually displays, so patients, prescriptions, appointments, and lab orders populate again.
 
-## 2. Doctor's Order Screen
+5. **Fix virtual appointment booking**
+   - In the triage confirmation flow, resolve the selected doctor’s active hospital id before inserting.
+   - For telemedicine, use the selected doctor’s first active hospital affiliation.
+   - For in-person, validate that the selected hospital is provided.
+   - If no valid hospital id can be resolved, show a clear error and do not attempt the insert.
 
-Rebuild `src/components/doctor/OrderLabTestDialog.tsx`:
-
-- Search input filtering catalog by test name.
-- Collapsible sections per category (using existing `@/components/ui/collapsible`) with a checkbox per test.
-- Selected tests shown as chips at the top with remove buttons.
-- Quick-pick bundle buttons (chips) that toggle all tests in a bundle.
-- "Other — specify test" row with a free-text input; multiple custom rows supported.
-- Clinical notes textarea (kept).
-- On submit: insert one `lab_results` row (as today) and insert one `lab_result_tests` row per selected item:
-  - Catalog test → `test_name = catalog.name`, `category_name = catalog.category`, plus a new column `catalog_test_id` (see schema note).
-  - Custom test → `test_name = user input`, `category_name = "Custom"`, new column `is_custom = true`.
-
-**Schema addition** (single migration):
-- `lab_result_tests.catalog_test_id text NULL`
-- `lab_result_tests.is_custom boolean NOT NULL DEFAULT false`
-
-No policy changes; existing RLS already covers these rows.
-
-## 3. Hospital Result Entry (auto-populated)
-
-Edit `src/components/hospital/dialogs/EnterLabResultDialog.tsx`:
-
-- Remove the manual panel/preset selector.
-- On open, fetch `lab_result_tests` for the order and, for each row:
-  - If `catalog_test_id` is set → look it up in the catalog and render a labeled sub-table with all its parameters (name, unit, reference range pre-filled, empty result input).
-  - If `is_custom` → render one editable free-text row (parameter name, result, unit, reference range all editable).
-- Group parameter inputs under a heading per ordered test ("Full Blood Count", "Lipid Profile", "Custom: <name>").
-- Keep auto-flagging via `computeFlag` against catalog low/high (honoring sex-specific ranges based on the patient's `gender`).
-- Interpretation textarea + markdown-lite toolbar unchanged.
-
-**Persistence:** instead of one `lab_result_tests` row per ordered test, we expand into one row per parameter on save. To avoid clobbering the ordered rows, either:
-- store parameters as a JSON column, or
-- add `parent_test_id` self-reference on `lab_result_tests` and insert child rows per parameter.
-
-Plan: add `lab_result_tests.parameters jsonb NULL` (simpler, single write, easy to render in the report). The ordered row keeps its `test_name`/`catalog_test_id`; results live inside `parameters` as `[{name, result, unit, range, flag}]`.
-
-## 4. Report Generation
-
-Update the "Save and generate report" body builder in `EnterLabResultDialog.tsx`:
-
-- Iterate ordered tests. For each, output a section heading followed by a parameter table (Name • Result • Unit • Range • Flag).
-- Custom tests render the single row the user filled in.
-- Interpretation section appended at the bottom.
-- Insert one `patient_letters` row (`letter_type = "lab_report"`) as today — patient side already handles this via the earlier `TYPE_META` change.
-
-## Files touched
-
-- New: `src/lib/lab/catalog.ts`
-- Edit: `src/lib/lab/panels.ts` (compat shim)
-- Edit: `src/components/doctor/OrderLabTestDialog.tsx` (full rebuild)
-- Edit: `src/components/hospital/dialogs/EnterLabResultDialog.tsx` (auto-populated table + new report builder)
-- Migration: add `catalog_test_id`, `is_custom`, `parameters` columns to `lab_result_tests`
-- Types regenerate after migration; then wire the code above
-
-## Out of scope
-
-- Moving the catalog into the DB (kept static for speed; easy to migrate later).
-- Editing catalog from the UI.
-- PDF layout changes beyond the multi-section body already produced.
+6. **Validate as a doctor**
+   - After implementation, test the live app as a logged-in doctor where possible:
+     - Doctor profile loads.
+     - Patients list loads.
+     - Appointments list loads.
+     - Lab orders list loads.
+     - Prescriptions list loads.
+     - Virtual appointment booking no longer inserts `hospital_id = null`.
+   - If authenticated browser verification is unavailable for the current preview session, validate the backend access paths with read-only policy checks and report what could not be end-to-end tested.

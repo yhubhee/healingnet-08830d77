@@ -2149,6 +2149,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_doctor_access_patient: {
+        Args: { _doctor_id: string; _patient_id: string }
+        Returns: boolean
+      }
       create_hospital_with_admin: {
         Args: {
           _address: string
@@ -2161,9 +2165,20 @@ export type Database = {
         }
         Returns: string
       }
+      get_doctor_hospital_id: { Args: { _doctor_id: string }; Returns: string }
+      get_doctor_hospital_ids: {
+        Args: { _doctor_id: string }
+        Returns: {
+          hospital_id: string
+        }[]
+      }
       get_hospital_plan: { Args: { _hospital_id: string }; Returns: string }
       get_user_doctor_id: { Args: { _user_id: string }; Returns: string }
       get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
+      is_doctor_at_hospital: {
+        Args: { _doctor_id: string; _hospital_id: string }
+        Returns: boolean
+      }
       is_hospital_admin: {
         Args: { _hospital_id: string; _user_id: string }
         Returns: boolean
