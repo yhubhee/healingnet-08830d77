@@ -367,8 +367,13 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
                   </thead>
                   <tbody>
                     {(t.parameters || []).map((p, pi) => {
-                      const flag = computeFlag(p.result_value, p.range_low, p.range_high);
+                      const flag = flagForParam(p, patientSex);
                       const style = FLAG_STYLES[flag];
+                      // Determine dependsOn gating (find sibling param by name)
+                      const gate = p.dependsOn
+                        ? (t.parameters || []).find((x) => x.name === p.dependsOn)
+                        : undefined;
+                      const gateSatisfied = !p.dependsOn || (gate?.result_value === p.dependsOnValue);
                       return (
                         <tr key={pi} className="border-t border-border/60">
                           <td className="p-2 align-top">
@@ -379,7 +384,28 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
                             )}
                           </td>
                           <td className="p-2 align-top">
-                            <Input value={p.result_value || ""} onChange={(e) => updateParam(ti, pi, "result_value", e.target.value)} placeholder="—" className="h-9" />
+                            {p.kind === "qualitative" && p.options ? (
+                              <Select
+                                value={p.result_value || ""}
+                                onValueChange={(v) => updateParam(ti, pi, "result_value", v)}
+                              >
+                                <SelectTrigger className="h-9"><SelectValue placeholder="Select…" /></SelectTrigger>
+                                <SelectContent>
+                                  {p.options.map((opt) => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                value={p.result_value || ""}
+                                onChange={(e) => updateParam(ti, pi, "result_value", e.target.value)}
+                                placeholder={gateSatisfied ? "—" : "N/A"}
+                                className="h-9"
+                                disabled={!gateSatisfied}
+                                type={p.kind === "numeric" ? "number" : "text"}
+                              />
+                            )}
                           </td>
                           <td className="p-2 align-top">
                             {t.is_custom ? (
