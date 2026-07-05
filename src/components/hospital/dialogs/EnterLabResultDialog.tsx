@@ -223,7 +223,7 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
       lines.push(`Parameter                Result       Unit      Range        Flag`);
       lines.push(`------------------------------------------------------------`);
       (t.parameters || []).forEach((p) => {
-        const flag = computeFlag(p.result_value, p.range_low, p.range_high);
+        const flag = flagForParam(p, patientSex);
         const flagLabel = FLAG_STYLES[flag].label;
         lines.push(
           `${(p.name || "").padEnd(24)} ${(p.result_value || "").toString().padEnd(12)} ${(p.unit || "").padEnd(9)} ${(p.reference_range || "").padEnd(12)} ${flagLabel}`,
