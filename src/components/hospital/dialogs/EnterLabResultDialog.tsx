@@ -12,7 +12,8 @@ import { AlertCircle, Bold, FileUp, FlaskConical, Italic, List, Loader2, Trash2 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { computeFlag, type FlagLevel } from "@/lib/lab/panels";
-import { findCatalogTest, resolveRange, type CatalogTest } from "@/lib/lab/catalog";
+import { findCatalogTest, resolveRange, type CatalogTest, type ParamKind } from "@/lib/lab/catalog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ParamResult = {
   name: string;
@@ -22,6 +23,12 @@ type ParamResult = {
   range_low?: number;
   range_high?: number;
   flag?: FlagLevel;
+  kind?: ParamKind;
+  options?: string[];
+  expectedNormal?: string;
+  dependsOn?: string;
+  dependsOnValue?: string;
+  forcedValue?: string;
 };
 
 type OrderedTest = {
@@ -37,6 +44,7 @@ const FLAG_STYLES: Record<FlagLevel, { label: string; className: string }> = {
   normal: { label: "Normal", className: "bg-success/15 text-success border border-success/30" },
   low: { label: "Low", className: "bg-warning/15 text-warning border border-warning/30" },
   high: { label: "High", className: "bg-warning/15 text-warning border border-warning/30" },
+  abnormal: { label: "Positive", className: "bg-destructive/15 text-destructive border border-destructive/30" },
   unknown: { label: "—", className: "bg-muted text-muted-foreground border border-border" },
 };
 
@@ -50,7 +58,22 @@ function paramsFromCatalog(t: CatalogTest, sex?: string | null): ParamResult[] {
       range_low: r.low,
       range_high: r.high,
       result_value: "",
+      kind: p.kind,
+      options: p.options,
+      expectedNormal: p.expectedNormal,
+      dependsOn: p.dependsOn,
+      dependsOnValue: p.dependsOnValue,
+      forcedValue: p.forcedValue,
     };
+  });
+}
+
+function flagForParam(p: ParamResult, sex?: string | null): FlagLevel {
+  return computeFlag(p.result_value, p.range_low, p.range_high, {
+    kind: p.kind,
+    reference_range: p.reference_range,
+    expectedNormal: p.expectedNormal,
+    sex,
   });
 }
 
