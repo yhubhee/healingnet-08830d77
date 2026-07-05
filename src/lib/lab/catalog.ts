@@ -1,5 +1,7 @@
 export type Sex = "male" | "female";
 
+export type ParamKind = "numeric" | "titer" | "qualitative";
+
 export type LabParameter = {
   name: string;
   unit?: string;
@@ -10,6 +12,16 @@ export type LabParameter = {
     male?: { low?: number; high?: number; range?: string };
     female?: { low?: number; high?: number; range?: string };
   };
+  kind?: ParamKind;
+  /** For qualitative parameters: list of allowed dropdown values. */
+  options?: string[];
+  /** For qualitative parameters: the value that should be flagged Normal. */
+  expectedNormal?: string;
+  /** For any parameter: name of another parameter in the same test whose value must equal `dependsOnValue` for this param to be editable. */
+  dependsOn?: string;
+  dependsOnValue?: string;
+  /** When gated by dependsOn and the condition is not met, force this value. */
+  forcedValue?: string;
 };
 
 export type LabCategory =
