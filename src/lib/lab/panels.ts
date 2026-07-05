@@ -66,15 +66,91 @@ export const LAB_PANELS: LabPanel[] = [
   },
 ];
 
-export type FlagLevel = "normal" | "low" | "high" | "unknown";
+export type FlagLevel = "normal" | "low" | "high" | "abnormal" | "unknown";
+
+/** Parse a titer string like "1:160" or "<1:80" / ">1:160" into { op, denom }. */
+function parseTiter(s: string): { op: "lt" | "gt" | "eq"; denom: number } | null {
+  const m = String(s).trim().match(/^(<=|>=|<|>)?\s*1\s*:\s*(\d+)\s*$/i);
+  if (!m) return null;
+  const op = m[1] === "<" || m[1] === "<=" ? "lt" : m[1] === ">" || m[1] === ">=" ? "gt" : "eq";
+  return { op, denom: parseInt(m[2], 10) };
+}
+
+/** Parse "M 13.0–17.0 / F 12.0–15.5" into per-sex numeric bounds. */
+function parseSexRange(range: string): { male?: { low?: number; high?: number }; female?: { low?: number; high?: number } } | null {
+  if (!range || !/\b[MF]\b/.test(range)) return null;
+  const out: any = {};
+  const rx = /\b(M|F)\s+([\d.]+)\s*[–\-]\s*([\d.]+)/g;
+  let m: RegExpExecArray | null;
+  while ((m = rx.exec(range)) !== null) {
+    const key = m[1] === "M" ? "male" : "female";
+    out[key] = { low: parseFloat(m[2]), high: parseFloat(m[3]) };
+  }
+  return out.male || out.female ? out : null;
+}
+
+export type ComputeFlagOptions = {
+  kind?: "numeric" | "titer" | "qualitative";
+  reference_range?: string;
+  expectedNormal?: string;
+  sex?: string | null;
+};
 
 export function computeFlag(
   resultValue: string | number | null | undefined,
-  low?: number,
+  lowOrOptions?: number | ComputeFlagOptions,
   high?: number,
+  maybeOptions?: ComputeFlagOptions,
 ): FlagLevel {
-  if (resultValue === null || resultValue === undefined || resultValue === "") return "unknown";
-  const n = typeof resultValue === "number" ? resultValue : parseFloat(String(resultValue));
+  // Overloaded call signatures: (value, low, high, options?) or (value, options)
+  let low: number | undefined;
+  let options: ComputeFlagOptions | undefined;
+  if (typeof lowOrOptions === "number") {
+    low = lowOrOptions;
+    options = maybeOptions;
+  } else if (lowOrOptions && typeof lowOrOptions === "object") {
+    options = lowOrOptions;
+  } else {
+    options = maybeOptions;
+  }
+
+  const raw = resultValue === null || resultValue === undefined ? "" : String(resultValue).trim();
+  if (raw === "") return "unknown";
+
+  // Qualitative
+  if (options?.kind === "qualitative") {
+    if (!options.expectedNormal) return "unknown";
+    return raw.toLowerCase() === options.expectedNormal.trim().toLowerCase() ? "normal" : "abnormal";
+  }
+
+  // Titer
+  if (options?.kind === "titer" || /^\s*(<=|>=|<|>)?\s*1\s*:\s*\d+/i.test(raw)) {
+    const ref = parseTiter(options?.reference_range || "");
+    const val = parseTiter(raw);
+    if (ref && val) {
+      // Reference "<1:80" → normal when result denom < 80. ">1:X" → normal when denom > X.
+      if (ref.op === "lt") return val.denom < ref.denom ? "normal" : "high";
+      if (ref.op === "gt") return val.denom > ref.denom ? "normal" : "low";
+      return val.denom === ref.denom ? "normal" : val.denom > ref.denom ? "high" : "low";
+    }
+    if (val && !ref) return "unknown";
+  }
+
+  // Sex-specific numeric range parsed from reference_range string
+  if ((low === undefined && high === undefined) && options?.reference_range) {
+    const parsed = parseSexRange(options.reference_range);
+    if (parsed && options.sex) {
+      const s = String(options.sex).toLowerCase();
+      const bounds = s === "male" ? parsed.male : s === "female" ? parsed.female : undefined;
+      if (bounds) {
+        low = bounds.low;
+        high = bounds.high;
+      }
+    }
+  }
+
+  // Numeric
+  const n = typeof resultValue === "number" ? resultValue : parseFloat(raw);
   if (isNaN(n)) return "unknown";
   if (low === undefined && high === undefined) return "unknown";
   if (low !== undefined && n < low) return "low";

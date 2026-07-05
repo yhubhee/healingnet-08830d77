@@ -12,7 +12,8 @@ import { AlertCircle, Bold, FileUp, FlaskConical, Italic, List, Loader2, Trash2 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { computeFlag, type FlagLevel } from "@/lib/lab/panels";
-import { findCatalogTest, resolveRange, type CatalogTest } from "@/lib/lab/catalog";
+import { findCatalogTest, resolveRange, type CatalogTest, type ParamKind } from "@/lib/lab/catalog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ParamResult = {
   name: string;
@@ -22,6 +23,12 @@ type ParamResult = {
   range_low?: number;
   range_high?: number;
   flag?: FlagLevel;
+  kind?: ParamKind;
+  options?: string[];
+  expectedNormal?: string;
+  dependsOn?: string;
+  dependsOnValue?: string;
+  forcedValue?: string;
 };
 
 type OrderedTest = {
@@ -37,6 +44,7 @@ const FLAG_STYLES: Record<FlagLevel, { label: string; className: string }> = {
   normal: { label: "Normal", className: "bg-success/15 text-success border border-success/30" },
   low: { label: "Low", className: "bg-warning/15 text-warning border border-warning/30" },
   high: { label: "High", className: "bg-warning/15 text-warning border border-warning/30" },
+  abnormal: { label: "Positive", className: "bg-destructive/15 text-destructive border border-destructive/30" },
   unknown: { label: "—", className: "bg-muted text-muted-foreground border border-border" },
 };
 
@@ -50,7 +58,22 @@ function paramsFromCatalog(t: CatalogTest, sex?: string | null): ParamResult[] {
       range_low: r.low,
       range_high: r.high,
       result_value: "",
+      kind: p.kind,
+      options: p.options,
+      expectedNormal: p.expectedNormal,
+      dependsOn: p.dependsOn,
+      dependsOnValue: p.dependsOnValue,
+      forcedValue: p.forcedValue,
     };
+  });
+}
+
+function flagForParam(p: ParamResult, sex?: string | null): FlagLevel {
+  return computeFlag(p.result_value, p.range_low, p.range_high, {
+    kind: p.kind,
+    reference_range: p.reference_range,
+    expectedNormal: p.expectedNormal,
+    sex,
   });
 }
 
@@ -105,7 +128,21 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
       const params = [...(n[ti].parameters || [])];
       (params[pi] as any)[field] = value;
       if (field === "result_value") {
-        params[pi].flag = computeFlag(value, params[pi].range_low, params[pi].range_high);
+        params[pi].flag = flagForParam(params[pi], patientSex);
+      }
+      // Cascade: if this param gates any dependent, sync/lock the dependent
+      if (field === "result_value") {
+        const changedName = params[pi].name;
+        params.forEach((dep, di) => {
+          if (dep.dependsOn && dep.dependsOn === changedName) {
+            if (dep.dependsOnValue && value !== dep.dependsOnValue) {
+              if (dep.forcedValue !== undefined) {
+                dep.result_value = dep.forcedValue;
+                dep.flag = flagForParam(dep, patientSex);
+              }
+            }
+          }
+        });
       }
       n[ti] = { ...n[ti], parameters: params };
       return n;
@@ -163,11 +200,11 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
   const abnormalCount = useMemo(() => {
     let n = 0;
     tests.forEach((t) => (t.parameters || []).forEach((p) => {
-      const f = computeFlag(p.result_value, p.range_low, p.range_high);
-      if (f === "low" || f === "high") n++;
+      const f = flagForParam(p, patientSex);
+      if (f === "low" || f === "high" || f === "abnormal") n++;
     }));
     return n;
-  }, [tests]);
+  }, [tests, patientSex]);
 
   function buildReportBody() {
     const lines: string[] = [];
@@ -186,7 +223,7 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
       lines.push(`Parameter                Result       Unit      Range        Flag`);
       lines.push(`------------------------------------------------------------`);
       (t.parameters || []).forEach((p) => {
-        const flag = computeFlag(p.result_value, p.range_low, p.range_high);
+        const flag = flagForParam(p, patientSex);
         const flagLabel = FLAG_STYLES[flag].label;
         lines.push(
           `${(p.name || "").padEnd(24)} ${(p.result_value || "").toString().padEnd(12)} ${(p.unit || "").padEnd(9)} ${(p.reference_range || "").padEnd(12)} ${flagLabel}`,
@@ -214,9 +251,9 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
       for (const t of tests) {
         const params = (t.parameters || []).map((p) => ({
           ...p,
-          flag: computeFlag(p.result_value, p.range_low, p.range_high),
+          flag: flagForParam(p, patientSex),
         }));
-        const anyAbnormal = params.some((p) => p.flag === "low" || p.flag === "high");
+        const anyAbnormal = params.some((p) => p.flag === "low" || p.flag === "high" || p.flag === "abnormal");
         // Also mirror the first parameter's result into legacy fields so table previews still work
         const first = params[0];
         await supabase.from("lab_result_tests").update({
@@ -330,8 +367,13 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
                   </thead>
                   <tbody>
                     {(t.parameters || []).map((p, pi) => {
-                      const flag = computeFlag(p.result_value, p.range_low, p.range_high);
+                      const flag = flagForParam(p, patientSex);
                       const style = FLAG_STYLES[flag];
+                      // Determine dependsOn gating (find sibling param by name)
+                      const gate = p.dependsOn
+                        ? (t.parameters || []).find((x) => x.name === p.dependsOn)
+                        : undefined;
+                      const gateSatisfied = !p.dependsOn || (gate?.result_value === p.dependsOnValue);
                       return (
                         <tr key={pi} className="border-t border-border/60">
                           <td className="p-2 align-top">
@@ -342,7 +384,28 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
                             )}
                           </td>
                           <td className="p-2 align-top">
-                            <Input value={p.result_value || ""} onChange={(e) => updateParam(ti, pi, "result_value", e.target.value)} placeholder="—" className="h-9" />
+                            {p.kind === "qualitative" && p.options ? (
+                              <Select
+                                value={p.result_value || ""}
+                                onValueChange={(v) => updateParam(ti, pi, "result_value", v)}
+                              >
+                                <SelectTrigger className="h-9"><SelectValue placeholder="Select…" /></SelectTrigger>
+                                <SelectContent>
+                                  {p.options.map((opt) => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Input
+                                value={p.result_value || ""}
+                                onChange={(e) => updateParam(ti, pi, "result_value", e.target.value)}
+                                placeholder={gateSatisfied ? "—" : "N/A"}
+                                className="h-9"
+                                disabled={!gateSatisfied}
+                                type={p.kind === "numeric" ? "number" : "text"}
+                              />
+                            )}
                           </td>
                           <td className="p-2 align-top">
                             {t.is_custom ? (

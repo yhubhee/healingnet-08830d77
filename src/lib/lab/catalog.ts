@@ -1,5 +1,7 @@
 export type Sex = "male" | "female";
 
+export type ParamKind = "numeric" | "titer" | "qualitative";
+
 export type LabParameter = {
   name: string;
   unit?: string;
@@ -10,6 +12,16 @@ export type LabParameter = {
     male?: { low?: number; high?: number; range?: string };
     female?: { low?: number; high?: number; range?: string };
   };
+  kind?: ParamKind;
+  /** For qualitative parameters: list of allowed dropdown values. */
+  options?: string[];
+  /** For qualitative parameters: the value that should be flagged Normal. */
+  expectedNormal?: string;
+  /** For any parameter: name of another parameter in the same test whose value must equal `dependsOnValue` for this param to be editable. */
+  dependsOn?: string;
+  dependsOnValue?: string;
+  /** When gated by dependsOn and the condition is not met, force this value. */
+  forcedValue?: string;
 };
 
 export type LabCategory =
@@ -133,9 +145,31 @@ export const LAB_CATALOG: CatalogTest[] = [
     name: "Malaria Parasite (MP)",
     category: "Infectious disease",
     parameters: [
-      { name: "Malaria Parasite (thick film)", range: "Not seen" },
-      { name: "Parasite density", unit: "/µL", range: "0" },
-      { name: "Species identified", range: "None" },
+      {
+        name: "Malaria Parasite (thick film)",
+        range: "Not seen",
+        kind: "qualitative",
+        options: ["Not seen", "Seen"],
+        expectedNormal: "Not seen",
+      },
+      {
+        name: "Parasite density",
+        unit: "/µL",
+        range: "0",
+        low: 0,
+        high: 0,
+        kind: "numeric",
+        dependsOn: "Malaria Parasite (thick film)",
+        dependsOnValue: "Seen",
+        forcedValue: "0",
+      },
+      {
+        name: "Species identified",
+        range: "None",
+        kind: "qualitative",
+        options: ["None", "P. falciparum", "P. vivax", "P. ovale", "P. malariae", "Mixed infection"],
+        expectedNormal: "None",
+      },
     ],
   },
   {
@@ -143,10 +177,10 @@ export const LAB_CATALOG: CatalogTest[] = [
     name: "Widal Test",
     category: "Infectious disease",
     parameters: [
-      { name: "S. typhi O", range: "<1:80" },
-      { name: "S. typhi H", range: "<1:80" },
-      { name: "S. paratyphi A (O)", range: "<1:80" },
-      { name: "S. paratyphi B (O)", range: "<1:80" },
+      { name: "S. typhi O", range: "<1:80", kind: "titer" },
+      { name: "S. typhi H", range: "<1:80", kind: "titer" },
+      { name: "S. paratyphi A (O)", range: "<1:80", kind: "titer" },
+      { name: "S. paratyphi B (O)", range: "<1:80", kind: "titer" },
     ],
   },
 ];
