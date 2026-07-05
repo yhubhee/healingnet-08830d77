@@ -128,7 +128,21 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
       const params = [...(n[ti].parameters || [])];
       (params[pi] as any)[field] = value;
       if (field === "result_value") {
-        params[pi].flag = computeFlag(value, params[pi].range_low, params[pi].range_high);
+        params[pi].flag = flagForParam(params[pi], patientSex);
+      }
+      // Cascade: if this param gates any dependent, sync/lock the dependent
+      if (field === "result_value") {
+        const changedName = params[pi].name;
+        params.forEach((dep, di) => {
+          if (dep.dependsOn && dep.dependsOn === changedName) {
+            if (dep.dependsOnValue && value !== dep.dependsOnValue) {
+              if (dep.forcedValue !== undefined) {
+                dep.result_value = dep.forcedValue;
+                dep.flag = flagForParam(dep, patientSex);
+              }
+            }
+          }
+        });
       }
       n[ti] = { ...n[ti], parameters: params };
       return n;
