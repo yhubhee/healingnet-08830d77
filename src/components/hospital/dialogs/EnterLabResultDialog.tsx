@@ -251,9 +251,9 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
       for (const t of tests) {
         const params = (t.parameters || []).map((p) => ({
           ...p,
-          flag: computeFlag(p.result_value, p.range_low, p.range_high),
+          flag: flagForParam(p, patientSex),
         }));
-        const anyAbnormal = params.some((p) => p.flag === "low" || p.flag === "high");
+        const anyAbnormal = params.some((p) => p.flag === "low" || p.flag === "high" || p.flag === "abnormal");
         // Also mirror the first parameter's result into legacy fields so table previews still work
         const first = params[0];
         await supabase.from("lab_result_tests").update({
