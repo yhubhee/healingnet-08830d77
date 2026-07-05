@@ -105,10 +105,12 @@ export function computeFlag(
   // Overloaded call signatures: (value, low, high, options?) or (value, options)
   let low: number | undefined;
   let options: ComputeFlagOptions | undefined;
-  if (typeof lowOrOptions === "object" && lowOrOptions !== null) {
+  if (typeof lowOrOptions === "number") {
+    low = lowOrOptions;
+    options = maybeOptions;
+  } else if (lowOrOptions && typeof lowOrOptions === "object") {
     options = lowOrOptions;
   } else {
-    low = lowOrOptions;
     options = maybeOptions;
   }
 
