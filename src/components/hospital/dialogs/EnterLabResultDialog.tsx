@@ -200,11 +200,11 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
   const abnormalCount = useMemo(() => {
     let n = 0;
     tests.forEach((t) => (t.parameters || []).forEach((p) => {
-      const f = computeFlag(p.result_value, p.range_low, p.range_high);
-      if (f === "low" || f === "high") n++;
+      const f = flagForParam(p, patientSex);
+      if (f === "low" || f === "high" || f === "abnormal") n++;
     }));
     return n;
-  }, [tests]);
+  }, [tests, patientSex]);
 
   function buildReportBody() {
     const lines: string[] = [];
