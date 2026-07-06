@@ -73,9 +73,16 @@ export function TriageStep3InterviewStep({ question, askedCount, maxQuestions, o
   }
 
   if (questionType === "scale") {
+    const scaleQuestion = {
+      ...question,
+      options: Array.isArray(question.options) && question.options.length >= 2
+        ? [question.options[0], question.options[1]] as [string, string]
+        : undefined,
+    };
+
     return (
       <TriageQuestionScale
-        question={question}
+        question={scaleQuestion}
         askedCount={askedCount}
         maxQuestions={maxQuestions}
         onAnswer={(v) => onAnswer(v)}
