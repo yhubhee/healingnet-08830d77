@@ -42,7 +42,7 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
     // Record call start time
     await supabase
       .from("patient_appointments")
-      .update({ call_started_at: new Date().toISOString() })
+      .update({ call_started_at: new Date().toISOString() } as any)
       .eq("id", a.id);
     window.open(a.meeting_link, "_blank");
   }
@@ -57,7 +57,7 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
         status: "completed",
         call_ended_at: new Date().toISOString(),
         consultation_notes: note,
-      },
+      } as any,
       "Consultation completed"
     );
   }

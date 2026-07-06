@@ -108,7 +108,7 @@ export function RescheduleAppointmentDialog({ appointment, trigger, onSuccess }:
 
   async function handleReschedule() {
     if (!date || !time) {
-      toast.error("Please select both date and time");
+      toast({ title: "Please select both date and time", variant: "destructive" });
       return;
     }
 
@@ -123,11 +123,11 @@ export function RescheduleAppointmentDialog({ appointment, trigger, onSuccess }:
     setSavingReschedule(false);
 
     if (error) {
-      toast.error(error.message);
+      toast({ title: "Failed", description: error.message, variant: "destructive" });
       return;
     }
 
-    toast.success("Appointment rescheduled successfully");
+    toast({ title: "Appointment rescheduled successfully" });
     qc.invalidateQueries({ queryKey: ["patient", "appointments"] });
     qc.invalidateQueries({ queryKey: ["doctor", "appointments"] });
     setOpen(false);
