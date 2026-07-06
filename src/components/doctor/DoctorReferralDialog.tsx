@@ -39,22 +39,22 @@ export function DoctorReferralDialog({ patientId, trigger, onSuccess }: Props) {
 
   async function handleSubmit() {
     if (!doctor?.doctor?.id || !hospitalId || !patientId) {
-      toast.error("Missing required information");
+      toast({ title: "Missing required information", variant: "destructive" });
       return;
     }
 
     if (!form.reason.trim()) {
-      toast.error("Please provide a referral reason");
+      toast({ title: "Please provide a referral reason", variant: "destructive" });
       return;
     }
 
     if (form.referral_type === "internal" && !form.referred_to_doctor_id) {
-      toast.error("Please select a doctor for internal referral");
+      toast({ title: "Please select a doctor for internal referral", variant: "destructive" });
       return;
     }
 
     if (form.referral_type === "external" && !form.referred_to_hospital.trim()) {
-      toast.error("Please provide hospital name for external referral");
+      toast({ title: "Please provide hospital name for external referral", variant: "destructive" });
       return;
     }
 
@@ -79,11 +79,11 @@ export function DoctorReferralDialog({ patientId, trigger, onSuccess }: Props) {
     setSaving(false);
 
     if (error) {
-      toast.error(error.message);
+      toast({ title: "Failed", description: error.message, variant: "destructive" });
       return;
     }
 
-    toast.success("Referral created successfully");
+    toast({ title: "Referral created successfully" });
     qc.invalidateQueries({ queryKey: ["hospital-referrals"] });
     setOpen(false);
     setForm({
