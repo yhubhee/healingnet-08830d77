@@ -72,7 +72,7 @@ export function useVerifyConsultationPayment(consultationId?: string) {
 
       // Get payment record from DB
       const { data: paymentRecord, error: dbError } = await supabase
-        .from("consultation_payments")
+        .from("consultation_payments" as any)
         .select("*")
         .eq("consultation_id", consultationId)
         .single();
@@ -129,7 +129,7 @@ export function useRefundConsultationPayment() {
     }) => {
       // Get payment record
       const { data: paymentRecord, error: dbError } = await supabase
-        .from("consultation_payments")
+        .from("consultation_payments" as any)
         .select("*")
         .eq("consultation_id", consultation_id)
         .single();
@@ -184,7 +184,7 @@ export function useCompleteConsultationTransfer() {
     }) => {
       // Get payment record
       const { data: paymentRecord, error: dbError } = await supabase
-        .from("consultation_payments")
+        .from("consultation_payments" as any)
         .select("*")
         .eq("consultation_id", consultation_id)
         .single();
@@ -240,7 +240,7 @@ export function useConsultationPaymentStatus(consultationId?: string) {
       if (!consultationId) return null;
 
       const { data, error } = await supabase
-        .from("consultation_payments")
+        .from("consultation_payments" as any)
         .select("*")
         .eq("consultation_id", consultationId)
         .single();

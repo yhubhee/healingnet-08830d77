@@ -37,11 +37,12 @@ export function FormDialog({ title, triggerLabel = "Add", triggerIcon, trigger, 
 
 export async function handleSubmit(
   promise: PromiseLike<{ error: any }>,
-  opts: { toast: any; close: () => void; qc: any; invalidate: string[]; successMsg?: string }
+  opts: { toast: any; close: () => void; qc: any; invalidate: string[]; successMsg?: string; onSuccess?: () => void }
 ) {
   const { error } = await promise;
   if (error) return opts.toast({ title: "Failed", description: error.message, variant: "destructive" });
   opts.toast({ title: opts.successMsg || "Saved" });
+  opts.onSuccess?.();
   opts.close();
   opts.invalidate.forEach((k) => opts.qc.invalidateQueries({ queryKey: [k] }));
 }
