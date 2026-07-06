@@ -14,6 +14,7 @@ import ContactPage from "./pages/Contact";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
+import OAuthConsent from "./pages/OAuthConsent";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RequirePlan } from "./components/auth/RequirePlan";
 
@@ -83,6 +84,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
 
           {/* Patient Portal */}
           <Route path="/patient" element={<ProtectedRoute><PatientDashboard /></ProtectedRoute>} />
