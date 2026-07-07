@@ -21,7 +21,7 @@ export default function DoctorLabOrders() {
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "labs", ctx?.doctor?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("lab_results").select("*, patients(first_name,last_name)").eq("ordered_by", ctx!.doctor.id).order("created_at", { ascending: false });
+      const { data } = await supabase.from("lab_results").select("*, patients(first_name,last_name), lab_result_tests(*, lab_result_parameters(*))").eq("ordered_by", ctx!.doctor.id).order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -29,7 +29,7 @@ export default function DoctorLabOrders() {
 
   async function openDetail(o: any) {
     setDetail(o);
-    const { data } = await supabase.from("lab_result_tests").select("*").eq("lab_result_id", o.id);
+    const { data } = await supabase.from("lab_result_tests").select("*, lab_result_parameters(*)").eq("lab_result_id", o.id);
     setTests(data || []);
   }
   async function cancel(id: string) {
