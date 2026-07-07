@@ -1120,10 +1120,58 @@ export type Database = {
           },
         ]
       }
+      lab_result_parameters: {
+        Row: {
+          created_at: string
+          flag: string
+          id: string
+          order_test_id: string
+          parameter_name: string
+          ref_range_snapshot: string | null
+          result_value: string | null
+          sort_order: number
+          unit_snapshot: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          flag?: string
+          id?: string
+          order_test_id: string
+          parameter_name: string
+          ref_range_snapshot?: string | null
+          result_value?: string | null
+          sort_order?: number
+          unit_snapshot?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          flag?: string
+          id?: string
+          order_test_id?: string
+          parameter_name?: string
+          ref_range_snapshot?: string | null
+          result_value?: string | null
+          sort_order?: number
+          unit_snapshot?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lab_result_parameters_order_test_id_fkey"
+            columns: ["order_test_id"]
+            isOneToOne: false
+            referencedRelation: "lab_result_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lab_result_tests: {
         Row: {
           catalog_test_id: string | null
           category_name: string | null
+          completed_at: string | null
           created_at: string
           id: string
           is_abnormal: boolean | null
@@ -1133,12 +1181,14 @@ export type Database = {
           reference_range: string | null
           result_value: string | null
           sample_type: string | null
+          status: string
           test_name: string
           unit: string | null
         }
         Insert: {
           catalog_test_id?: string | null
           category_name?: string | null
+          completed_at?: string | null
           created_at?: string
           id?: string
           is_abnormal?: boolean | null
@@ -1148,12 +1198,14 @@ export type Database = {
           reference_range?: string | null
           result_value?: string | null
           sample_type?: string | null
+          status?: string
           test_name: string
           unit?: string | null
         }
         Update: {
           catalog_test_id?: string | null
           category_name?: string | null
+          completed_at?: string | null
           created_at?: string
           id?: string
           is_abnormal?: boolean | null
@@ -1163,6 +1215,7 @@ export type Database = {
           reference_range?: string | null
           result_value?: string | null
           sample_type?: string | null
+          status?: string
           test_name?: string
           unit?: string | null
         }
@@ -2186,6 +2239,10 @@ export type Database = {
       is_hospital_staff: {
         Args: { _hospital_id: string; _user_id: string }
         Returns: boolean
+      }
+      recompute_lab_order_status: {
+        Args: { _order_id: string }
+        Returns: undefined
       }
     }
     Enums: {
