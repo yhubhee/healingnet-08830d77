@@ -266,38 +266,96 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
     return lines.join("\n");
   }
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!order) return;
-    if (tests.length === 0) return toast({ title: "No tests on this order", variant: "destructive" });
-    setSaving(true);
-    try {
-      // Persist parameters per ordered-test row
-      for (const t of tests) {
-        const params = (t.parameters || []).map((p) => ({
-          ...p,
-          flag: flagForParam(p, patientSex),
-        }));
-        const anyAbnormal = params.some((p) => p.flag === "low" || p.flag === "high" || p.flag === "abnormal");
-        const first = params[0];
-        const { error: testErr } = await supabase.from("lab_result_tests").update({
-          parameters: params as any,
+  async function saveResultsCore(): Promise<boolean> {
+    if (!order) return false;
+    if (tests.length === 0) {
+      toast({ title: "No tests on this order", variant: "destructive" });
+      return false;
+    }
+
+    // Persist per-parameter rows for every test in the order
+    for (const t of tests) {
+      const params = (t.parameters || []).map((p, idx) => ({
+        order_test_id: t.id,
+        parameter_name: p.name || t.test_name,
+        result_value: p.result_value?.toString() || null,
+        unit_snapshot: p.unit || null,
+        ref_range_snapshot: p.reference_range || null,
+        flag: flagForParam(p, patientSex) || "unknown",
+        sort_order: idx,
+      }));
+
+      // Wipe + reinsert so removed rows don't linger
+      const { error: delErr } = await supabase
+        .from("lab_result_parameters" as any)
+        .delete()
+        .eq("order_test_id", t.id);
+      if (delErr) throw delErr;
+
+      if (params.length > 0) {
+        const { error: insErr } = await supabase
+          .from("lab_result_parameters" as any)
+          .insert(params);
+        if (insErr) throw insErr;
+      }
+
+      const anyAbnormal = (t.parameters || []).some((p) => {
+        const f = flagForParam(p, patientSex);
+        return f === "low" || f === "high" || f === "abnormal";
+      });
+      const first = (t.parameters || [])[0];
+      const { error: testErr } = await supabase
+        .from("lab_result_tests")
+        .update({
+          status: "completed",
+          completed_at: new Date().toISOString(),
           is_abnormal: anyAbnormal,
+          // legacy mirrors — keep populated so older reads still work
           result_value: first?.result_value || null,
           unit: first?.unit || null,
           reference_range: first?.reference_range || null,
-        } as any).eq("id", t.id);
-        if (testErr) throw testErr;
+          parameters: (t.parameters || []).map((p) => ({
+            ...p,
+            flag: flagForParam(p, patientSex),
+          })) as any,
+        } as any)
+        .eq("id", t.id);
+      if (testErr) throw testErr;
+    }
+
+    const { error: notesErr } = await supabase
+      .from("lab_results")
+      .update({ notes: interpretation || null })
+      .eq("id", order.id);
+    if (notesErr) throw notesErr;
+
+    // The DB trigger will flip lab_results.status to 'completed' automatically.
+    qc.invalidateQueries({ queryKey: ["lab-results"] });
+    return true;
+  }
+
+  async function handleSaveOnly() {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const ok = await saveResultsCore();
+      if (ok) {
+        toast({ title: "Results saved" });
+        onClose();
       }
+    } catch (err: any) {
+      toast({ title: "Could not save results", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
 
-      const { error: statusErr } = await supabase.from("lab_results")
-        .update({ status: "completed", notes: interpretation || null })
-        .eq("id", order.id);
-      if (statusErr) throw statusErr;
-
-      // Results are saved. Refresh lists immediately so status flips to Completed
-      // everywhere — even if report generation below fails.
-      qc.invalidateQueries({ queryKey: ["lab-results"] });
+  async function handleSaveAndReport() {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const ok = await saveResultsCore();
+      if (!ok) return;
 
       // Report generation is best-effort — never block a successful save.
       try {
@@ -310,7 +368,7 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
           title: `Laboratory Report — ${labId}`,
           body,
           status: "issued",
-          issued_at: new Date().toISOString(),
+          issued_at: new Date().toISOString().slice(0, 10),
         });
         if (letterErr) throw letterErr;
         qc.invalidateQueries({ queryKey: ["patient-letters"] });
@@ -330,7 +388,72 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
     }
   }
 
+  function handlePrint() {
+    const win = window.open("", "_blank", "width=900,height=1000");
+    if (!win) {
+      toast({ title: "Popup blocked", description: "Allow popups to print the report.", variant: "destructive" });
+      return;
+    }
+    const rows = tests.map((t) => {
+      const paramRows = (t.parameters || []).map((p) => {
+        const f = flagForParam(p, patientSex);
+        const style = f === "low" || f === "high" || f === "abnormal"
+          ? "color:#b91c1c;font-weight:600;"
+          : f === "normal" ? "color:#166534;" : "color:#6b7280;";
+        return `<tr>
+          <td>${escapeHtml(p.name || "")}</td>
+          <td style="${style}">${escapeHtml(p.result_value || "—")}</td>
+          <td>${escapeHtml(p.unit || "")}</td>
+          <td>${escapeHtml(p.reference_range || "")}</td>
+          <td style="${style}">${FLAG_STYLES[f].label}</td>
+        </tr>`;
+      }).join("");
+      return `<section style="margin-top:20px;">
+        <h3 style="margin:0 0 4px 0;font-size:14px;">${escapeHtml(t.test_name)}${t.category_name ? ` — <span style="font-weight:400;color:#6b7280">${escapeHtml(t.category_name)}</span>` : ""}</h3>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="background:#f3f4f6;text-align:left;">
+            <th style="padding:6px 8px;border:1px solid #e5e7eb;">Parameter</th>
+            <th style="padding:6px 8px;border:1px solid #e5e7eb;">Result</th>
+            <th style="padding:6px 8px;border:1px solid #e5e7eb;">Unit</th>
+            <th style="padding:6px 8px;border:1px solid #e5e7eb;">Reference range</th>
+            <th style="padding:6px 8px;border:1px solid #e5e7eb;">Flag</th>
+          </tr></thead>
+          <tbody>${paramRows.replace(/<td>/g, '<td style="padding:6px 8px;border:1px solid #e5e7eb;">').replace(/<td style="([^"]*)">/g, '<td style="padding:6px 8px;border:1px solid #e5e7eb;$1">')}</tbody>
+        </table>
+      </section>`;
+    }).join("");
+
+    win.document.write(`<!doctype html><html><head><title>${escapeHtml(labId)} — Laboratory Report</title>
+      <style>
+        body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; color:#111827; padding:32px; }
+        .letterhead { border-bottom:2px solid #0f766e; padding-bottom:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:flex-end; }
+        .letterhead h1 { margin:0; font-size:20px; }
+        .letterhead p { margin:2px 0 0 0; font-size:11px; color:#6b7280; text-transform:uppercase; letter-spacing:2px; }
+        .info { display:grid; grid-template-columns:1fr 1fr; gap:8px 24px; font-size:12px; margin-bottom:12px; }
+        .info label { color:#6b7280; text-transform:uppercase; letter-spacing:1px; font-size:10px; display:block; }
+        .interp { margin-top:24px; padding:12px; border:1px solid #e5e7eb; background:#f9fafb; font-size:12px; white-space:pre-wrap; }
+        .foot { margin-top:32px; font-size:11px; color:#6b7280; text-align:center; border-top:1px solid #e5e7eb; padding-top:12px; }
+      </style></head><body>
+      <div class="letterhead">
+        <div><h1>${escapeHtml(hospital?.name || "HealingNet Hospital")}</h1><p>Laboratory Report</p></div>
+        <div style="text-align:right;font-size:11px;color:#6b7280;">${escapeHtml(labId)}<br/>${escapeHtml(today)}</div>
+      </div>
+      <div class="info">
+        <div><label>Patient</label>${escapeHtml(patientName)}</div>
+        <div><label>Ordering Doctor</label>${escapeHtml(doctorName)}</div>
+        <div><label>Lab ID</label>${escapeHtml(labId)}</div>
+        <div><label>Report Date</label>${escapeHtml(today)}</div>
+      </div>
+      ${rows}
+      ${interpretation.trim() ? `<div class="interp"><strong>Clinical interpretation</strong><br/>${escapeHtml(interpretation.trim())}</div>` : ""}
+      <div class="foot">Official laboratory report issued by ${escapeHtml(hospital?.name || "HealingNet Hospital")}.</div>
+      <script>window.onload = () => { window.print(); };</script>
+      </body></html>`);
+    win.document.close();
+  }
+
   if (!order) return null;
+  const isCompleted = order.status === "completed";
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
