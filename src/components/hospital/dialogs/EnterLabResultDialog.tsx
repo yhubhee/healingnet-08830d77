@@ -77,6 +77,12 @@ function flagForParam(p: ParamResult, sex?: string | null): FlagLevel {
   });
 }
 
+function escapeHtml(s: string) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string
+  ));
+}
+
 export function EnterLabResultDialog({ order, open, onClose }: { order: any; open: boolean; onClose: () => void }) {
   const { data: hospital } = useHospitalInfo();
   const [tests, setTests] = useState<OrderedTest[]>([]);
