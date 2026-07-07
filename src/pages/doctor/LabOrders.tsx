@@ -21,7 +21,7 @@ export default function DoctorLabOrders() {
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "labs", ctx?.doctor?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("lab_results").select("*, patients(first_name,last_name)").eq("ordered_by", ctx!.doctor.id).order("created_at", { ascending: false });
+      const { data } = await supabase.from("lab_results").select("*, patients(first_name,last_name), lab_result_tests(*, lab_result_parameters(*))").eq("ordered_by", ctx!.doctor.id).order("created_at", { ascending: false });
       return data || [];
     },
   });
@@ -29,7 +29,7 @@ export default function DoctorLabOrders() {
 
   async function openDetail(o: any) {
     setDetail(o);
-    const { data } = await supabase.from("lab_result_tests").select("*").eq("lab_result_id", o.id);
+    const { data } = await supabase.from("lab_result_tests").select("*, lab_result_parameters(*)").eq("lab_result_id", o.id);
     setTests(data || []);
   }
   async function cancel(id: string) {
@@ -75,16 +75,45 @@ export default function DoctorLabOrders() {
         </div>}
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Lab order #{detail?.id?.slice(0, 8)}</DialogTitle></DialogHeader>
-          <div className="space-y-2">
-            <div className="text-sm text-muted-foreground">{detail?.notes || "No clinical notes."}</div>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Lab order #{detail?.id?.slice(0, 8)}
+              <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium capitalize", detail?.status === "completed" ? "bg-success/15 text-success" : detail?.status === "cancelled" ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning")}>{detail?.status}</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {detail?.notes && <div className="text-sm text-muted-foreground border-l-2 border-border pl-3">{detail.notes}</div>}
             {tests.length === 0 ? <div className="text-sm text-muted-foreground">No test items.</div> :
-              <div className="space-y-2">{tests.map((t) => (
-                <div key={t.id} className="border border-border rounded-lg p-3 text-sm flex justify-between items-center">
-                  <div><div className="font-medium">{t.test_name}</div><div className="text-xs text-muted-foreground">{t.category_name}</div></div>
-                  <div className="text-right">{t.result_value ? <span className={cn("font-medium", t.is_abnormal && "text-destructive")}>{t.result_value} {t.unit}</span> : <span className="text-xs text-muted-foreground">Pending</span>}</div>
-                </div>))}</div>}
+              <div className="space-y-3">{tests.map((t: any) => {
+                const params: any[] = (t.lab_result_parameters || []).slice().sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0));
+                return (
+                  <div key={t.id} className="border border-border rounded-lg overflow-hidden">
+                    <div className="px-3 py-2 bg-muted/40 flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-sm">{t.test_name}</div>
+                        {t.category_name && <div className="text-xs text-muted-foreground">{t.category_name}</div>}
+                      </div>
+                      <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium capitalize", t.status === "completed" ? "bg-success/15 text-success" : "bg-warning/15 text-warning")}>{t.status || "pending"}</span>
+                    </div>
+                    {params.length > 0 ? (
+                      <table className="w-full text-xs">
+                        <thead><tr className="text-left text-muted-foreground bg-muted/20"><th className="p-2">Parameter</th><th className="p-2">Result</th><th className="p-2">Unit</th><th className="p-2">Range</th><th className="p-2">Flag</th></tr></thead>
+                        <tbody>{params.map((p) => (
+                          <tr key={p.id} className="border-t border-border/50">
+                            <td className="p-2">{p.parameter_name}</td>
+                            <td className={cn("p-2 font-medium", (p.flag === "low" || p.flag === "high" || p.flag === "abnormal") && "text-destructive")}>{p.result_value || "—"}</td>
+                            <td className="p-2 text-muted-foreground">{p.unit_snapshot || "—"}</td>
+                            <td className="p-2 text-muted-foreground">{p.ref_range_snapshot || "—"}</td>
+                            <td className="p-2 capitalize">{p.flag}</td>
+                          </tr>))}</tbody>
+                      </table>
+                    ) : (
+                      <div className="p-3 text-xs text-muted-foreground">Awaiting results.</div>
+                    )}
+                  </div>
+                );
+              })}</div>}
           </div>
         </DialogContent>
       </Dialog>
