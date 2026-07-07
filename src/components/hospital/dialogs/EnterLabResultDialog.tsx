@@ -254,40 +254,52 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
           flag: flagForParam(p, patientSex),
         }));
         const anyAbnormal = params.some((p) => p.flag === "low" || p.flag === "high" || p.flag === "abnormal");
-        // Also mirror the first parameter's result into legacy fields so table previews still work
         const first = params[0];
-        await supabase.from("lab_result_tests").update({
+        const { error: testErr } = await supabase.from("lab_result_tests").update({
           parameters: params as any,
           is_abnormal: anyAbnormal,
           result_value: first?.result_value || null,
           unit: first?.unit || null,
           reference_range: first?.reference_range || null,
         } as any).eq("id", t.id);
+        if (testErr) throw testErr;
       }
 
-      await supabase.from("lab_results")
+      const { error: statusErr } = await supabase.from("lab_results")
         .update({ status: "completed", notes: interpretation || null })
         .eq("id", order.id);
+      if (statusErr) throw statusErr;
 
-      const body = buildReportBody();
-      const { error: letterErr } = await supabase.from("patient_letters" as any).insert({
-        patient_id: order.patient_id,
-        hospital_id: order.hospital_id || hospital?.id || null,
-        doctor_id: order.ordered_by || null,
-        letter_type: "lab_report",
-        title: `Laboratory Report — ${labId}`,
-        body,
-        status: "issued",
-        issued_at: new Date().toISOString(),
-      });
-      if (letterErr) throw letterErr;
-
-      toast({ title: "Report saved and issued to patient" });
+      // Results are saved. Refresh lists immediately so status flips to Completed
+      // everywhere — even if report generation below fails.
       qc.invalidateQueries({ queryKey: ["lab-results"] });
-      qc.invalidateQueries({ queryKey: ["patient-letters"] });
+
+      // Report generation is best-effort — never block a successful save.
+      try {
+        const body = buildReportBody();
+        const { error: letterErr } = await supabase.from("patient_letters" as any).insert({
+          patient_id: order.patient_id,
+          hospital_id: order.hospital_id || hospital?.id || null,
+          doctor_id: order.ordered_by || null,
+          letter_type: "lab_report",
+          title: `Laboratory Report — ${labId}`,
+          body,
+          status: "issued",
+          issued_at: new Date().toISOString(),
+        });
+        if (letterErr) throw letterErr;
+        qc.invalidateQueries({ queryKey: ["patient-letters"] });
+        toast({ title: "Report saved and issued to patient" });
+      } catch (reportErr: any) {
+        toast({
+          title: "Results saved",
+          description: `Report generation failed: ${reportErr.message}. You can re-issue the report later.`,
+        });
+      }
+
       onClose();
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Could not save results", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
