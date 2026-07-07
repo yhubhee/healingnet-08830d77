@@ -95,12 +95,37 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
     const src: any[] = order.lab_result_tests || [];
     const hydrated: OrderedTest[] = src.map((row: any) => {
       const catalog = findCatalogTest(row.catalog_test_id);
+      const savedParams: any[] = Array.isArray(row.lab_result_parameters) ? row.lab_result_parameters : [];
       let parameters: ParamResult[] = [];
-      if (Array.isArray(row.parameters) && row.parameters.length > 0) {
+
+      if (savedParams.length > 0) {
+        // Prefer the new normalized table
+        const bySortAsc = [...savedParams].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        parameters = bySortAsc.map((p) => {
+          // Bring in kind/options/dependsOn metadata from catalog when available
+          const catP = catalog?.parameters.find((cp) => cp.name === p.parameter_name);
+          const r = catP ? resolveRange(catP, patientSex) : undefined;
+          return {
+            name: p.parameter_name,
+            result_value: p.result_value || "",
+            unit: p.unit_snapshot || catP?.unit || "",
+            reference_range: p.ref_range_snapshot || r?.range || "",
+            range_low: r?.low,
+            range_high: r?.high,
+            flag: p.flag as FlagLevel,
+            kind: catP?.kind,
+            options: catP?.options,
+            expectedNormal: catP?.expectedNormal,
+            dependsOn: catP?.dependsOn,
+            dependsOnValue: catP?.dependsOnValue,
+            forcedValue: catP?.forcedValue,
+          };
+        });
+      } else if (Array.isArray(row.parameters) && row.parameters.length > 0) {
         parameters = row.parameters as ParamResult[];
       } else if (catalog) {
         parameters = paramsFromCatalog(catalog, patientSex);
-      } else if (row.is_custom || !catalog) {
+      } else {
         parameters = [{
           name: row.test_name || "",
           result_value: row.result_value || "",
