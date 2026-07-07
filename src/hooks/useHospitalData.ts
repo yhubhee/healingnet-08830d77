@@ -190,7 +190,7 @@ export function useLabResults() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lab_results")
-        .select("*, patients(first_name, last_name), doctors:ordered_by(first_name, last_name), lab_result_tests(*)")
+        .select("*, patients(first_name, last_name, gender, date_of_birth), doctors:ordered_by(first_name, last_name), lab_result_tests(*, lab_result_parameters(*))")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
