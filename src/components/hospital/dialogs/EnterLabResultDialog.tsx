@@ -489,7 +489,7 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
           </div>
         </div>
 
-        <form onSubmit={submit} className="p-6 space-y-6">
+        <div className="p-6 space-y-6">
           {abnormalCount > 0 && (
             <Alert className="border-warning/40 bg-warning/10">
               <AlertCircle className="h-4 w-4 text-warning" />
