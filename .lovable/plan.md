@@ -1,67 +1,90 @@
+## Goal
 
-## Findings
+Fix the recurring "results don't save / status out of sync / report crash blocks save" bugs by giving lab data a proper 3-level structure (order → test → parameter), computing order status from its tests, and separating "Save Results" from "Generate Report".
 
-**1. Current check constraint on `patient_letters.letter_type`:**
-```
-CHECK (letter_type = ANY (ARRAY[
-  'fit_to_work', 'pregnancy_maternity', 'sick_leave',
-  'excuse_of_duty', 'vaccination_record'
-]))
-```
-`'lab_report'` is **not** in the allowed list.
+## Approach — reuse existing table names to avoid a rewrite of every page
 
-**2. What the save function inserts** (`src/components/hospital/dialogs/EnterLabResultDialog.tsx`, line 277):
-```ts
-letter_type: "lab_report"
-```
-This is the exact mismatch causing the constraint violation.
+The current schema already has two of the three levels: `lab_results` (acts as the order) and `lab_result_tests` (one row per test in the order). I'll keep those names so the ~10 pages/hooks that reference them don't churn, add the missing per-parameter level as a new table, and enforce the "status is computed" rule with a trigger.
 
-**3. Transaction behaviour:** Supabase JS calls are separate HTTP requests — not a single DB transaction. The three writes in `submit()` run sequentially:
-   1. `lab_result_tests.update(...)` per test
-   2. `lab_results.update({status: "completed"})`
-   3. `patient_letters.insert({letter_type: "lab_report"})` ← throws
+Mapping to the names in your spec:
+- `lab_orders` → existing `lab_results`
+- `lab_order_tests` → existing `lab_result_tests` (add `status` column)
+- `lab_results` (per parameter) → new `lab_result_parameters`
 
-Because step 3 throws inside the `try`, the `catch` shows the error toast, but steps 1 & 2 already committed server-side. So the "still Pending" symptom the user sees is likely a stale React Query cache: `qc.invalidateQueries` is only called on success, so after the error the Lab list is never refetched and keeps showing the pre-save snapshot until the page is reloaded. Fixing the constraint mismatch resolves both symptoms; the ordering fix below adds belt-and-braces so a future letter failure can never mask a completed save.
+## 1. Schema migration
 
-## Fix
-
-### A. Database migration — allow `lab_report`
-Drop and recreate the check constraint to include `'lab_report'`:
-
-```sql
-ALTER TABLE public.patient_letters
-  DROP CONSTRAINT patient_letters_letter_type_check;
-
-ALTER TABLE public.patient_letters
-  ADD CONSTRAINT patient_letters_letter_type_check
-  CHECK (letter_type = ANY (ARRAY[
-    'fit_to_work','pregnancy_maternity','sick_leave',
-    'excuse_of_duty','vaccination_record','lab_report'
-  ]));
+```text
+lab_results (order)                — unchanged columns; status becomes trigger-managed
+ └── lab_result_tests (per test)   — add status ('pending'|'completed'), completed_at
+      └── lab_result_parameters    — NEW: id, order_test_id, parameter_key, parameter_label,
+                                          result_value, unit_snapshot, ref_range_snapshot,
+                                          flag ('normal'|'low'|'high'|'critical'), created_at
 ```
 
-Adding (not replacing) keeps the existing patient-letter feature working.
+- Add `status text default 'pending' check in ('pending','completed')` and `completed_at timestamptz` on `lab_result_tests`.
+- Create `lab_result_parameters` with GRANTs, RLS, and policies that mirror `lab_result_tests` (staff at owning hospital + assigned doctor + owning patient can read; hospital staff can write).
+- `unit_snapshot` and `ref_range_snapshot` are copied from the catalog at save-time so historical reports are stable.
 
-### B. Frontend hardening — `EnterLabResultDialog.submit()`
-Restructure so lab data integrity is never coupled to report generation:
+## 2. Computed order status via trigger
 
-1. Run the `lab_result_tests` updates and the `lab_results` status update first (as today), and check each response's `error` explicitly — throw immediately if either fails so the user sees a real error and no false "success".
-2. Invalidate `["lab-results"]` **before** attempting the letter insert, so the Lab list refreshes to "Completed" even if the letter step later fails.
-3. Wrap the `patient_letters` insert in its own try/catch. On failure, show a non-blocking warning toast ("Results saved. Report generation failed — you can re-issue the report later.") instead of a destructive error, and still call `onClose()`.
-4. Keep `letter_type: "lab_report"` (now valid after migration A).
+- Trigger on `lab_result_parameters` INSERT/UPDATE/DELETE and on `lab_result_tests` INSERT/UPDATE/DELETE:
+  - Recompute owning `lab_results.status`: `completed` iff every child `lab_result_tests.status='completed'` AND at least one test exists; else `pending`.
+- Drop client code paths that manually set `lab_results.status`.
 
-### C. Verify "View" on completed orders shows results
-`Lab.tsx` already reopens `EnterLabResultDialog` for completed orders, and the dialog hydrates from `order.lab_result_tests[*].parameters`. `useLabResults` must select `lab_result_tests(*)` including the `parameters` JSON column — I'll confirm and, if the select is narrowed, widen it to `lab_result_tests(*)` so saved parameters render on re-open for hospital, and continue to render on the doctor (`Doctor > Lab Orders` / patient detail) and patient (`/patient/lab-results`) views which already read the same rows.
+## 3. Data migration (preserve existing entries)
 
-## Test plan (after build)
-Logged in as a hospital lab tech:
-1. Open a Pending lab order → Enter Results → Save → expect success toast, no constraint error, order flips to Completed in the Lab list immediately.
-2. Click View on that order → parameters, units, ranges, and flags are pre-filled.
-3. Switch to the ordering doctor account → open the patient's Lab Orders → status Completed, results visible.
-4. Switch to the patient account → `/patient/lab-results` → results visible with correct Normal / Abnormal flags.
-5. Confirm a new "Laboratory Report" letter appears under the patient's Letters & Reports.
+- Backfill each existing `lab_result_tests` row with `status='completed'` when `result_value` is non-null, else `pending`.
+- For rows whose `parameters` JSONB has entries, expand each key into a `lab_result_parameters` row (`unit_snapshot`, `ref_range_snapshot`, `flag` inferred from `is_abnormal`). Leave the legacy `parameters` column in place for now (read-only fallback).
+- Run the status trigger once to sync existing `lab_results.status`.
+
+## 4. Fix patient_letters constraint (unblock report generation)
+
+The last migration already added `'lab_report'` to the check constraint. I'll verify it's present and, if the current insert uses a different value, either update the code to `'lab_report'` or extend the constraint. Report generation stays best-effort — failures never roll back saved results.
+
+## 5. Split the save flow — two independent actions
+
+`EnterLabResultDialog` gets two buttons:
+
+- **Save Results** — for each test's parameter grid: upsert `lab_result_parameters` rows (with unit/range snapshots + computed flag), then set that test's `lab_result_tests.status='completed'`. Trigger recomputes order status. Toast success, invalidate `lab-results`, close.
+- **Save and Generate Report** — runs Save Results, then, in an isolated try/catch, inserts a `patient_letters` row (`letter_type='lab_report'`, body rendered from saved parameters). If the letter insert fails, show a non-blocking warning; saved results and completed status remain.
+
+Flag computation (client-side, from catalog range): numeric parse → compare against low/high → `low`/`normal`/`high`; free-text results default to `normal` unless the tech overrides.
+
+## 6. Update the three views to read the new structure
+
+- **Hospital `EnterLabResultDialog` (also used as "View" for completed orders)** — hydrate parameter inputs from `lab_result_parameters` (fallback to legacy `lab_result_tests.parameters` JSON if empty). Show interpretation text saved on the order.
+- **Doctor `LabOrders.tsx` detail modal** — show each `lab_result_tests` row with its own status badge + parameter list from `lab_result_parameters`; header shows computed overall status.
+- **Patient `LabResults.tsx`** — replace the current per-test row with per-parameter rows sourced from `lab_result_parameters` (value, `unit_snapshot`, `ref_range_snapshot`, `flag`). No more default "Normal" fallback — show real flag or "—" if not yet entered.
+- Extend `useHospitalData.useLabResults` and equivalent doctor/patient queries to include `lab_result_parameters` in the nested select.
+
+## 7. PDF export from the hospital View modal
+
+Add a **Print / Export PDF** button in `EnterLabResultDialog` header (visible when order is completed). Uses `window.print()` against a hidden print-styled report container (hospital name/address as letterhead, patient block, per-test parameter tables with flag coloring, interpretation, doctor signature line). No new dependency needed; a follow-up can swap to `jspdf` if a true download file is required.
+
+## 8. Test plan
+
+1. Create order with 2 tests (e.g. FBC + LFT) as hospital.
+2. Enter partial results for test 1 only → Save Results → order still `pending`, test 1 `completed`, test 2 `pending`. Verified in hospital list, doctor list, patient page.
+3. Enter results for test 2 → Save Results → order flips to `completed` automatically (trigger).
+4. Click "View" on completed order → all values, units, ranges, flags rehydrated from `lab_result_parameters`.
+5. Click "Save and Generate Report" → confirm a `lab_report` letter appears in the patient's Letters page; deliberately break the letter (e.g. long title) to confirm results remain saved and only a warning shows.
+6. Click Print/Export PDF → verify letterhead, patient block, parameter table, flags, interpretation render correctly.
 
 ## Files touched
-- New migration: `supabase/migrations/<timestamp>_allow_lab_report_letter_type.sql`
-- `src/components/hospital/dialogs/EnterLabResultDialog.tsx` (submit flow)
-- Possibly `src/hooks/useHospitalData.ts` (widen `lab_result_tests` select if needed)
+
+**New migration** — `supabase/migrations/<ts>_lab_results_restructure.sql` (schema, GRANTs, RLS, trigger, backfill).
+
+**Frontend**
+- `src/components/hospital/dialogs/EnterLabResultDialog.tsx` — split submit into `saveResults()` + `saveAndGenerateReport()`; hydrate from `lab_result_parameters`; add Print button + print template.
+- `src/hooks/useHospitalData.ts` — widen `lab_results` select to include `lab_result_tests(*, lab_result_parameters(*))`.
+- `src/pages/doctor/LabOrders.tsx` — per-test status badge, read parameters from new table.
+- `src/pages/patient/LabResults.tsx` — render per-parameter rows from `lab_result_parameters`.
+- `src/components/doctor/OrderLabTestDialog.tsx` and hospital `OrderLabTestDialog.tsx` — no change needed (they only create tests).
+
+**Untouched:** all other lab-adjacent code; no table renames, so hooks/pages referencing `lab_results`/`lab_result_tests` keep working.
+
+## Non-goals
+
+- Not renaming existing tables (would force edits across every lab-touching file for no functional gain).
+- Not removing the legacy `lab_result_tests.parameters` JSONB column in this migration — kept as fallback for one release; can be dropped later.
+- Not changing the test catalog (`src/lib/lab/catalog.ts`) structure.
