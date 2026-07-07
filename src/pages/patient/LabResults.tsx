@@ -14,10 +14,22 @@ export default function PatientLabResults() {
       if (!user) return [];
       const { data: p } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
       if (!p) return [];
-      const { data: results } = await supabase.from("lab_results").select("*, hospitals(name)").eq("patient_id", p.id).order("created_at", { ascending: false });
-      const ids = (results || []).map((r: any) => r.id);
-      const { data: tests } = ids.length ? await supabase.from("lab_result_tests").select("*").in("lab_result_id", ids) : { data: [] as any[] };
-      return (results || []).map((r: any) => ({ ...r, tests: (tests || []).filter((t: any) => t.lab_result_id === r.id) }));
+      const { data: results } = await supabase.from("lab_results").select("*, hospitals(name), lab_result_tests(*, lab_result_parameters(*))").eq("patient_id", p.id).order("created_at", { ascending: false });
+      return (results || []).map((r: any) => {
+        const tests: any[] = r.lab_result_tests || [];
+        const params = tests.flatMap((t: any) => (t.lab_result_parameters || []).map((pp: any) => ({
+          id: pp.id,
+          test_name: pp.parameter_name,
+          parent_test: t.test_name,
+          result_value: pp.result_value,
+          unit: pp.unit_snapshot,
+          reference_range: pp.ref_range_snapshot,
+          flag: pp.flag,
+          is_abnormal: pp.flag === "low" || pp.flag === "high" || pp.flag === "abnormal",
+          sort_order: pp.sort_order,
+        })));
+        return { ...r, tests: params };
+      });
     },
   });
 
