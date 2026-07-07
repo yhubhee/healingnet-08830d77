@@ -653,14 +653,21 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
             )}
           </div>
 
-          <div className="flex gap-2 justify-end pt-4 border-t border-border">
+          <div className="flex gap-2 justify-end pt-4 border-t border-border flex-wrap">
             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
-            <Button type="submit" disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Save and generate report
+            {isCompleted && (
+              <Button type="button" variant="outline" onClick={handlePrint} disabled={saving}>
+                <Printer className="w-4 h-4 mr-2" />Print / Export PDF
+              </Button>
+            )}
+            <Button type="button" variant="secondary" onClick={handleSaveOnly} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Save results
+            </Button>
+            <Button type="button" onClick={handleSaveAndReport} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Save and generate report
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
