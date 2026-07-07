@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useHospitalInfo } from "@/hooks/useHospitalData";
-import { AlertCircle, Bold, FileUp, FlaskConical, Italic, List, Loader2, Trash2 } from "lucide-react";
+import { AlertCircle, Bold, FileUp, FlaskConical, Italic, List, Loader2, Printer, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { computeFlag, type FlagLevel } from "@/lib/lab/panels";
