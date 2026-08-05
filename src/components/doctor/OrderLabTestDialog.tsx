@@ -27,7 +27,7 @@ export function OrderLabTestDialog({ trigger, patientId: lockedPatientId }: { tr
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({ Hematology: true });
-  const qc = useQueryClient();
+  const createOrder = useCreateLabOrder();
 
   useEffect(() => { if (lockedPatientId) setPatientId(lockedPatientId); }, [lockedPatientId]);
   const hospitalId = ctx?.hospitals?.[0]?.id;
@@ -64,43 +64,36 @@ export function OrderLabTestDialog({ trigger, patientId: lockedPatientId }: { tr
     const cleanCustoms = customs.map((c) => c.trim()).filter(Boolean);
     if (!selected.length && !cleanCustoms.length) return toast.error("Select at least one test");
     if (!hospitalId) return toast.error("You're not linked to any hospital yet");
-    setSaving(true);
-    const { data: lr, error } = await supabase.from("lab_results").insert({
-      patient_id: patientId, hospital_id: hospitalId, ordered_by: ctx!.doctor.id, notes, status: "pending",
-    }).select().single();
-    if (error || !lr) { setSaving(false); return toast.error(error?.message || "Failed"); }
 
-    const rows: any[] = [];
+    const tests: NewLabOrderTest[] = [];
     selected.forEach((id) => {
       const t = findCatalogTest(id);
       if (!t) return;
-      rows.push({
-        lab_result_id: lr.id,
-        test_name: t.name,
-        category_name: t.category,
-        catalog_test_id: t.id,
-        is_custom: false,
-      });
+      tests.push({ name: t.name, categoryName: t.category, catalogTestId: t.id, isCustom: false });
     });
     cleanCustoms.forEach((name) => {
-      rows.push({
-        lab_result_id: lr.id,
-        test_name: name,
-        category_name: "Custom",
-        catalog_test_id: null,
-        is_custom: true,
-      });
+      tests.push({ name, categoryName: "Custom", catalogTestId: null, isCustom: true });
     });
-    const { error: tErr } = await supabase.from("lab_result_tests").insert(rows);
-    setSaving(false);
-    if (tErr) return toast.error(tErr.message);
-    toast.success(`Lab order created (${rows.length} test${rows.length > 1 ? "s" : ""})`);
-    qc.invalidateQueries({ queryKey: ["doctor", "labs"] });
-    qc.invalidateQueries({ queryKey: ["doctor", "patient-detail"] });
-    qc.invalidateQueries({ queryKey: ["lab-results"] });
-    setOpen(false);
-    setSelected([]); setCustoms([]); setNotes(""); setSearch("");
+
+    setSaving(true);
+    try {
+      await createOrder.mutateAsync({
+        patientId,
+        hospitalId,
+        doctorId: ctx!.doctor.id,
+        notes,
+        tests,
+      });
+      toast.success(`Lab order created (${tests.length} test${tests.length > 1 ? "s" : ""})`);
+      setOpen(false);
+      setSelected([]); setCustoms([]); setNotes(""); setSearch("");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create order");
+    } finally {
+      setSaving(false);
+    }
   }
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
