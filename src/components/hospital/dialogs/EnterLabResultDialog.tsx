@@ -283,64 +283,23 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
 
     // Persist per-parameter rows for every test in the order
     for (const t of tests) {
-      const params = (t.parameters || []).map((p, idx) => ({
-        order_test_id: t.id,
-        parameter_name: p.name || t.test_name,
-        result_value: p.result_value?.toString() || null,
-        unit_snapshot: p.unit || null,
-        ref_range_snapshot: p.reference_range || null,
-        flag: flagForParam(p, patientSex) || "unknown",
-        sort_order: idx,
+      const params: SaveParameterInput[] = (t.parameters || []).map((p) => ({
+        name: p.name || t.test_name,
+        resultValue: p.result_value?.toString() || null,
+        unit: p.unit || null,
+        referenceRange: p.reference_range || null,
+        flag: (flagForParam(p, patientSex) || "unknown") as FlagLevel,
       }));
 
-      // Wipe + reinsert so removed rows don't linger
-      const { error: delErr } = await supabase
-        .from("lab_result_parameters" as any)
-        .delete()
-        .eq("order_test_id", t.id);
-      if (delErr) throw delErr;
-
-      if (params.length > 0) {
-        const { error: insErr } = await supabase
-          .from("lab_result_parameters" as any)
-          .insert(params);
-        if (insErr) throw insErr;
-      }
-
-      const anyAbnormal = (t.parameters || []).some((p) => {
-        const f = flagForParam(p, patientSex);
-        return f === "low" || f === "high" || f === "abnormal";
-      });
-      const first = (t.parameters || [])[0];
-      const { error: testErr } = await supabase
-        .from("lab_result_tests")
-        .update({
-          status: "completed",
-          completed_at: new Date().toISOString(),
-          is_abnormal: anyAbnormal,
-          // legacy mirrors — keep populated so older reads still work
-          result_value: first?.result_value || null,
-          unit: first?.unit || null,
-          reference_range: first?.reference_range || null,
-          parameters: (t.parameters || []).map((p) => ({
-            ...p,
-            flag: flagForParam(p, patientSex),
-          })) as any,
-        } as any)
-        .eq("id", t.id);
-      if (testErr) throw testErr;
+      await saveResults.mutateAsync({ orderTestId: t.id, parameters: params });
     }
 
-    const { error: notesErr } = await supabase
-      .from("lab_results")
-      .update({ notes: interpretation || null })
-      .eq("id", order.id);
-    if (notesErr) throw notesErr;
+    await updateOrderNotes(order.id, interpretation || null);
 
     // The DB trigger will flip lab_results.status to 'completed' automatically.
-    qc.invalidateQueries({ queryKey: ["lab-results"] });
     return true;
   }
+
 
   async function handleSaveOnly() {
     if (saving) return;
