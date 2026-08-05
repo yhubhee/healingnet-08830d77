@@ -298,7 +298,7 @@ export async function saveConsultationPayment({
   paystack_auth_url: string;
   paystack_access_code: string;
 }) {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("consultation_payments")
     .insert({
       consultation_id,
@@ -329,7 +329,7 @@ export async function updatePaymentStatus({
   payment_status: string;
   charged_at?: string;
 }) {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("consultation_payments")
     .update({
       payment_status,
@@ -355,7 +355,7 @@ export async function refundConsultationPayment({
   reason: string;
   refund_reference?: string;
 }) {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("consultation_payments")
     .update({
       payment_status: "refunded",
@@ -383,7 +383,7 @@ export async function completeTransfer({
   transfer_reference: string;
   transfer_amount: number;
 }) {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("consultation_payments")
     .update({
       transfer_status: "completed",
