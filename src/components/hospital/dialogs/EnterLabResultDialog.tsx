@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
 import { useHospitalInfo } from "@/hooks/useHospitalData";
 import { AlertCircle, Bold, FileUp, FlaskConical, Italic, List, Loader2, Printer, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,6 +12,10 @@ import { cn } from "@/lib/utils";
 import { computeFlag, type FlagLevel } from "@/lib/lab/panels";
 import { findCatalogTest, resolveRange, type CatalogTest, type ParamKind } from "@/lib/lab/catalog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useIssueLabReport, useSaveTestResults } from "@/api/hooks/useLab";
+import { updateOrderNotes } from "@/api/lab";
+import type { LabOrder, SaveParameterInput } from "@/api/types";
+
 
 type ParamResult = {
   name: string;
