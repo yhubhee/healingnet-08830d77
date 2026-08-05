@@ -81,7 +81,7 @@ export function toLabOrder(row: any): LabOrder {
 }
 
 async function listOrders(column: string, value: string): Promise<LabOrder[]> {
-  const rows = unwrap(
+  const rows = unwrap<any[]>(
     await (backend as any)
       .from("lab_results")
       .select(ORDER_SELECT)
@@ -105,14 +105,14 @@ export function listOrdersForHospital(hospitalId: string) {
 
 /** All orders visible to the caller under current access rules. */
 export async function listOrders_visible(): Promise<LabOrder[]> {
-  const rows = unwrap(
+  const rows = unwrap<any[]>(
     await (backend as any).from("lab_results").select(ORDER_SELECT).order("created_at", { ascending: false }),
   );
   return (rows || []).map(toLabOrder);
 }
 
 export async function getOrder(orderId: string): Promise<LabOrder | null> {
-  const row = unwrap(
+  const row = unwrap<any>(
     await (backend as any).from("lab_results").select(ORDER_SELECT).eq("id", orderId).maybeSingle(),
   );
   return row ? toLabOrder(row) : null;
