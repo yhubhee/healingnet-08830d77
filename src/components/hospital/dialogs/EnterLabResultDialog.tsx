@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
 import { useHospitalInfo } from "@/hooks/useHospitalData";
 import { AlertCircle, Bold, FileUp, FlaskConical, Italic, List, Loader2, Printer, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,6 +12,10 @@ import { cn } from "@/lib/utils";
 import { computeFlag, type FlagLevel } from "@/lib/lab/panels";
 import { findCatalogTest, resolveRange, type CatalogTest, type ParamKind } from "@/lib/lab/catalog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useIssueLabReport, useSaveTestResults } from "@/api/hooks/useLab";
+import { updateOrderNotes } from "@/api/lab";
+import type { LabOrder, SaveParameterInput } from "@/api/types";
+
 
 type ParamResult = {
   name: string;
@@ -91,7 +93,8 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
   const [saving, setSaving] = useState(false);
   const interpretationRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
-  const qc = useQueryClient();
+  const saveResults = useSaveTestResults();
+  const issueReport = useIssueLabReport();
 
   const patientSex = order?.patients?.gender;
 
@@ -281,64 +284,23 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
 
     // Persist per-parameter rows for every test in the order
     for (const t of tests) {
-      const params = (t.parameters || []).map((p, idx) => ({
-        order_test_id: t.id,
-        parameter_name: p.name || t.test_name,
-        result_value: p.result_value?.toString() || null,
-        unit_snapshot: p.unit || null,
-        ref_range_snapshot: p.reference_range || null,
-        flag: flagForParam(p, patientSex) || "unknown",
-        sort_order: idx,
+      const params: SaveParameterInput[] = (t.parameters || []).map((p) => ({
+        name: p.name || t.test_name,
+        resultValue: p.result_value?.toString() || null,
+        unit: p.unit || null,
+        referenceRange: p.reference_range || null,
+        flag: (flagForParam(p, patientSex) || "unknown") as FlagLevel,
       }));
 
-      // Wipe + reinsert so removed rows don't linger
-      const { error: delErr } = await supabase
-        .from("lab_result_parameters" as any)
-        .delete()
-        .eq("order_test_id", t.id);
-      if (delErr) throw delErr;
-
-      if (params.length > 0) {
-        const { error: insErr } = await supabase
-          .from("lab_result_parameters" as any)
-          .insert(params);
-        if (insErr) throw insErr;
-      }
-
-      const anyAbnormal = (t.parameters || []).some((p) => {
-        const f = flagForParam(p, patientSex);
-        return f === "low" || f === "high" || f === "abnormal";
-      });
-      const first = (t.parameters || [])[0];
-      const { error: testErr } = await supabase
-        .from("lab_result_tests")
-        .update({
-          status: "completed",
-          completed_at: new Date().toISOString(),
-          is_abnormal: anyAbnormal,
-          // legacy mirrors — keep populated so older reads still work
-          result_value: first?.result_value || null,
-          unit: first?.unit || null,
-          reference_range: first?.reference_range || null,
-          parameters: (t.parameters || []).map((p) => ({
-            ...p,
-            flag: flagForParam(p, patientSex),
-          })) as any,
-        } as any)
-        .eq("id", t.id);
-      if (testErr) throw testErr;
+      await saveResults.mutateAsync({ orderTestId: t.id, parameters: params });
     }
 
-    const { error: notesErr } = await supabase
-      .from("lab_results")
-      .update({ notes: interpretation || null })
-      .eq("id", order.id);
-    if (notesErr) throw notesErr;
+    await updateOrderNotes(order.id, interpretation || null);
 
     // The DB trigger will flip lab_results.status to 'completed' automatically.
-    qc.invalidateQueries({ queryKey: ["lab-results"] });
     return true;
   }
+
 
   async function handleSaveOnly() {
     if (saving) return;
@@ -366,18 +328,14 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
       // Report generation is best-effort — never block a successful save.
       try {
         const body = buildReportBody();
-        const { error: letterErr } = await supabase.from("patient_letters" as any).insert({
-          patient_id: order.patient_id,
-          hospital_id: order.hospital_id || hospital?.id || null,
-          doctor_id: order.ordered_by || null,
-          letter_type: "lab_report",
+        await issueReport.mutateAsync({
+          orderId: order.id,
+          patientId: order.patient_id,
+          hospitalId: order.hospital_id || hospital?.id || null,
+          doctorId: order.ordered_by || null,
           title: `Laboratory Report — ${labId}`,
           body,
-          status: "issued",
-          issued_at: new Date().toISOString().slice(0, 10),
         });
-        if (letterErr) throw letterErr;
-        qc.invalidateQueries({ queryKey: ["patient-letters"] });
         toast({ title: "Report saved and issued to patient" });
       } catch (reportErr: any) {
         toast({
