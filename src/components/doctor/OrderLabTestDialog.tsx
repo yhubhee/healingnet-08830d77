@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { PatientPicker } from "./PatientPicker";
-import { supabase } from "@/integrations/supabase/client";
 import { useDoctor, useDoctorPatients } from "@/hooks/useDoctor";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCreateLabOrder } from "@/api/hooks/useLab";
+import type { NewLabOrderTest } from "@/api/types";
 import { toast } from "sonner";
 import { Loader2, FlaskConical, X, Plus, Search, ChevronDown } from "lucide-react";
 import { LAB_CATALOG, LAB_BUNDLES, LAB_CATEGORIES, findCatalogTest, type LabCategory } from "@/lib/lab/catalog";
 import { cn } from "@/lib/utils";
+
 
 export function OrderLabTestDialog({ trigger, patientId: lockedPatientId }: { trigger: React.ReactNode; patientId?: string }) {
   const [open, setOpen] = useState(false);
