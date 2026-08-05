@@ -328,18 +328,14 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
       // Report generation is best-effort — never block a successful save.
       try {
         const body = buildReportBody();
-        const { error: letterErr } = await supabase.from("patient_letters" as any).insert({
-          patient_id: order.patient_id,
-          hospital_id: order.hospital_id || hospital?.id || null,
-          doctor_id: order.ordered_by || null,
-          letter_type: "lab_report",
+        await issueReport.mutateAsync({
+          orderId: order.id,
+          patientId: order.patient_id,
+          hospitalId: order.hospital_id || hospital?.id || null,
+          doctorId: order.ordered_by || null,
           title: `Laboratory Report — ${labId}`,
           body,
-          status: "issued",
-          issued_at: new Date().toISOString().slice(0, 10),
         });
-        if (letterErr) throw letterErr;
-        qc.invalidateQueries({ queryKey: ["patient-letters"] });
         toast({ title: "Report saved and issued to patient" });
       } catch (reportErr: any) {
         toast({
