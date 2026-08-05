@@ -93,7 +93,8 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
   const [saving, setSaving] = useState(false);
   const interpretationRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
-  const qc = useQueryClient();
+  const saveResults = useSaveTestResults();
+  const issueReport = useIssueLabReport();
 
   const patientSex = order?.patients?.gender;
 
