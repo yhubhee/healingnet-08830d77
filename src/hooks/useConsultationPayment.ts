@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+// consultation_payments is not in the generated DB types yet; use an untyped client for it.
+const db = supabase as any;
 import {
   paystackService,
   saveConsultationPayment,
@@ -71,8 +74,8 @@ export function useVerifyConsultationPayment(consultationId?: string) {
       if (!consultationId) return null;
 
       // Get payment record from DB
-      const { data: paymentRecord, error: dbError } = await supabase
-        .from("consultation_payments" as any)
+      const { data: paymentRecord, error: dbError } = await db
+        .from("consultation_payments")
         .select("*")
         .eq("consultation_id", consultationId)
         .single();
@@ -128,8 +131,8 @@ export function useRefundConsultationPayment() {
       reason: "cancelled_before_call" | "doctor_no_show" | "patient_request";
     }) => {
       // Get payment record
-      const { data: paymentRecord, error: dbError } = await supabase
-        .from("consultation_payments" as any)
+      const { data: paymentRecord, error: dbError } = await db
+        .from("consultation_payments")
         .select("*")
         .eq("consultation_id", consultation_id)
         .single();
@@ -183,8 +186,8 @@ export function useCompleteConsultationTransfer() {
       doctor_name: string;
     }) => {
       // Get payment record
-      const { data: paymentRecord, error: dbError } = await supabase
-        .from("consultation_payments" as any)
+      const { data: paymentRecord, error: dbError } = await db
+        .from("consultation_payments")
         .select("*")
         .eq("consultation_id", consultation_id)
         .single();
@@ -239,8 +242,8 @@ export function useConsultationPaymentStatus(consultationId?: string) {
     queryFn: async () => {
       if (!consultationId) return null;
 
-      const { data, error } = await supabase
-        .from("consultation_payments" as any)
+      const { data, error } = await db
+        .from("consultation_payments")
         .select("*")
         .eq("consultation_id", consultationId)
         .single();
