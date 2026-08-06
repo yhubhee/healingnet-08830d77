@@ -2,6 +2,15 @@
 
 The order → test → parameter restructure has never been exercised against the running app. This plan runs the full flow in a real browser session, fixes whatever breaks, and reports results.
 
+## Step 0: clear the existing TypeScript errors
+
+The project currently fails typecheck with ~35 pre-existing errors that predate the lab work and hide real regressions. These get fixed first so the verification run isn't happening on top of a broken build:
+
+- `consultation_payments` table is missing from the generated database types, breaking `services/paystack.ts` and `useConsultationPayment.ts` (most of the errors).
+- MCP tool files reference `process.env` without Node types.
+- Small type mismatches in doctor Consultations/Notifications/PatientDetail and patient Dashboard.
+
+
 ## Verification run
 
 Using an automated browser session against the live preview, signed in with the managed session:
