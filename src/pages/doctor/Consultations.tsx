@@ -51,7 +51,8 @@ export default function DoctorConsultations() {
         .eq("id", c.patient_id)
         .single();
 
-      const patientEmail = patientInfo?.users?.[0]?.email || patientInfo?.email;
+      const pi = patientInfo as any;
+      const patientEmail = pi?.users?.[0]?.email || pi?.email;
 
       if (!patientEmail) {
         toast.error("Unable to process payment - patient email not found");

@@ -309,12 +309,15 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
         const f = flagForParam(p, patientSex);
         return f === "low" || f === "high" || f === "abnormal";
       });
+      // Partial save: a test only counts as completed once every parameter has a value.
+      const filled = (t.parameters || []).filter((p) => (p.result_value ?? "").toString().trim() !== "");
+      const isComplete = (t.parameters || []).length > 0 && filled.length === (t.parameters || []).length;
       const first = (t.parameters || [])[0];
       const { error: testErr } = await supabase
         .from("lab_result_tests")
         .update({
-          status: "completed",
-          completed_at: new Date().toISOString(),
+          status: isComplete ? "completed" : "pending",
+          completed_at: isComplete ? new Date().toISOString() : null,
           is_abnormal: anyAbnormal,
           // legacy mirrors — keep populated so older reads still work
           result_value: first?.result_value || null,
