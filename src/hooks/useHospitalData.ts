@@ -562,7 +562,7 @@ export function useHospitalPatients(hospitalId?: string | null) {
     const channel = supabase
       .channel(`realtime-checkins-${hospitalId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "patient_checkins" }, (payload) => {
-        if (payload.new?.hospital_id === hospitalId || payload.old?.hospital_id === hospitalId) {
+        if ((payload.new as any)?.hospital_id === hospitalId || (payload.old as any)?.hospital_id === hospitalId) {
           qc.invalidateQueries({ queryKey: ["hospital-patients", hospitalId] });
         }
       })
