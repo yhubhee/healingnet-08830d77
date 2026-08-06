@@ -124,7 +124,7 @@ export default function DoctorPatientDetail() {
         </TabsContent>
 
         <TabsContent value="triage" className="mt-4">
-          <TriageAnalysisPanel triageSession={data?.triage as any} />
+          <TriageAnalysisPanel triageSession={data?.triage} />
         </TabsContent>
 
         <TabsContent value="history" className="mt-4">

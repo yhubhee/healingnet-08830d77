@@ -1,50 +1,33 @@
 import { useState } from "react";
-import { FormDialog } from "./FormDialog";
+import { FormDialog, handleSubmit } from "./FormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePatients, useDoctors, useHospitalId } from "@/hooks/useHospitalData";
-import { useCreateLabOrder } from "@/api/hooks/useLab";
 import { Plus, X } from "lucide-react";
-
-const EMPTY_TEST = { test_name: "", category_name: "", sample_type: "blood" };
 
 export function OrderLabTestDialog() {
   const [patientId, setPatientId] = useState("");
   const [doctorId, setDoctorId] = useState("");
-  const [tests, setTests] = useState([{ ...EMPTY_TEST }]);
-  const { toast } = useToast();
+  const [tests, setTests] = useState([{ test_name: "", category_name: "", sample_type: "blood" }]);
+  const { toast } = useToast(); const qc = useQueryClient();
   const { data: patients = [] } = usePatients();
   const { data: doctors = [] } = useDoctors();
   const { data: hospitalId } = useHospitalId();
-  const createOrder = useCreateLabOrder();
 
   async function submit(e: React.FormEvent, close: () => void) {
     e.preventDefault();
-    const rows = tests.filter((t) => t.test_name.trim());
-    if (!rows.length) return toast({ title: "Add at least one test", variant: "destructive" });
-    if (!hospitalId) return toast({ title: "No hospital linked to your account", variant: "destructive" });
-
-    try {
-      await createOrder.mutateAsync({
-        patientId,
-        hospitalId,
-        doctorId: doctorId || null,
-        tests: rows.map((t) => ({
-          name: t.test_name.trim(),
-          categoryName: t.category_name || null,
-          sampleType: t.sample_type || null,
-          isCustom: true,
-        })),
-      });
-      toast({ title: "Lab order created" });
-      close();
-      setTests([{ ...EMPTY_TEST }]); setPatientId(""); setDoctorId("");
-    } catch (err: any) {
-      toast({ title: "Failed", description: err.message, variant: "destructive" });
-    }
+    const { data: lab, error } = await supabase.from("lab_results").insert({ patient_id: patientId, hospital_id: hospitalId!, ordered_by: doctorId || null, status: "pending" }).select().single();
+    if (error || !lab) return toast({ title: "Failed", description: error?.message, variant: "destructive" });
+    const rows = tests.filter((t) => t.test_name).map((t) => ({ ...t, lab_result_id: lab.id }));
+    if (rows.length) await supabase.from("lab_result_tests").insert(rows);
+    toast({ title: "Lab order created" });
+    close(); setTests([{ test_name: "", category_name: "", sample_type: "blood" }]); setPatientId(""); setDoctorId("");
+    qc.invalidateQueries({ queryKey: ["lab-results"] });
   }
 
   return (
@@ -75,9 +58,9 @@ export function OrderLabTestDialog() {
                 <Button type="button" variant="ghost" size="icon" onClick={() => setTests(tests.filter((_, j) => j !== i))}><X className="w-4 h-4" /></Button>
               </div>
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={() => setTests([...tests, { ...EMPTY_TEST }])}><Plus className="w-3 h-3 mr-1" />Add test</Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setTests([...tests, { test_name: "", category_name: "", sample_type: "blood" }])}><Plus className="w-3 h-3 mr-1" />Add test</Button>
           </div>
-          <Button type="submit" className="w-full" disabled={createOrder.isPending}>Create Order</Button>
+          <Button type="submit" className="w-full">Create Order</Button>
         </form>
       )}
     </FormDialog>

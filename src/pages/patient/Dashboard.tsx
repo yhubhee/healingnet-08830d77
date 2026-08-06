@@ -164,7 +164,7 @@ export default function PatientDashboard() {
                     <div key={lab.id} className="p-3 bg-muted/30 rounded-lg transition-all hover:bg-muted/50 animate-fade-in" style={{ animationDelay: `${310 + i * 50}ms` }}>
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium text-sm">{(lab as any).test_name || "Lab Test"}</div>
+                          <div className="font-medium text-sm">{lab.test_name || "Lab Test"}</div>
                           <div className="text-xs text-muted-foreground">{new Date(lab.created_at).toDateString()}</div>
                         </div>
                         <span className="px-2 py-1 rounded-full text-xs font-medium bg-info/15 text-info">Ready</span>
@@ -194,7 +194,7 @@ export default function PatientDashboard() {
                 <div className="space-y-2">
                   {emr.slice(0, 3).map((entry, i) => (
                     <div key={entry.id} className="p-3 bg-muted/30 rounded-lg transition-all hover:bg-muted/50 animate-fade-in" style={{ animationDelay: `${390 + i * 50}ms` }}>
-                      <div className="font-medium text-sm line-clamp-2">{(entry as any).diagnosis || (entry as any).notes || "Medical Entry"}</div>
+                      <div className="font-medium text-sm line-clamp-2">{entry.diagnosis || entry.notes || "Medical Entry"}</div>
                       <div className="text-xs text-muted-foreground mt-1 flex items-center justify-between">
                         <span>{entry.doctors?.first_name && `Dr. ${entry.doctors.first_name} ${entry.doctors.last_name}`}</span>
                         <span>{new Date(entry.created_at).toDateString()}</span>

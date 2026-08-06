@@ -71,7 +71,7 @@ export function useVerifyConsultationPayment(consultationId?: string) {
       if (!consultationId) return null;
 
       // Get payment record from DB
-      const { data: paymentRecord, error: dbError }: any = await (supabase as any)
+      const { data: paymentRecord, error: dbError } = await supabase
         .from("consultation_payments" as any)
         .select("*")
         .eq("consultation_id", consultationId)
@@ -128,7 +128,7 @@ export function useRefundConsultationPayment() {
       reason: "cancelled_before_call" | "doctor_no_show" | "patient_request";
     }) => {
       // Get payment record
-      const { data: paymentRecord, error: dbError }: any = await (supabase as any)
+      const { data: paymentRecord, error: dbError } = await supabase
         .from("consultation_payments" as any)
         .select("*")
         .eq("consultation_id", consultation_id)
@@ -183,7 +183,7 @@ export function useCompleteConsultationTransfer() {
       doctor_name: string;
     }) => {
       // Get payment record
-      const { data: paymentRecord, error: dbError }: any = await (supabase as any)
+      const { data: paymentRecord, error: dbError } = await supabase
         .from("consultation_payments" as any)
         .select("*")
         .eq("consultation_id", consultation_id)
