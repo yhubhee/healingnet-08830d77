@@ -2218,6 +2218,17 @@ export type Database = {
         }
         Returns: string
       }
+      emit_hospital_notification: {
+        Args: {
+          _hospital_id: string
+          _message: string
+          _reference_id?: string
+          _reference_type?: string
+          _title: string
+          _type: string
+        }
+        Returns: undefined
+      }
       get_doctor_hospital_id: { Args: { _doctor_id: string }; Returns: string }
       get_doctor_hospital_ids: {
         Args: { _doctor_id: string }
@@ -2240,6 +2251,7 @@ export type Database = {
         Args: { _hospital_id: string; _user_id: string }
         Returns: boolean
       }
+      patient_display_name: { Args: { _patient_id: string }; Returns: string }
       recompute_lab_order_status: {
         Args: { _order_id: string }
         Returns: undefined
