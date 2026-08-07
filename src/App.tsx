@@ -48,6 +48,7 @@ import PatientMessages from "./pages/patient/Messages";
 import PatientLetters from "./pages/patient/Letters";
 import PatientProfile from "./pages/patient/Profile";
 import PatientSettings from "./pages/patient/Settings";
+import PatientNotifications from "./pages/patient/Notifications";
 import PatientTriage from "./pages/patient/Triage";
 
 import DoctorDashboard from "./pages/doctor/Dashboard";
@@ -95,6 +96,7 @@ const App = () => (
           <Route path="/patient/letters" element={<ProtectedRoute><PatientLetters /></ProtectedRoute>} />
           <Route path="/patient/messages" element={<ProtectedRoute><PatientMessages /></ProtectedRoute>} />
           <Route path="/patient/profile" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
+          <Route path="/patient/notifications" element={<ProtectedRoute><PatientNotifications /></ProtectedRoute>} />
           <Route path="/patient/settings" element={<ProtectedRoute><PatientSettings /></ProtectedRoute>} />
           <Route path="/patient/triage" element={<ProtectedRoute><PatientTriage /></ProtectedRoute>} />
 
