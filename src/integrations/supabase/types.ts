@@ -1395,6 +1395,45 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_appointments: boolean
+          email_billing: boolean
+          email_enabled: boolean
+          email_lab_results: boolean
+          email_letters: boolean
+          email_prescriptions: boolean
+          language: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_appointments?: boolean
+          email_billing?: boolean
+          email_enabled?: boolean
+          email_lab_results?: boolean
+          email_letters?: boolean
+          email_prescriptions?: boolean
+          language?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_appointments?: boolean
+          email_billing?: boolean
+          email_enabled?: boolean
+          email_lab_results?: boolean
+          email_letters?: boolean
+          email_prescriptions?: boolean
+          language?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       patient_appointments: {
         Row: {
           created_at: string
@@ -2117,6 +2156,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notifications: {
+        Row: {
+          action_url: string | null
+          audience: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          audience?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          audience?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       my_doctor_profile: {
@@ -2218,6 +2299,7 @@ export type Database = {
         }
         Returns: string
       }
+      doctor_user_id: { Args: { _doctor_id: string }; Returns: string }
       emit_hospital_notification: {
         Args: {
           _hospital_id: string
@@ -2226,6 +2308,19 @@ export type Database = {
           _reference_type?: string
           _title: string
           _type: string
+        }
+        Returns: undefined
+      }
+      emit_user_notification: {
+        Args: {
+          _action_url?: string
+          _audience: string
+          _message: string
+          _reference_id?: string
+          _reference_type?: string
+          _title: string
+          _type: string
+          _user_id: string
         }
         Returns: undefined
       }
@@ -2252,6 +2347,7 @@ export type Database = {
         Returns: boolean
       }
       patient_display_name: { Args: { _patient_id: string }; Returns: string }
+      patient_user_id: { Args: { _patient_id: string }; Returns: string }
       recompute_lab_order_status: {
         Args: { _order_id: string }
         Returns: undefined
