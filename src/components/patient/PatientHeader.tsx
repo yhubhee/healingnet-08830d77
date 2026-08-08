@@ -75,7 +75,7 @@ export function PatientHeader() {
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="justify-center text-primary cursor-pointer"
+                className="notification-item justify-center text-primary cursor-pointer"
                 onClick={() => navigate("/patient/notifications")}
               >
                 View all notifications
