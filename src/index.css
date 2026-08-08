@@ -154,4 +154,17 @@
   .nav-link-active {
     @apply text-primary bg-primary/10;
   }
+
+  /* Notification dropdown rows: keep text readable on the accent highlight */
+  .notification-item[data-highlighted],
+  .notification-item:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+
+  .notification-item[data-highlighted] *,
+  .notification-item:hover * {
+    color: hsl(var(--accent-foreground));
+  }
 }
+
