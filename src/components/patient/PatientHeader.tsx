@@ -58,7 +58,7 @@ export function PatientHeader() {
                 recent.map((n) => (
                   <DropdownMenuItem
                     key={n.id}
-                    className={cn("flex flex-col items-start gap-1 py-3 cursor-pointer", !n.is_read && "bg-primary/5")}
+                    className={cn("notification-item flex flex-col items-start gap-1 py-3 cursor-pointer", !n.is_read && "bg-primary/5")}
                     onClick={() => {
                       if (!n.is_read) markRead.mutate(n.id);
                       if (n.action_url) navigate(n.action_url);
