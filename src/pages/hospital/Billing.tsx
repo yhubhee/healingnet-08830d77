@@ -1,16 +1,19 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { cn } from "@/lib/utils";
-import { CreditCard, TrendingUp, Clock, CheckCircle } from "lucide-react";
+import { CreditCard, TrendingUp, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useHospitalBilling } from "@/hooks/useHospitalData";
+import { useHospitalBilling, useHospitalId } from "@/hooks/useHospitalData";
 import { AddBillDialog } from "@/components/hospital/dialogs/AddBillDialog";
+import { useCollectPayment } from "@/hooks/useCollectPayment";
 
 const filters = ["All", "Paid", "Pending", "Partial"];
 
 export default function HospitalBilling() {
   const { data: billing = [], isLoading } = useHospitalBilling();
+  const { data: hospitalId } = useHospitalId();
   const [activeFilter, setActiveFilter] = useState("All");
+  const { collect, isProcessing } = useCollectPayment();
 
   const filtered = activeFilter === "All" ? billing : billing.filter((b: any) => b.payment_status === activeFilter.toLowerCase());
 
@@ -26,9 +29,19 @@ export default function HospitalBilling() {
     { label: "Avg. Bill", value: `₦${avg.toLocaleString()}`, colorClass: "text-info", icon: CreditCard },
   ];
 
+  const handleCollect = (b: any) =>
+    collect({
+      purpose: "billing",
+      amount: Number(b.total),
+      email: b.patients?.email,
+      referenceId: b.id,
+      hospitalId: b.hospital_id ?? hospitalId,
+      patientId: b.patient_id,
+    });
+
   return (
     <HospitalLayout>
-      <div className="mb-6 flex justify-between items-start">
+      <div className="mb-6 flex flex-wrap gap-3 justify-between items-start">
         <div>
           <h1 className="text-2xl font-heading font-bold mb-1">Billing & Revenue</h1>
           <p className="text-muted-foreground">Manage hospital billing, payments, and revenue tracking</p>
@@ -52,37 +65,73 @@ export default function HospitalBilling() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading billing...</div> : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  {["Patient", "Type", "Amount", "Method", "Date", "Status", "Actions"].map((h) => (
-                    <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No billing records</td></tr>
-                ) : filtered.map((b: any) => (
-                  <tr key={b.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
-                    <td className="p-4 font-medium">{b.patients?.first_name} {b.patients?.last_name}</td>
-                    <td className="p-4 text-sm">{b.billing_type}</td>
-                    <td className="p-4 font-heading font-bold">₦{Number(b.total).toLocaleString()}</td>
-                    <td className="p-4 text-sm">{b.payment_method}</td>
-                    <td className="p-4 text-sm text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</td>
-                    <td className="p-4">
-                      <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
-                        b.payment_status === "paid" ? "bg-success/15 text-success" : b.payment_status === "partial" ? "bg-info/15 text-info" : "bg-warning/15 text-warning"
-                      )}>{b.payment_status}</span>
-                    </td>
-                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading billing...</div> : filtered.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground">No billing records</div>
+        ) : (
+          <>
+            {/* Mobile / tablet cards */}
+            <div className="lg:hidden divide-y divide-border/50">
+              {filtered.map((b: any) => (
+                <div key={b.id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{b.patients?.first_name} {b.patients?.last_name}</p>
+                      <p className="text-xs text-muted-foreground">{b.billing_type} · {new Date(b.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0",
+                      b.payment_status === "paid" ? "bg-success/15 text-success" : b.payment_status === "partial" ? "bg-info/15 text-info" : "bg-warning/15 text-warning"
+                    )}>{b.payment_status}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-heading font-bold">₦{Number(b.total).toLocaleString()}</span>
+                    {b.payment_status !== "paid" && (
+                      <Button size="sm" onClick={() => handleCollect(b)} disabled={isProcessing}>
+                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Collect payment"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Patient", "Type", "Amount", "Method", "Date", "Status", "Actions"].map((h) => (
+                      <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.map((b: any) => (
+                    <tr key={b.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
+                      <td className="p-4 font-medium">{b.patients?.first_name} {b.patients?.last_name}</td>
+                      <td className="p-4 text-sm">{b.billing_type}</td>
+                      <td className="p-4 font-heading font-bold">₦{Number(b.total).toLocaleString()}</td>
+                      <td className="p-4 text-sm">{b.payment_method || "—"}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</td>
+                      <td className="p-4">
+                        <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
+                          b.payment_status === "paid" ? "bg-success/15 text-success" : b.payment_status === "partial" ? "bg-info/15 text-info" : "bg-warning/15 text-warning"
+                        )}>{b.payment_status}</span>
+                      </td>
+                      <td className="p-4">
+                        {b.payment_status === "paid" ? (
+                          <span className="text-xs text-muted-foreground">Settled</span>
+                        ) : (
+                          <Button size="sm" onClick={() => handleCollect(b)} disabled={isProcessing}>
+                            {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Collect payment"}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </HospitalLayout>
