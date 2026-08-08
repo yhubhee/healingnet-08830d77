@@ -8,7 +8,7 @@ type Purpose = "billing" | "pharmacy" | "consultation";
 interface CollectArgs {
   purpose: Purpose;
   amount: number;
-  email: string;
+  email?: string | null;
   referenceId?: string | null;
   hospitalId?: string | null;
   patientId?: string | null;
