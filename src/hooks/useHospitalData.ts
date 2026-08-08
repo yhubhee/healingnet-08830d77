@@ -234,7 +234,8 @@ export function useHospitalBilling() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hospital_billing")
-        .select("*, patients(first_name, last_name)")
+        .select("*, patients(id, first_name, last_name, email)")
+
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
