@@ -1753,6 +1753,78 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          authorization_url: string | null
+          channel: string | null
+          created_at: string
+          currency: string
+          email: string | null
+          hospital_id: string | null
+          id: string
+          metadata: Json
+          paid_at: string | null
+          patient_id: string | null
+          paystack_reference: string
+          purpose: string
+          reference_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          authorization_url?: string | null
+          channel?: string | null
+          created_at?: string
+          currency?: string
+          email?: string | null
+          hospital_id?: string | null
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          patient_id?: string | null
+          paystack_reference: string
+          purpose: string
+          reference_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          authorization_url?: string | null
+          channel?: string | null
+          created_at?: string
+          currency?: string
+          email?: string | null
+          hospital_id?: string | null
+          id?: string
+          metadata?: Json
+          paid_at?: string | null
+          patient_id?: string | null
+          paystack_reference?: string
+          purpose?: string
+          reference_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pharmacy_dispensing: {
         Row: {
           created_at: string
