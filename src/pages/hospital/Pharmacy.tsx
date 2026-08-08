@@ -53,41 +53,68 @@ export default function HospitalPharmacy() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading pharmacy...</div> : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  {["Drug Name", "Category", "Form", "Stock", "Reorder Level", "Unit Price", "Expiry", "Actions"].map((h) => (
-                    <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {displayed.length === 0 ? (
-                  <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No inventory items</td></tr>
-                ) : displayed.map((item: any) => (
-                  <tr key={item.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
-                    <td className="p-4 font-medium">{item.drug_name}</td>
-                    <td className="p-4 text-sm">{item.category || "—"}</td>
-                    <td className="p-4 text-sm">{item.dosage_form || "—"}</td>
-                    <td className="p-4">
-                      <span className={cn("font-heading font-bold", (item.quantity_in_stock || 0) <= (item.reorder_level || 50) ? "text-destructive" : "text-foreground")}>
+        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading pharmacy...</div> : displayed.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground">No inventory items</div>
+        ) : (
+          <>
+            <div className="lg:hidden divide-y divide-border/50">
+              {displayed.map((item: any) => {
+                const low = (item.quantity_in_stock || 0) <= (item.reorder_level || 50);
+                return (
+                  <div key={item.id} className="p-4 space-y-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium">{item.drug_name}</p>
+                        <p className="text-xs text-muted-foreground">{item.category || "—"} · {item.dosage_form || "—"}</p>
+                      </div>
+                      <span className={cn("font-heading font-bold", low ? "text-destructive" : "text-foreground")}>
                         {item.quantity_in_stock || 0}
+                        {low && <AlertTriangle className="inline h-3.5 w-3.5 ml-1" />}
                       </span>
-                      {(item.quantity_in_stock || 0) <= (item.reorder_level || 50) && <AlertTriangle className="inline h-3.5 w-3.5 text-destructive ml-1" />}
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">{item.reorder_level || 50}</td>
-                    <td className="p-4 text-sm">₦{Number(item.unit_price || 0).toLocaleString()}</td>
-                    <td className="p-4 text-sm text-muted-foreground">{item.expiry_date ? new Date(item.expiry_date).toLocaleDateString() : "—"}</td>
-                    <td className="p-4"><Button variant="outline" size="sm">Edit</Button></td>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>₦{Number(item.unit_price || 0).toLocaleString()} / unit</span>
+                      <span>{item.expiry_date ? `Exp. ${new Date(item.expiry_date).toLocaleDateString()}` : "No expiry"}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    {["Drug Name", "Category", "Form", "Stock", "Reorder Level", "Unit Price", "Expiry", "Actions"].map((h) => (
+                      <th key={h} className="text-left p-4 text-xs uppercase tracking-wider text-muted-foreground font-semibold">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {displayed.map((item: any) => (
+                    <tr key={item.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
+                      <td className="p-4 font-medium">{item.drug_name}</td>
+                      <td className="p-4 text-sm">{item.category || "—"}</td>
+                      <td className="p-4 text-sm">{item.dosage_form || "—"}</td>
+                      <td className="p-4">
+                        <span className={cn("font-heading font-bold", (item.quantity_in_stock || 0) <= (item.reorder_level || 50) ? "text-destructive" : "text-foreground")}>
+                          {item.quantity_in_stock || 0}
+                        </span>
+                        {(item.quantity_in_stock || 0) <= (item.reorder_level || 50) && <AlertTriangle className="inline h-3.5 w-3.5 text-destructive ml-1" />}
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">{item.reorder_level || 50}</td>
+                      <td className="p-4 text-sm">₦{Number(item.unit_price || 0).toLocaleString()}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{item.expiry_date ? new Date(item.expiry_date).toLocaleDateString() : "—"}</td>
+                      <td className="p-4"><Button variant="outline" size="sm">Edit</Button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
+
     </HospitalLayout>
   );
 }
