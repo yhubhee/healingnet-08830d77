@@ -2,8 +2,10 @@ import { PatientLayout } from "@/layouts/PatientLayout";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, FlaskConical, Loader2 } from "lucide-react";
+import { ChevronDown, FlaskConical, Loader2, Download, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { buildLabReportDocument, downloadReportPdf, printReport } from "@/lib/reports/documents";
 
 export default function PatientLabResults() {
   const [open, setOpen] = useState<string | null>(null);
@@ -32,6 +34,26 @@ export default function PatientLabResults() {
       });
     },
   });
+
+  const buildDoc = (l: any) =>
+    buildLabReportDocument({
+      hospitalName: l.hospitals?.name,
+      patientName: "You",
+      orderId: l.id,
+      createdAt: l.created_at,
+      notes: l.notes,
+      tests: (l.lab_result_tests || []).map((t: any) => ({
+        test_name: t.test_name,
+        category_name: t.category_name,
+        parameters: (t.lab_result_parameters || []).map((p: any) => ({
+          parameter_name: p.parameter_name,
+          result_value: p.result_value,
+          unit_snapshot: p.unit_snapshot,
+          ref_range_snapshot: p.ref_range_snapshot,
+          flag: p.flag,
+        })),
+      })),
+    });
 
   return (
     <PatientLayout>
@@ -81,6 +103,16 @@ export default function PatientLabResults() {
                           ))}
                         </tbody>
                       </table>}
+                    {l.tests.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        <Button size="sm" variant="outline" onClick={() => downloadReportPdf(buildDoc(l))}>
+                          <Download className="w-4 h-4 mr-2" />Download report
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => printReport(buildDoc(l))}>
+                          <Printer className="w-4 h-4 mr-2" />Print
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
