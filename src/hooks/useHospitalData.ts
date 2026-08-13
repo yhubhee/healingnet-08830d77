@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 
 // Helper to get hospital_id from current user
 async function getHospitalId() {
@@ -72,15 +72,16 @@ export function usePatientCheckins() {
 
 export function useRealtimeCheckins() {
   const queryClient = useQueryClient();
+  const instanceId = useId();
   useEffect(() => {
     const channel = supabase
-      .channel("realtime-checkins")
+      .channel(`realtime-checkins-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "patient_checkins" }, () => {
         queryClient.invalidateQueries({ queryKey: ["patient-checkins"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+  }, [queryClient, instanceId]);
 }
 
 export function useUpdateCheckin() {
@@ -160,15 +161,16 @@ export function useHospitalDoctors() {
 // ---- EMR ----
 export function useEmrEntries() {
   const qc = useQueryClient();
+  const instanceId = useId();
   useEffect(() => {
     const channel = supabase
-      .channel("realtime-emr")
+      .channel(`realtime-emr-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "emr_entries" }, () => {
         qc.invalidateQueries({ queryKey: ["emr-entries"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  }, [qc, instanceId]);
 
   return useQuery({
     queryKey: ["emr-entries"],
@@ -350,15 +352,30 @@ export function useHospitalNotifications() {
 
 export function useRealtimeNotifications() {
   const queryClient = useQueryClient();
+  // Unique per hook instance: several components (header, dashboard,
+  // notifications page, unread-count hook) mount this at the same time and a
+  // shared channel name makes the second `.on()` land on an already
+  // subscribed channel, which throws.
+  const instanceId = useId();
+
   useEffect(() => {
+    // Create the channel fresh, attach every listener BEFORE subscribing.
     const channel = supabase
-      .channel("realtime-notifications")
-      .on("postgres_changes", { event: "*", schema: "public", table: "hospital_notifications" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["hospital-notifications"] });
-      })
+      .channel(`realtime-notifications-${instanceId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hospital_notifications" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["hospital-notifications"] });
+        }
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+
+    // Always tear the channel down on unmount / re-run.
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, instanceId]);
 }
 
 export function useMarkNotificationRead() {
@@ -430,16 +447,17 @@ export function useHospitalBeds() {
 
 export function useRealtimeBeds() {
   const queryClient = useQueryClient();
+  const instanceId = useId();
   useEffect(() => {
     const channel = supabase
-      .channel("realtime-beds")
+      .channel(`realtime-beds-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "hospital_beds" }, () => {
         queryClient.invalidateQueries({ queryKey: ["hospital-beds"] });
         queryClient.invalidateQueries({ queryKey: ["hospital-wards"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+  }, [queryClient, instanceId]);
 }
 
 // ---- STAFF ----
@@ -557,11 +575,12 @@ export function useDoctorProfile(doctorId?: string | null) {
 
 export function useHospitalPatients(hospitalId?: string | null) {
   const qc = useQueryClient();
+  const instanceId = useId();
 
   useEffect(() => {
     if (!hospitalId) return;
     const channel = supabase
-      .channel(`realtime-checkins-${hospitalId}`)
+      .channel(`realtime-checkins-${hospitalId}-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "patient_checkins" }, (payload) => {
         if ((payload.new as any)?.hospital_id === hospitalId || (payload.old as any)?.hospital_id === hospitalId) {
           qc.invalidateQueries({ queryKey: ["hospital-patients", hospitalId] });
@@ -569,7 +588,7 @@ export function useHospitalPatients(hospitalId?: string | null) {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [hospitalId, qc]);
+  }, [hospitalId, qc, instanceId]);
 
   return useQuery({
     enabled: !!hospitalId,

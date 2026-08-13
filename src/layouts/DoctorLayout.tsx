@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react";
 import { DoctorSidebar } from "@/components/doctor/DoctorSidebar";
+import { DoctorHeader } from "@/components/doctor/DoctorHeader";
 import { VerificationGate } from "@/components/doctor/VerificationGate";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,8 @@ export function DoctorLayout({ children }: { children: ReactNode }) {
             <span className="font-heading font-bold text-sm">HealingNet</span>
           </div>
         </header>
+
+        <DoctorHeader />
 
         <main className="flex-1 overflow-auto p-4 md:p-6">
           <VerificationGate>{children}</VerificationGate>

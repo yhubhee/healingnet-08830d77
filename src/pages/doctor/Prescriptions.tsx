@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Pill, Loader2, Search, MoreHorizontal, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { buildPrescriptionDocument, downloadReportPdf, printReport } from "@/lib/reports/documents";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { NewPrescriptionDialog } from "@/components/doctor/NewPrescriptionDialog";
@@ -53,6 +54,16 @@ export default function DoctorPrescriptions() {
     qc.invalidateQueries({ queryKey: ["doctor", "prescriptions"] });
   }
 
+  const rxDoc = (r: any) =>
+    buildPrescriptionDocument({
+      hospitalName: ctx?.hospitals?.[0]?.name,
+      patientName: r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : "Patient",
+      doctorName: ctx?.doctor ? `${ctx.doctor.first_name} ${ctx.doctor.last_name}` : null,
+      issuedAt: r.created_at,
+      referenceId: r.id,
+      items: [r],
+    });
+
   return (
     <DoctorLayout>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -90,7 +101,8 @@ export default function DoctorPrescriptions() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => renew(r)}>Renew</DropdownMenuItem>
                         {r.status === "active" && <DropdownMenuItem onClick={() => discontinue(r.id)}>Discontinue</DropdownMenuItem>}
-                        <DropdownMenuItem onClick={() => window.print()}>Print</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => printReport(rxDoc(r))}>Print</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => downloadReportPdf(rxDoc(r))}>Download report</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
