@@ -161,15 +161,16 @@ export function useHospitalDoctors() {
 // ---- EMR ----
 export function useEmrEntries() {
   const qc = useQueryClient();
+  const instanceId = useId();
   useEffect(() => {
     const channel = supabase
-      .channel("realtime-emr")
+      .channel(`realtime-emr-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "emr_entries" }, () => {
         qc.invalidateQueries({ queryKey: ["emr-entries"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [qc]);
+  }, [qc, instanceId]);
 
   return useQuery({
     queryKey: ["emr-entries"],
