@@ -2,7 +2,7 @@ import { DoctorLayout } from "@/layouts/DoctorLayout";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FlaskConical, Loader2, Plus, MoreHorizontal } from "lucide-react";
+import { FlaskConical, Loader2, Plus, MoreHorizontal, Download, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { OrderLabTestDialog } from "@/components/doctor/OrderLabTestDialog";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
+import { buildLabReportDocument, downloadReportPdf, printReport } from "@/lib/reports/documents";
 
 export default function DoctorLabOrders() {
   const [tab, setTab] = useState<"pending" | "completed">("pending");
@@ -38,6 +39,30 @@ export default function DoctorLabOrders() {
     toast.success("Cancelled");
     qc.invalidateQueries({ queryKey: ["doctor", "labs"] });
   }
+
+  const buildDoc = () =>
+    buildLabReportDocument({
+      hospitalName: ctx?.hospitals?.[0]?.name,
+      patientName: detail?.patients ? `${detail.patients.first_name} ${detail.patients.last_name}` : "Patient",
+      doctorName: ctx?.doctor ? `Dr. ${ctx.doctor.first_name} ${ctx.doctor.last_name}` : null,
+      orderId: detail?.id || "",
+      createdAt: detail?.created_at,
+      notes: detail?.notes,
+      tests: tests.map((t: any) => ({
+        test_name: t.test_name,
+        category_name: t.category_name,
+        parameters: ((t.lab_result_parameters || []) as any[])
+          .slice()
+          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+          .map((p) => ({
+            parameter_name: p.parameter_name,
+            result_value: p.result_value,
+            unit_snapshot: p.unit_snapshot,
+            ref_range_snapshot: p.ref_range_snapshot,
+            flag: p.flag,
+          })),
+      })),
+    });
 
   return (
     <DoctorLayout>
@@ -114,6 +139,16 @@ export default function DoctorLabOrders() {
                   </div>
                 );
               })}</div>}
+            {tests.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+                <Button size="sm" variant="outline" onClick={() => downloadReportPdf(buildDoc())}>
+                  <Download className="w-4 h-4 mr-2" />Download report
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => printReport(buildDoc())}>
+                  <Printer className="w-4 h-4 mr-2" />Print
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
