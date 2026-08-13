@@ -31,6 +31,8 @@ export function DoctorLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
+        <DoctorHeader />
+
         <main className="flex-1 overflow-auto p-4 md:p-6">
           <VerificationGate>{children}</VerificationGate>
         </main>
