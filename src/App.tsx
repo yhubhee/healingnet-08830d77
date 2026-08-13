@@ -99,6 +99,9 @@ const App = () => (
           <Route path="/patient/notifications" element={<ProtectedRoute><PatientNotifications /></ProtectedRoute>} />
           <Route path="/patient/settings" element={<ProtectedRoute><PatientSettings /></ProtectedRoute>} />
           <Route path="/patient/triage" element={<ProtectedRoute><PatientTriage /></ProtectedRoute>} />
+          {/* Legacy deep links from older notifications */}
+          <Route path="/patient/dashboard" element={<Navigate to="/patient" replace />} />
+          <Route path="/doctor/dashboard" element={<Navigate to="/doctor" replace />} />
 
           <Route path="/consult/:id" element={<ProtectedRoute><VideoConsult /></ProtectedRoute>} />
 
