@@ -588,7 +588,7 @@ export function useHospitalPatients(hospitalId?: string | null) {
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [hospitalId, qc]);
+  }, [hospitalId, qc, instanceId]);
 
   return useQuery({
     enabled: !!hospitalId,
