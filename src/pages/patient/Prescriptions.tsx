@@ -2,8 +2,9 @@ import { PatientLayout } from "@/layouts/PatientLayout";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Pill, RefreshCw, User, Loader2 } from "lucide-react";
+import { Pill, RefreshCw, User, Loader2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { buildPrescriptionDocument, downloadReportPdf } from "@/lib/reports/documents";
 
 export default function PatientPrescriptions() {
   const [tab, setTab] = useState<"active" | "completed">("active");
@@ -71,7 +72,25 @@ export default function PatientPrescriptions() {
                 </div>
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
                   <div className="text-xs text-muted-foreground flex items-center gap-1"><User className="w-3.5 h-3.5" />{r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : "—"}</div>
-                  {r.status === "active" && refillsLeft > 0 && <button className="text-sm text-primary inline-flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />Request refill</button>}
+                  <div className="flex items-center gap-3">
+                    <button
+                      className="text-sm text-primary inline-flex items-center gap-1"
+                      onClick={() =>
+                        downloadReportPdf(
+                          buildPrescriptionDocument({
+                            patientName: "You",
+                            doctorName: r.doctors ? `${r.doctors.first_name} ${r.doctors.last_name}` : null,
+                            issuedAt: r.created_at,
+                            referenceId: r.id,
+                            items: [r],
+                          })
+                        )
+                      }
+                    >
+                      <Download className="w-3.5 h-3.5" />Report
+                    </button>
+                    {r.status === "active" && refillsLeft > 0 && <button className="text-sm text-primary inline-flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />Request refill</button>}
+                  </div>
                 </div>
               </div>
             );
