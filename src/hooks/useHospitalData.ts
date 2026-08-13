@@ -352,15 +352,30 @@ export function useHospitalNotifications() {
 
 export function useRealtimeNotifications() {
   const queryClient = useQueryClient();
+  // Unique per hook instance: several components (header, dashboard,
+  // notifications page, unread-count hook) mount this at the same time and a
+  // shared channel name makes the second `.on()` land on an already
+  // subscribed channel, which throws.
+  const instanceId = useId();
+
   useEffect(() => {
+    // Create the channel fresh, attach every listener BEFORE subscribing.
     const channel = supabase
-      .channel("realtime-notifications")
-      .on("postgres_changes", { event: "*", schema: "public", table: "hospital_notifications" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["hospital-notifications"] });
-      })
+      .channel(`realtime-notifications-${instanceId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hospital_notifications" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["hospital-notifications"] });
+        }
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+
+    // Always tear the channel down on unmount / re-run.
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, instanceId]);
 }
 
 export function useMarkNotificationRead() {
