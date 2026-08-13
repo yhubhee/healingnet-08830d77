@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react";
 import { DoctorSidebar } from "@/components/doctor/DoctorSidebar";
+import { DoctorHeader } from "@/components/doctor/DoctorHeader";
 import { VerificationGate } from "@/components/doctor/VerificationGate";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
