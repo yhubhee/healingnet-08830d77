@@ -575,11 +575,12 @@ export function useDoctorProfile(doctorId?: string | null) {
 
 export function useHospitalPatients(hospitalId?: string | null) {
   const qc = useQueryClient();
+  const instanceId = useId();
 
   useEffect(() => {
     if (!hospitalId) return;
     const channel = supabase
-      .channel(`realtime-checkins-${hospitalId}`)
+      .channel(`realtime-checkins-${hospitalId}-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "patient_checkins" }, (payload) => {
         if ((payload.new as any)?.hospital_id === hospitalId || (payload.old as any)?.hospital_id === hospitalId) {
           qc.invalidateQueries({ queryKey: ["hospital-patients", hospitalId] });
