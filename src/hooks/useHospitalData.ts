@@ -447,16 +447,17 @@ export function useHospitalBeds() {
 
 export function useRealtimeBeds() {
   const queryClient = useQueryClient();
+  const instanceId = useId();
   useEffect(() => {
     const channel = supabase
-      .channel("realtime-beds")
+      .channel(`realtime-beds-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "hospital_beds" }, () => {
         queryClient.invalidateQueries({ queryKey: ["hospital-beds"] });
         queryClient.invalidateQueries({ queryKey: ["hospital-wards"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+  }, [queryClient, instanceId]);
 }
 
 // ---- STAFF ----
