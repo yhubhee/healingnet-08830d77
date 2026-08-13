@@ -72,15 +72,16 @@ export function usePatientCheckins() {
 
 export function useRealtimeCheckins() {
   const queryClient = useQueryClient();
+  const instanceId = useId();
   useEffect(() => {
     const channel = supabase
-      .channel("realtime-checkins")
+      .channel(`realtime-checkins-${instanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "patient_checkins" }, () => {
         queryClient.invalidateQueries({ queryKey: ["patient-checkins"] });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+  }, [queryClient, instanceId]);
 }
 
 export function useUpdateCheckin() {
