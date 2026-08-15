@@ -992,6 +992,7 @@ export type Database = {
       }
       hospitals: {
         Row: {
+          active_plan: string
           address: string | null
           city: string | null
           created_at: string
@@ -1005,9 +1006,11 @@ export type Database = {
           name: string
           phone: string | null
           state: string | null
+          subscription_status: string
           updated_at: string
         }
         Insert: {
+          active_plan?: string
           address?: string | null
           city?: string | null
           created_at?: string
@@ -1021,9 +1024,11 @@ export type Database = {
           name: string
           phone?: string | null
           state?: string | null
+          subscription_status?: string
           updated_at?: string
         }
         Update: {
+          active_plan?: string
           address?: string | null
           city?: string | null
           created_at?: string
@@ -1037,6 +1042,7 @@ export type Database = {
           name?: string
           phone?: string | null
           state?: string | null
+          subscription_status?: string
           updated_at?: string
         }
         Relationships: []
@@ -1767,6 +1773,7 @@ export type Database = {
           paid_at: string | null
           patient_id: string | null
           paystack_reference: string
+          plan: string | null
           purpose: string
           reference_id: string | null
           status: string
@@ -1785,6 +1792,7 @@ export type Database = {
           paid_at?: string | null
           patient_id?: string | null
           paystack_reference: string
+          plan?: string | null
           purpose: string
           reference_id?: string | null
           status?: string
@@ -1803,6 +1811,7 @@ export type Database = {
           paid_at?: string | null
           patient_id?: string | null
           paystack_reference?: string
+          plan?: string | null
           purpose?: string
           reference_id?: string | null
           status?: string
