@@ -31,7 +31,9 @@ Deno.serve(async (req) => {
     const amount = Number(body?.amount)
     const email = String(body?.email ?? '').trim()
 
-    if (!['billing', 'pharmacy', 'consultation'].includes(purpose)) {
+    const plan = body?.plan === 'telemedicine' || body?.plan === 'emr' ? body.plan : null
+
+    if (!['billing', 'pharmacy', 'consultation', 'subscription'].includes(purpose)) {
       return new Response(JSON.stringify({ error: 'Invalid purpose' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -43,6 +45,12 @@ Deno.serve(async (req) => {
     }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       return new Response(JSON.stringify({ error: 'A valid payer email is required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (purpose === 'subscription' && !plan) {
+      return new Response(JSON.stringify({ error: 'A plan is required for subscription payments' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -61,7 +69,7 @@ Deno.serve(async (req) => {
         amount: Math.round(amount * 100),
         reference,
         callback_url: callbackUrl,
-        metadata: { purpose, reference_id: body?.referenceId ?? null },
+        metadata: { purpose, plan, reference_id: body?.referenceId ?? null },
       }),
     })
 
@@ -79,6 +87,7 @@ Deno.serve(async (req) => {
       hospital_id: body?.hospitalId ?? null,
       patient_id: body?.patientId ?? null,
       purpose,
+      plan,
       reference_id: body?.referenceId ?? null,
       amount,
       email,

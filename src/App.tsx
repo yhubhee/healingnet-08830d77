@@ -38,6 +38,7 @@ import HospitalMarketplace from "./pages/hospital/Marketplace";
 import HospitalNotifications from "./pages/hospital/Notifications";
 import HospitalSettings from "./pages/hospital/Settings";
 import HospitalBedManagement from "./pages/hospital/BedManagement";
+import ConfirmingPayment from "./pages/hospital/ConfirmingPayment";
 
 import PatientDashboard from "./pages/patient/Dashboard";
 import PatientAppointments from "./pages/patient/Appointments";
@@ -141,6 +142,7 @@ const App = () => (
           <Route path="/hospital/marketplace" element={<ProtectedRoute><RequirePlan plan="telemedicine"><HospitalMarketplace /></RequirePlan></ProtectedRoute>} />
           <Route path="/hospital/notifications" element={<ProtectedRoute><HospitalNotifications /></ProtectedRoute>} />
           <Route path="/hospital/settings" element={<ProtectedRoute><HospitalSettings /></ProtectedRoute>} />
+          <Route path="/hospital/confirming-payment" element={<ProtectedRoute><ConfirmingPayment /></ProtectedRoute>} />
           <Route path="/hospital/beds" element={<ProtectedRoute><HospitalBedManagement /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />

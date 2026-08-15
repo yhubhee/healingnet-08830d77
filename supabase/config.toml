@@ -2,3 +2,6 @@ project_id = "cjjbfrckrfuaqyrkmbfn"
 
 [functions.create-hospital]
 verify_jwt = false
+
+[functions.paystack-webhook]
+verify_jwt = false
