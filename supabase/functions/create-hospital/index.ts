@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
     const { data: hospital, error: hErr } = await admin
       .from("hospitals")
-      .insert({ name, address, phone, email })
+      .insert({ name, address, phone, email, active_plan: "none", subscription_status: "pending" })
       .select("id").single();
     if (hErr) throw hErr;
 
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     if (sErr) throw sErr;
 
     const { error: subErr } = await admin.from("hospital_subscriptions").insert({
-      hospital_id: hospital.id, plan: plan || "emr", status: "active", billing_cycle: "monthly",
+      hospital_id: hospital.id, plan: plan || "emr", status: "pending", billing_cycle: "monthly",
     });
     if (subErr) throw subErr;
 

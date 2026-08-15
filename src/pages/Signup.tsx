@@ -9,6 +9,8 @@ import { Heart, User, Building2, Stethoscope } from "lucide-react";
 
 type Role = "patient" | "hospital" | "doctor";
 
+const PLAN_PRICES: Record<"emr" | "telemedicine", number> = { emr: 75000, telemedicine: 150000 };
+
 export default function Signup() {
   const [params] = useSearchParams();
   const [role, setRole] = useState<Role | null>(null);
@@ -74,9 +76,41 @@ export default function Signup() {
         setLoading(false);
         return toast({ title: "Hospital creation failed", description: hErr?.message || (fnData as any)?.error || "Try again", variant: "destructive" });
       }
-      toast({ title: "Welcome to HealingNet!", description: signUp.session ? "Your hospital is ready." : "Check your email to confirm, then sign in." });
+
+      const hospitalId = (fnData as any)?.hospital_id as string | undefined;
+
+      if (!signUp.session) {
+        toast({ title: "Almost there", description: "Confirm your email, then sign in to complete payment." });
+        setLoading(false);
+        return navigate("/login");
+      }
+
+      // Start the subscription checkout. The plan is stored on the pending
+      // payment record so the webhook can activate the right plan later.
+      const { data: pay, error: payErr } = await supabase.functions.invoke("paystack-initialize", {
+        body: {
+          purpose: "subscription",
+          plan,
+          amount: PLAN_PRICES[plan],
+          email,
+          hospitalId,
+          callbackUrl: `${window.location.origin}/hospital/confirming-payment?hospital=${hospitalId}`,
+        },
+      });
+
       setLoading(false);
-      navigate(signUp.session ? "/hospital" : "/login");
+
+      if (payErr || !(pay as any)?.authorization_url) {
+        toast({
+          title: "Account created — payment not started",
+          description: "You can complete payment from Settings → Subscription.",
+          variant: "destructive",
+        });
+        return navigate(`/hospital/confirming-payment?hospital=${hospitalId}`);
+      }
+
+      window.location.href = (pay as any).authorization_url;
+      return;
     } else if (role === "doctor") {
       console.log("=== DOCTOR SIGNUP ===");
       console.log("Doctor signup - signUp.user:", signUp.user);
@@ -211,7 +245,7 @@ export default function Signup() {
                 </div>
               </>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating account…" : "Create Account"}</Button>
+            <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating account…" : role === "hospital" ? "Create Account & Pay" : "Create Account"}</Button>
           </form>
         </div>
       </div>

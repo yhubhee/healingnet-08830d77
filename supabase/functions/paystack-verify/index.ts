@@ -69,6 +69,27 @@ Deno.serve(async (req) => {
       paid_at: tx.paid_at ?? null,
     }).eq('id', payment.id)
 
+    if (status === 'success' && payment.purpose === 'subscription' && payment.hospital_id) {
+      const plan = payment.plan === 'telemedicine' ? 'telemedicine' : 'emr'
+      await admin.from('hospitals')
+        .update({ active_plan: plan, subscription_status: 'active' })
+        .eq('id', payment.hospital_id)
+      const { data: sub } = await admin
+        .from('hospital_subscriptions')
+        .select('id')
+        .eq('hospital_id', payment.hospital_id)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (sub) {
+        await admin.from('hospital_subscriptions').update({ plan, status: 'active' }).eq('id', sub.id)
+      } else {
+        await admin.from('hospital_subscriptions').insert({
+          hospital_id: payment.hospital_id, plan, status: 'active', billing_cycle: 'monthly',
+        })
+      }
+    }
+
     if (status === 'success' && payment.reference_id) {
       if (payment.purpose === 'billing') {
         await admin.from('hospital_billing').update({
