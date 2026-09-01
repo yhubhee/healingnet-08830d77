@@ -3,13 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 // consultation_payments is not in the generated DB types yet; use an untyped client for it.
 const db = supabase as any;
 
-const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
-const PAYSTACK_SECRET_KEY = import.meta.env.VITE_PAYSTACK_SECRET_KEY;
+/**
+ * NOTE: every privileged Paystack call goes through an edge function so the
+ * Paystack secret key stays server-side. Nothing in this file may read a
+ * secret key from `import.meta.env` — that would ship it to the browser.
+ */
 
 interface InitializePaymentParams {
   email: string;
   amount: number; // in kobo (NGN/100)
-  reference: string;
+  reference?: string;
   metadata?: Record<string, any>;
 }
 
@@ -24,260 +27,90 @@ interface InitiateTransferParams {
   reason?: string;
 }
 
+function serverOnly(operation: string): never {
+  throw new Error(
+    `${operation} requires the Paystack secret key and must run in an edge function. ` +
+      `It is not available from the browser.`,
+  );
+}
+
 export const paystackService = {
   /**
-   * Initialize Paystack payment for consultation
+   * Initialize a Paystack payment for a consultation, via the
+   * `paystack-initialize` edge function.
    */
-  async initializePayment({
-    email,
-    amount,
-    reference,
-    metadata,
-  }: InitializePaymentParams) {
-    try {
-      const response = await fetch("https://api.paystack.co/transaction/initialize", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          amount, // in kobo
-          reference,
-          metadata: metadata || {},
-        }),
-      });
+  async initializePayment({ email, amount, metadata }: InitializePaymentParams) {
+    const { data, error } = await supabase.functions.invoke("paystack-initialize", {
+      body: {
+        purpose: "consultation",
+        // the edge function takes naira and converts to kobo itself
+        amount: amount / 100,
+        email,
+        referenceId: metadata?.consultation_id ?? null,
+        patientId: metadata?.patient_id ?? null,
+        metadata: metadata ?? {},
+      },
+    });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to initialize payment");
-      }
+    if (error) throw error;
+    if (!data?.authorization_url) throw new Error(data?.error || "Failed to initialize payment");
 
-      const data = await response.json();
-      return {
-        status: true,
-        data: {
-          authorization_url: data.data.authorization_url,
-          access_code: data.data.access_code,
-          reference: data.data.reference,
-        },
-      };
-    } catch (error) {
-      console.error("Paystack initialization error:", error);
-      throw error;
-    }
+    return {
+      status: true,
+      data: {
+        authorization_url: data.authorization_url as string,
+        access_code: data.access_code as string,
+        reference: data.reference as string,
+      },
+    };
   },
 
   /**
-   * Verify payment status
+   * Verify payment status via the `paystack-verify` edge function.
    */
   async verifyPayment({ reference }: VerifyPaymentParams) {
-    try {
-      const response = await fetch(
-        `https://api.paystack.co/transaction/verify/${reference}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          },
-        }
-      );
+    const { data, error } = await supabase.functions.invoke("paystack-verify", {
+      body: { reference },
+    });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to verify payment");
-      }
+    if (error) throw error;
+    if (!data) throw new Error("Failed to verify payment");
 
-      const data = await response.json();
-      return {
-        status: true,
-        data: {
-          status: data.data.status,
-          amount: data.data.amount,
-          paid_at: data.data.paid_at,
-          customer: data.data.customer,
-          reference: data.data.reference,
-        },
-      };
-    } catch (error) {
-      console.error("Paystack verification error:", error);
-      throw error;
-    }
+    return {
+      status: true,
+      data: {
+        status: data.status as string,
+        amount: data.amount as number,
+        paid_at: data.paid_at as string | null,
+        customer: data.customer ?? null,
+        reference,
+      },
+    };
   },
 
-  /**
-   * Create recipient (bank account or mobile money account)
-   */
-  async createTransferRecipient({
-    type = "nuban",
-    account_number,
-    bank_code,
-    name,
-  }: {
+  /** Server-side only — needs the Paystack secret key. */
+  async createTransferRecipient(_params: {
     type?: string;
     account_number: string;
     bank_code: string;
     name: string;
   }) {
-    try {
-      const response = await fetch("https://api.paystack.co/transferrecipient", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type,
-          account_number,
-          bank_code,
-          name,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to create transfer recipient");
-      }
-
-      const data = await response.json();
-      return {
-        status: true,
-        data: {
-          recipient_code: data.data.recipient_code,
-          account_number: data.data.account_number,
-          bank_code: data.data.bank_code,
-        },
-      };
-    } catch (error) {
-      console.error("Transfer recipient creation error:", error);
-      throw error;
-    }
+    serverOnly("Creating a transfer recipient");
   },
 
-  /**
-   * Initiate transfer to doctor
-   */
-  async initiateTransfer({
-    amount,
-    recipient,
-    reference,
-    reason = "Consultation payment",
-  }: InitiateTransferParams) {
-    try {
-      const response = await fetch("https://api.paystack.co/transfer", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          source: "balance",
-          amount, // in kobo
-          recipient,
-          reference,
-          reason,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to initiate transfer");
-      }
-
-      const data = await response.json();
-      return {
-        status: true,
-        data: {
-          transfer_code: data.data.transfer_code,
-          reference: data.data.reference,
-          status: data.data.status,
-        },
-      };
-    } catch (error) {
-      console.error("Transfer initiation error:", error);
-      throw error;
-    }
+  /** Server-side only — needs the Paystack secret key. */
+  async initiateTransfer(_params: InitiateTransferParams) {
+    serverOnly("Initiating a transfer");
   },
 
-  /**
-   * Verify transfer status
-   */
-  async verifyTransfer({ reference }: { reference: string }) {
-    try {
-      const response = await fetch(
-        `https://api.paystack.co/transfer/verify/${reference}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to verify transfer");
-      }
-
-      const data = await response.json();
-      return {
-        status: true,
-        data: {
-          status: data.data.status,
-          amount: data.data.amount,
-          transferred_at: data.data.transferred_at,
-        },
-      };
-    } catch (error) {
-      console.error("Transfer verification error:", error);
-      throw error;
-    }
+  /** Server-side only — needs the Paystack secret key. */
+  async verifyTransfer(_params: { reference: string }) {
+    serverOnly("Verifying a transfer");
   },
 
-  /**
-   * Process refund
-   */
-  async refund({
-    paystack_reference,
-    amount,
-  }: {
-    paystack_reference: string;
-    amount: number;
-  }) {
-    try {
-      const response = await fetch(
-        `https://api.paystack.co/refund`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            transaction: paystack_reference,
-            amount, // in kobo
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to process refund");
-      }
-
-      const data = await response.json();
-      return {
-        status: true,
-        data: {
-          reference: data.data.reference,
-          status: data.data.status,
-        },
-      };
-    } catch (error) {
-      console.error("Refund error:", error);
-      throw error;
-    }
+  /** Server-side only — needs the Paystack secret key. */
+  async refund(_params: { paystack_reference: string; amount: number }) {
+    serverOnly("Processing a refund");
   },
 };
 
