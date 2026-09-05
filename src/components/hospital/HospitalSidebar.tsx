@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import healingnetLogo from "@/assets/healingnet-logo.png";
 import { NavLink, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { signOut } from "@/hooks/useAuth";
 import {
   LayoutDashboard,
   Users,
@@ -79,7 +80,7 @@ const directLinks = [
   { label: "EMR Records", path: "/hospital/emr", icon: FileText },
   { label: "Billing & Revenue", path: "/hospital/billing", icon: CreditCard },
   { label: "Analytics", path: "/hospital/analytics", icon: BarChart3 },
-  { label: "Teleconsultation", path: "/hospital/teleconsult", icon: Video },
+  { label: "Teleconsultation", path: "/hospital/consultations", icon: Video },
   { label: "Notifications", path: "/hospital/notifications", icon: Bell },
 ];
 
@@ -292,7 +293,10 @@ export function HospitalSidebar() {
             <ArrowLeft className="h-5 w-5" />
             <span>Patient Portal</span>
           </NavLink>
-          <button className="flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-all duration-200 w-full">
+          <button
+            onClick={() => { setIsOpen(false); void signOut(); }}
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-destructive transition-all duration-200 w-full"
+          >
             <LogOut className="h-5 w-5" />
             <span>Logout</span>
           </button>
