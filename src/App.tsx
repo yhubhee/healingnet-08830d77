@@ -67,7 +67,16 @@ import DoctorInvitations from "./pages/doctor/Invitations";
 import DoctorNotifications from "./pages/doctor/Notifications";
 import VideoConsult from "./pages/VideoConsult";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => {
+      toast.error("Couldn't load some information", {
+        description: (error as { message?: string })?.message ?? "Please try again.",
+      });
+    },
+  }),
+  defaultOptions: { queries: { retry: 1 } },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
