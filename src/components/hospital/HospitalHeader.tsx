@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { signOut } from "@/hooks/useAuth";
 import { useHospitalNotifications, useRealtimeNotifications, useMarkNotificationRead } from "@/hooks/useHospitalData";
 import { useHospitalProfile, useHospitalSearch } from "@/hooks/useHospitalSearch";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
@@ -206,7 +207,9 @@ export function HospitalHeader() {
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-destructive">Log out</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void signOut()} className="cursor-pointer text-destructive">
+                Log out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
