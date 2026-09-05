@@ -5,6 +5,7 @@ import { VerificationGate } from "@/components/doctor/VerificationGate";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, Heart } from "lucide-react";
+import { DataErrorBanner } from "@/components/ui/data-error-banner";
 
 export function DoctorLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -35,6 +36,7 @@ export function DoctorLayout({ children }: { children: ReactNode }) {
         <DoctorHeader />
 
         <main className="flex-1 overflow-auto p-4 md:p-6">
+          <DataErrorBanner />
           <VerificationGate>{children}</VerificationGate>
         </main>
       </div>
