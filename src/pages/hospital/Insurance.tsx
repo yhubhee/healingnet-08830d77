@@ -56,7 +56,29 @@ export default function HospitalInsurance() {
       {activeTab === "Claims" && (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Mobile / tablet cards */}
+            <div className="lg:hidden divide-y divide-border/50">
+              {claims.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">No claims</div>
+              ) : claims.map((c: any) => (
+                <div key={c.id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium">{c.patients?.first_name} {c.patients?.last_name}</p>
+                      <p className="text-xs text-muted-foreground">{c.insurance_provider} • {new Date(c.claim_date).toLocaleDateString()}</p>
+                      <p className="text-xs text-muted-foreground">{c.service_description || "—"}</p>
+                    </div>
+                    <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0",
+                      c.status === "approved" || c.status === "paid" ? "bg-success/15 text-success" : c.status === "pending" ? "bg-warning/15 text-warning" : "bg-info/15 text-info"
+                    )}>{(c.status || "draft").replace(/_/g, " ")}</span>
+                  </div>
+                  <p className="font-heading font-bold">₦{Number(c.claim_amount).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
@@ -86,6 +108,7 @@ export default function HospitalInsurance() {
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </div>
       )}

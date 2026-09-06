@@ -81,7 +81,40 @@ export default function HospitalQueue() {
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground">Loading queue...</div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile / tablet cards */}
+          <div className="lg:hidden divide-y divide-border/50">
+            {filtered.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">No patients in queue</div>
+            ) : filtered.map((q: any) => (
+              <div key={q.id} className={cn("p-4 space-y-2 border-l-4", priorityBorder[q.urgency || "routine"])}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">
+                      <span className="text-muted-foreground font-heading mr-1">#{q.queue_number || "—"}</span>
+                      {q.patients?.first_name} {q.patients?.last_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {q.department || "—"} • {q.doctors ? `Dr. ${q.doctors.first_name} ${q.doctors.last_name}` : "No doctor"}
+                    </p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {q.checkin_type === "walk_in" ? "Walk-in" : "Booked"} • {q.urgency || "routine"} • waited {getWaitTime(q.checkin_time)}
+                    </p>
+                  </div>
+                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0", statusColors[q.status] || "bg-muted text-muted-foreground")}>
+                    {q.status.replace(/_/g, " ")}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {q.status === "called" && <Button size="sm" onClick={() => updateCheckin.mutate({ id: q.id, status: "in_consultation", consultation_start: new Date().toISOString() })}>Acknowledge</Button>}
+                  {q.status === "checked_in" && <Button size="sm" onClick={() => updateCheckin.mutate({ id: q.id, status: "in_consultation", consultation_start: new Date().toISOString() })}>Start</Button>}
+                  {q.status === "in_consultation" && <Button size="sm" variant="outline" onClick={() => updateCheckin.mutate({ id: q.id, status: "completed", consultation_end: new Date().toISOString() })}>Complete</Button>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
@@ -133,6 +166,7 @@ export default function HospitalQueue() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </HospitalLayout>

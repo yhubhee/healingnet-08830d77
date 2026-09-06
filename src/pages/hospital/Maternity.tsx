@@ -53,7 +53,32 @@ export default function HospitalMaternity() {
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile / tablet cards */}
+          <div className="lg:hidden divide-y divide-border/50">
+            {filtered.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">No records in this category</div>
+            ) : filtered.map((r: any) => (
+              <div key={r.id} className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{r.patients?.first_name} {r.patients?.last_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      EDD {r.edd ? new Date(r.edd).toLocaleDateString() : "—"} • {r.gestational_age_weeks || "—"} weeks • G{r.gravida || 0}P{r.para || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : "No doctor"}
+                      {r.patients?.blood_group ? ` • ${r.patients.blood_group}` : ""}
+                    </p>
+                  </div>
+                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0", riskColors[r.risk_level || "low"])}>{r.risk_level || "low"}</span>
+                </div>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary inline-block">{(r.status || "").replace(/_/g, " ")}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
@@ -81,6 +106,7 @@ export default function HospitalMaternity() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </HospitalLayout>
