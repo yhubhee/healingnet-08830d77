@@ -37,7 +37,33 @@ export default function HospitalReferrals() {
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile / tablet cards */}
+          <div className="lg:hidden divide-y divide-border/50">
+            {filtered.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">No referrals</div>
+            ) : filtered.map((r: any) => (
+              <div key={r.id} className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{r.patients?.first_name} {r.patients?.last_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {r.referring_doctor ? `Dr. ${r.referring_doctor.first_name} ${r.referring_doctor.last_name}` : "—"}
+                      {" → "}
+                      {r.referred_to_hospital || (r.referred_to_doctor ? `Dr. ${r.referred_to_doctor.first_name} ${r.referred_to_doctor.last_name}` : "—")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {r.specialty || "—"} • {new Date(r.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0", statusColors[r.status || "pending"])}>{(r.status || "pending").replace(/_/g, " ")}</span>
+                </div>
+                <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full inline-block", urgencyColors[r.urgency || "routine"])}>{r.urgency || "routine"}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
@@ -70,6 +96,7 @@ export default function HospitalReferrals() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </HospitalLayout>

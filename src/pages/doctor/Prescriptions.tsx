@@ -83,7 +83,32 @@ export default function DoctorPrescriptions() {
 
       {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
         list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Pill className="w-10 h-10 mx-auto mb-2" />No prescriptions yet.</div> :
-        <div className="bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
+        <>
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {list.map((r: any) => (
+            <div key={r.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-success/10 text-success flex items-center justify-center"><Pill className="w-4 h-4" /></div>
+                  <div>
+                    <p className="font-medium text-sm">{r.drug_name}</p>
+                    <p className="text-xs text-muted-foreground">{r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : "—"}</p>
+                    <p className="text-xs text-muted-foreground">{r.frequency || "—"} • {r.duration || "—"} • {new Date(r.created_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium capitalize shrink-0", r.status === "active" ? "bg-success/15 text-success" : r.status === "cancelled" ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground")}>{r.status}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => renew(r)}>Renew</Button>
+                {r.status === "active" && <Button size="sm" variant="outline" onClick={() => discontinue(r.id)}>Discontinue</Button>}
+                <Button size="sm" variant="ghost" onClick={() => downloadReportPdf(rxDoc(r))}>Download</Button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted/30 text-xs text-muted-foreground"><tr><th className="text-left p-3">Drug</th><th className="text-left p-3">Patient</th><th className="text-left p-3">Frequency</th><th className="text-left p-3">Duration</th><th className="text-left p-3">Date</th><th className="text-left p-3">Status</th><th /></tr></thead>
             <tbody>
@@ -110,7 +135,8 @@ export default function DoctorPrescriptions() {
               ))}
             </tbody>
           </table>
-        </div>}
+        </div>
+        </>}
     </DoctorLayout>
   );
 }

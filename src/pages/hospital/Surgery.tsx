@@ -50,7 +50,31 @@ export default function HospitalSurgery() {
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile / tablet cards */}
+          <div className="lg:hidden divide-y divide-border/50">
+            {filtered.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">No surgery records</div>
+            ) : filtered.map((s: any) => (
+              <div key={s.id} className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{s.patients?.first_name} {s.patients?.last_name}</p>
+                    <p className="text-xs text-muted-foreground">{s.procedure_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {s.doctors ? `Dr. ${s.doctors.first_name} ${s.doctors.last_name}` : "—"} • Theatre {s.theatre_number || "—"} • {s.scheduled_time}
+                    </p>
+                  </div>
+                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0",
+                    s.status === "completed" ? "bg-success/15 text-success" : s.status === "in_progress" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
+                  )}>{(s.status || "scheduled").replace(/_/g, " ")}</span>
+                </div>
+                <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full inline-block", s.procedure_type === "emergency" ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary")}>{s.procedure_type}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
@@ -82,6 +106,7 @@ export default function HospitalSurgery() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </HospitalLayout>

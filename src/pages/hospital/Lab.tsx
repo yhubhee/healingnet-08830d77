@@ -73,7 +73,45 @@ export default function HospitalLab() {
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading lab data...</div> : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile / tablet cards */}
+          <div className="lg:hidden divide-y divide-border/50">
+            {filtered.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">No lab results found</div>
+            ) : filtered.map((o: any) => (
+              <div key={o.id} className="p-4 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{o.patients?.first_name} {o.patients?.last_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      LAB-{o.id.slice(0, 4).toUpperCase()} • {new Date(o.created_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {o.doctors ? `Dr. ${o.doctors.first_name} ${o.doctors.last_name}` : "—"}
+                    </p>
+                  </div>
+                  <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0",
+                    o.status === "completed" || o.status === "final" ? "bg-success/15 text-success" :
+                    o.status === "in_progress" || o.status === "processing" ? "bg-info/15 text-info" :
+                    "bg-warning/15 text-warning"
+                  )}>{(o.status || "pending").replace(/_/g, " ")}</span>
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  {o.lab_result_tests?.slice(0, 3).map((t: any) => (
+                    <span key={t.id} className="px-2 py-1 bg-muted rounded text-xs">{t.test_name}</span>
+                  ))}
+                  {o.lab_result_tests?.length > 3 && (
+                    <span className="px-2 py-1 bg-muted rounded text-xs">+{o.lab_result_tests.length - 3}</span>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" className="w-full" onClick={() => setSelectedOrder(o)}>
+                  {o.status === "completed" || o.status === "final" ? "View" : "Enter Results"}
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -124,6 +162,7 @@ export default function HospitalLab() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
       <EnterLabResultDialog order={selectedOrder} open={!!selectedOrder} onClose={() => setSelectedOrder(null)} />

@@ -87,7 +87,43 @@ export default function HospitalPatients() {
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground">Loading patients...</div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile / tablet cards */}
+          <div className="lg:hidden divide-y divide-border/50">
+            {filtered.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">No patients found</div>
+            ) : filtered.map((p: any) => (
+              <div key={p.id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{p.first_name} {p.last_name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {getAge(p.date_of_birth)}y • {p.gender || "—"} • {p.phone || "no phone"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Last visit: {getLastVisit(p.id)}</p>
+                  </div>
+                  {p.blood_group && (
+                    <span className="bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 rounded-full shrink-0">{p.blood_group}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={p.status || "outpatient"} onValueChange={(v) => updateStatus(p.id, v)}>
+                    <SelectTrigger className={cn("h-8 flex-1 text-xs font-semibold rounded-full border-0", statusColor(p.status || "outpatient"))}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="outline" size="sm" onClick={() => setActive(p)}>View</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
@@ -126,6 +162,7 @@ export default function HospitalPatients() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
