@@ -28,7 +28,31 @@ export default function DoctorPatients() {
 
       {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
         list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Users className="w-10 h-10 mx-auto mb-2" />No patients yet.</div> :
-        <div className="bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
+        <>
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {list.map((p: any) => (
+            <div key={p.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
+              <Link to={`/doctor/patients/${p.id}`} className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-info text-primary-foreground flex items-center justify-center font-bold text-sm">{p.first_name?.[0]}</div>
+                <div>
+                  <div className="font-medium text-sm">{p.first_name} {p.last_name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {p.gender || "—"} • {(p as any).blood_group || "—"} • {(p as any).genotype || "—"}
+                  </div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3" />{(p as any).phone || "—"}</div>
+                </div>
+              </Link>
+              <div className="flex gap-1">
+                <NewPrescriptionDialog patientId={p.id} trigger={<Button variant="outline" size="sm"><Pill className="w-4 h-4 mr-1" />Prescribe</Button>} />
+                <OrderLabTestDialog patientId={p.id} trigger={<Button variant="outline" size="sm"><FlaskConical className="w-4 h-4 mr-1" />Lab</Button>} />
+                {p.user_id && <Link to={`/doctor/messages?to=${p.user_id}`}><Button variant="ghost" size="sm"><MessageSquare className="w-4 h-4" /></Button></Link>}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted/30 text-xs text-muted-foreground"><tr><th className="text-left p-3">Patient</th><th className="text-left p-3">Phone</th><th className="text-left p-3">Genotype</th><th className="text-left p-3">Blood</th><th /></tr></thead>
             <tbody>
@@ -52,7 +76,8 @@ export default function DoctorPatients() {
               ))}
             </tbody>
           </table>
-        </div>}
+        </div>
+        </>}
     </DoctorLayout>
   );
 }

@@ -90,7 +90,21 @@ export default function PatientLabResults() {
                 {expanded && (
                   <div className="border-t border-border p-5 bg-muted/10">
                     {l.tests.length === 0 ? <p className="text-sm text-muted-foreground">No test entries yet.</p> :
-                      <table className="w-full text-sm">
+                      <>
+                      {/* Mobile list */}
+                      <div className="sm:hidden space-y-3">
+                        {l.tests.map((t: any) => (
+                          <div key={t.id} className="rounded-lg border border-border/50 p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-medium">{t.test_name}</p>
+                              <span className={cn("text-xs px-2 py-0.5 rounded-full shrink-0", t.is_abnormal ? "bg-destructive/15 text-destructive" : "bg-success/15 text-success")}>{t.is_abnormal ? "Abnormal" : "Normal"}</span>
+                            </div>
+                            <p className="text-sm mt-1">{t.result_value} {t.unit}</p>
+                            <p className="text-xs text-muted-foreground">Range: {t.reference_range || "—"}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <table className="w-full text-sm hidden sm:table">
                         <thead><tr className="text-xs text-muted-foreground text-left"><th className="pb-2">Test</th><th className="pb-2">Result</th><th className="pb-2">Range</th><th className="pb-2">Flag</th></tr></thead>
                         <tbody>
                           {l.tests.map((t: any) => (
@@ -102,7 +116,8 @@ export default function PatientLabResults() {
                             </tr>
                           ))}
                         </tbody>
-                      </table>}
+                      </table>
+                      </>}
                     {l.tests.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-4">
                         <Button size="sm" variant="outline" onClick={() => downloadReportPdf(buildDoc(l))}>
