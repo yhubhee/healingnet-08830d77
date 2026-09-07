@@ -32,6 +32,29 @@ export default function HospitalSettings() {
   const [form, setForm] = useState<any>({});
   const [prefs, setPrefs] = useState<Record<string, boolean>>({});
   const [savingInfo, setSavingInfo] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
+
+  async function startUpgrade() {
+    if (!hospital?.id) return;
+    const email = (hospital as any).email;
+    if (!email) return toast({ title: "Add a hospital email first", description: "Save a contact email under Hospital Info before upgrading.", variant: "destructive" });
+    setUpgrading(true);
+    const { data, error } = await supabase.functions.invoke("paystack-initialize", {
+      body: {
+        purpose: "subscription",
+        plan: "telemedicine",
+        amount: 150000,
+        email,
+        hospitalId: hospital.id,
+        callbackUrl: `${window.location.origin}/hospital/confirming-payment?hospital=${hospital.id}`,
+      },
+    });
+    setUpgrading(false);
+    if (error || !(data as any)?.authorization_url) {
+      return toast({ title: "Couldn't start checkout", description: (error as any)?.message || "Please try again.", variant: "destructive" });
+    }
+    window.location.href = (data as any).authorization_url;
+  }
 
   useEffect(() => { if (hospital) setForm(hospital); }, [hospital]);
 
@@ -161,8 +184,8 @@ export default function HospitalSettings() {
                 </div>
               </div>
               {!isTele ? (
-                <Button onClick={() => toast({ title: "Contact Sales", description: "We'll reach out to upgrade you to Telemedicine." })}>
-                  Upgrade to Telemedicine
+                <Button onClick={startUpgrade} disabled={upgrading}>
+                  {upgrading ? "Starting checkout..." : "Upgrade to Telemedicine — ₦150,000/mo"}
                 </Button>
               ) : (
                 <p className="text-sm text-muted-foreground flex items-center gap-2"><Lock className="w-4 h-4" /> You're on the highest tier.</p>
@@ -176,7 +199,24 @@ export default function HospitalSettings() {
                 <h3 className="text-lg font-heading font-bold">Staff Members</h3>
                 <InviteStaffDialog />
               </div>
-              <div className="overflow-x-auto">
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-3">
+                {staff.length === 0 ? <p className="text-center text-muted-foreground py-6 text-sm">No staff yet</p> : staff.map((s: any) => (
+                  <div key={s.id} className="rounded-lg border border-border p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium text-sm">{s.first_name} {s.last_name}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{s.email}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{s.role}</p>
+                      </div>
+                      <Badge variant={s.is_active ? "default" : "secondary"}>{s.is_active ? "Active" : "Inactive"}</Badge>
+                    </div>
+                    {s.is_active && <Button size="sm" variant="outline" onClick={() => deactivateStaff(s.id)}>Deactivate</Button>}
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
                     <th className="p-3">Name</th><th className="p-3">Email</th><th className="p-3">Role</th><th className="p-3">Status</th><th className="p-3"></th>
