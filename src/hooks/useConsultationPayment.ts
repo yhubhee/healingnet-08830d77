@@ -146,7 +146,7 @@ export function useRefundConsultationPayment() {
       }
 
       // Process refund with Paystack
-      const refundResult = await paystackService.refund({
+      const refundResult: any = await paystackService.refund({
         paystack_reference: paymentRecord.paystack_reference,
         amount: paymentRecord.amount * 100, // Convert to kobo
       });
@@ -201,7 +201,7 @@ export function useCompleteConsultationTransfer() {
       }
 
       // Create transfer recipient
-      const recipientResult = await paystackService.createTransferRecipient({
+      const recipientResult: any = await paystackService.createTransferRecipient({
         account_number: doctor_bank_account,
         bank_code: doctor_bank_code,
         name: doctor_name,
@@ -209,7 +209,7 @@ export function useCompleteConsultationTransfer() {
 
       // Initiate transfer
       const transferRef = `TRANS-${consultation_id.slice(0, 8)}-${Date.now()}`;
-      const transferResult = await paystackService.initiateTransfer({
+      const transferResult: any = await paystackService.initiateTransfer({
         amount: paymentRecord.amount * 100, // Convert to kobo
         recipient: recipientResult.data.recipient_code,
         reference: transferRef,
