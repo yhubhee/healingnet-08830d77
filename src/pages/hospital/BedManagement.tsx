@@ -281,7 +281,36 @@ export default function HospitalBedManagement() {
       {/* Beds table */}
       {(activeTab === "All Beds" || activeTab === "Occupied" || activeTab === "Available") && !isLoading && (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile cards */}
+          <div className="lg:hidden divide-y divide-border/50">
+            {filteredBeds.length === 0 ? (
+              <p className="p-8 text-center text-muted-foreground">No beds found</p>
+            ) : filteredBeds.map((bed: any) => {
+              const ward = wards.find((w: any) => w.id === bed.ward_id);
+              return (
+                <div key={bed.id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-heading font-bold">Bed {bed.bed_number}</p>
+                      <p className="text-xs text-muted-foreground">{ward?.ward_name || "—"} • <span className="capitalize">{bed.bed_type}</span></p>
+                      <p className="text-xs text-muted-foreground">₦{Number(bed.daily_rate || 0).toLocaleString()}/day</p>
+                    </div>
+                    <span className={cn("text-xs font-semibold px-3 py-1 rounded-full shrink-0", statusColors[bed.status])}>{bed.status}</span>
+                  </div>
+                  <p className="text-sm">{bed.patients ? `${bed.patients.first_name} ${bed.patients.last_name}` : "Unoccupied"}
+                    {bed.assigned_at && <span className="text-xs text-muted-foreground"> • since {new Date(bed.assigned_at).toLocaleDateString()}</span>}
+                  </p>
+                  {bed.status === "available" ? (
+                    <Button variant="outline" size="sm" onClick={() => { setSelectedBed(bed); setAssignDialogOpen(true); }}>Assign</Button>
+                  ) : bed.status === "occupied" ? (
+                    <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDischargeBed(bed.id)}>Discharge</Button>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
