@@ -66,6 +66,7 @@ import DoctorMessages from "./pages/doctor/Messages";
 import DoctorPatientDetail from "./pages/doctor/PatientDetail";
 import DoctorInvitations from "./pages/doctor/Invitations";
 import DoctorNotifications from "./pages/doctor/Notifications";
+import DoctorConsultationPage from "./pages/doctor/ConsultationPage";
 import VideoConsult from "./pages/VideoConsult";
 
 const queryClient = new QueryClient({
@@ -126,6 +127,7 @@ const App = () => (
           <Route path="/doctor/prescriptions" element={<ProtectedRoute><DoctorPrescriptions /></ProtectedRoute>} />
           <Route path="/doctor/lab-orders" element={<ProtectedRoute><DoctorLabOrders /></ProtectedRoute>} />
           <Route path="/doctor/consultations" element={<ProtectedRoute><DoctorConsultations /></ProtectedRoute>} />
+          <Route path="/doctor/consultation/:consultationId" element={<ProtectedRoute><DoctorConsultationPage /></ProtectedRoute>} />
           <Route path="/doctor/invitations" element={<ProtectedRoute><DoctorInvitations /></ProtectedRoute>} />
           <Route path="/doctor/notifications" element={<ProtectedRoute><DoctorNotifications /></ProtectedRoute>} />
           <Route path="/doctor/profile" element={<ProtectedRoute><DoctorProfile /></ProtectedRoute>} />
