@@ -6,6 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { SectionCard } from "./SectionCard";
 import { useInvestigations } from "@/hooks/useConsultation";
+import { useState } from "react";
+import { OrderPickerDialog, type PickerMode } from "./OrderPickerDialog";
 
 const sb = supabase as any;
 
@@ -25,14 +27,16 @@ function dxPill(r: any) {
 }
 const Pill = ({ p }: { p: { label: string; cls: string } }) => <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap", p.cls)}>{p.label}</span>;
 
-export function InvestigationsCard({ consultationId, readOnly }: { consultationId: string; readOnly: boolean }) {
+export function InvestigationsCard({ consultation, readOnly }: { consultation: any; readOnly: boolean }) {
+  const consultationId = consultation.id;
+  const [picker, setPicker] = useState<PickerMode | null>(null);
   const { data, isLoading, isError, refetch } = useInvestigations(consultationId);
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ queryKey: ["consultation", consultationId, "investigations"] });
 
   const tests = (data?.labs || []).flatMap((o: any) => (o.lab_result_tests || []).map((t: any) => ({ ...t, order: o })));
-  const radiology = (data?.requests || []).filter((r: any) => r.kind === "radiology" || r.kind === "imaging");
-  const other = (data?.requests || []).filter((r: any) => !(r.kind === "radiology" || r.kind === "imaging"));
+  const radiology = (data?.requests || []).filter((r: any) => r.kind === "imaging");
+  const other = (data?.requests || []).filter((r: any) => !(r.kind === "imaging"));
   const total = tests.length + (data?.requests?.length || 0);
 
   async function cancelTest(t: any) {
@@ -45,7 +49,6 @@ export function InvestigationsCard({ consultationId, readOnly }: { consultationI
     if (error) return toast.error(error.message);
     toast.success("Request cancelled"); refresh();
   }
-  const soon = () => toast.info("The order picker is coming in the next step.");
 
   return (
     <SectionCard title="Investigations" completion={total ? "done" : "empty"}>
@@ -104,12 +107,13 @@ export function InvestigationsCard({ consultationId, readOnly }: { consultationI
         )}
       {!readOnly && (
         <div className="flex flex-wrap gap-2 pt-1">
-          <Button size="sm" variant="outline" onClick={soon}><Plus className="w-3.5 h-3.5" />Add Lab</Button>
-          <Button size="sm" variant="outline" onClick={soon}><Plus className="w-3.5 h-3.5" />Add Radiology</Button>
-          <Button size="sm" variant="outline" onClick={soon}><Plus className="w-3.5 h-3.5" />Add More</Button>
+          <Button size="sm" variant="outline" onClick={() => setPicker("lab")}><Plus className="w-3.5 h-3.5" />Add Lab</Button>
+          <Button size="sm" variant="outline" onClick={() => setPicker("radiology")}><Plus className="w-3.5 h-3.5" />Add Radiology</Button>
+          <Button size="sm" variant="outline" onClick={() => setPicker("more")}><Plus className="w-3.5 h-3.5" />Add More</Button>
           <Button size="sm" variant="ghost" disabled title="Available in a later step"><Printer className="w-3.5 h-3.5" />Print request slip</Button>
         </div>
       )}
+      <OrderPickerDialog mode={picker} onClose={() => setPicker(null)} consultation={consultation} />
     </SectionCard>
   );
 }
