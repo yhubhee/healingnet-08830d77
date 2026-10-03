@@ -100,7 +100,7 @@ export default function ConsultationPage() {
             )}
             <HistoryCard consultation={c} row={history.data} readOnly={readOnly} showObstetric={female && age != null && age >= 12 && age <= 55} userId={userId} onChange={onHistory} />
             <ExaminationCard consultation={c} row={exam.data} readOnly={readOnly} age={age} userId={userId} />
-            <InvestigationsCard consultationId={c.id} readOnly={readOnly} />
+            <InvestigationsCard consultation={c} readOnly={readOnly} />
             <TreatmentCard consultation={c} readOnly={readOnly} allergies={recordedAllergies} userId={userId} />
             <DiagnosisBlock consultation={c} readOnly={readOnly} />
           </div>
