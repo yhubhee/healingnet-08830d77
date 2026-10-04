@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { SectionCard } from "./SectionCard";
 import { useInvestigations } from "@/hooks/useConsultation";
 import { useState } from "react";
+import { printRequestSlip } from "./requestSlip";
 import { OrderPickerDialog, type PickerMode } from "./OrderPickerDialog";
 
 const sb = supabase as any;
@@ -110,7 +111,7 @@ export function InvestigationsCard({ consultation, readOnly }: { consultation: a
           <Button size="sm" variant="outline" onClick={() => setPicker("lab")}><Plus className="w-3.5 h-3.5" />Add Lab</Button>
           <Button size="sm" variant="outline" onClick={() => setPicker("radiology")}><Plus className="w-3.5 h-3.5" />Add Radiology</Button>
           <Button size="sm" variant="outline" onClick={() => setPicker("more")}><Plus className="w-3.5 h-3.5" />Add More</Button>
-          <Button size="sm" variant="ghost" disabled title="Available in a later step"><Printer className="w-3.5 h-3.5" />Print request slip</Button>
+          <Button size="sm" variant="ghost" disabled={total === 0} onClick={async () => { if (!(await printRequestSlip(consultation, tests, data?.requests || []))) toast.error("Allow pop-ups to print the slip"); }}><Printer className="w-3.5 h-3.5" />Print request slip</Button>
         </div>
       )}
       <OrderPickerDialog mode={picker} onClose={() => setPicker(null)} consultation={consultation} />

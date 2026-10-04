@@ -9,7 +9,7 @@ export async function printRequestSlip(consultation: any, tests: any[], requests
   const p = consultation.patients || {};
   const [{ data: h }, { data: d }] = await Promise.all([
     sb.from("hospitals").select("name").eq("id", consultation.hospital_id).maybeSingle(),
-    sb.from("doctor_profiles").select("first_name,last_name").eq("id", consultation.doctor_id).maybeSingle().then((r: any) => r.error ? sb.from("doctors").select("first_name,last_name").eq("id", consultation.doctor_id).maybeSingle() : r),
+    sb.from("doctors").select("first_name,last_name").eq("id", consultation.doctor_id).maybeSingle(),
   ]);
   const firstOrder = tests[0]?.order || requests[0] || {};
   const age = ageFromDob(p.date_of_birth);
