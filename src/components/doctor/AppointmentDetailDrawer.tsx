@@ -16,10 +16,10 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
+  const { data: cs } = useConsultationStatus(appointment?.id ? [appointment.id] : []);
 
   if (!appointment) return null;
   const a = appointment;
-  const { data: cs } = useConsultationStatus(a?.id ? [a.id] : []);
   const p = a.patients;
   const isTelemedicine = a.is_telemedicine === true;
 
