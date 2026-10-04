@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { usePharmacyInventory } from "@/hooks/useHospitalData";
 import { AddInventoryDialog } from "@/components/hospital/dialogs/AddInventoryDialog";
+import { PrescriptionQueue, usePrescriptionQueue } from "@/components/hospital/PrescriptionQueue";
 import { DispenseDrugDialog } from "@/components/hospital/dialogs/DispenseDrugDialog";
 
-const tabs = ["Inventory", "Low Stock"];
+const tabs = ["Prescriptions", "Inventory", "Low Stock"];
 
 export default function HospitalPharmacy() {
   const { data: inventory = [], isLoading } = usePharmacyInventory();
-  const [activeTab, setActiveTab] = useState("Inventory");
+  const [activeTab, setActiveTab] = useState("Prescriptions");
+  const { data: rxQueue = [] } = usePrescriptionQueue();
 
   const displayed = activeTab === "Low Stock"
     ? inventory.filter((i: any) => (i.quantity_in_stock || 0) <= (i.reorder_level || 50))
@@ -48,12 +50,12 @@ export default function HospitalPharmacy() {
 
       <div className="flex flex-wrap gap-1 mb-6">
         {tabs.map((t) => (
-          <Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>{t}</Button>
+          <Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>{t === "Prescriptions" ? `Prescriptions to dispense (${rxQueue.length})` : t}</Button>
         ))}
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading pharmacy...</div> : displayed.length === 0 ? (
+        {activeTab === "Prescriptions" ? <PrescriptionQueue /> : isLoading ? <div className="p-8 text-center text-muted-foreground">Loading pharmacy...</div> : displayed.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">No inventory items</div>
         ) : (
           <>

@@ -17,7 +17,8 @@ import { ExaminationCard } from "@/components/consultation/ExaminationCard";
 import { InvestigationsCard } from "@/components/consultation/InvestigationsCard";
 import { TreatmentCard } from "@/components/consultation/TreatmentCard";
 import { PatientSummary } from "@/components/consultation/PatientSummary";
-import { SaveRegistryContext, SaveStatus, ageFromDob, useAutosave, useConsultationCore, useConsultationRow, useReportSave } from "@/hooks/useConsultation";
+import { SaveRegistryContext, SaveStatus, ageFromDob, useAutosave, useConsultationCore, useConsultationRow, useReportSave, useTreatmentItems, useInvestigations } from "@/hooks/useConsultation";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const sb = supabase as any;
 
@@ -149,17 +150,29 @@ function SubmitBar({ consultation, readOnly, overall, complaintCount }: { consul
   const label = overall.s === "saving" ? "Saving…" : overall.s === "dirty" ? "Unsaved changes" : overall.s === "error" ? "Not saved, retrying" : overall.at ? `Saved ${overall.at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "All changes saved";
   const Icon = overall.s === "error" ? CloudOff : overall.s === "saving" ? Loader2 : Cloud;
 
+  const [open, setOpen] = useState(false);
+  const { data: items } = useTreatmentItems(consultation.id);
+  const { data: inv } = useInvestigations(consultation.id);
+  const fresh: any = qc.getQueryData(["consultation", consultation.id, "core"]) || consultation;
+  const drugs = (items || []).filter((t: any) => t.kind === "drug").length;
+  const labs = (inv?.labs || []).reduce((n: number, o: any) => n + (o.lab_result_tests?.length || 0), 0);
+  const reqs = (inv?.requests || []).filter((r: any) => !r.cancelled_at).length;
+  const problems = [
+    overall.s !== "saved" && overall.s !== "idle" ? "Changes are still saving." : null,
+    !complaintCount ? "Add at least one chief complaint." : null,
+    !(fresh?.provisional_diagnosis || "").trim() ? "Provisional diagnosis is required." : null,
+  ].filter(Boolean) as string[];
+
   async function submit() {
-    if (overall.s !== "saved" && overall.s !== "idle") return toast.error("Wait for your changes to finish saving.");
-    if (!complaintCount) return toast.error("Add at least one chief complaint.");
-    const fresh: any = qc.getQueryData(["consultation", consultation.id, "core"]);
-    if (!(fresh?.provisional_diagnosis || "").trim()) return toast.error("Provisional diagnosis is required.");
+    if (problems.length) return;
     setBusy(true);
     const { data, error } = await sb.rpc("submit_consultation", { p_consultation_id: consultation.id });
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success(`Consultation submitted · ${data?.prescriptions ?? 0} prescription(s) sent`);
+    setOpen(false);
+    toast.success(`Consultation submitted · ${data?.prescriptions ?? 0} prescription(s) sent to pharmacy`);
     qc.invalidateQueries({ queryKey: ["consultation", consultation.id] });
+    qc.invalidateQueries({ queryKey: ["doctor", "consultation-status"] });
     nav("/doctor/appointments");
   }
 
@@ -168,7 +181,27 @@ function SubmitBar({ consultation, readOnly, overall, complaintCount }: { consul
       <span className={cn("text-xs flex items-center gap-1.5", overall.s === "error" ? "text-destructive" : "text-muted-foreground")}>
         <Icon className={cn("w-4 h-4", overall.s === "saving" && "animate-spin")} />{readOnly ? "Read only" : label}
       </span>
-      {!readOnly && <Button className="ml-auto" disabled={busy} onClick={submit}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}Submit consultation</Button>}
+      {!readOnly && <Button className="ml-auto" onClick={() => setOpen(true)}><CheckCircle2 className="w-4 h-4" />Submit consultation</Button>}
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit this consultation?</AlertDialogTitle>
+            <AlertDialogDescription>After submitting, the notes become read-only. You can still add addenda later.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <ul className="text-sm space-y-1.5">
+            <li className="flex justify-between"><span className="text-muted-foreground">Chief complaints</span><span>{complaintCount}</span></li>
+            <li className="flex justify-between gap-3"><span className="text-muted-foreground">Diagnosis</span><span className="text-right truncate">{fresh?.provisional_diagnosis || "—"}</span></li>
+            <li className="flex justify-between"><span className="text-muted-foreground">Drugs to pharmacy</span><span>{drugs}</span></li>
+            <li className="flex justify-between"><span className="text-muted-foreground">Lab tests / other requests</span><span>{labs} / {reqs}</span></li>
+            <li className="flex justify-between"><span className="text-muted-foreground">Follow-up</span><span>{fresh?.follow_up_date ? new Date(fresh.follow_up_date).toLocaleDateString() : "None"}</span></li>
+          </ul>
+          {problems.length > 0 && <div className="rounded-md bg-destructive/10 text-destructive text-sm p-2.5 space-y-1">{problems.map((p) => <p key={p} className="flex gap-1.5"><AlertTriangle className="w-4 h-4 shrink-0" />{p}</p>)}</div>}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Back</AlertDialogCancel>
+            <AlertDialogAction disabled={busy || problems.length > 0} onClick={(e) => { e.preventDefault(); submit(); }}>{busy && <Loader2 className="w-4 h-4 animate-spin" />}Submit</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

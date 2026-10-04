@@ -1,3 +1,4 @@
+import { StartConsultationButton, useConsultationStatus } from "@/components/consultation/StartConsultationButton";
 import { DoctorLayout } from "@/layouts/DoctorLayout";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -65,6 +66,8 @@ export default function DoctorAppointments() {
     return true;
   });
 
+  const { data: cs } = useConsultationStatus((data || []).map((a: any) => a.id));
+
   return (
     <DoctorLayout>
       <div className="mb-6"><h1 className="text-2xl font-heading font-bold">Appointments</h1><p className="text-muted-foreground text-sm">Manage patient bookings</p></div>
@@ -100,6 +103,7 @@ export default function DoctorAppointments() {
                   a.status === "accepted" ? "bg-success/15 text-success" :
                   a.status === "cancelled" ? "bg-destructive/15 text-destructive" :
                   "bg-muted text-muted-foreground")}>{a.status}</span>
+                {["accepted", "confirmed", "completed"].includes(a.status) && <StartConsultationButton size="sm" appointment={a} status={cs?.[a.id]} />}
                 {["pending", "accepted", "confirmed"].includes(a.status) && (
                   <RescheduleAppointmentDialog appointment={a} />
                 )}

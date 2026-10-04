@@ -10,11 +10,13 @@ import { NewPrescriptionDialog } from "./NewPrescriptionDialog";
 import { OrderLabTestDialog } from "./OrderLabTestDialog";
 import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
 import { DoctorReferralDialog } from "./DoctorReferralDialog";
+import { StartConsultationButton, useConsultationStatus } from "@/components/consultation/StartConsultationButton";
 
 export function AppointmentDetailDrawer({ appointment, onClose }: { appointment: any | null; onClose: () => void }) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
+  const { data: cs } = useConsultationStatus(appointment?.id ? [appointment.id] : []);
 
   if (!appointment) return null;
   const a = appointment;
@@ -89,13 +91,7 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
 
           <div className="space-y-2">
             {["accepted", "confirmed", "completed"].includes(a.status) && (
-              <Button disabled={saving} className="w-full" onClick={async () => {
-                setSaving(true);
-                const { data, error } = await (supabase as any).rpc("start_consultation", { p_patient_id: a.patient_id, p_appointment_id: a.id });
-                setSaving(false);
-                if (error) return toast.error(error.message);
-                window.location.assign(`/doctor/consultation/${data}`);
-              }}><Play className="w-4 h-4" />Open consultation page</Button>
+              <StartConsultationButton appointment={a} status={cs?.[a.id]} className="w-full" />
             )}
             {a.status === "pending" && (
               <div className="grid grid-cols-2 gap-2">
