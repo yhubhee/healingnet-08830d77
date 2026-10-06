@@ -1,7 +1,8 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Stethoscope, FileText, Activity, Pill, Syringe, Loader2 } from "lucide-react";
+import { Stethoscope, FileText, Activity, Pill, Syringe } from "lucide-react";
+import { QueryState } from "@/components/common/QueryState";
 
 const iconFor: Record<string, any> = {
   consultation: Stethoscope,
@@ -19,14 +20,16 @@ const colorFor: Record<string, string> = {
 };
 
 export default function PatientMedicalRecords() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["patient", "emr"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
-      const { data: p } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
+      const { data: p, error: pError } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
+      if (pError) throw pError;
       if (!p) return [];
-      const { data } = await supabase.from("emr_entries").select("*, doctors(first_name,last_name), vital_data").eq("patient_id", p.id).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("emr_entries").select("*, doctors(first_name,last_name), vital_data").eq("patient_id", p.id).order("created_at", { ascending: false });
+      if (error) throw error;
       return data || [];
     },
   });
@@ -38,8 +41,14 @@ export default function PatientMedicalRecords() {
         <p className="text-muted-foreground text-sm">Your full clinical history, in one timeline</p>
       </div>
 
-      {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
-        (data || []).length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><FileText className="w-10 h-10 mx-auto mb-2" />No medical records yet.</div> :
+      <QueryState
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isEmpty={(data || []).length === 0}
+        emptyMessage="No medical records yet."
+      >
         <div className="relative pl-6 border-l-2 border-border space-y-5">
           {(data || []).map((r: any) => {
             const Icon = iconFor[r.entry_type] || FileText;
@@ -103,7 +112,8 @@ export default function PatientMedicalRecords() {
               </div>
             );
           })}
-        </div>}
+        </div>
+      </QueryState>
     </PatientLayout>
   );
 }

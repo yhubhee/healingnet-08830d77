@@ -2,13 +2,14 @@ import { PatientLayout } from "@/layouts/PatientLayout";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Pill, RefreshCw, User, Loader2, Download } from "lucide-react";
+import { Pill, RefreshCw, User, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { QueryState } from "@/components/common/QueryState";
 import { buildPrescriptionDocument, downloadReportPdf } from "@/lib/reports/documents";
 
 export default function PatientPrescriptions() {
   const [tab, setTab] = useState<"active" | "completed">("active");
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["patient", "prescriptions"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -19,6 +20,7 @@ export default function PatientPrescriptions() {
       }
       const { data: p, error: pError } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
       console.log("🔍 Patient lookup result:", { patient_id: p?.id, error: pError });
+      if (pError) throw pError;
       if (!p) {
         console.warn("⚠️ No patient record found for user");
         return [];
@@ -29,7 +31,7 @@ export default function PatientPrescriptions() {
         .eq("patient_id", p.id)
         .order("created_at", { ascending: false });
       console.log("🔍 Prescriptions query result:", { count: data?.length, error, patient_id: p.id });
-      if (error) console.error("❌ Prescriptions error:", error);
+      if (error) throw error;
       return data || [];
     },
   });
@@ -49,8 +51,14 @@ export default function PatientPrescriptions() {
         ))}
       </div>
 
-      {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
-        list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Pill className="w-10 h-10 mx-auto mb-2" />No {tab} prescriptions.</div> :
+      <QueryState
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isEmpty={list.length === 0}
+        emptyMessage={`No ${tab} prescriptions.`}
+      >
         <div className="grid md:grid-cols-2 gap-4">
           {list.map((r: any) => {
             const refillsLeft = (r.refills_allowed || 0) - (r.refills_used || 0);
@@ -95,7 +103,8 @@ export default function PatientPrescriptions() {
               </div>
             );
           })}
-        </div>}
+        </div>
+      </QueryState>
     </PatientLayout>
   );
 }

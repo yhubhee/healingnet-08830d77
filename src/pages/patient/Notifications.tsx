@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Bell, CheckCircle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/common/QueryState";
 import {
   useUserNotifications,
   useRealtimeUserNotifications,
@@ -15,7 +16,7 @@ import {
 export default function PatientNotifications() {
   useRealtimeUserNotifications();
   const navigate = useNavigate();
-  const { data: notifications = [], isLoading } = useUserNotifications();
+  const { data: notifications = [], isLoading, isError, error, refetch } = useUserNotifications();
   const markRead = useMarkUserNotificationRead();
   const markAll = useMarkAllUserNotificationsRead();
   const remove = useDeleteUserNotification();
@@ -40,14 +41,10 @@ export default function PatientNotifications() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="text-center p-8 text-muted-foreground">Loading...</div>
-      ) : notifications.length === 0 ? (
-        <div className="bg-card border border-dashed border-border rounded-xl p-12 text-center">
-          <Bell className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-50" />
-          <p className="text-muted-foreground">No notifications yet</p>
-        </div>
-      ) : (
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}
+        isEmpty={notifications.length === 0}
+        emptyMessage="No notifications yet"
+      >
         <div className="space-y-2 max-w-3xl">
           {notifications.map((n) => (
             <div
@@ -81,7 +78,7 @@ export default function PatientNotifications() {
             </div>
           ))}
         </div>
-      )}
+      </QueryState>
     </PatientLayout>
   );
 }

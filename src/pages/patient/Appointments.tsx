@@ -3,17 +3,18 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Loader2, Video } from "lucide-react";
+import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
 import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["upcoming", "past", "cancelled"] as const;
 
 export default function PatientAppointments() {
   const [tab, setTab] = useState<typeof tabs[number]>("upcoming");
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["patient", "appointments"],
     queryFn: async () => {
       try {
@@ -29,10 +30,7 @@ export default function PatientAppointments() {
           .eq("patient_id", p.id)
           .order("requested_date", { ascending: false });
 
-        if (fetchError) {
-          console.error("Error fetching patient appointments:", fetchError);
-          return [];
-        }
+        if (fetchError) throw fetchError;
 
         if (!appts || appts.length === 0) return [];
 
@@ -58,8 +56,8 @@ export default function PatientAppointments() {
           hospitals: a.hospital_id ? hospitalMap.get(a.hospital_id) : null,
         }));
       } catch (err) {
-        console.error("Unexpected error fetching patient appointments:", err);
-        return [];
+        console.error("Error fetching patient appointments:", err);
+        throw err;
       }
     },
   });
@@ -96,8 +94,7 @@ export default function PatientAppointments() {
         ))}
       </div>
 
-      {error && <div className="bg-destructive/15 text-destructive p-3 rounded-lg text-sm mb-4">Error: {error.message}</div>}
-      {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
         <div className="space-y-3">
           {filtered.length === 0 && (
             <div className="bg-card border border-border rounded-xl p-12 text-center">
@@ -164,7 +161,8 @@ export default function PatientAppointments() {
               </div>
             );
           })}
-        </div>}
+        </div>
+      </QueryState>
     </PatientLayout>
   );
 }

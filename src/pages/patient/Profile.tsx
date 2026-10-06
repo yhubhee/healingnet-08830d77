@@ -1,22 +1,25 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Phone, Mail, Heart, Shield, Loader2 } from "lucide-react";
+import { User, Phone, Mail, Heart, Shield } from "lucide-react";
+import { QueryState } from "@/components/common/QueryState";
 
 export default function PatientProfile() {
   const [p, setP] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-      const { data } = await supabase.from("patients").select("*").eq("user_id", user.id).maybeSingle();
-      setP(data);
-      setLoading(false);
-    })();
-  }, []);
+  const [loadError, setLoadError] = useState<Error | null>(null);
+  const load = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+    const { data, error } = await supabase.from("patients").select("*").eq("user_id", user.id).maybeSingle();
+    if (error) setLoadError(new Error(error.message));
+    else { setLoadError(null); setP(data); }
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
 
-  if (loading) return <PatientLayout><div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div></PatientLayout>;
+  if (loading || loadError) return <PatientLayout><QueryState isLoading={loading} isError={!!loadError} error={loadError} onRetry={() => load()}>{null}</QueryState></PatientLayout>;
   if (!p) return <PatientLayout><p className="text-muted-foreground text-sm">Profile not found.</p></PatientLayout>;
 
   return (

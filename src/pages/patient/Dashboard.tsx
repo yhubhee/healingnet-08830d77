@@ -6,14 +6,15 @@ import { Link } from "react-router-dom";
 import { Calendar, Pill, FlaskConical, FileText, ArrowRight, Stethoscope, Loader2, Clock, AlertCircle, Plus } from "lucide-react";
 import { usePatientProfile, usePatientAppointments, usePatientPrescriptions, usePatientLabResults, usePatientEmr } from "@/hooks/usePatientData";
 import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/common/QueryState";
 
 export default function PatientDashboard() {
   const qc = useQueryClient();
   const { data: profile, isLoading: profileLoading } = usePatientProfile();
-  const { data: appts = [], isLoading: apptsLoading } = usePatientAppointments();
-  const { data: prescriptions = [], isLoading: rxLoading } = usePatientPrescriptions();
-  const { data: labs = [], isLoading: labsLoading } = usePatientLabResults();
-  const { data: emr = [], isLoading: emrLoading } = usePatientEmr();
+  const { data: appts = [], isLoading: apptsLoading, isError: apptsError, error: apptsErr, refetch: refetchAppts } = usePatientAppointments();
+  const { data: prescriptions = [], isLoading: rxLoading, isError: rxError, error: rxErr, refetch: refetchRx } = usePatientPrescriptions();
+  const { data: labs = [], isLoading: labsLoading, isError: labsError, error: labsErr, refetch: refetchLabs } = usePatientLabResults();
+  const { data: emr = [], isLoading: emrLoading, isError: emrError, error: emrErr, refetch: refetchEmr } = usePatientEmr();
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -52,10 +53,10 @@ export default function PatientDashboard() {
   const activeRx = prescriptions.filter(p => p.status === "active");
 
   const cards = [
-    { label: "Upcoming Appointments", value: upcomingAppts.length, icon: Calendar, color: "text-info", bg: "bg-info/10" },
-    { label: "Active Prescriptions", value: activeRx.length, icon: Pill, color: "text-success", bg: "bg-success/10" },
-    { label: "Lab Results", value: labs.length, icon: FlaskConical, color: "text-warning", bg: "bg-warning/10" },
-    { label: "Medical Entries", value: emr.length, icon: FileText, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Upcoming Appointments", value: apptsError ? "—" : upcomingAppts.length, icon: Calendar, color: "text-info", bg: "bg-info/10" },
+    { label: "Active Prescriptions", value: rxError ? "—" : activeRx.length, icon: Pill, color: "text-success", bg: "bg-success/10" },
+    { label: "Lab Results", value: labsError ? "—" : labs.length, icon: FlaskConical, color: "text-warning", bg: "bg-warning/10" },
+    { label: "Medical Entries", value: emrError ? "—" : emr.length, icon: FileText, color: "text-primary", bg: "bg-primary/10" },
   ];
 
   return (
@@ -99,6 +100,7 @@ export default function PatientDashboard() {
                 <p className="text-xs uppercase tracking-wider text-primary font-semibold">Next Appointment</p>
                 <Link to="/patient/appointments" className="text-sm text-primary hover:underline">View all</Link>
               </div>
+              <QueryState isLoading={false} isError={apptsError} error={apptsErr} onRetry={() => refetchAppts()}>
               {nextAppt ? (
                 <div className="space-y-3">
                   <div>
@@ -119,6 +121,7 @@ export default function PatientDashboard() {
                   <Link to="/patient/appointments" className="text-sm text-primary hover:underline mt-2 inline-block">Book one now</Link>
                 </div>
               )}
+              </QueryState>
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "180ms" }}>
@@ -126,6 +129,7 @@ export default function PatientDashboard() {
                 <p className="text-xs uppercase tracking-wider text-success font-semibold flex items-center gap-2"><Pill className="w-4 h-4" />Active Prescriptions</p>
                 <Link to="/patient/prescriptions" className="text-sm text-primary hover:underline">View all</Link>
               </div>
+              <QueryState isLoading={false} isError={rxError} error={rxErr} onRetry={() => refetchRx()}>
               {activeRx.length === 0 ? (
                 <div className="text-center py-6">
                   <Pill className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -146,6 +150,7 @@ export default function PatientDashboard() {
                   )}
                 </div>
               )}
+              </QueryState>
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "260ms" }}>
@@ -153,6 +158,7 @@ export default function PatientDashboard() {
                 <p className="text-xs uppercase tracking-wider text-warning font-semibold flex items-center gap-2"><FlaskConical className="w-4 h-4" />Lab Results</p>
                 <Link to="/patient/lab-results" className="text-sm text-primary hover:underline">View all</Link>
               </div>
+              <QueryState isLoading={false} isError={labsError} error={labsErr} onRetry={() => refetchLabs()}>
               {labs.length === 0 ? (
                 <div className="text-center py-6">
                   <FlaskConical className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -178,6 +184,7 @@ export default function PatientDashboard() {
                   )}
                 </div>
               )}
+              </QueryState>
             </div>
 
             <div className="bg-card border border-border rounded-xl p-5 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "340ms" }}>
@@ -185,6 +192,7 @@ export default function PatientDashboard() {
                 <p className="text-xs uppercase tracking-wider text-primary font-semibold flex items-center gap-2"><FileText className="w-4 h-4" />Medical Records</p>
                 <Link to="/patient/medical-records" className="text-sm text-primary hover:underline">View all</Link>
               </div>
+              <QueryState isLoading={false} isError={emrError} error={emrErr} onRetry={() => refetchEmr()}>
               {emr.length === 0 ? (
                 <div className="text-center py-6">
                   <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
@@ -208,6 +216,7 @@ export default function PatientDashboard() {
                   )}
                 </div>
               )}
+              </QueryState>
             </div>
           </div>
 

@@ -9,6 +9,7 @@ import { Download, FileText, Plane, Baby, BedDouble, FileSignature, Syringe, Inb
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { RequestLetterDialog } from "@/components/patient/RequestLetterDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const TYPE_META: Record<string, { label: string; Icon: any }> = {
   fit_to_work: { label: "Fit-to-Work / Fit-to-Travel Letter", Icon: Plane },
@@ -28,7 +29,7 @@ const STATUS_VARIANT: Record<string, string> = {
 export default function PatientLetters() {
   const { data: profile } = usePatientProfile();
 
-  const { data: letters = [], isLoading } = useQuery({
+  const { data: letters = [], isLoading, isError, error, refetch } = useQuery({
     enabled: !!profile?.id,
     queryKey: ["patient-letters", profile?.id],
     queryFn: async () => {
@@ -89,15 +90,14 @@ export default function PatientLetters() {
           )}
         </div>
 
-        {isLoading && <div className="text-sm text-muted-foreground">Loading…</div>}
-
-        {!isLoading && letters.length === 0 && (
-          <div className="bg-card border border-border rounded-xl p-12 text-center">
-            <Inbox className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">No letters or reports yet. When your doctor issues one, it will appear here.</p>
-          </div>
-        )}
-
+        <QueryState
+          isLoading={isLoading}
+          isError={isError}
+          error={error}
+          onRetry={() => refetch()}
+          isEmpty={letters.length === 0}
+          emptyMessage="No letters or reports yet. When your doctor issues one, it will appear here."
+        >
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {letters.map((l) => {
             const meta = TYPE_META[l.letter_type] || { label: l.title, Icon: FileText };
@@ -127,6 +127,7 @@ export default function PatientLetters() {
             );
           })}
         </div>
+        </QueryState>
       </div>
     </PatientLayout>
   );

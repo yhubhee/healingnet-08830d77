@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { Bell, Lock, Globe, Shield, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNotificationPrefs, useSaveNotificationPrefs } from "@/hooks/useUserNotifications";
+import { QueryState } from "@/components/common/QueryState";
 
 export default function PatientSettings() {
-  const { data: prefs, isLoading } = useNotificationPrefs();
+  const { data: prefs, isLoading, isError, error, refetch } = useNotificationPrefs();
   const savePrefs = useSaveNotificationPrefs();
   const [form, setForm] = useState({
     email_enabled: true,
@@ -52,9 +53,7 @@ export default function PatientSettings() {
 
       <div className="space-y-5 max-w-3xl">
         <Card title="Email notifications" icon={Bell}>
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground py-2">Loading preferences...</p>
-          ) : (
+          <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
             <>
               <Toggle label="Send me email notifications" Icon={Mail} checked={form.email_enabled} onChange={(v) => update({ email_enabled: v })} />
               <div className={form.email_enabled ? "" : "opacity-50 pointer-events-none"}>
@@ -68,7 +67,7 @@ export default function PatientSettings() {
                 In-app notifications are always delivered to your Notifications inbox.
               </p>
             </>
-          )}
+          </QueryState>
         </Card>
 
         <Card title="Language" icon={Globe}>

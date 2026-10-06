@@ -2,21 +2,24 @@ import { PatientLayout } from "@/layouts/PatientLayout";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, FlaskConical, Loader2, Download, Printer } from "lucide-react";
+import { ChevronDown, FlaskConical, Download, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/common/QueryState";
 import { buildLabReportDocument, downloadReportPdf, printReport } from "@/lib/reports/documents";
 
 export default function PatientLabResults() {
   const [open, setOpen] = useState<string | null>(null);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["patient", "labs"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
-      const { data: p } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
+      const { data: p, error: pError } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
+      if (pError) throw pError;
       if (!p) return [];
-      const { data: results } = await supabase.from("lab_results").select("*, hospitals(name), lab_result_tests(*, lab_result_parameters(*))").eq("patient_id", p.id).order("created_at", { ascending: false });
+      const { data: results, error: resultsError } = await supabase.from("lab_results").select("*, hospitals(name), lab_result_tests(*, lab_result_parameters(*))").eq("patient_id", p.id).order("created_at", { ascending: false });
+      if (resultsError) throw resultsError;
       return (results || []).map((r: any) => {
         const tests: any[] = r.lab_result_tests || [];
         const params = tests.flatMap((t: any) => (t.lab_result_parameters || []).map((pp: any) => ({
@@ -62,8 +65,14 @@ export default function PatientLabResults() {
         <p className="text-muted-foreground text-sm">All tests requested by your doctors</p>
       </div>
 
-      {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
-        (data || []).length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><FlaskConical className="w-10 h-10 mx-auto mb-2" />No lab results yet.</div> :
+      <QueryState
+        isLoading={isLoading}
+        isError={isError}
+        error={error}
+        onRetry={() => refetch()}
+        isEmpty={(data || []).length === 0}
+        emptyMessage="No lab results yet."
+      >
         <div className="space-y-3">
           {(data || []).map((l: any) => {
             const expanded = open === l.id;
@@ -133,7 +142,8 @@ export default function PatientLabResults() {
               </div>
             );
           })}
-        </div>}
+        </div>
+      </QueryState>
     </PatientLayout>
   );
 }

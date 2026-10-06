@@ -1,9 +1,10 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, MessageSquare, Loader2 } from "lucide-react";
+import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { QueryState } from "@/components/common/QueryState";
 
 interface Msg { id: string; from_user_id: string; to_user_id: string; body: string; created_at: string; is_read: boolean; subject?: string | null }
 
@@ -13,14 +14,20 @@ export default function PatientMessages() {
   const [activeWith, setActiveWith] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<Error | null>(null);
   const [sending, setSending] = useState(false);
 
   async function load() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     setMe(user.id);
-    const { data } = await supabase.from("patient_messages").select("*").or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`).order("created_at", { ascending: true });
-    setMessages((data || []) as Msg[]);
+    const { data, error } = await supabase.from("patient_messages").select("*").or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`).order("created_at", { ascending: true });
+    if (error) {
+      setLoadError(new Error(error.message));
+    } else {
+      setLoadError(null);
+      setMessages((data || []) as Msg[]);
+    }
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -51,8 +58,10 @@ export default function PatientMessages() {
         <p className="text-muted-foreground text-sm">Chat securely with your care team</p>
       </div>
 
-      {loading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
-        counterparts.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><MessageSquare className="w-10 h-10 mx-auto mb-2" />No conversations yet. Your doctors will message you here.</div> :
+      <QueryState isLoading={loading} isError={!!loadError} error={loadError} onRetry={() => load()}
+        isEmpty={counterparts.length === 0}
+        emptyMessage="No conversations yet. Your doctors will message you here."
+      >
         <div className="bg-card border border-border rounded-xl overflow-hidden grid grid-cols-1 md:grid-cols-[280px_1fr] h-[calc(100vh-220px)]">
           <aside className="border-r border-border overflow-y-auto">
             {counterparts.map((id) => {
@@ -85,7 +94,8 @@ export default function PatientMessages() {
                 </div>
               </>}
           </section>
-        </div>}
+        </div>
+      </QueryState>
     </PatientLayout>
   );
 }
