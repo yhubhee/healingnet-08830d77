@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "react-router-dom";
+import { QueryState } from "@/components/common/QueryState";
 
 export default function DoctorMessages() {
   const { data: ctx } = useDoctor();
@@ -28,14 +29,15 @@ export default function DoctorMessages() {
     return map;
   }, [patients]);
 
-  const { data: threads = [] } = useQuery({
+  const { data: threads = [], isLoading: threadsLoading, isError: threadsError, error: threadsErr, refetch: threadsRefetch } = useQuery({
     enabled: !!userId,
     queryKey: ["doctor", "msg-threads", userId],
     refetchInterval: 10000,
     queryFn: async () => {
-      const { data } = await supabase.from("patient_messages")
+      const { data, error } = await supabase.from("patient_messages")
         .select("*").or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
         .order("created_at", { ascending: false }).limit(200);
+      if (error) throw error;
       const map = new Map<string, any>();
       (data || []).forEach((m: any) => {
         const other = m.from_user_id === userId ? m.to_user_id : m.from_user_id;
@@ -46,14 +48,15 @@ export default function DoctorMessages() {
     },
   });
 
-  const { data: messages = [] } = useQuery({
+  const { data: messages = [], isLoading: messagesLoading, isError: messagesError, error: messagesErr, refetch: messagesRefetch } = useQuery({
     enabled: !!userId && !!activeUserId,
     queryKey: ["doctor", "msg-thread", userId, activeUserId],
     refetchInterval: 5000,
     queryFn: async () => {
-      const { data } = await supabase.from("patient_messages").select("*")
+      const { data, error } = await supabase.from("patient_messages").select("*")
         .or(`and(from_user_id.eq.${userId},to_user_id.eq.${activeUserId}),and(from_user_id.eq.${activeUserId},to_user_id.eq.${userId})`)
         .order("created_at");
+      if (error) throw error;
       // mark received as read
       const unreadIds = (data || []).filter((m: any) => m.to_user_id === userId && !m.is_read).map((m: any) => m.id);
       if (unreadIds.length) {
@@ -99,6 +102,7 @@ export default function DoctorMessages() {
                 ))}
               </div>
             )}
+            <QueryState isLoading={threadsLoading} isError={threadsError} error={threadsErr} onRetry={() => threadsRefetch()}>
             {threads.length === 0 ? <div className="p-6 text-center text-sm text-muted-foreground">No conversations yet.</div> :
               threads.map((t: any) => {
                 const p = patientByUserId.get(t.other_user_id);
@@ -114,6 +118,7 @@ export default function DoctorMessages() {
                   </button>
                 );
               })}
+            </QueryState>
           </div>
         </div>
 
@@ -126,12 +131,14 @@ export default function DoctorMessages() {
                 {(() => { const p = patientByUserId.get(activeUserId); return p ? `${p.first_name} ${p.last_name}` : "Patient"; })()}
               </div>
               <div className="flex-1 overflow-auto p-4 space-y-2">
+                <QueryState isLoading={messagesLoading} isError={messagesError} error={messagesErr} onRetry={() => messagesRefetch()}>
                 {messages.length === 0 && <div className="text-center text-sm text-muted-foreground">Say hello 👋</div>}
                 {messages.map((m: any) => (
                   <div key={m.id} className={cn("flex", m.from_user_id === userId ? "justify-end" : "justify-start")}>
                     <div className={cn("max-w-[75%] px-3 py-2 rounded-2xl text-sm", m.from_user_id === userId ? "bg-primary text-primary-foreground" : "bg-muted")}>{m.body}</div>
                   </div>
                 ))}
+                </QueryState>
                 <div ref={endRef} />
               </div>
               <div className="border-t border-border p-3 flex gap-2">

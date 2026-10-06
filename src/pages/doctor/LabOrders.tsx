@@ -2,7 +2,7 @@ import { DoctorLayout } from "@/layouts/DoctorLayout";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FlaskConical, Loader2, Plus, MoreHorizontal, Download, Printer } from "lucide-react";
+import { FlaskConical, Plus, MoreHorizontal, Download, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { OrderLabTestDialog } from "@/components/doctor/OrderLabTestDialog";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
+import { QueryState } from "@/components/common/QueryState";
 import { buildLabReportDocument, downloadReportPdf, printReport } from "@/lib/reports/documents";
 
 export default function DoctorLabOrders() {
@@ -18,11 +19,12 @@ export default function DoctorLabOrders() {
   const [tests, setTests] = useState<any[]>([]);
   const qc = useQueryClient();
   const { data: ctx } = useDoctor();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "labs", ctx?.doctor?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("lab_results").select("*, patients(first_name,last_name), lab_result_tests(*, lab_result_parameters(*))").eq("ordered_by", ctx!.doctor.id).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("lab_results").select("*, patients(first_name,last_name), lab_result_tests(*, lab_result_parameters(*))").eq("ordered_by", ctx!.doctor.id).order("created_at", { ascending: false });
+      if (error) throw error;
       return data || [];
     },
   });
@@ -75,8 +77,8 @@ export default function DoctorLabOrders() {
         {(["pending", "completed"] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={cn("px-4 py-1.5 rounded-md text-sm capitalize", tab === t ? "bg-card shadow" : "text-muted-foreground")}>{t}</button>)}
       </div>
 
-      {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
-        list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><FlaskConical className="w-10 h-10 mx-auto mb-2" />No {tab} lab orders.</div> :
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><FlaskConical className="w-10 h-10 mx-auto mb-2" />No {tab} lab orders.</div> :
         <div className="space-y-3">
           {list.map((o: any) => (
             <div key={o.id} className="bg-card border border-border rounded-xl p-4 flex items-center gap-4 flex-wrap hover:border-primary/40">
@@ -98,6 +100,7 @@ export default function DoctorLabOrders() {
             </div>
           ))}
         </div>}
+      </QueryState>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">

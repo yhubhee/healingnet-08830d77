@@ -2,7 +2,7 @@ import { DoctorLayout } from "@/layouts/DoctorLayout";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Pill, Loader2, Search, MoreHorizontal, Plus } from "lucide-react";
+import { Pill, Search, MoreHorizontal, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buildPrescriptionDocument, downloadReportPdf, printReport } from "@/lib/reports/documents";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { NewPrescriptionDialog } from "@/components/doctor/NewPrescriptionDialog
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["all", "active", "completed", "cancelled"] as const;
 
@@ -19,14 +20,14 @@ export default function DoctorPrescriptions() {
   const [q, setQ] = useState("");
   const qc = useQueryClient();
   const { data: ctx } = useDoctor();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "prescriptions", ctx?.doctor?.id],
     queryFn: async () => {
       console.log("🔍 DoctorPrescriptions: Doctor ID:", ctx?.doctor?.id);
       const { data, error } = await supabase.from("prescriptions").select("*, patients(first_name,last_name)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
       console.log("🔍 Doctor prescriptions query:", { count: data?.length, error, doctor_id: ctx?.doctor?.id });
-      if (error) console.error("❌ Doctor prescriptions error:", error);
+      if (error) throw error;
       return data || [];
     },
   });
@@ -81,8 +82,8 @@ export default function DoctorPrescriptions() {
         </div>
       </div>
 
-      {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
-        list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Pill className="w-10 h-10 mx-auto mb-2" />No prescriptions yet.</div> :
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Pill className="w-10 h-10 mx-auto mb-2" />No prescriptions yet.</div> :
         <>
         {/* Mobile cards */}
         <div className="md:hidden space-y-3">
@@ -137,6 +138,7 @@ export default function DoctorPrescriptions() {
           </table>
         </div>
         </>}
+      </QueryState>
     </DoctorLayout>
   );
 }

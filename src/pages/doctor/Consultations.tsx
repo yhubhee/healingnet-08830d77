@@ -2,13 +2,14 @@ import { DoctorLayout } from "@/layouts/DoctorLayout";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Video, FileText, MessageSquare, Loader2, CheckCircle2, XCircle, Zap } from "lucide-react";
+import { Video, FileText, MessageSquare, CheckCircle2, XCircle, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
+import { QueryState } from "@/components/common/QueryState";
 import { useInitializeConsultationPayment, useCompleteConsultationTransfer, useConsultationPaymentStatus } from "@/hooks/useConsultationPayment";
 import { JoinCallButton } from "@/components/JoinCallButton";
 
@@ -20,11 +21,12 @@ export default function DoctorConsultations() {
   const [note, setNote] = useState("");
   const qc = useQueryClient();
   const { data: ctx } = useDoctor();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "consultations", ctx?.doctor?.id],
     queryFn: async () => {
-      const { data } = await supabase.from("consultation_requests").select("*, patients(first_name,last_name,phone,user_id)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("consultation_requests").select("*, patients(first_name,last_name,phone,user_id)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
+      if (error) throw error;
       return data || [];
     },
   });
@@ -117,12 +119,8 @@ export default function DoctorConsultations() {
         ))}
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Loading…
-        </div>
-      ) : list.length === 0 ? (
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+      {list.length === 0 ? (
         <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm">
           <MessageSquare className="w-10 h-10 mx-auto mb-2" />
           No consultation requests.
@@ -237,6 +235,7 @@ export default function DoctorConsultations() {
           ))}
         </div>
       )}
+      </QueryState>
 
       <Dialog open={!!notesFor} onOpenChange={(o) => !o && setNotesFor(null)}>
         <DialogContent>

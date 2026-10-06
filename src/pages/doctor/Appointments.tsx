@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { Calendar, Clock, Loader2, Search } from "lucide-react";
+import { Calendar, Clock, Search } from "lucide-react";
 import { useDoctor } from "@/hooks/useDoctor";
 import { AppointmentDetailDrawer } from "@/components/doctor/AppointmentDetailDrawer";
 import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
 import { Input } from "@/components/ui/input";
+import { QueryState } from "@/components/common/QueryState";
 
 const statuses = ["all", "pending", "accepted", "completed", "cancelled"] as const;
 
@@ -17,7 +18,7 @@ export default function DoctorAppointments() {
   const [q, setQ] = useState("");
   const [active, setActive] = useState<any>(null);
   const { data: ctx } = useDoctor();
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "appointments", ctx?.doctor?.id],
     queryFn: async () => {
@@ -30,10 +31,7 @@ export default function DoctorAppointments() {
           .eq("doctor_id", ctx.doctor.id)
           .order("requested_date", { ascending: false });
 
-        if (fetchError) {
-          console.error("Error fetching doctor appointments:", fetchError);
-          return [];
-        }
+        if (fetchError) throw fetchError;
 
         if (!appts || appts.length === 0) return [];
 
@@ -55,8 +53,8 @@ export default function DoctorAppointments() {
           patients: patientMap.get(a.patient_id),
         }));
       } catch (err) {
-        console.error("Unexpected error fetching appointments:", err);
-        return [];
+        console.error("Error fetching appointments:", err);
+        throw err;
       }
     },
   });
@@ -82,9 +80,8 @@ export default function DoctorAppointments() {
         </div>
       </div>
 
-      {error && <div className="bg-destructive/15 text-destructive p-3 rounded-lg text-sm mb-4">Error: {error.message}</div>}
-      {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
-        list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Calendar className="w-10 h-10 mx-auto mb-2" />No {filter === "all" ? "" : filter} appointments.</div> :
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Calendar className="w-10 h-10 mx-auto mb-2" />No {filter === "all" ? "" : filter} appointments.</div> :
         <div className="space-y-3">
           {list.map((a: any) => (
             <div key={a.id} className="w-full bg-card border border-border rounded-xl p-5 flex items-start gap-4 flex-wrap hover:border-primary/40 transition-colors">
@@ -111,6 +108,7 @@ export default function DoctorAppointments() {
             </div>
           ))}
         </div>}
+      </QueryState>
 
       <AppointmentDetailDrawer appointment={active} onClose={() => setActive(null)} />
     </DoctorLayout>

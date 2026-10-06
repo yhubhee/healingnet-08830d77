@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Bell, CheckCircle, Clock, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DoctorLayout } from "@/layouts/DoctorLayout";
+import { QueryState } from "@/components/common/QueryState";
 import {
   useUserNotifications,
   useRealtimeUserNotifications,
@@ -25,7 +26,7 @@ interface Invitation {
 export default function DoctorNotifications() {
   useRealtimeUserNotifications();
   const navigate = useNavigate();
-  const { data: notifications = [], isLoading } = useUserNotifications();
+  const { data: notifications = [], isLoading, isError, error, refetch } = useUserNotifications();
   const markRead = useMarkUserNotificationRead();
   const markAll = useMarkAllUserNotificationsRead();
   const remove = useDeleteUserNotification();
@@ -107,9 +108,8 @@ export default function DoctorNotifications() {
           </Card>
         ))}
 
-        {isLoading ? (
-          <div className="text-center p-8 text-muted-foreground">Loading...</div>
-        ) : notifications.length === 0 ? (
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {notifications.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex items-center justify-center py-12">
               <div className="text-center">
@@ -153,6 +153,7 @@ export default function DoctorNotifications() {
             ))}
           </div>
         )}
+        </QueryState>
       </div>
     </DoctorLayout>
   );

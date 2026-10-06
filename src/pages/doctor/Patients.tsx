@@ -1,16 +1,17 @@
 import { DoctorLayout } from "@/layouts/DoctorLayout";
 import { useState } from "react";
-import { Search, Phone, Users, Loader2, MessageSquare, Pill, FlaskConical } from "lucide-react";
+import { Search, Phone, Users, MessageSquare, Pill, FlaskConical } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useDoctor, useDoctorPatients } from "@/hooks/useDoctor";
 import { NewPrescriptionDialog } from "@/components/doctor/NewPrescriptionDialog";
 import { OrderLabTestDialog } from "@/components/doctor/OrderLabTestDialog";
 import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/common/QueryState";
 
 export default function DoctorPatients() {
   const [q, setQ] = useState("");
   const { data: ctx } = useDoctor();
-  const { data, isLoading } = useDoctorPatients(ctx?.doctor?.id);
+  const { data, isLoading, isError, error, refetch } = useDoctorPatients(ctx?.doctor?.id);
 
   const list = (data || []).filter((p: any) => `${p.first_name} ${p.last_name}`.toLowerCase().includes(q.toLowerCase()));
 
@@ -26,8 +27,8 @@ export default function DoctorPatients() {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search patients..." className="w-full pl-9 pr-3 py-2 bg-card border border-border rounded-lg text-sm outline-none" />
       </div>
 
-      {isLoading ? <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div> :
-        list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Users className="w-10 h-10 mx-auto mb-2" />No patients yet.</div> :
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {list.length === 0 ? <div className="bg-card border border-border rounded-xl p-12 text-center text-muted-foreground text-sm"><Users className="w-10 h-10 mx-auto mb-2" />No patients yet.</div> :
         <>
         {/* Mobile cards */}
         <div className="md:hidden space-y-3">
@@ -78,6 +79,7 @@ export default function DoctorPatients() {
           </table>
         </div>
         </>}
+      </QueryState>
     </DoctorLayout>
   );
 }

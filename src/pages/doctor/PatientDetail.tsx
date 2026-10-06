@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User, Award, Inbox, Stethoscope } from "lucide-react";
+import { ArrowLeft, Pill, FlaskConical, FileText, Calendar, MessageSquare, User, Award, Inbox, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { NewPrescriptionDialog } from "@/components/doctor/NewPrescriptionDialog";
@@ -12,12 +12,13 @@ import { AddEmrNoteDialog } from "@/components/doctor/AddEmrNoteDialog";
 import { IssueLetterDialog, LETTER_TYPES } from "@/components/doctor/IssueLetterDialog";
 import { TriageAnalysisPanel } from "@/components/doctor/TriageAnalysisPanel";
 import { useState } from "react";
+import { QueryState } from "@/components/common/QueryState";
 
 export default function DoctorPatientDetail() {
   const { id } = useParams();
   const [fulfilLetter, setFulfilLetter] = useState<any | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     enabled: !!id,
     queryKey: ["doctor", "patient-detail", id],
     queryFn: async () => {
@@ -29,22 +30,25 @@ export default function DoctorPatientDetail() {
         supabase.from("emr_entries").select("*").eq("patient_id", id!).order("created_at", { ascending: false }),
         supabase.from("triage_sessions").select("*").eq("patient_id", id!).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
+      const failed = patient.error || appts.error || rx.error || labs.error || emr.error || triage.error;
+      if (failed) throw failed;
       return { patient: patient.data, appts: appts.data || [], rx: rx.data || [], labs: labs.data || [], emr: emr.data || [], triage: triage.data };
     },
   });
 
-  const { data: pendingLetters = [] } = useQuery({
+  const { data: pendingLetters = [], isError: lettersError, error: lettersErr, refetch: lettersRefetch } = useQuery({
     enabled: !!id,
     queryKey: ["pending-letters", id],
     queryFn: async () => {
-      const { data } = await supabase.from("patient_letters" as any)
+      const { data, error } = await supabase.from("patient_letters" as any)
         .select("*").eq("patient_id", id!).eq("status", "pending")
         .order("created_at", { ascending: false });
+      if (error) throw error;
       return (data || []) as any[];
     },
   });
 
-  if (isLoading) return <DoctorLayout><div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div></DoctorLayout>;
+  if (isLoading || isError) return <DoctorLayout><QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}><></></QueryState></DoctorLayout>;
   if (!data?.patient) return <DoctorLayout><div className="text-muted-foreground">Patient not found.</div></DoctorLayout>;
 
   const p = data.patient;
@@ -67,6 +71,7 @@ export default function DoctorPatientDetail() {
         </div>
       </div>
 
+      {lettersError && <div className="mb-5"><QueryState isLoading={false} isError error={lettersErr} onRetry={() => lettersRefetch()}><></></QueryState></div>}
       {pendingLetters.length > 0 && (
         <div className="bg-warning/5 border border-warning/30 rounded-xl p-4 mb-5">
           <div className="flex items-center gap-2 mb-3">

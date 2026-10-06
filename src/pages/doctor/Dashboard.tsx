@@ -12,9 +12,10 @@ import { OrderLabTestDialog } from "@/components/doctor/OrderLabTestDialog";
 import { AppointmentDetailDrawer } from "@/components/doctor/AppointmentDetailDrawer";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { QueryState } from "@/components/common/QueryState";
 
 export default function DoctorDashboard() {
-  const { data: ctx, isLoading: ctxLoading } = useDoctor();
+  const { data: ctx, isLoading: ctxLoading, isError: ctxError, error: ctxErr, refetch: ctxRefetch } = useDoctor();
   const doc = ctx?.doctor;
   const { data: badges } = useDoctorBadges(doc?.id, ctx?.user?.id);
   const [active, setActive] = useState<any>(null);
@@ -56,7 +57,7 @@ export default function DoctorDashboard() {
     return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
   }, [doc?.id, qc]);
 
-  const { data: dash, isLoading } = useQuery({
+  const { data: dash, isLoading, isError: dashError, error: dashErr, refetch: dashRefetch } = useQuery({
     enabled: !!doc?.id,
     queryKey: ["doctor", "dashboard", doc?.id],
     queryFn: async () => {
@@ -66,6 +67,8 @@ export default function DoctorDashboard() {
         supabase.from("consultation_requests").select("*, patients(first_name,last_name)").eq("doctor_id", doc!.id).eq("status", "pending").limit(5),
         supabase.from("patient_appointments").select("patient_id").eq("doctor_id", doc!.id),
       ]);
+      const failed = appts.error || cons.error || ptIds.error;
+      if (failed) throw failed;
       return {
         today: appts.data || [],
         pending: cons.data || [],
@@ -74,16 +77,17 @@ export default function DoctorDashboard() {
     },
   });
 
-  const { data: checkins = [] } = useQuery({
+  const { data: checkins = [], isError: checkinsError, error: checkinsErr, refetch: checkinsRefetch } = useQuery({
     enabled: !!doc?.id,
     queryKey: ["doctor", "checkins", doc?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("patient_checkins")
         .select("*, patients(first_name, last_name, gender, date_of_birth), doctors:assigned_doctor_id(first_name, last_name)")
         .eq("assigned_doctor_id", doc!.id)
         .in("status", ["checked_in", "called"])
         .order("queue_number", { ascending: true });
+      if (error) throw error;
       return data || [];
     },
   });
@@ -95,6 +99,7 @@ export default function DoctorDashboard() {
     { label: "Unread Messages", value: badges?.messages || 0, icon: Mail, color: "bg-primary/10 text-primary" },
   ];
 
+  if (ctxError) return <DoctorLayout><QueryState isLoading={false} isError error={ctxErr} onRetry={() => ctxRefetch()}><></></QueryState></DoctorLayout>;
   if (ctxLoading || isLoading) return <DoctorLayout><div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div></DoctorLayout>;
 
   return (
@@ -125,6 +130,7 @@ export default function DoctorDashboard() {
             <h3 className="font-heading font-bold flex items-center gap-2"><Calendar className="w-4 h-4 text-primary" />Today's Schedule</h3>
             <Link to="/doctor/appointments" className="text-sm text-primary">View all</Link>
           </div>
+          <QueryState isLoading={false} isError={dashError} error={dashErr} onRetry={() => dashRefetch()}>
           {!dash?.today?.length ? <p className="text-sm text-muted-foreground py-6 text-center">No appointments today.</p> :
             <div className="space-y-2">
               {dash.today.map((a: any, i) => (
@@ -138,6 +144,7 @@ export default function DoctorDashboard() {
                 </button>
               ))}
             </div>}
+          </QueryState>
         </div>
 
         <div className="bg-card border border-border rounded-xl p-5 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "200ms" }}>
@@ -145,6 +152,7 @@ export default function DoctorDashboard() {
             <h3 className="font-heading font-bold flex items-center gap-2"><Clock className="w-4 h-4 text-success" />Queue</h3>
             <span className="text-xs bg-success/15 text-success px-2 py-1 rounded-full font-semibold">{checkins.length}</span>
           </div>
+          <QueryState isLoading={false} isError={checkinsError} error={checkinsErr} onRetry={() => checkinsRefetch()}>
           {!checkins?.length ? <p className="text-sm text-muted-foreground py-6 text-center">No patients checked in.</p> :
             <div className="space-y-2">
               {checkins.slice(0, 5).map((c: any, i) => (
@@ -174,6 +182,7 @@ export default function DoctorDashboard() {
                 </div>
               ))}
             </div>}
+          </QueryState>
         </div>
       </div>
 
@@ -182,6 +191,7 @@ export default function DoctorDashboard() {
           <h3 className="font-heading font-bold flex items-center gap-2"><MessageSquare className="w-4 h-4 text-warning" />Consult Requests</h3>
           <Link to="/doctor/consultations" className="text-sm text-primary">View all</Link>
         </div>
+        <QueryState isLoading={false} isError={dashError} error={dashErr} onRetry={() => dashRefetch()}>
         {!dash?.pending?.length ? <p className="text-sm text-muted-foreground py-6 text-center">No pending requests.</p> :
           <div className="space-y-3">
             {dash.pending.slice(0, 3).map((c: any, i) => (
@@ -191,6 +201,7 @@ export default function DoctorDashboard() {
               </Link>
             ))}
           </div>}
+        </QueryState>
       </div>
 
       <AppointmentDetailDrawer appointment={active} onClose={() => setActive(null)} />

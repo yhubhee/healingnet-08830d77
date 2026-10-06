@@ -43,6 +43,9 @@ export function useDoctorPatients(doctorId?: string) {
         supabase.from("lab_results").select("patient_id").eq("ordered_by", doctorId!),
       ]);
 
+      const failed = appts.error || rx.error || labs.error;
+      if (failed) throw failed;
+
       const ids = Array.from(new Set([
         ...((appts.data || []).map((a: any) => a.patient_id)),
         ...((rx.data || []).map((r: any) => r.patient_id)),
