@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useMaternityRecords } from "@/hooks/useHospitalData";
 import { RegisterAncDialog } from "@/components/hospital/dialogs/RegisterAncDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["ANC Register", "Labour Ward", "Delivered", "Postnatal"];
 const riskColors: Record<string, string> = { low: "bg-success/15 text-success", moderate: "bg-warning/15 text-warning", high: "bg-destructive/15 text-destructive" };
 
 export default function HospitalMaternity() {
-  const { data: records = [], isLoading } = useMaternityRecords();
+  const { data: records = [], isLoading, isError, error, refetch } = useMaternityRecords();
   const [activeTab, setActiveTab] = useState("ANC Register");
 
   const filtered = activeTab === "ANC Register" ? records.filter((r: any) => (r.status || "").includes("anc")) :
@@ -52,7 +53,8 @@ export default function HospitalMaternity() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {(
           <>
           {/* Mobile / tablet cards */}
           <div className="lg:hidden divide-y divide-border/50">
@@ -108,6 +110,7 @@ export default function HospitalMaternity() {
           </div>
           </>
         )}
+        </QueryState>
       </div>
     </HospitalLayout>
   );

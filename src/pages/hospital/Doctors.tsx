@@ -7,6 +7,7 @@ import { useHospitalDoctors } from "@/hooks/useHospitalData";
 import { AssignDoctorDialog } from "@/components/hospital/dialogs/AssignDoctorDialog";
 import { EditDoctorDialog } from "@/components/hospital/dialogs/EditDoctorDialog";
 import { RemoveDoctorDialog } from "@/components/hospital/dialogs/RemoveDoctorDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const typeColors: Record<string, string> = {
   full_time: "bg-primary/15 text-primary",
@@ -18,7 +19,7 @@ const filters = ["All", "Full-time", "Visiting", "Locum"];
 const filterMap: Record<string, string> = { "Full-time": "full_time", Visiting: "visiting_consultant", Locum: "locum" };
 
 export default function HospitalDoctors() {
-  const { data: hospitalDoctors = [], isLoading } = useHospitalDoctors();
+  const { data: hospitalDoctors = [], isLoading, isError, error, refetch } = useHospitalDoctors();
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -45,9 +46,8 @@ export default function HospitalDoctors() {
 
       </div>
 
-      {isLoading ? (
-        <div className="text-center p-8 text-muted-foreground">Loading doctors...</div>
-      ) : (
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+      {(
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.length === 0 ? (
             <div className="col-span-full text-center p-8 text-muted-foreground">No doctors found</div>
@@ -86,6 +86,7 @@ export default function HospitalDoctors() {
           ))}
         </div>
       )}
+      </QueryState>
 
       {selectedDoctor && (
         <>

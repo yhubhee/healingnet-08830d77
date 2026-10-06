@@ -6,11 +6,12 @@ import { useState } from "react";
 import { useHospitalBilling, useHospitalId } from "@/hooks/useHospitalData";
 import { AddBillDialog } from "@/components/hospital/dialogs/AddBillDialog";
 import { useCollectPayment } from "@/hooks/useCollectPayment";
+import { QueryState } from "@/components/common/QueryState";
 
 const filters = ["All", "Paid", "Pending", "Partial"];
 
 export default function HospitalBilling() {
-  const { data: billing = [], isLoading } = useHospitalBilling();
+  const { data: billing = [], isLoading, isError, error, refetch } = useHospitalBilling();
   const { data: hospitalId } = useHospitalId();
   const [activeFilter, setActiveFilter] = useState("All");
   const { collect, isProcessing } = useCollectPayment();
@@ -65,7 +66,8 @@ export default function HospitalBilling() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading billing...</div> : filtered.length === 0 ? (
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {filtered.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">No billing records</div>
         ) : (
           <>
@@ -133,6 +135,7 @@ export default function HospitalBilling() {
             </div>
           </>
         )}
+        </QueryState>
       </div>
     </HospitalLayout>
   );

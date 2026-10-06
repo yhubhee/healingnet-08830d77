@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { QueryState } from "@/components/common/QueryState";
 
 const STATUS_OPTIONS = [
   { value: "outpatient", label: "Outpatient", color: "bg-success/15 text-success" },
@@ -26,7 +27,7 @@ const STATUS_OPTIONS = [
 const statusColor = (s: string) => STATUS_OPTIONS.find((o) => o.value === s)?.color || "bg-muted text-muted-foreground";
 
 export default function HospitalPatients() {
-  const { data: patients = [], isLoading } = usePatients();
+  const { data: patients = [], isLoading, isError, error, refetch } = usePatients();
   const { data: hospitalId } = useHospitalId();
   const { data: hospitalPatients = [] } = useHospitalPatients(hospitalId);
   const [search, setSearch] = useState("");
@@ -84,9 +85,8 @@ export default function HospitalPatients() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground">Loading patients...</div>
-        ) : (
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {(
           <>
           {/* Mobile / tablet cards */}
           <div className="lg:hidden divide-y divide-border/50">
@@ -164,6 +164,7 @@ export default function HospitalPatients() {
           </div>
           </>
         )}
+        </QueryState>
       </div>
 
       <PatientDetailDrawer patient={active} onClose={() => setActive(null)} />

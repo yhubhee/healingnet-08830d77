@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useSurgeryRecords } from "@/hooks/useHospitalData";
 import { ScheduleSurgeryDialog } from "@/components/hospital/dialogs/ScheduleSurgeryDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["All", "Scheduled", "In Progress", "Completed"];
 
 export default function HospitalSurgery() {
-  const { data: surgeries = [], isLoading } = useSurgeryRecords();
+  const { data: surgeries = [], isLoading, isError, error, refetch } = useSurgeryRecords();
   const [activeTab, setActiveTab] = useState("All");
 
   const filtered = activeTab === "All" ? surgeries :
@@ -49,7 +50,8 @@ export default function HospitalSurgery() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {(
           <>
           {/* Mobile / tablet cards */}
           <div className="lg:hidden divide-y divide-border/50">
@@ -108,6 +110,7 @@ export default function HospitalSurgery() {
           </div>
           </>
         )}
+        </QueryState>
       </div>
     </HospitalLayout>
   );

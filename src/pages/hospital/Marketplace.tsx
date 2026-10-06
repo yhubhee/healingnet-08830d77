@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useDoctorMarketplace } from "@/hooks/useHospitalData";
 import { useState } from "react";
+import { QueryState } from "@/components/common/QueryState";
 
 export default function HospitalMarketplace() {
-  const { data: listings = [], isLoading } = useDoctorMarketplace();
+  const { data: listings = [], isLoading, isError, error, refetch } = useDoctorMarketplace();
   const [search, setSearch] = useState("");
 
   const filtered = listings.filter((d: any) => {
@@ -27,7 +28,8 @@ export default function HospitalMarketplace() {
           <Input placeholder="Search doctors..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
-      {isLoading ? <div className="text-center p-8 text-muted-foreground">Loading marketplace...</div> : (
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+      {(
         <div className="space-y-4">
           {filtered.length === 0 ? (
             <div className="text-center p-8 text-muted-foreground">No doctors available</div>
@@ -56,6 +58,7 @@ export default function HospitalMarketplace() {
           ))}
         </div>
       )}
+      </QueryState>
     </HospitalLayout>
   );
 }

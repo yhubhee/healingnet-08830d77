@@ -1,6 +1,7 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { Users, UserCheck, CreditCard, Video, Clock, Activity, ArrowUpRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { QueryState } from "@/components/common/QueryState";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -29,10 +30,10 @@ export default function HospitalDashboard() {
   useRealtimeCheckins();
   useRealtimeNotifications();
 
-  const { data: checkins = [] } = usePatientCheckins();
-  const { data: hospitalDoctors = [] } = useHospitalDoctors();
-  const { data: billing = [] } = useHospitalBilling();
-  const { data: notifications = [] } = useHospitalNotifications();
+  const { data: checkins = [], isLoading: checkinsLoading, isError: checkinsError, error: checkinsErr, refetch: checkinsRefetch } = usePatientCheckins();
+  const { data: hospitalDoctors = [], isLoading: hospitalDoctorsLoading, isError: hospitalDoctorsError, error: hospitalDoctorsErr, refetch: hospitalDoctorsRefetch } = useHospitalDoctors();
+  const { data: billing = [], isLoading: billingLoading, isError: billingError, error: billingErr, refetch: billingRefetch } = useHospitalBilling();
+  const { data: notifications = [], isLoading: notificationsLoading, isError: notificationsError, error: notificationsErr, refetch: notificationsRefetch } = useHospitalNotifications();
   const { data: hospitalId } = useHospitalId();
 
   const { data: tele } = useQuery({
@@ -109,6 +110,7 @@ export default function HospitalDashboard() {
               <h3 className="text-lg font-heading font-bold flex items-center gap-2"><Clock className="h-5 w-5 text-primary" />Patient Queue</h3>
               <a href="/hospital/queue" className="text-sm text-primary hover:underline">View all</a>
             </div>
+            <QueryState isLoading={checkinsLoading} isError={checkinsError} error={checkinsErr} onRetry={() => checkinsRefetch()}>
             <div className="space-y-2">
               {queueItems.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No patients in queue today</p>
@@ -125,6 +127,7 @@ export default function HospitalDashboard() {
                 </div>
               ))}
             </div>
+            </QueryState>
           </div>
 
           {/* Recent Billing */}
@@ -133,6 +136,7 @@ export default function HospitalDashboard() {
               <h3 className="text-lg font-heading font-bold flex items-center gap-2"><CreditCard className="h-5 w-5 text-primary" />Recent Billing</h3>
               <a href="/hospital/billing" className="text-sm text-primary hover:underline">View all</a>
             </div>
+            <QueryState isLoading={billingLoading} isError={billingError} error={billingErr} onRetry={() => billingRefetch()}>
             <div className="space-y-2">
               {recentBills.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No billing today</p>
@@ -149,6 +153,7 @@ export default function HospitalDashboard() {
                 </div>
               ))}
             </div>
+            </QueryState>
           </div>
         </div>
 
@@ -159,6 +164,7 @@ export default function HospitalDashboard() {
               <h3 className="text-lg font-heading font-bold flex items-center gap-2"><UserCheck className="h-5 w-5 text-primary" />Doctor Overview</h3>
               <a href="/hospital/doctors" className="text-sm text-primary hover:underline">View all</a>
             </div>
+            <QueryState isLoading={hospitalDoctorsLoading} isError={hospitalDoctorsError} error={hospitalDoctorsErr} onRetry={() => hospitalDoctorsRefetch()}>
             <div className="space-y-2">
               {doctors.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No doctors assigned</p>
@@ -180,11 +186,13 @@ export default function HospitalDashboard() {
                 </div>
               ))}
             </div>
+            </QueryState>
           </div>
 
           {/* Activity */}
           <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="text-lg font-heading font-bold flex items-center gap-2 mb-4"><Activity className="h-5 w-5 text-primary" />Recent Activity</h3>
+            <QueryState isLoading={notificationsLoading} isError={notificationsError} error={notificationsErr} onRetry={() => notificationsRefetch()}>
             <div className="space-y-3">
               {recentActivity.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
@@ -198,6 +206,7 @@ export default function HospitalDashboard() {
                 </div>
               ))}
             </div>
+            </QueryState>
           </div>
         </div>
       </div>

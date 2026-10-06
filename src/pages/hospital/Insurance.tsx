@@ -8,11 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { useInsuranceClaims } from "@/hooks/useHospitalData";
 import { FileClaimDialog } from "@/components/hospital/dialogs/FileClaimDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["Claims", "HMO Partners", "Verification"];
 
 export default function HospitalInsurance() {
-  const { data: claims = [], isLoading } = useInsuranceClaims();
+  const { data: claims = [], isLoading, isError, error, refetch } = useInsuranceClaims();
   const [activeTab, setActiveTab] = useState("Claims");
 
   const totalClaims = claims.reduce((s: number, c: any) => s + Number(c.claim_amount), 0);
@@ -55,7 +56,8 @@ export default function HospitalInsurance() {
 
       {activeTab === "Claims" && (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
-          {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
+          <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+          {(
             <>
             {/* Mobile / tablet cards */}
             <div className="lg:hidden divide-y divide-border/50">
@@ -110,6 +112,7 @@ export default function HospitalInsurance() {
             </div>
             </>
           )}
+          </QueryState>
         </div>
       )}
 

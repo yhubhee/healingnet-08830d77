@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useConsultationRequests } from "@/hooks/useHospitalData";
 import { CreateConsultationDialog } from "@/components/hospital/dialogs/CreateConsultationDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["All", "Pending", "Accepted", "Completed"];
 
 export default function HospitalConsultations() {
-  const { data: consults = [], isLoading } = useConsultationRequests();
+  const { data: consults = [], isLoading, isError, error, refetch } = useConsultationRequests();
   const [activeTab, setActiveTab] = useState("All");
   const filtered = activeTab === "All" ? consults : consults.filter((c: any) => c.status === activeTab.toLowerCase());
 
@@ -24,7 +25,8 @@ export default function HospitalConsultations() {
       <div className="flex flex-wrap gap-1 mb-6">
         {tabs.map((t) => (<Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>{t}</Button>))}
       </div>
-      {isLoading ? <div className="text-center p-8 text-muted-foreground">Loading...</div> : (
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+      {(
         <div className="space-y-3">
           {filtered.length === 0 ? (
             <div className="text-center p-8 text-muted-foreground">No consultation requests</div>
@@ -49,6 +51,7 @@ export default function HospitalConsultations() {
           ))}
         </div>
       )}
+      </QueryState>
     </HospitalLayout>
   );
 }

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePatientCheckins, useRealtimeCheckins, useUpdateCheckin } from "@/hooks/useHospitalData";
 import { CheckInDialog } from "@/components/hospital/dialogs/CheckInDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const filters = ["All", "Waiting", "Called", "In Consultation", "Checked In", "Completed"];
 
@@ -25,7 +26,7 @@ const priorityBorder: Record<string, string> = {
 
 export default function HospitalQueue() {
   useRealtimeCheckins();
-  const { data: checkins = [], isLoading } = usePatientCheckins();
+  const { data: checkins = [], isLoading, isError, error, refetch } = usePatientCheckins();
   const updateCheckin = useUpdateCheckin();
   const [activeFilter, setActiveFilter] = useState("All");
 
@@ -78,9 +79,8 @@ export default function HospitalQueue() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-muted-foreground">Loading queue...</div>
-        ) : (
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {(
           <>
           {/* Mobile / tablet cards */}
           <div className="lg:hidden divide-y divide-border/50">
@@ -168,6 +168,7 @@ export default function HospitalQueue() {
           </div>
           </>
         )}
+        </QueryState>
       </div>
     </HospitalLayout>
   );

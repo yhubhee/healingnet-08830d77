@@ -1,4 +1,5 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
+import { QueryState } from "@/components/common/QueryState";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,7 +26,7 @@ export default function EMRTypeDetail() {
   const { type = "vitals" } = useParams<{ type: string }>();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data: allEntries = [] } = useEmrEntries();
+  const { data: allEntries = [], isLoading, isError, error, refetch } = useEmrEntries();
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function EMRTypeDetail() {
         <Input placeholder="Search by patient or title..." className="pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
         <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center p-12 text-muted-foreground bg-card border border-border rounded-xl">
@@ -144,6 +146,7 @@ export default function EMRTypeDetail() {
           </div>
         ))}
       </div>
+        </QueryState>
     </HospitalLayout>
   );
 }

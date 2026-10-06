@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useHospitalReferrals } from "@/hooks/useHospitalData";
 import { CreateReferralDialog } from "@/components/hospital/dialogs/CreateReferralDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["All", "Outgoing", "Incoming", "Internal"];
 const urgencyColors: Record<string, string> = { routine: "bg-success/15 text-success", urgent: "bg-warning/15 text-warning", emergency: "bg-destructive/15 text-destructive" };
 const statusColors: Record<string, string> = { pending: "bg-warning/15 text-warning", accepted: "bg-primary/15 text-primary", in_progress: "bg-info/15 text-info", completed: "bg-success/15 text-success", declined: "bg-destructive/15 text-destructive" };
 
 export default function HospitalReferrals() {
-  const { data: referrals = [], isLoading } = useHospitalReferrals();
+  const { data: referrals = [], isLoading, isError, error, refetch } = useHospitalReferrals();
   const [activeTab, setActiveTab] = useState("All");
 
   const filtered = activeTab === "All" ? referrals :
@@ -36,7 +37,8 @@ export default function HospitalReferrals() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading...</div> : (
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {(
           <>
           {/* Mobile / tablet cards */}
           <div className="lg:hidden divide-y divide-border/50">
@@ -98,6 +100,7 @@ export default function HospitalReferrals() {
           </div>
           </>
         )}
+        </QueryState>
       </div>
     </HospitalLayout>
   );

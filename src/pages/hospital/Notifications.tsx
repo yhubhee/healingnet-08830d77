@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useEffect } from "react";
 import { useHospitalNotifications, useRealtimeNotifications, useMarkNotificationRead, useMarkAllNotificationsRead, useHospitalId } from "@/hooks/useHospitalData";
 import { useNotificationSound } from "@/hooks/useNotificationSound";
+import { QueryState } from "@/components/common/QueryState";
 
 const typeIcons: Record<string, string> = {
   checkin: "🟢",
@@ -19,7 +20,7 @@ const typeIcons: Record<string, string> = {
 
 export default function HospitalNotifications() {
   useRealtimeNotifications();
-  const { data: notifications = [], isLoading } = useHospitalNotifications();
+  const { data: notifications = [], isLoading, isError, error, refetch } = useHospitalNotifications();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
   const { data: hospitalId } = useHospitalId();
@@ -43,7 +44,8 @@ export default function HospitalNotifications() {
           <CheckCircle className="h-4 w-4 mr-2" />Mark all read
         </Button>
       </div>
-      {isLoading ? <div className="text-center p-8 text-muted-foreground">Loading...</div> : (
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+      {(
         <div className="space-y-2">
           {notifications.length === 0 ? (
             <div className="text-center p-8 text-muted-foreground">No notifications</div>
@@ -64,6 +66,7 @@ export default function HospitalNotifications() {
           ))}
         </div>
       )}
+      </QueryState>
     </HospitalLayout>
   );
 }

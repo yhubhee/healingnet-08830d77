@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useEmrEntries } from "@/hooks/useHospitalData";
 import { Link } from "react-router-dom";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["All Records", "Consultation Notes", "Vitals", "Diagnoses", "Lab Orders", "Procedures"];
 
@@ -27,7 +28,7 @@ const typeColors: Record<string, string> = {
 };
 
 export default function HospitalEMR() {
-  const { data: entries = [], isLoading } = useEmrEntries();
+  const { data: entries = [], isLoading, isError, error, refetch } = useEmrEntries();
   const [activeTab, setActiveTab] = useState("All Records");
   const [search, setSearch] = useState("");
 
@@ -79,7 +80,8 @@ export default function HospitalEMR() {
         ))}
       </div>
 
-      {isLoading ? <div className="text-center p-8 text-muted-foreground">Loading records...</div> : (
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+      {(
         <div className="space-y-3">
           {filtered.length === 0 ? (
             <div className="text-center p-8 text-muted-foreground">No records found</div>
@@ -100,6 +102,7 @@ export default function HospitalEMR() {
           ))}
         </div>
       )}
+      </QueryState>
     </HospitalLayout>
   );
 }

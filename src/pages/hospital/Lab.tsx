@@ -7,11 +7,12 @@ import { useState } from "react";
 import { useLabResults } from "@/hooks/useHospitalData";
 import { OrderLabTestDialog } from "@/components/hospital/dialogs/OrderLabTestDialog";
 import { EnterLabResultDialog } from "@/components/hospital/dialogs/EnterLabResultDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["All", "Pending", "Processing", "Completed", "Final"];
 
 export default function HospitalLab() {
-  const { data: labResults = [], isLoading } = useLabResults();
+  const { data: labResults = [], isLoading, isError, error, refetch } = useLabResults();
   const [activeTab, setActiveTab] = useState("All");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,7 +73,8 @@ export default function HospitalLab() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {isLoading ? <div className="p-8 text-center text-muted-foreground">Loading lab data...</div> : (
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {(
           <>
           {/* Mobile / tablet cards */}
           <div className="lg:hidden divide-y divide-border/50">
@@ -164,6 +166,7 @@ export default function HospitalLab() {
           </div>
           </>
         )}
+        </QueryState>
       </div>
       <EnterLabResultDialog order={selectedOrder} open={!!selectedOrder} onClose={() => setSelectedOrder(null)} />
     </HospitalLayout>

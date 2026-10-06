@@ -1,4 +1,5 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
+import { QueryState } from "@/components/common/QueryState";
 import { cn } from "@/lib/utils";
 import { BarChart3, Users, TrendingUp, Activity } from "lucide-react";
 import { usePatientCheckins, useHospitalBilling, useHospitalBeds } from "@/hooks/useHospitalData";
@@ -21,17 +22,28 @@ function last30Days(): string[] {
 }
 
 export default function HospitalAnalytics() {
-  const { data: checkins = [] } = usePatientCheckins();
-  const { data: billing = [] } = useHospitalBilling();
-  const { data: beds = [] } = useHospitalBeds();
+  const checkinsQ = usePatientCheckins();
+  const billingQ = useHospitalBilling();
+  const bedsQ = useHospitalBeds();
 
-  const { data: emr = [] } = useQuery({
+  const emrQ = useQuery({
     queryKey: ["emr-diagnoses"],
     queryFn: async () => {
-      const { data } = await supabase.from("emr_entries").select("title, entry_type").eq("entry_type", "diagnosis").limit(500);
+      const { data, error } = await supabase.from("emr_entries").select("title, entry_type").eq("entry_type", "diagnosis").limit(500);
+      if (error) throw error;
       return data || [];
     },
   });
+
+  const checkins = checkinsQ.data ?? [];
+  const billing = billingQ.data ?? [];
+  const beds = bedsQ.data ?? [];
+  const emr = emrQ.data ?? [];
+  const allQueries = [checkinsQ, billingQ, bedsQ, emrQ];
+  const isLoading = allQueries.some((q) => q.isLoading);
+  const isError = allQueries.some((q) => q.isError);
+  const firstError = allQueries.find((q) => q.isError)?.error;
+  const retryFailed = () => allQueries.filter((q) => q.isError).forEach((q) => q.refetch());
 
   const totalPatients = checkins.length;
   const totalRevenue = billing.reduce((s: number, b: any) => s + Number(b.total), 0);
@@ -88,6 +100,7 @@ export default function HospitalAnalytics() {
         <p className="text-muted-foreground">Hospital performance metrics and operational insights</p>
       </div>
 
+      <QueryState isLoading={isLoading} isError={isError} error={firstError} onRetry={retryFailed}>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {kpis.map((k) => (
           <div key={k.label} className={cn("relative rounded-xl p-5 text-foreground overflow-hidden", k.gradient)}>
@@ -171,6 +184,7 @@ export default function HospitalAnalytics() {
           </ResponsiveContainer>
         )}
       </div>
+      </QueryState>
     </HospitalLayout>
   );
 }

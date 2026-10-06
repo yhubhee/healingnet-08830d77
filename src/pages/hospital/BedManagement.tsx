@@ -2,6 +2,7 @@ import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { useState } from "react";
 import { Bed, Building, AlertTriangle, CheckCircle, Plus, Users, TrendingUp, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { QueryState } from "@/components/common/QueryState";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -34,8 +35,8 @@ const wardTypeColors: Record<string, string> = {
 
 export default function HospitalBedManagement() {
   useRealtimeBeds();
-  const { data: wards = [], isLoading: wardsLoading } = useHospitalWards();
-  const { data: beds = [], isLoading: bedsLoading } = useHospitalBeds();
+  const { data: wards = [], isLoading: wardsLoading, isError: wardsError, error: wardsErr, refetch: wardsRefetch } = useHospitalWards();
+  const { data: beds = [], isLoading: bedsLoading, isError: bedsError, error: bedsErr, refetch: bedsRefetch } = useHospitalBeds();
   const { data: patients = [] } = usePatients();
   const queryClient = useQueryClient();
 
@@ -113,6 +114,7 @@ export default function HospitalBedManagement() {
     : beds.filter((b: any) => b.status === activeTab.toLowerCase());
 
   const isLoading = wardsLoading || bedsLoading;
+  const loadError = wardsError || bedsError;
 
   return (
     <HospitalLayout>
@@ -187,10 +189,10 @@ export default function HospitalBedManagement() {
         ))}
       </div>
 
-      {isLoading && <div className="text-center p-8 text-muted-foreground">Loading bed data...</div>}
+      <QueryState isLoading={isLoading} isError={loadError} error={wardsErr ?? bedsErr} onRetry={() => { if (wardsError) wardsRefetch(); if (bedsError) bedsRefetch(); }}><></></QueryState>
 
       {/* Wards view */}
-      {activeTab === "Wards" && !isLoading && (
+      {activeTab === "Wards" && !isLoading && !loadError && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {wards.length === 0 ? (
             <div className="col-span-full text-center p-8 text-muted-foreground">No wards configured yet. Add a ward to get started.</div>
@@ -231,7 +233,7 @@ export default function HospitalBedManagement() {
       )}
 
       {/* Overview - visual bed map */}
-      {activeTab === "Overview" && !isLoading && (
+      {activeTab === "Overview" && !isLoading && !loadError && (
         <div className="space-y-6">
           {wards.length === 0 ? (
             <div className="text-center p-8 text-muted-foreground">No wards or beds configured. Start by adding a ward.</div>
@@ -279,7 +281,7 @@ export default function HospitalBedManagement() {
       )}
 
       {/* Beds table */}
-      {(activeTab === "All Beds" || activeTab === "Occupied" || activeTab === "Available") && !isLoading && (
+      {(activeTab === "All Beds" || activeTab === "Occupied" || activeTab === "Available") && !isLoading && !loadError && (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           {/* Mobile cards */}
           <div className="lg:hidden divide-y divide-border/50">

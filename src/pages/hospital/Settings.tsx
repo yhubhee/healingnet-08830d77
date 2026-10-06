@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { InviteStaffDialog } from "@/components/hospital/dialogs/InviteStaffDialog";
 import { Check, Lock, Mail } from "lucide-react";
+import { QueryState } from "@/components/common/QueryState";
 
 const NOTIF_KEYS = [
   { key: "checkins", label: "Patient check-ins" },
@@ -23,7 +24,7 @@ const NOTIF_KEYS = [
 ];
 
 export default function HospitalSettings() {
-  const { data: hospital, isLoading } = useHospitalInfo();
+  const { data: hospital, isLoading, isError, error, refetch } = useHospitalInfo();
   const { data: subscription } = useHospitalSubscription();
   const { data: staff = [] } = useHospitalStaff();
   const { toast } = useToast();
@@ -118,7 +119,8 @@ export default function HospitalSettings() {
         <h1 className="text-2xl font-heading font-bold mb-1">Settings</h1>
         <p className="text-muted-foreground">Hospital configuration and preferences</p>
       </div>
-      {isLoading ? <div className="text-center p-8 text-muted-foreground">Loading...</div> : (
+      <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+      {(
         <Tabs defaultValue="general" className="max-w-4xl">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
@@ -254,6 +256,7 @@ export default function HospitalSettings() {
           </TabsContent>
         </Tabs>
       )}
+      </QueryState>
     </HospitalLayout>
   );
 }

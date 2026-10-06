@@ -7,11 +7,12 @@ import { usePharmacyInventory } from "@/hooks/useHospitalData";
 import { AddInventoryDialog } from "@/components/hospital/dialogs/AddInventoryDialog";
 import { PrescriptionQueue, usePrescriptionQueue } from "@/components/hospital/PrescriptionQueue";
 import { DispenseDrugDialog } from "@/components/hospital/dialogs/DispenseDrugDialog";
+import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["Prescriptions", "Inventory", "Low Stock"];
 
 export default function HospitalPharmacy() {
-  const { data: inventory = [], isLoading } = usePharmacyInventory();
+  const { data: inventory = [], isLoading, isError, error, refetch } = usePharmacyInventory();
   const [activeTab, setActiveTab] = useState("Prescriptions");
   const { data: rxQueue = [] } = usePrescriptionQueue();
 
@@ -55,7 +56,9 @@ export default function HospitalPharmacy() {
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        {activeTab === "Prescriptions" ? <PrescriptionQueue /> : isLoading ? <div className="p-8 text-center text-muted-foreground">Loading pharmacy...</div> : displayed.length === 0 ? (
+        {activeTab === "Prescriptions" ? <PrescriptionQueue /> : (
+        <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
+        {displayed.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">No inventory items</div>
         ) : (
           <>
@@ -114,6 +117,8 @@ export default function HospitalPharmacy() {
               </table>
             </div>
           </>
+        )}
+        </QueryState>
         )}
       </div>
 
