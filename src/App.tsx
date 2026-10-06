@@ -3,71 +3,73 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
-import About from "./pages/About";
-import Services from "./pages/Services";
-import FeaturesPage from "./pages/Features";
-import PricingPage from "./pages/Pricing";
-import FAQPage from "./pages/FAQ";
-import ContactPage from "./pages/Contact";
+const About = lazy(() => import("./pages/About"));
+const Services = lazy(() => import("./pages/Services"));
+const FeaturesPage = lazy(() => import("./pages/Features"));
+const PricingPage = lazy(() => import("./pages/Pricing"));
+const FAQPage = lazy(() => import("./pages/FAQ"));
+const ContactPage = lazy(() => import("./pages/Contact"));
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
 import OAuthConsent from "./pages/OAuthConsent";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RequirePlan } from "./components/auth/RequirePlan";
+import { PageLoadingFallback } from "./components/common/PageLoadingFallback";
 
-import HospitalDashboard from "./pages/hospital/Dashboard";
-import HospitalQueue from "./pages/hospital/Queue";
-import HospitalDoctors from "./pages/hospital/Doctors";
-import HospitalPatients from "./pages/hospital/Patients";
-import HospitalBilling from "./pages/hospital/Billing";
-import HospitalEMR from "./pages/hospital/EMR";
-import AddEMREntry from "./pages/hospital/AddEMREntry";
-import EMRTypeDetail from "./pages/hospital/EMRTypeDetail";
-import HospitalLab from "./pages/hospital/Lab";
-import HospitalPharmacy from "./pages/hospital/Pharmacy";
-import HospitalSurgery from "./pages/hospital/Surgery";
-import HospitalMaternity from "./pages/hospital/Maternity";
-import HospitalReferrals from "./pages/hospital/Referrals";
-import HospitalInsurance from "./pages/hospital/Insurance";
-import HospitalAnalytics from "./pages/hospital/Analytics";
-import HospitalConsultations from "./pages/hospital/Consultations";
-import HospitalMarketplace from "./pages/hospital/Marketplace";
-import HospitalNotifications from "./pages/hospital/Notifications";
-import HospitalSettings from "./pages/hospital/Settings";
-import HospitalBedManagement from "./pages/hospital/BedManagement";
-import ConfirmingPayment from "./pages/hospital/ConfirmingPayment";
+const HospitalDashboard = lazy(() => import("./pages/hospital/Dashboard"));
+const HospitalQueue = lazy(() => import("./pages/hospital/Queue"));
+const HospitalDoctors = lazy(() => import("./pages/hospital/Doctors"));
+const HospitalPatients = lazy(() => import("./pages/hospital/Patients"));
+const HospitalBilling = lazy(() => import("./pages/hospital/Billing"));
+const HospitalEMR = lazy(() => import("./pages/hospital/EMR"));
+const AddEMREntry = lazy(() => import("./pages/hospital/AddEMREntry"));
+const EMRTypeDetail = lazy(() => import("./pages/hospital/EMRTypeDetail"));
+const HospitalLab = lazy(() => import("./pages/hospital/Lab"));
+const HospitalPharmacy = lazy(() => import("./pages/hospital/Pharmacy"));
+const HospitalSurgery = lazy(() => import("./pages/hospital/Surgery"));
+const HospitalMaternity = lazy(() => import("./pages/hospital/Maternity"));
+const HospitalReferrals = lazy(() => import("./pages/hospital/Referrals"));
+const HospitalInsurance = lazy(() => import("./pages/hospital/Insurance"));
+const HospitalAnalytics = lazy(() => import("./pages/hospital/Analytics"));
+const HospitalConsultations = lazy(() => import("./pages/hospital/Consultations"));
+const HospitalMarketplace = lazy(() => import("./pages/hospital/Marketplace"));
+const HospitalNotifications = lazy(() => import("./pages/hospital/Notifications"));
+const HospitalSettings = lazy(() => import("./pages/hospital/Settings"));
+const HospitalBedManagement = lazy(() => import("./pages/hospital/BedManagement"));
+const ConfirmingPayment = lazy(() => import("./pages/hospital/ConfirmingPayment"));
 
-import PatientDashboard from "./pages/patient/Dashboard";
-import PatientAppointments from "./pages/patient/Appointments";
-import PatientPrescriptions from "./pages/patient/Prescriptions";
-import PatientLabResults from "./pages/patient/LabResults";
-import PatientMedicalRecords from "./pages/patient/MedicalRecords";
-import PatientMessages from "./pages/patient/Messages";
-import PatientLetters from "./pages/patient/Letters";
-import PatientProfile from "./pages/patient/Profile";
-import PatientSettings from "./pages/patient/Settings";
-import PatientNotifications from "./pages/patient/Notifications";
-import PatientTriage from "./pages/patient/Triage";
+const PatientDashboard = lazy(() => import("./pages/patient/Dashboard"));
+const PatientAppointments = lazy(() => import("./pages/patient/Appointments"));
+const PatientPrescriptions = lazy(() => import("./pages/patient/Prescriptions"));
+const PatientLabResults = lazy(() => import("./pages/patient/LabResults"));
+const PatientMedicalRecords = lazy(() => import("./pages/patient/MedicalRecords"));
+const PatientMessages = lazy(() => import("./pages/patient/Messages"));
+const PatientLetters = lazy(() => import("./pages/patient/Letters"));
+const PatientProfile = lazy(() => import("./pages/patient/Profile"));
+const PatientSettings = lazy(() => import("./pages/patient/Settings"));
+const PatientNotifications = lazy(() => import("./pages/patient/Notifications"));
+const PatientTriage = lazy(() => import("./pages/patient/Triage"));
 
-import DoctorDashboard from "./pages/doctor/Dashboard";
-import DoctorAppointments from "./pages/doctor/Appointments";
-import DoctorPatients from "./pages/doctor/Patients";
-import DoctorPrescriptions from "./pages/doctor/Prescriptions";
-import DoctorLabOrders from "./pages/doctor/LabOrders";
-import DoctorConsultations from "./pages/doctor/Consultations";
-import DoctorProfile from "./pages/doctor/Profile";
-import DoctorVerification from "./pages/doctor/Verification";
-import DoctorSettings from "./pages/doctor/Settings";
-import DoctorMessages from "./pages/doctor/Messages";
-import DoctorPatientDetail from "./pages/doctor/PatientDetail";
-import DoctorInvitations from "./pages/doctor/Invitations";
-import DoctorNotifications from "./pages/doctor/Notifications";
-import DoctorConsultationPage from "./pages/doctor/ConsultationPage";
-import VideoConsult from "./pages/VideoConsult";
+const DoctorDashboard = lazy(() => import("./pages/doctor/Dashboard"));
+const DoctorAppointments = lazy(() => import("./pages/doctor/Appointments"));
+const DoctorPatients = lazy(() => import("./pages/doctor/Patients"));
+const DoctorPrescriptions = lazy(() => import("./pages/doctor/Prescriptions"));
+const DoctorLabOrders = lazy(() => import("./pages/doctor/LabOrders"));
+const DoctorConsultations = lazy(() => import("./pages/doctor/Consultations"));
+const DoctorProfile = lazy(() => import("./pages/doctor/Profile"));
+const DoctorVerification = lazy(() => import("./pages/doctor/Verification"));
+const DoctorSettings = lazy(() => import("./pages/doctor/Settings"));
+const DoctorMessages = lazy(() => import("./pages/doctor/Messages"));
+const DoctorPatientDetail = lazy(() => import("./pages/doctor/PatientDetail"));
+const DoctorInvitations = lazy(() => import("./pages/doctor/Invitations"));
+const DoctorNotifications = lazy(() => import("./pages/doctor/Notifications"));
+const DoctorConsultationPage = lazy(() => import("./pages/doctor/ConsultationPage"));
+const VideoConsult = lazy(() => import("./pages/VideoConsult"));
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
@@ -86,6 +88,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/about" element={<About />} />
@@ -159,6 +162,7 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
