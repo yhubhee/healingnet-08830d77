@@ -45,9 +45,12 @@ select gen_random_uuid(), u.id::text, u.id,
                 '22222222-2222-4222-8222-222222222222',
                 '33333333-3333-4333-8333-333333333333');
 
--- Give the test hospital a paid telemedicine plan so every feature can be tested.
+-- Approve the test hospital and give it a paid telemedicine plan so every
+-- feature can be tested.
 update public.hospitals h
-   set active_plan = 'telemedicine',
+   set verification_status = 'approved',
+       verified_at = now(),
+       active_plan = 'telemedicine',
        subscription_status = 'active',
        plan_expires_at = now() + interval '1 year',
        trial_ends_at = null,

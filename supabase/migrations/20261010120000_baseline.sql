@@ -95,8 +95,17 @@ create table public.hospitals (
     check (subscription_status in ('inactive', 'pending', 'trialing', 'active', 'expired')),
   trial_ends_at timestamptz,          -- D5
   plan_expires_at timestamptz,        -- end of the paid period (set by Paystack functions)
+  -- Platform verification. A pending hospital can use its own trial, but is
+  -- invisible to patients until a platform admin approves it (review_hospital).
+  verification_status text not null default 'pending'
+    check (verification_status in ('pending', 'approved', 'rejected')),
+  verified_at timestamptz,
+  verification_notes text,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- A paid plan or a trial always has an end date.
+  constraint hospitals_active_has_expiry check (subscription_status <> 'active' or plan_expires_at is not null),
+  constraint hospitals_trial_has_end check (subscription_status <> 'trialing' or trial_ends_at is not null)
 );
 
 create table public.hospital_staff (
@@ -128,7 +137,8 @@ create table public.hospital_subscriptions (
   started_at timestamptz not null default now(),
   expires_at timestamptz,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint hospital_subscriptions_has_expiry check (status not in ('active', 'trialing') or expires_at is not null)
 );
 
 create table public.hospital_notification_prefs (
@@ -1008,6 +1018,38 @@ language sql stable security definer
 set search_path = ''
 as $$ select exists (select 1 from public.doctors where id = _doctor_id and verification_status = 'approved') $$;
 
+-- Patient-facing visibility: only active hospitals approved by a platform admin.
+create or replace function private.hospital_is_public(_hospital_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = ''
+as $$
+  select exists (select 1 from public.hospitals
+                 where id = _hospital_id and is_active and verification_status = 'approved')
+$$;
+
+-- The calling doctor has any link (including a pending invite) to the hospital,
+-- so invitations from unverified hospitals still show the hospital's name.
+create or replace function private.doctor_linked_to_hospital(_hospital_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = ''
+as $$
+  select exists (select 1 from public.hospital_doctors
+                 where hospital_id = _hospital_id and doctor_id = private.my_doctor_id())
+$$;
+
+-- The calling patient is registered at the hospital (so they can see its name
+-- on their own records, whatever its verification status).
+create or replace function private.is_patient_of_hospital(_hospital_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = ''
+as $$
+  select exists (select 1 from public.hospital_patients
+                 where hospital_id = _hospital_id and patient_id = private.my_patient_id())
+$$;
+
 -- #14 / D5: does the hospital currently have (at least) this plan?
 -- Telemedicine includes EMR. The 30-day trial covers EMR only.
 create or replace function private.hospital_has_plan(_hospital_id uuid, _plan text)
@@ -1781,7 +1823,8 @@ begin
 end;
 $$;
 
--- #4 / #14: plan and subscription state belong to the service role.
+-- #4 / #14: plan and subscription state belong to the service role;
+-- verification state belongs to review_hospital().
 create or replace function private.guard_hospitals()
 returns trigger
 language plpgsql
@@ -1795,6 +1838,12 @@ begin
     or new.plan_expires_at is distinct from old.plan_expires_at
     or new.is_active is distinct from old.is_active) then
     raise exception 'Plan and subscription fields can only be changed by the billing system' using errcode = '42501';
+  end if;
+  if not private.is_trusted() and (
+       new.verification_status is distinct from old.verification_status
+    or new.verified_at is distinct from old.verified_at
+    or new.verification_notes is distinct from old.verification_notes) then
+    raise exception 'Hospital verification can only be changed by a platform admin' using errcode = '42501';
   end if;
   return new;
 end;
@@ -1957,7 +2006,8 @@ language sql stable security definer
 set search_path = ''
 as $$ select private.is_call_participant(_kind, _id) $$;
 
--- Hospitals where an approved doctor is actively practising (for booking).
+-- Approved, active hospitals where an approved doctor is actively practising
+-- (for patient booking).
 create or replace function public.doctor_hospital_ids(_doctor_id uuid)
 returns setof uuid
 language sql stable security definer
@@ -1966,8 +2016,10 @@ as $$
   select hd.hospital_id
     from public.hospital_doctors hd
     join public.doctors d on d.id = hd.doctor_id
+    join public.hospitals h on h.id = hd.hospital_id
    where hd.doctor_id = _doctor_id and hd.status = 'active' and hd.is_active
      and d.verification_status = 'approved'
+     and h.is_active and h.verification_status = 'approved'
 $$;
 
 -- For Google/OAuth sign-ups, which carry no role metadata.
@@ -2122,6 +2174,49 @@ begin
     case when p_approve then 'Your credentials were approved. Welcome to HealingNet.'
          else coalesce('Reason: ' || p_reason, 'Please review and resubmit your credentials.') end,
     p_doctor_id, 'doctor', '/doctor/verification');
+end;
+$$;
+
+-- A platform admin approves or rejects a hospital. Only approved hospitals are
+-- visible to patients (booking, discovery, consultation requests).
+create or replace function public.review_hospital(p_hospital_id uuid, p_approve boolean, p_notes text default null)
+returns void
+language plpgsql security definer
+set search_path = ''
+as $$
+declare
+  _name text;
+  _admin uuid;
+begin
+  if not private.is_platform_admin() then
+    raise exception 'Only platform admins can review hospitals' using errcode = '42501';
+  end if;
+  update public.hospitals
+     set verification_status = case when p_approve then 'approved' else 'rejected' end,
+         verified_at = case when p_approve then now() else null end,
+         verification_notes = p_notes
+   where id = p_hospital_id
+  returning name into _name;
+  if not found then
+    raise exception 'Hospital not found';
+  end if;
+
+  perform public.emit_hospital_notification(p_hospital_id, 'system',
+    case when p_approve then 'Hospital verified' else 'Hospital verification not approved' end,
+    case when p_approve then _name || ' is now visible to patients on HealingNet.'
+         else coalesce('Reason: ' || p_notes, 'Please contact HealingNet support.') end,
+    p_hospital_id, 'hospital');
+
+  for _admin in
+    select user_id from public.hospital_staff
+     where hospital_id = p_hospital_id and role = 'admin' and is_active
+  loop
+    perform public.emit_user_notification(_admin, 'hospital', 'verification',
+      case when p_approve then 'Hospital verified' else 'Hospital verification not approved' end,
+      case when p_approve then _name || ' is now visible to patients on HealingNet.'
+           else coalesce('Reason: ' || p_notes, 'Please contact HealingNet support.') end,
+      p_hospital_id, 'hospital', '/hospital/settings');
+  end loop;
 end;
 $$;
 
@@ -2324,10 +2419,8 @@ begin
   end if;
 
   if p_checkin_id is not null then
-    select id into cid from public.consultations where checkin_id = p_checkin_id and submitted_at is null;
     select hospital_id, patient_id into h, src_patient from public.patient_checkins where id = p_checkin_id;
   elsif p_appointment_id is not null then
-    select id into cid from public.consultations where appointment_id = p_appointment_id and submitted_at is null;
     select hospital_id, patient_id, case when is_telemedicine then 'telemedicine' else 'in_person' end
       into h, src_patient, m
       from public.patient_appointments where id = p_appointment_id;
@@ -2341,11 +2434,9 @@ begin
     src_patient := p_patient_id;
   end if;
 
+  -- All access checks happen before any consultation id is returned.
   if src_patient is distinct from p_patient_id then
     raise exception 'Patient does not match this check-in or appointment';
-  end if;
-  if cid is not null then
-    return cid;
   end if;
   if h is null or not private.doctor_is_active_at(d, h) then
     raise exception 'You are not attached to this hospital';
@@ -2354,13 +2445,31 @@ begin
     raise exception 'Hospital plan does not include consultations';
   end if;
 
+  -- Resume the open consultation for this check-in / appointment, if any.
+  if p_checkin_id is not null then
+    select id into cid from public.consultations
+     where checkin_id = p_checkin_id and hospital_id = h and submitted_at is null;
+  elsif p_appointment_id is not null then
+    select id into cid from public.consultations
+     where appointment_id = p_appointment_id and hospital_id = h and submitted_at is null;
+  end if;
+  if cid is not null then
+    return cid;
+  end if;
+
   insert into public.consultations (hospital_id, patient_id, doctor_id, checkin_id, appointment_id, mode)
   values (h, p_patient_id, d, p_checkin_id, p_appointment_id, m)
   returning id into cid;
   return cid;
 exception when unique_violation then
+  -- A concurrent call created it first. Re-check access before returning its id.
+  if d is null or h is null or not private.doctor_is_active_at(d, h) then
+    raise exception 'You are not attached to this hospital';
+  end if;
   select id into cid from public.consultations
-   where submitted_at is null and (checkin_id = p_checkin_id or appointment_id = p_appointment_id)
+   where submitted_at is null and hospital_id = h
+     and ((p_checkin_id is not null and checkin_id = p_checkin_id)
+          or (p_appointment_id is not null and appointment_id = p_appointment_id))
    limit 1;
   return cid;
 end;
@@ -2561,9 +2670,15 @@ create policy "Platform admins read contact messages" on public.contact_messages
 grant select on public.hospitals to authenticated;
 grant update (name, address, city, state, phone, email, logo_url, license_number, lat, lng)
   on public.hospitals to authenticated;
-create policy "Read active hospitals and own hospital" on public.hospitals
+-- Patients and other users see only active, platform-approved hospitals. Staff,
+-- invited/linked doctors and patients registered there also see their own hospital.
+create policy "Read approved hospitals and own hospital" on public.hospitals
   for select to authenticated
-  using (is_active or private.is_hospital_staff(id) or private.is_platform_admin());
+  using ((is_active and verification_status = 'approved')
+         or private.is_hospital_staff(id)
+         or private.doctor_linked_to_hospital(id)
+         or private.is_patient_of_hospital(id)
+         or private.is_platform_admin());
 create policy "Hospital admins update their hospital" on public.hospitals
   for update to authenticated
   using (private.is_hospital_admin(id))
@@ -2771,7 +2886,7 @@ create policy "Patients book appointments" on public.patient_appointments
   for insert to authenticated
   with check (private.is_own_patient(patient_id)
               and status = 'pending'
-              and (select h.is_active from public.hospitals h where h.id = hospital_id)
+              and private.hospital_is_public(hospital_id)
               and (doctor_id is null or (private.doctor_is_active_at(doctor_id, hospital_id)
                                           and private.doctor_is_approved(doctor_id)))
               and (not is_telemedicine or private.hospital_has_plan(hospital_id, 'telemedicine')));
@@ -2800,12 +2915,16 @@ create policy "Read triage sessions" on public.triage_sessions
   using (private.is_own_patient(patient_id)
          or (chosen_hospital_id is not null and private.can_work_at(chosen_hospital_id, 'emr'))
          or (chosen_doctor_id is not null and chosen_doctor_id = private.my_doctor_id()));
+-- A triage session is shared with the chosen hospital, so only approved hospitals can be chosen.
 create policy "Patients create own triage" on public.triage_sessions
-  for insert to authenticated with check (private.is_own_patient(patient_id));
+  for insert to authenticated
+  with check (private.is_own_patient(patient_id)
+              and (chosen_hospital_id is null or private.hospital_is_public(chosen_hospital_id)));
 create policy "Patients update own triage" on public.triage_sessions
   for update to authenticated
   using (private.is_own_patient(patient_id))
-  with check (private.is_own_patient(patient_id));
+  with check (private.is_own_patient(patient_id)
+              and (chosen_hospital_id is null or private.hospital_is_public(chosen_hospital_id)));
 create policy "Patients delete own triage" on public.triage_sessions
   for delete to authenticated using (private.is_own_patient(patient_id));
 
@@ -3179,6 +3298,7 @@ create policy "Read consultation requests" on public.consultation_requests
 create policy "Staff request consultations" on public.consultation_requests
   for insert to authenticated
   with check (private.can_staff_work_at(requesting_hospital_id, 'telemedicine')
+              and private.hospital_is_public(requesting_hospital_id)
               and private.patient_linked(requesting_hospital_id, patient_id)
               and private.doctor_is_approved(doctor_id));
 create policy "Doctor and requesting staff update consultation requests" on public.consultation_requests
@@ -3211,6 +3331,9 @@ grant execute on function
   private.doctor_is_active_at(uuid, uuid),
   private.is_active_doctor_at(uuid),
   private.doctor_is_approved(uuid),
+  private.hospital_is_public(uuid),
+  private.doctor_linked_to_hospital(uuid),
+  private.is_patient_of_hospital(uuid),
   private.hospital_has_plan(uuid, text),
   private.can_staff_work_at(uuid, text),
   private.can_doctor_work_at(uuid, text),
@@ -3244,6 +3367,7 @@ grant execute on function
   public.respond_to_invitation(uuid, boolean),
   public.submit_doctor_verification(jsonb),
   public.review_doctor(uuid, boolean, text),
+  public.review_hospital(uuid, boolean, text),
   public.doctor_private_profile(uuid),
   public.dispense_prescription(uuid, uuid, integer),
   public.dispense_drug(uuid, uuid, integer, text, text),
