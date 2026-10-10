@@ -56,12 +56,14 @@ create table public.plan_prices (
   primary key (plan, billing_cycle)
 );
 
--- #12: send-email rate limiting (service role only).
-create table public.email_log (
+-- #12 / #16: rate limiting for edge functions (service role only).
+-- user_id is the caller (null for internal server-to-server calls);
+-- subject_user_id is who the call is about (e.g. the email recipient).
+create table public.function_calls (
   id uuid primary key default gen_random_uuid(),
-  sender_user_id uuid references auth.users(id) on delete set null,
-  recipient_user_id uuid references auth.users(id) on delete set null,
-  template text not null,
+  user_id uuid references auth.users(id) on delete cascade,
+  fn text not null,
+  subject_user_id uuid references auth.users(id) on delete cascade,
   created_at timestamptz not null default now()
 );
 
@@ -824,18 +826,19 @@ create table public.consultation_requests (
   recording_url text,
   recording_status text,
   call_started_at timestamptz,
-  call_ended_at timestamptz
+  call_ended_at timestamptz,
+  paid_at timestamptz             -- set by private.fulfill_payment
 );
 
 -- #3 / #10 / D3: one payments table for subscriptions, bills, pharmacy and consultations.
--- Written only by the service role (Paystack edge functions).
+-- Written only by the service role (Paystack edge functions). amount is in kobo.
 create table public.payments (
   id uuid primary key default gen_random_uuid(),
   hospital_id uuid references public.hospitals(id),
   patient_id uuid references public.patients(id),
   purpose text not null check (purpose in ('billing', 'pharmacy', 'consultation', 'subscription')),
   reference_id uuid,              -- hospital_billing.id / pharmacy_dispensing.id / consultation_requests.id
-  amount numeric not null check (amount > 0),
+  amount bigint not null check (amount > 0),   -- kobo
   currency text not null default 'NGN' check (currency = 'NGN'),
   email text,
   paystack_reference text not null unique,
@@ -929,7 +932,8 @@ create index idx_payments_hospital on public.payments (hospital_id);
 create index idx_payments_patient on public.payments (patient_id);
 create index idx_payments_ref on public.payments (reference_id);
 create index idx_payments_payer on public.payments (payer_user_id);
-create index idx_email_log_sender on public.email_log (sender_user_id, created_at desc);
+create index idx_function_calls_user on public.function_calls (user_id, fn, created_at);
+create index idx_function_calls_subject on public.function_calls (subject_user_id, fn, created_at);
 
 -- -----------------------------------------------------------------------------
 -- 4. Private helper functions (used by RLS policies; not exposed by the API)
@@ -1943,8 +1947,18 @@ begin
 end;
 $$;
 
--- #7 / #3: call and fee fields. Room/recording fields are service-role only;
--- the agreed fee can only be set by the consulted doctor.
+create or replace function private.consultation_has_payment(_request_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = ''
+as $$
+  select exists (select 1 from public.payments
+                 where purpose = 'consultation' and reference_id = _request_id and status = 'success')
+$$;
+
+-- #7 / #3: call and fee fields. Room/recording/payment fields are service-role
+-- only; the agreed fee can only be set by the consulted doctor, and is locked
+-- once the request is accepted or paid (the Paystack function charges it).
 create or replace function private.guard_consultation_requests()
 returns trigger
 language plpgsql
@@ -1963,11 +1977,23 @@ begin
      or new.recording_url is distinct from old.recording_url
      or new.recording_status is distinct from old.recording_status
      or new.call_started_at is distinct from old.call_started_at
-     or new.call_ended_at is distinct from old.call_ended_at then
+     or new.call_ended_at is distinct from old.call_ended_at
+     or new.paid_at is distinct from old.paid_at then
     raise exception 'This consultation field cannot be changed' using errcode = '42501';
   end if;
-  if new.fee_agreed is distinct from old.fee_agreed and old.doctor_id is distinct from private.my_doctor_id() then
-    raise exception 'Only the consulted doctor can set the fee' using errcode = '42501';
+  if new.fee_agreed is distinct from old.fee_agreed then
+    if old.status in ('accepted', 'completed')
+       or old.paid_at is not null
+       or private.consultation_has_payment(old.id) then
+      raise exception 'The fee is locked once the consultation is accepted' using errcode = '42501';
+    end if;
+    if old.doctor_id is distinct from private.my_doctor_id() then
+      raise exception 'Only the consulted doctor can set the fee' using errcode = '42501';
+    end if;
+  end if;
+  -- An accepted request cannot be reopened to unlock the fee.
+  if old.status in ('accepted', 'completed') and new.status = 'pending' then
+    raise exception 'An accepted consultation cannot be reopened' using errcode = '42501';
   end if;
   return new;
 end;
@@ -2242,6 +2268,118 @@ begin
   return _row;
 end;
 $$;
+
+-- #3 / #22: settle a payment once Paystack has confirmed it. Called only by the
+-- Paystack edge functions (service role) after they re-verify the transaction.
+-- Returns false, with no side effects, if the payment is already settled or the
+-- amount/currency does not match what we asked for.
+create or replace function private.fulfill_payment(p_payment_id uuid, p_paid_amount bigint, p_currency text)
+returns boolean
+language plpgsql security definer
+set search_path = ''
+as $$
+declare
+  p public.payments;
+  _start timestamptz;
+  _expires timestamptz;
+  _naira text;
+  _sub_id uuid;
+begin
+  update public.payments
+     set status = 'success', paid_at = now()
+   where id = p_payment_id
+     and status <> 'success'
+     and amount = p_paid_amount
+     and currency = p_currency
+  returning * into p;
+  if not found then
+    return false;
+  end if;
+
+  _naira := '₦' || to_char(p.amount / 100.0, 'FM999,999,999,990.00');
+
+  if p.purpose = 'subscription' then
+    -- Renewing the same plan extends from the current end date; anything else starts now.
+    select case
+             when h.subscription_status = 'active' and h.active_plan = p.plan and h.plan_expires_at > now()
+             then h.plan_expires_at else now()
+           end
+      into _start
+      from public.hospitals h
+     where h.id = p.hospital_id
+       for update;
+    if _start is null then
+      raise exception 'Hospital not found for payment %', p.id;
+    end if;
+    _expires := _start + case when p.billing_cycle = 'yearly' then interval '1 year' else interval '1 month' end;
+
+    update public.hospitals
+       set active_plan = p.plan,
+           subscription_status = 'active',
+           plan_expires_at = _expires,
+           trial_ends_at = null
+     where id = p.hospital_id;
+
+    -- Close the trial / pending rows and any active row for a different plan or cycle.
+    update public.hospital_subscriptions
+       set status = 'canceled'
+     where hospital_id = p.hospital_id
+       and (status in ('pending', 'trialing')
+            or (status = 'active' and (plan <> p.plan or billing_cycle <> p.billing_cycle)));
+
+    update public.hospital_subscriptions
+       set expires_at = _expires
+     where id = (select s.id from public.hospital_subscriptions s
+                  where s.hospital_id = p.hospital_id and s.status = 'active'
+                    and s.plan = p.plan and s.billing_cycle = p.billing_cycle
+                  order by s.started_at desc
+                  limit 1)
+    returning id into _sub_id;
+    if _sub_id is null then
+      insert into public.hospital_subscriptions (hospital_id, plan, status, billing_cycle, started_at, expires_at)
+      values (p.hospital_id, p.plan, 'active', p.billing_cycle, now(), _expires);
+    end if;
+
+    perform public.emit_hospital_notification(p.hospital_id, 'billing', 'Subscription active',
+      initcap(p.plan) || ' plan paid (' || _naira || '), active until ' || to_char(_expires, 'DD Mon YYYY') || '.',
+      p.id, 'payment');
+
+  elsif p.purpose = 'billing' then
+    -- notify_billing / notify_user_billing fire on the status change.
+    update public.hospital_billing
+       set payment_status = 'paid', paid_at = now(), payment_method = 'card'
+     where id = p.reference_id and hospital_id = p.hospital_id;
+
+  elsif p.purpose = 'pharmacy' then
+    update public.pharmacy_dispensing
+       set payment_status = 'paid'
+     where id = p.reference_id and hospital_id = p.hospital_id;
+    perform public.emit_hospital_notification(p.hospital_id, 'pharmacy', 'Pharmacy payment received',
+      _naira || ' paid by ' || coalesce(public.patient_display_name(p.patient_id), 'a patient'), p.id, 'payment');
+
+  elsif p.purpose = 'consultation' then
+    update public.consultation_requests
+       set paid_at = now()
+     where id = p.reference_id;
+    perform public.emit_hospital_notification(p.hospital_id, 'consultation', 'Consultation paid',
+      _naira || ' paid for ' || coalesce(public.patient_display_name(p.patient_id), 'a patient') || '''s consultation',
+      p.reference_id, 'consultation');
+    perform public.emit_user_notification(public.doctor_user_id(p.payee_doctor_id), 'doctor', 'billing',
+      'Consultation paid', 'The consultation fee of ' || _naira || ' has been paid.',
+      p.reference_id, 'consultation', '/doctor/consultations');
+  end if;
+
+  return true;
+end;
+$$;
+
+-- Thin wrapper so the edge functions can reach it through the Data API.
+-- EXECUTE is granted to service_role only (section 9.11).
+create or replace function public.fulfill_payment(p_payment_id uuid, p_paid_amount bigint, p_currency text)
+returns boolean
+language sql security definer
+set search_path = ''
+as $$ select private.fulfill_payment(p_payment_id, p_paid_amount, p_currency) $$;
 
 -- #13: dispense against a prescription in one transaction.
 create or replace function public.dispense_prescription(p_rx_id uuid, p_drug_id uuid, p_qty integer)
@@ -2620,7 +2758,7 @@ declare
   t text;
 begin
   foreach t in array array[
-    'platform_admins', 'plan_prices', 'email_log', 'contact_messages',
+    'platform_admins', 'plan_prices', 'function_calls', 'contact_messages',
     'hospitals', 'hospital_staff', 'hospital_subscriptions', 'hospital_notification_prefs', 'hospital_notifications',
     'doctors', 'hospital_doctors', 'doctor_settings', 'doctor_availability', 'doctor_marketplace',
     'patients', 'hospital_patients', 'notification_preferences', 'user_notifications', 'patient_messages',
@@ -2649,7 +2787,7 @@ grant execute on all functions in schema public to service_role;
 grant execute on all functions in schema private to service_role;
 
 -- 9.2 Platform tables -----------------------------------------------------------
--- platform_admins, email_log: service role only (no grants, no policies).
+-- platform_admins, function_calls: service role only (no grants, no policies).
 
 grant select on public.plan_prices to anon, authenticated;
 create policy "Anyone can read active prices" on public.plan_prices
@@ -3331,6 +3469,7 @@ grant execute on function
   private.doctor_is_active_at(uuid, uuid),
   private.is_active_doctor_at(uuid),
   private.doctor_is_approved(uuid),
+  private.consultation_has_payment(uuid),
   private.hospital_is_public(uuid),
   private.doctor_linked_to_hospital(uuid),
   private.is_patient_of_hospital(uuid),
@@ -3355,6 +3494,12 @@ grant execute on function
 to authenticated;
 -- private.provision_user and private.is_call_participant: definer code only
 -- (is_call_participant is reached through public.can_join_call).
+
+-- Payment settlement: service role only (Paystack edge functions).
+revoke all on function public.fulfill_payment(uuid, bigint, text) from public, anon, authenticated;
+revoke all on function private.fulfill_payment(uuid, bigint, text) from public, anon, authenticated;
+grant execute on function public.fulfill_payment(uuid, bigint, text) to service_role;
+grant execute on function private.fulfill_payment(uuid, bigint, text) to service_role;
 
 -- RPCs callable from the app.
 grant execute on function

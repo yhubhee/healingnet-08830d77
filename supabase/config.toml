@@ -1,9 +1,23 @@
 project_id = "prougveoeumxvyallkcm"
 
-# create-hospital is replaced by the signup trigger / complete_signup() RPC in
-# Phase 3. Until it is deleted it must not accept unauthenticated calls (N6).
-[functions.create-hospital]
+# Every function also verifies the caller in code (supabase/functions/_shared/auth.ts).
+# The mcp function is not deployed to this project (decision D7) and has no entry.
+
+[functions.daily-room]
 verify_jwt = true
 
+[functions.paystack-initialize]
+verify_jwt = true
+
+[functions.paystack-verify]
+verify_jwt = true
+
+# Paystack calls this without a JWT; it is authenticated by the x-paystack-signature HMAC.
 [functions.paystack-webhook]
 verify_jwt = false
+
+[functions.send-email]
+verify_jwt = true
+
+[functions.triage-nurse]
+verify_jwt = true
