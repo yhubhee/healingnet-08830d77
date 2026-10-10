@@ -1246,11 +1246,13 @@ as $$
   select case _kind
     when 'appointment' then exists (
       select 1 from public.patient_appointments a
-      where a.id = _id and a.is_telemedicine
+      where a.id = _id and a.is_telemedicine and a.status = 'accepted'
+        and private.hospital_has_plan(a.hospital_id, 'telemedicine')
         and (a.doctor_id = private.my_doctor_id() or private.is_own_patient(a.patient_id)))
     when 'consultation_request' then exists (
       select 1 from public.consultation_requests r
       where r.id = _id and r.status = 'accepted'
+        and private.hospital_has_plan(r.requesting_hospital_id, 'telemedicine')
         and (r.doctor_id = private.my_doctor_id() or private.is_own_patient(r.patient_id)))
     else false
   end
@@ -1981,8 +1983,10 @@ begin
      or new.paid_at is distinct from old.paid_at then
     raise exception 'This consultation field cannot be changed' using errcode = '42501';
   end if;
+  -- The fee can be set only while the request is still pending, and only by the
+  -- consulted doctor. After that it is what paystack-initialize charges.
   if new.fee_agreed is distinct from old.fee_agreed then
-    if old.status in ('accepted', 'completed')
+    if old.status is distinct from 'pending'
        or old.paid_at is not null
        or private.consultation_has_payment(old.id) then
       raise exception 'The fee is locked once the consultation is accepted' using errcode = '42501';
@@ -1991,9 +1995,12 @@ begin
       raise exception 'Only the consulted doctor can set the fee' using errcode = '42501';
     end if;
   end if;
-  -- An accepted request cannot be reopened to unlock the fee.
-  if old.status in ('accepted', 'completed') and new.status = 'pending' then
-    raise exception 'An accepted consultation cannot be reopened' using errcode = '42501';
+  -- Status only moves forward: pending -> accepted | rejected | cancelled,
+  -- accepted -> completed | cancelled. rejected, cancelled and completed are final.
+  if new.status is distinct from old.status and not (
+       (old.status = 'pending' and new.status in ('accepted', 'rejected', 'cancelled'))
+    or (old.status = 'accepted' and new.status in ('completed', 'cancelled'))) then
+    raise exception 'This consultation status change is not allowed' using errcode = '42501';
   end if;
   return new;
 end;
@@ -2284,6 +2291,7 @@ declare
   _expires timestamptz;
   _naira text;
   _sub_id uuid;
+  _already_paid boolean;
 begin
   update public.payments
      set status = 'success', paid_at = now()
@@ -2297,6 +2305,30 @@ begin
   end if;
 
   _naira := '₦' || to_char(p.amount / 100.0, 'FM999,999,999,990.00');
+
+  -- Two checkouts for the same item can both be paid (e.g. patient and staff each
+  -- started one). The money moved, so this payment stays 'success', but the item
+  -- is not settled again: flag it for a refund instead. The row lock serialises
+  -- concurrent settlements of the same item.
+  if p.purpose = 'billing' then
+    select payment_status = 'paid' into _already_paid
+      from public.hospital_billing where id = p.reference_id and hospital_id = p.hospital_id for update;
+  elsif p.purpose = 'pharmacy' then
+    select payment_status = 'paid' into _already_paid
+      from public.pharmacy_dispensing where id = p.reference_id and hospital_id = p.hospital_id for update;
+  elsif p.purpose = 'consultation' then
+    select paid_at is not null into _already_paid
+      from public.consultation_requests where id = p.reference_id for update;
+  end if;
+  if coalesce(_already_paid, false) then
+    update public.payments
+       set metadata = metadata || '{"review": "duplicate_payment_refund_needed"}'::jsonb
+     where id = p.id;
+    perform public.emit_hospital_notification(p.hospital_id, 'billing', 'Duplicate payment received — refund needed',
+      _naira || ' was paid for an item that was already paid (reference ' || p.paystack_reference || '). Please refund it.',
+      p.id, 'payment');
+    return true;
+  end if;
 
   if p.purpose = 'subscription' then
     -- Renewing the same plan extends from the current end date; anything else starts now.

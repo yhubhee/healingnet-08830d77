@@ -286,7 +286,12 @@ export async function sendTemplate(
     // SMTP errors can echo the recipient address, so only the error type is logged.
     throw new HttpError(502, "Could not send email", `smtp send failed (${e instanceof Error ? e.name : "error"})`);
   } finally {
-    await client.close().catch(() => {});
+    // close() is synchronous on the non-pool client (returns void), so no .catch here.
+    try {
+      await client.close();
+    } catch {
+      // ignore: the message has already been sent
+    }
   }
 
   await recordCall(callerUserId, FN, toUserId);
