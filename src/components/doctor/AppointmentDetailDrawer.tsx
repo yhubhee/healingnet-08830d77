@@ -51,9 +51,7 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
     await update(
       {
         status: "completed",
-        notes: a.notes ? `${a.notes}
-
-Consultation summary: ${note}` : `Consultation summary: ${note}`,
+        consultation_notes: note,
       } as any,
       "Consultation completed"
     );
@@ -114,10 +112,10 @@ Consultation summary: ${note}` : `Consultation summary: ${note}`,
                 <Button disabled={saving} variant="outline" className="w-full" onClick={() => update({ status: "cancelled" }, "Cancelled")}>Cancel appointment</Button>
               </>
             )}
-            {a.status === "completed" && a.notes && (
+            {a.status === "completed" && a.consultation_notes && (
               <div className="p-3 bg-muted/30 rounded-lg">
                 <div className="text-xs text-muted-foreground mb-1">Consultation Summary</div>
-                <p className="text-sm">{a.notes}</p>
+                <p className="text-sm">{a.consultation_notes}</p>
               </div>
             )}
             {p?.user_id && (

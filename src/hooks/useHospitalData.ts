@@ -462,6 +462,23 @@ export function useHospitalStaff() {
   });
 }
 
+// Pending (not yet accepted, not expired) staff invites. Only admins can read these.
+export function useStaffInvites() {
+  return useQuery({
+    queryKey: ["staff-invites"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("hospital_staff_invites")
+        .select("id, email, role, first_name, last_name, expires_at")
+        .is("accepted_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 // ---- SUBSCRIPTION ----
 export function useHospitalSubscription() {
   return useQuery({

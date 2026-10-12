@@ -1569,6 +1569,53 @@ export type Database = {
           },
         ]
       }
+      hospital_staff_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          first_name: string | null
+          hospital_id: string
+          id: string
+          invited_by: string | null
+          last_name: string | null
+          role: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          first_name?: string | null
+          hospital_id: string
+          id?: string
+          invited_by?: string | null
+          last_name?: string | null
+          role?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          first_name?: string | null
+          hospital_id?: string
+          id?: string
+          invited_by?: string | null
+          last_name?: string | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_staff_invites_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hospital_subscriptions: {
         Row: {
           billing_cycle: string
@@ -2149,6 +2196,9 @@ export type Database = {
       }
       patient_appointments: {
         Row: {
+          call_ended_at: string | null
+          call_started_at: string | null
+          consultation_notes: string | null
           created_at: string
           daily_room_name: string | null
           doctor_id: string | null
@@ -2165,6 +2215,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          call_ended_at?: string | null
+          call_started_at?: string | null
+          consultation_notes?: string | null
           created_at?: string
           daily_room_name?: string | null
           doctor_id?: string | null
@@ -2181,6 +2234,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          call_ended_at?: string | null
+          call_started_at?: string | null
+          consultation_notes?: string | null
           created_at?: string
           daily_room_name?: string | null
           doctor_id?: string | null
@@ -3259,6 +3315,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_my_staff_invites: { Args: never; Returns: string[] }
       adjust_stock: {
         Args: { p_delta: number; p_drug_id: string }
         Returns: number
@@ -3292,6 +3349,7 @@ export type Database = {
       doctor_hospital_ids: { Args: { _doctor_id: string }; Returns: string[] }
       doctor_private_profile: { Args: { p_doctor_id: string }; Returns: Json }
       doctor_user_id: { Args: { _doctor_id: string }; Returns: string }
+      end_call: { Args: { _id: string; _kind: string }; Returns: boolean }
       emit_hospital_notification: {
         Args: {
           _hospital_id: string
@@ -3323,6 +3381,16 @@ export type Database = {
           p_payment_id: string
         }
         Returns: boolean
+      }
+      invite_staff: {
+        Args: {
+          _email: string
+          _first_name?: string
+          _hospital_id: string
+          _last_name?: string
+          _role: string
+        }
+        Returns: string
       }
       link_patient_by_code: {
         Args: { p_code: string; p_hospital_id: string }

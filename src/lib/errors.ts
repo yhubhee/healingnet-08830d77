@@ -1,5 +1,7 @@
 // Turn a database / network error into a message that is safe to show a user.
 const KNOWN: [RegExp, string][] = [
+  [/only a hospital admin can invite/i, "Only a hospital admin can invite staff."],
+  [/valid email/i, "Enter a valid email address."],
   [/not enough stock/i, "There isn't enough stock for that quantity."],
   [/too many wrong codes/i, "Too many wrong codes. Please try again in a little while."],
   [/fee is locked/i, "The fee can't be changed once the request is accepted."],

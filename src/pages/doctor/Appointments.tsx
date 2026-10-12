@@ -27,7 +27,7 @@ export default function DoctorAppointments() {
         // Fetch appointments without complex joins first
         const { data: appts, error: fetchError } = await supabase
           .from("patient_appointments")
-          .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, meeting_link, daily_room_name")
+          .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, meeting_link, daily_room_name, consultation_notes")
           .eq("doctor_id", ctx.doctor.id)
           .order("requested_date", { ascending: false });
 

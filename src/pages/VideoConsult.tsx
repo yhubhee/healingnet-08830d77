@@ -26,6 +26,38 @@ export default function VideoConsult() {
   const [record_, setJoined] = useState(false);
   const [meta, setMeta] = useState<any>(null);
   const [isOwner, setIsOwner] = useState(false);
+  const endedRef = useRef(false);
+  const tokenRef = useRef<string | null>(null);
+  const callKind = mode === "consultation" ? "consultation_request" : "appointment";
+
+  // Mark the call as ended (once). The database only sets it if the call had started.
+  async function endCall() {
+    if (!id || endedRef.current) return;
+    endedRef.current = true;
+    try { await supabase.rpc("end_call", { _kind: callKind, _id: id }); } catch { /* best effort */ }
+  }
+
+  // Best effort when the tab is closed: a keepalive request outlives the page.
+  useEffect(() => {
+    function onPageHide() {
+      if (!id || endedRef.current || !tokenRef.current) return;
+      endedRef.current = true;
+      try {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/end_call`, {
+          method: "POST",
+          keepalive: true,
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${tokenRef.current}`,
+          },
+          body: JSON.stringify({ _kind: callKind, _id: id }),
+        }).catch(() => {});
+      } catch { /* best effort */ }
+    }
+    window.addEventListener("pagehide", onPageHide);
+    return () => window.removeEventListener("pagehide", onPageHide);
+  }, [id, callKind]);
 
   useEffect(() => {
     let mounted = true;
@@ -67,6 +99,7 @@ export default function VideoConsult() {
         call.on("recording-stopped", () => setRecord(false));
 
         await call.join({ url: join.url, token: join.token });
+        tokenRef.current = (await supabase.auth.getSession()).data.session?.access_token ?? null;
         if (mounted) setLoading(false);
       } catch (e: any) {
         toast.error(e?.message || "We couldn't join the video call.");
@@ -95,6 +128,7 @@ export default function VideoConsult() {
 
   async function leave() {
     if (isOwner) await saveNotes();
+    await endCall();
     nav(-1);
   }
 

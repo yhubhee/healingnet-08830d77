@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FormDialog, handleSubmit } from "./FormDialog";
+import { FormDialog } from "./FormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { pick, ALLOWED } from "@/lib/allowed";
+import { friendlyError } from "@/lib/errors";
 import { useHospitalId } from "@/hooks/useHospitalData";
 
 const ROLES = ["admin","receptionist","nurse","lab_tech","pharmacist","manager","medical_officer"];
@@ -20,9 +20,21 @@ export function InviteStaffDialog() {
     <FormDialog title="Invite Staff" triggerLabel="Invite Staff">
       {(close) => (
         <form onSubmit={async (e) => { e.preventDefault();
-          // For invite: in absence of an email-invite system, we create the row with a placeholder user_id;
-          // a true invite system would email a signup link.
-          await handleSubmit(supabase.from("hospital_staff").insert(pick({ ...f, hospital_id: hospitalId, user_id: "00000000-0000-0000-0000-000000000000" }, ALLOWED.hospitalStaffInsert) as any), { toast, close, qc, invalidate: ["hospital-staff"], successMsg: "Staff invited (pending signup)" });
+          // invite_staff records a pending invite; the person joins the hospital the next time
+          // they sign in with this email (accept_my_staff_invites).
+          if (!hospitalId) return;
+          const { error } = await supabase.rpc("invite_staff", {
+            _hospital_id: hospitalId,
+            _email: f.email,
+            _role: f.role,
+            _first_name: f.first_name,
+            _last_name: f.last_name,
+          });
+          if (error) return toast({ title: "Couldn't send the invite", description: friendlyError(error, "Please check the email address and try again."), variant: "destructive" });
+          toast({ title: "Invite saved", description: "They'll join your hospital when they sign in with this email." });
+          close(); setF({ role: "receptionist" });
+          qc.invalidateQueries({ queryKey: ["hospital-staff"] });
+          qc.invalidateQueries({ queryKey: ["staff-invites"] });
         }} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div><Label>First name</Label><Input required value={f.first_name || ""} onChange={(e) => setF({ ...f, first_name: e.target.value })} /></div>

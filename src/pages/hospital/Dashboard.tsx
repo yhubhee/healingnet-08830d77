@@ -42,16 +42,19 @@ export default function HospitalDashboard() {
     queryFn: async () => {
       const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(); endOfDay.setHours(23, 59, 59, 999);
-      const [today, active, pending] = await Promise.all([
+      const liveSince = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(); // a crashed call must not stay live forever
+      const [today, active, activeAppts, pending] = await Promise.all([
         supabase.from("consultation_requests").select("id", { count: "exact", head: true })
           .eq("requesting_hospital_id", hospitalId).eq("request_type", "virtual")
           .gte("created_at", startOfDay.toISOString()).lte("created_at", endOfDay.toISOString()),
         supabase.from("consultation_requests").select("id", { count: "exact", head: true })
-          .eq("requesting_hospital_id", hospitalId).not("call_started_at", "is", null).is("call_ended_at", null),
+          .eq("requesting_hospital_id", hospitalId).not("call_started_at", "is", null).is("call_ended_at", null).gt("call_started_at", liveSince),
+        supabase.from("patient_appointments").select("id", { count: "exact", head: true })
+          .eq("hospital_id", hospitalId).not("call_started_at", "is", null).is("call_ended_at", null).gt("call_started_at", liveSince),
         supabase.from("consultation_requests").select("id", { count: "exact", head: true })
           .eq("requesting_hospital_id", hospitalId).eq("request_type", "virtual").eq("status", "pending"),
       ]);
-      return { today: today.count || 0, active: active.count || 0, pending: pending.count || 0 };
+      return { today: today.count || 0, active: (active.count || 0) + (activeAppts.count || 0), pending: pending.count || 0 };
     },
     refetchInterval: 30_000,
   });

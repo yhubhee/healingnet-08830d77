@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { useHospitalInfo, useHospitalStaff } from "@/hooks/useHospitalData";
+import { useHospitalInfo, useHospitalStaff, useStaffInvites } from "@/hooks/useHospitalData";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,7 @@ export default function HospitalSettings() {
   const { data: prices } = usePlanPrices();
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const { data: staff = [] } = useHospitalStaff();
+  const { data: invites = [] } = useStaffInvites();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -222,7 +223,17 @@ export default function HospitalSettings() {
               </div>
               {/* Mobile cards */}
               <div className="md:hidden space-y-3">
-                {staff.length === 0 ? <p className="text-center text-muted-foreground py-6 text-sm">No staff yet</p> : staff.map((s: any) => (
+                {invites.map((i: any) => (
+                  <div key={i.id} className="rounded-lg border border-dashed border-border p-4 flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-sm">{[i.first_name, i.last_name].filter(Boolean).join(" ") || i.email}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{i.email}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{String(i.role).replace(/_/g, " ")}</p>
+                    </div>
+                    <Badge variant="outline">Invited</Badge>
+                  </div>
+                ))}
+                {staff.length === 0 && invites.length === 0 ? <p className="text-center text-muted-foreground py-6 text-sm">No staff yet</p> : staff.map((s: any) => (
                   <div key={s.id} className="rounded-lg border border-border p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -243,7 +254,16 @@ export default function HospitalSettings() {
                     <th className="p-3">Name</th><th className="p-3">Email</th><th className="p-3">Role</th><th className="p-3">Status</th><th className="p-3"></th>
                   </tr></thead>
                   <tbody>
-                    {staff.length === 0 ? (
+                    {invites.map((i: any) => (
+                      <tr key={i.id} className="border-b border-border/50">
+                        <td className="p-3 font-medium">{[i.first_name, i.last_name].filter(Boolean).join(" ") || "—"}</td>
+                        <td className="p-3 text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{i.email}</td>
+                        <td className="p-3 capitalize">{String(i.role).replace(/_/g, " ")}</td>
+                        <td className="p-3"><Badge variant="outline">Invited</Badge></td>
+                        <td className="p-3"></td>
+                      </tr>
+                    ))}
+                    {staff.length === 0 && invites.length === 0 ? (
                       <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">No staff yet</td></tr>
                     ) : staff.map((s: any) => (
                       <tr key={s.id} className="border-b border-border/50">
