@@ -2,6 +2,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { friendlyError } from "@/lib/errors";
 
 interface Props {
   doctor: any;
@@ -25,29 +26,9 @@ export function RemoveDoctorDialog({ doctor, open, onOpenChange }: Props) {
       toast({ title: "Doctor removed successfully" });
       qc.invalidateQueries({ queryKey: ["hospital-doctors"] });
 
-      const { data: admin } = await supabase
-        .from("hospital_staff")
-        .select("email")
-        .eq("hospital_id", doctor.hospital_id)
-        .eq("role", "admin")
-        .limit(1);
-
-      if (admin && admin.length > 0) {
-        fetch(new URL("/functions/v1/send-doctor-notification", import.meta.env.VITE_SUPABASE_URL).toString(), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            hospitalId: doctor.hospital_id,
-            doctorName: `${doctor.doctors?.first_name} ${doctor.doctors?.last_name}`,
-            action: "removed",
-            adminEmail: admin[0]?.email || "",
-          }),
-        }).catch(() => {});
-      }
-
       onOpenChange(false);
     } catch (err: any) {
-      toast({ title: "Failed to remove doctor", description: err.message, variant: "destructive" });
+      toast({ title: "Failed to remove doctor", description: friendlyError(err), variant: "destructive" });
     }
   }
 

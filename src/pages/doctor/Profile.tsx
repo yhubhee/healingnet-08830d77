@@ -1,4 +1,6 @@
 import { DoctorLayout } from "@/layouts/DoctorLayout";
+import { pick, ALLOWED } from "@/lib/allowed";
+import { friendlyError } from "@/lib/errors";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
@@ -22,7 +24,7 @@ export default function DoctorProfile() {
     if (!user) return setLoading(false);
     const { data, error } = await supabase.from("my_doctor_profile").select("*").maybeSingle();
     if (error) {
-      toast.error(error.message);
+      toast.error(friendlyError(error));
       setLoading(false);
       return;
     }
@@ -101,9 +103,9 @@ function EditProfileDialog({ doc, onSaved }: { doc: any; onSaved: () => void }) 
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase.from("doctors").update(form).eq("id", doc.id);
+    const { error } = await supabase.from("doctors").update(pick(form, ALLOWED.doctorUpdate) as any).eq("id", doc.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Profile updated"); setOpen(false); onSaved();
   }
   return (

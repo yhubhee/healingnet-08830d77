@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePatients, useHospitalId, useHospitalDoctors } from "@/hooks/useHospitalData";
+import { friendlyError } from "@/lib/errors";
+import { LinkPatientByCode } from "@/components/hospital/LinkPatientByCode";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function CheckInDialog() {
@@ -45,7 +47,7 @@ export function CheckInDialog() {
     const { error } = await supabase.from("patient_checkins").insert({
       patient_id: patientId, hospital_id: hospitalId, checkin_type: checkinType, urgency, department, notes, queue_number: nextNum, status: "checked_in", assigned_doctor_id: assignedDoctor,
     });
-    if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Patient checked in", description: `Queue #${nextNum}` });
     resetForm();
     setOpen(false);
@@ -55,16 +57,21 @@ export function CheckInDialog() {
   async function submitNewPatient(e: React.FormEvent) {
     e.preventDefault();
     if (!newPatient.first_name || !newPatient.last_name) return;
-    const { data: created, error: insertError } = await supabase.from("patients").insert({
-      first_name: newPatient.first_name,
-      last_name: newPatient.last_name,
-      phone: newPatient.phone || null,
-      date_of_birth: newPatient.date_of_birth || null,
-      gender: newPatient.gender,
-    }).select().single();
-    if (insertError) return toast({ title: "Failed", description: insertError.message, variant: "destructive" });
+    if (!hospitalId) return;
+    // register_patient creates the patient and links them to this hospital.
+    const { data: createdId, error: insertError } = await supabase.rpc("register_patient", {
+      p_hospital_id: hospitalId,
+      p_patient: {
+        first_name: newPatient.first_name,
+        last_name: newPatient.last_name,
+        phone: newPatient.phone || null,
+        date_of_birth: newPatient.date_of_birth || null,
+        gender: newPatient.gender,
+      },
+    });
+    if (insertError || !createdId) return toast({ title: "Failed", description: friendlyError(insertError), variant: "destructive" });
     toast({ title: "Patient created" });
-    setPatientId(created.id);
+    setPatientId(createdId as string);
     setNewPatient({ first_name: "", last_name: "", phone: "", date_of_birth: "", gender: "male" });
     setTab("checkin");
     qc.invalidateQueries({ queryKey: ["patients"] });
@@ -88,8 +95,9 @@ export function CheckInDialog() {
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>Check In Patient</DialogTitle></DialogHeader>
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="search">Search</TabsTrigger>
+            <TabsTrigger value="code">Code</TabsTrigger>
             <TabsTrigger value="new">New Patient</TabsTrigger>
             <TabsTrigger value="checkin" disabled={!patientId}>Check-in</TabsTrigger>
           </TabsList>
@@ -130,6 +138,10 @@ export function CheckInDialog() {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="code" className="space-y-3">
+            <LinkPatientByCode hospitalId={hospitalId} onLinked={(id) => { setPatientId(id); setTab("checkin"); }} />
           </TabsContent>
 
           <TabsContent value="new" className="space-y-3">

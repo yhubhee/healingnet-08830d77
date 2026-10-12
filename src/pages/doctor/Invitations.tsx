@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { friendlyError } from "@/lib/errors";
 import { DoctorLayout } from "@/layouts/DoctorLayout";
 
 export default function DoctorInvitations() {
@@ -51,91 +52,25 @@ export default function DoctorInvitations() {
         .order("created_at", { ascending: false });
 
       setInvitations(data || []);
-    } catch (err: any) {
+    } catch {
       toast({ title: "Failed to load invitations", variant: "destructive" });
-      console.error(err);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleAccept(invitationId: string) {
-    try {
-      console.log("Accepting invitation:", invitationId);
-
-      // Verify the current status before update
-      const { data: before } = await supabase
-        .from("hospital_doctors")
-        .select("status")
-        .eq("id", invitationId)
-        .single();
-      console.log("Status BEFORE update:", before?.status);
-
-      const { error } = await supabase
-        .from("hospital_doctors")
-        .update({ status: "active" })
-        .eq("id", invitationId);
-
-      if (error) {
-        console.error("Update error:", error);
-        throw error;
-      }
-
-      // Verify the status changed after update
-      const { data: after } = await supabase
-        .from("hospital_doctors")
-        .select("status")
-        .eq("id", invitationId)
-        .single();
-      console.log("Status AFTER update:", after?.status);
-
-      console.log("Invitation accepted successfully, reloading...");
-      toast({ title: "Invitation accepted!" });
-      await loadInvitations();
-      console.log("Invitations reloaded, total count:", invitations.length);
-    } catch (err: any) {
-      console.error("handleAccept error:", err);
-      toast({ title: "Failed to accept invitation", variant: "destructive" });
+  async function respond(invitationId: string, accept: boolean) {
+    const { error } = await supabase.rpc("respond_to_invitation", { p_link_id: invitationId, p_accept: accept });
+    if (error) {
+      toast({ title: accept ? "Failed to accept invitation" : "Failed to decline invitation", description: friendlyError(error), variant: "destructive" });
+      return;
     }
+    toast({ title: accept ? "Invitation accepted!" : "Invitation declined" });
+    await loadInvitations();
   }
 
-  async function handleDecline(invitationId: string) {
-    try {
-      console.log("Declining invitation:", invitationId);
-
-      const { data: before } = await supabase
-        .from("hospital_doctors")
-        .select("status")
-        .eq("id", invitationId)
-        .single();
-      console.log("Status BEFORE update:", before?.status);
-
-      const { error } = await supabase
-        .from("hospital_doctors")
-        .update({ status: "declined" })
-        .eq("id", invitationId);
-
-      if (error) {
-        console.error("Update error:", error);
-        throw error;
-      }
-
-      const { data: after } = await supabase
-        .from("hospital_doctors")
-        .select("status")
-        .eq("id", invitationId)
-        .single();
-      console.log("Status AFTER update:", after?.status);
-
-      console.log("Invitation declined successfully, reloading...");
-      toast({ title: "Invitation declined" });
-      await loadInvitations();
-      console.log("Invitations reloaded, total count:", invitations.length);
-    } catch (err: any) {
-      console.error("handleDecline error:", err);
-      toast({ title: "Failed to decline invitation", variant: "destructive" });
-    }
-  }
+  const handleAccept = (invitationId: string) => respond(invitationId, true);
+  const handleDecline = (invitationId: string) => respond(invitationId, false);
 
   if (loading) {
     return (

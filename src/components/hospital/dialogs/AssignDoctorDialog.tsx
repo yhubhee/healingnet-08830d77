@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useHospitalId } from "@/hooks/useHospitalData";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { pick, ALLOWED } from "@/lib/allowed";
 
 export function AssignDoctorDialog() {
   const [f, setF] = useState<any>({ employment_type: "full_time" });
@@ -22,32 +23,24 @@ export function AssignDoctorDialog() {
   const qc = useQueryClient();
   const { data: hospitalId } = useHospitalId();
 
-  // Fetch all doctors from the system (not just assigned ones)
+  // Doctors this hospital can invite (the directory only exposes approved doctors).
   const loadDoctors = async () => {
-    console.log("Loading doctors...");
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("doctors")
-      .select("*")
+      .select("id, user_id, first_name, last_name, specialty, years_experience, rating, profile_image_url, bio, is_available, verification_status")
       .order("first_name");
-    console.log("Doctors fetched:", data, "Error:", error);
     setAllDoctors(data || []);
   };
 
   const filtered = useMemo(() => {
-    console.log("All doctors:", allDoctors);
-    console.log("Search term:", search);
-    if (!search) {
-      console.log("No search, returning all:", allDoctors);
-      return allDoctors;
-    }
-    const result = allDoctors.filter(
+    if (!search) return allDoctors;
+    const q = search.toLowerCase();
+    return allDoctors.filter(
       (d) =>
-        d.first_name.toLowerCase().includes(search.toLowerCase()) ||
-        d.last_name.toLowerCase().includes(search.toLowerCase()) ||
-        d.specialty?.toLowerCase().includes(search.toLowerCase())
+        d.first_name.toLowerCase().includes(q) ||
+        d.last_name.toLowerCase().includes(q) ||
+        d.specialty?.toLowerCase().includes(q)
     );
-    console.log("Filtered result:", result);
-    return result;
   }, [search, allDoctors]);
 
   const selectedDoctor = f.doctor_id ? allDoctors.find((d) => d.id === f.doctor_id) : null;
@@ -62,36 +55,13 @@ export function AssignDoctorDialog() {
               toast({ title: "Please select a doctor", variant: "destructive" });
               return;
             }
-            const doctorData = allDoctors.find((d) => d.id === f.doctor_id);
+            // The database notifies the doctor about the invitation by itself.
             await handleSubmit(
-              supabase.from("hospital_doctors").insert({
-                ...f,
-                hospital_id: hospitalId,
-                is_active: true,
-                status: "pending",
-              }),
+              supabase.from("hospital_doctors").insert(
+                pick({ ...f, hospital_id: hospitalId, is_active: true, status: "pending" }, ALLOWED.hospitalDoctorInsert) as any
+              ),
               { toast, close, qc, invalidate: ["hospital-doctors"] }
             );
-
-            if (doctorData?.email) {
-              const { data: hospital } = await supabase
-                .from("hospitals")
-                .select("name")
-                .eq("id", hospitalId)
-                .single();
-
-              fetch(new URL("/functions/v1/send-doctor-notification", import.meta.env.VITE_SUPABASE_URL).toString(), {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  hospitalId,
-                  doctorName: `${doctorData.first_name} ${doctorData.last_name}`,
-                  action: "invited",
-                  adminEmail: "",
-                  doctorEmail: doctorData.email,
-                }),
-              }).catch(() => {});
-            }
           }}
           className="space-y-3"
         >

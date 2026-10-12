@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { friendlyError } from "@/lib/errors";
 import { FormDialog, handleSubmit } from "./FormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,43 +44,9 @@ export function EditDoctorDialog({ doctor, open, onOpenChange }: Props) {
       toast({ title: "Doctor updated successfully" });
       qc.invalidateQueries({ queryKey: ["hospital-doctors"] });
 
-      const details = [];
-      if (f.employment_type !== doctor.employment_type)
-        details.push(`Employment: ${doctor.employment_type} → ${f.employment_type}`);
-      if (f.department !== doctor.department)
-        details.push(`Department: ${doctor.department || "N/A"} → ${f.department || "N/A"}`);
-      if (Number(f.salary) !== doctor.salary)
-        details.push(`Salary: ₦${doctor.salary} → ₦${f.salary}`);
-      if (Number(f.commission_rate) !== doctor.commission_rate)
-        details.push(`Commission: ${doctor.commission_rate}% → ${f.commission_rate}%`);
-
-      if (details.length > 0) {
-        const { data: admin } = await supabase
-          .from("hospital_staff")
-          .select("email")
-          .eq("hospital_id", doctor.hospital_id)
-          .eq("role", "admin")
-          .limit(1);
-
-        if (admin && admin.length > 0) {
-          fetch(new URL("/functions/v1/send-doctor-notification", import.meta.env.VITE_SUPABASE_URL).toString(), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              hospitalId: doctor.hospital_id,
-              doctorName: `${doctor.doctors?.first_name} ${doctor.doctors?.last_name}`,
-              action: "updated",
-              details: details.join("; "),
-              adminEmail: admin[0]?.email || "",
-              doctorEmail: doctor.doctors?.email,
-            }),
-          }).catch(() => {});
-        }
-      }
-
       onOpenChange(false);
     } catch (err: any) {
-      toast({ title: "Failed to update doctor", description: err.message, variant: "destructive" });
+      toast({ title: "Failed to update doctor", description: friendlyError(err), variant: "destructive" });
     }
   }
 

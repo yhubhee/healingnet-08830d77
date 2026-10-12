@@ -6,158 +6,82 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, User, Building2, Stethoscope } from "lucide-react";
+import { RoleFields, detailsToData, emptyDetails, type Role, type SignupDetails } from "@/components/auth/RoleFields";
+import { usePlanPrices, priceNaira, formatNaira } from "@/hooks/usePlanPrices";
+import { paystackService } from "@/services/paystack";
 
-type Role = "patient" | "hospital" | "doctor";
-
-const PLAN_PRICES: Record<"emr" | "telemedicine", number> = { emr: 75000, telemedicine: 150000 };
+function signupErrorMessage(message?: string) {
+  if (message && /already (registered|exists)/i.test(message)) return "An account with this email already exists. Try signing in instead.";
+  if (message && /password/i.test(message)) return "Choose a stronger password (at least 6 characters).";
+  return "We couldn't create your account. Please check your details and try again.";
+}
 
 export default function Signup() {
   const [params] = useSearchParams();
   const [role, setRole] = useState<Role | null>(null);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [details, setDetails] = useState<SignupDetails>(emptyDetails());
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [hospitalName, setHospitalName] = useState("");
-  const [hospitalAddress, setHospitalAddress] = useState("");
-  const [hospitalPhone, setHospitalPhone] = useState("");
-  const [specialty, setSpecialty] = useState("");
-  const [plan, setPlan] = useState<"emr" | "telemedicine">((params.get("plan") as any) || "emr");
+  const [plan, setPlan] = useState<"emr" | "telemedicine">((params.get("plan") as any) === "telemedicine" ? "telemedicine" : "emr");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { data: prices } = usePlanPrices();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!role) return;
     setLoading(true);
 
-    const emailRedirectTo = window.location.origin;
-    console.log("=== SIGNUP START ===");
-    console.log("Role:", role);
-    console.log("Email:", email);
-    console.log("Email redirect URL:", emailRedirectTo);
-
+    // One call: a database trigger creates the patient, doctor or hospital records
+    // (including the hospital's 30-day EMR trial) from this metadata.
     const { data: signUp, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo,
-        data: { first_name: firstName, last_name: lastName, role, specialty },
+        emailRedirectTo: window.location.origin,
+        data: { role, ...detailsToData(role, details) },
       },
     });
 
-    console.log("=== AUTH SIGNUP RESPONSE ===");
-    console.log("Error:", error);
-    console.log("SignUp.user:", signUp.user);
-    console.log("SignUp.session:", signUp.session);
-    console.log("Email confirmed:", signUp.user?.email_confirmed_at);
-
     if (error || !signUp.user) {
       setLoading(false);
-      console.error("Signup failed:", error?.message);
-      return toast({ title: "Signup failed", description: error?.message || "Try again", variant: "destructive" });
+      return toast({ title: "Signup failed", description: signupErrorMessage(error?.message), variant: "destructive" });
     }
 
     if (role === "hospital") {
-      const { data: fnData, error: hErr } = await supabase.functions.invoke("create-hospital", {
-        body: {
-          user_id: signUp.user.id,
-          email,
-          name: hospitalName,
-          address: hospitalAddress,
-          phone: hospitalPhone,
-          first_name: firstName,
-          last_name: lastName,
-          plan,
-        },
-      });
-      if (hErr || (fnData as any)?.error) {
-        setLoading(false);
-        return toast({ title: "Hospital creation failed", description: hErr?.message || (fnData as any)?.error || "Try again", variant: "destructive" });
+      // Telemedicine is paid up front; EMR starts on the free trial.
+      if (plan === "telemedicine" && signUp.session) {
+        try {
+          const { authorization_url } = await paystackService.startCheckout({
+            purpose: "subscription",
+            plan: "telemedicine",
+            billing_cycle: "monthly",
+            callback_path: "/hospital/confirming-payment",
+          });
+          window.location.href = authorization_url;
+          return;
+        } catch {
+          setLoading(false);
+          toast({
+            title: "Account created, payment not started",
+            description: "Your 30-day EMR trial has started. You can upgrade to Telemedicine from Settings.",
+          });
+          return navigate("/hospital");
+        }
       }
-
-      const hospitalId = (fnData as any)?.hospital_id as string | undefined;
-
-      if (!signUp.session) {
-        toast({ title: "Almost there", description: "Confirm your email, then sign in to complete payment." });
-        setLoading(false);
-        return navigate("/login");
-      }
-
-      // Start the subscription checkout. The plan is stored on the pending
-      // payment record so the webhook can activate the right plan later.
-      const { data: pay, error: payErr } = await supabase.functions.invoke("paystack-initialize", {
-        body: {
-          purpose: "subscription",
-          plan,
-          amount: PLAN_PRICES[plan],
-          email,
-          hospitalId,
-          callbackUrl: `${window.location.origin}/hospital/confirming-payment?hospital=${hospitalId}`,
-        },
-      });
-
       setLoading(false);
+      toast({ title: "Your 30-day EMR trial has started", description: "Confirm your email, then upgrade any time from Settings." });
+      return navigate(signUp.session ? "/hospital" : "/login");
+    }
 
-      if (payErr || !(pay as any)?.authorization_url) {
-        toast({
-          title: "Account created — payment not started",
-          description: "You can complete payment from Settings → Subscription.",
-          variant: "destructive",
-        });
-        return navigate(`/hospital/confirming-payment?hospital=${hospitalId}`);
-      }
-
-      window.location.href = (pay as any).authorization_url;
-      return;
-    } else if (role === "doctor") {
-      console.log("=== DOCTOR SIGNUP ===");
-      console.log("Doctor signup - signUp.user:", signUp.user);
-      console.log("Doctor signup - signUp.user.id:", signUp.user?.id);
-      console.log("Has session (auto-verified):", !!signUp.session);
-
-      // Wait for auth user to replicate
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Create doctor profile with explicit null check
-      const doctorData = {
-        user_id: signUp.user.id || null,
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        specialty: specialty || "General Practice",
-        is_available: true,
-      };
-
-      console.log("Inserting doctor with data:", doctorData);
-
-      const { error: docErr } = await supabase
-        .from("doctors")
-        .insert(doctorData);
-
-      if (docErr) {
-        console.error("Doctor insert error:", docErr);
-        setLoading(false);
-        return toast({ title: "Doctor profile creation failed", description: docErr.message || "Try again", variant: "destructive" });
-      }
-
-      console.log("✓ Doctor profile created successfully");
-
-      if (signUp.session) {
-        console.log("✓ Auto-verified - user logged in immediately");
-        toast({ title: "Doctor account created!", description: "Welcome to HealingNet." });
-      } else {
-        console.log("⚠ Email verification required - check inbox for confirmation email");
-        toast({ title: "Doctor account created!", description: "Check your email to verify, then sign in." });
-      }
-
-      setLoading(false);
-      navigate(signUp.session ? "/doctor" : "/login");
+    setLoading(false);
+    if (signUp.session) {
+      toast({ title: role === "doctor" ? "Doctor account created!" : "Account created!", description: "Welcome to HealingNet." });
+      navigate(role === "doctor" ? "/doctor" : "/patient");
     } else {
-      toast({ title: "Account created!", description: "Welcome to HealingNet." });
-      setLoading(false);
-      navigate("/patient");
+      toast({ title: "Account created!", description: "Check your email to confirm your address, then sign in." });
+      navigate("/login");
     }
   }
 
@@ -212,40 +136,28 @@ export default function Signup() {
           <h1 className="text-2xl font-heading font-bold mb-1">{role === "hospital" ? "Create your hospital account" : role === "doctor" ? "Create your doctor account" : "Create your patient account"}</h1>
           <p className="text-muted-foreground text-sm mb-6">{role === "hospital" ? "Set up your hospital in under 2 minutes" : role === "doctor" ? "Join the network and reach more patients" : "Free forever — no credit card needed"}</p>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>First name</Label><Input value={firstName} onChange={(e) => setFirstName(e.target.value)} required /></div>
-              <div><Label>Last name</Label><Input value={lastName} onChange={(e) => setLastName(e.target.value)} required /></div>
-            </div>
             <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
             <div><Label>Password</Label><Input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-            {role === "doctor" && (
-              <div><Label>Specialty</Label><Input value={specialty} onChange={(e) => setSpecialty(e.target.value)} placeholder="e.g., Cardiology" required /></div>
-            )}
+            <RoleFields role={role} value={details} onChange={setDetails} />
             {role === "hospital" && (
-              <>
-                <div className="border-t border-border pt-4 mt-4">
-                  <h3 className="font-heading font-bold mb-3 text-sm">Hospital details</h3>
-                  <div className="space-y-3">
-                    <div><Label>Hospital name</Label><Input value={hospitalName} onChange={(e) => setHospitalName(e.target.value)} required /></div>
-                    <div><Label>Address</Label><Input value={hospitalAddress} onChange={(e) => setHospitalAddress(e.target.value)} /></div>
-                    <div><Label>Phone</Label><Input value={hospitalPhone} onChange={(e) => setHospitalPhone(e.target.value)} /></div>
-                  </div>
+              <div>
+                <Label>Choose your plan</Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {(["emr", "telemedicine"] as const).map((p) => (
+                    <button key={p} type="button" onClick={() => setPlan(p)}
+                      className={`p-3 rounded-lg border-2 text-left transition-colors ${plan === p ? "border-primary bg-primary/5" : "border-border"}`}>
+                      <div className="font-heading font-bold text-sm">{p === "emr" ? "EMR Essentials" : "Telemedicine Suite"}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {p === "emr"
+                          ? `30-day free trial, then ${formatNaira(priceNaira(prices, "emr", "monthly"))}/mo`
+                          : `${formatNaira(priceNaira(prices, "telemedicine", "monthly"))}/mo, pay now`}
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <div>
-                  <Label>Choose your plan</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {(["emr", "telemedicine"] as const).map((p) => (
-                      <button key={p} type="button" onClick={() => setPlan(p)}
-                        className={`p-3 rounded-lg border-2 text-left transition-colors ${plan === p ? "border-primary bg-primary/5" : "border-border"}`}>
-                        <div className="font-heading font-bold text-sm">{p === "emr" ? "EMR Essentials" : "Telemedicine Suite"}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{p === "emr" ? "₦75K/mo" : "₦150K/mo"}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
+              </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating account…" : role === "hospital" ? "Create Account & Pay" : "Create Account"}</Button>
+            <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating account…" : role === "hospital" && plan === "telemedicine" ? "Create Account & Pay" : role === "hospital" ? "Start free trial" : "Create Account"}</Button>
           </form>
         </div>
       </div>

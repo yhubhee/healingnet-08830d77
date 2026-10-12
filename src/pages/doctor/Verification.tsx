@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Upload, FileText, Shield, ArrowRight } from "lucide-react";
+import { friendlyError } from "@/lib/errors";
 
 const COUNCILS = ["MDCN (Medical and Dental Council of Nigeria)", "WACS", "WACP", "RCS", "Other"];
 const DOC_FIELDS = [
@@ -41,24 +42,25 @@ export default function DoctorVerification() {
         uploaded[f.key] = path;
       }
 
-      const { error: upErr } = await supabase.from("doctors").update({
-        license_number: form.licenseNumber,
-        license_council: form.licenseCouncil,
-        license_expiry: form.licenseExpiry,
-        specialty: form.specialty,
-        years_experience: parseInt(form.yearsExperience) || 0,
-        current_practice: { name: form.practiceName, city: form.practiceCity, role: form.practiceRole, from: form.practiceFrom, to: form.practiceTo },
-        credential_documents: uploaded,
-        reference_contact: form.refName ? { name: form.refName, hospital: form.refHospital, phone: form.refPhone } : null,
-        verification_status: "pending_review",
-        verification_submitted_at: new Date().toISOString(),
-      }).eq("user_id", user.id);
+      // The database sets the verification status; credential_documents is a map of document type -> storage path.
+      const { error: upErr } = await supabase.rpc("submit_doctor_verification", {
+        p_data: {
+          license_number: form.licenseNumber,
+          license_council: form.licenseCouncil,
+          license_expiry: form.licenseExpiry,
+          specialty: form.specialty,
+          years_experience: parseInt(form.yearsExperience) || 0,
+          current_practice: { name: form.practiceName, city: form.practiceCity, role: form.practiceRole, from: form.practiceFrom, to: form.practiceTo },
+          credential_documents: uploaded,
+          reference_contact: form.refName ? { name: form.refName, hospital: form.refHospital, phone: form.refPhone } : null,
+        },
+      });
       if (upErr) throw upErr;
 
       toast({ title: "Submitted", description: "Your credentials are under review. You'll get an email within 24–48 hours." });
       window.location.href = "/doctor";
     } catch (e: any) {
-      toast({ title: "Submission failed", description: e.message, variant: "destructive" });
+      toast({ title: "Submission failed", description: e?.message?.startsWith("Please upload") ? e.message : friendlyError(e, "We couldn't submit your credentials. Please try again."), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }

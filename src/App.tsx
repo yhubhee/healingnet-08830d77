@@ -16,7 +16,7 @@ const ContactPage = lazy(() => import("./pages/Contact"));
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ResetPassword from "./pages/ResetPassword";
-import OAuthConsent from "./pages/OAuthConsent";
+import CompleteSignup from "./pages/CompleteSignup";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RequirePlan } from "./components/auth/RequirePlan";
 import { PageLoadingFallback } from "./components/common/PageLoadingFallback";
@@ -75,7 +75,7 @@ const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
       toast.error("Couldn't load some information", {
-        description: (error as { message?: string })?.message ?? "Please try again.",
+        description: "Please check your connection and try again.",
       });
     },
   }),
@@ -100,7 +100,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+          <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
 
           {/* Patient Portal */}
           <Route path="/patient" element={<ProtectedRoute><PatientDashboard /></ProtectedRoute>} />

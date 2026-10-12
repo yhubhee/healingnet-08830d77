@@ -123,7 +123,7 @@ export function useDoctors() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("doctors")
-        .select("*")
+        .select("id, user_id, first_name, last_name, specialty, years_experience, rating, profile_image_url, bio, is_available, verification_status")
         .order("first_name");
       if (error) throw error;
       return data;

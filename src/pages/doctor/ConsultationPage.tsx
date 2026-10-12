@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { pick, ALLOWED } from "@/lib/allowed";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -123,7 +124,7 @@ function DiagnosisBlock({ consultation, readOnly }: { consultation: any; readOnl
   const [f, setF] = useState(init);
   const qc = useQueryClient();
   const { status, savedAt, setBaseline } = useAutosave(f, async (v) => {
-    const { error } = await sb.from("consultations").update({ ...v, follow_up_date: v.follow_up_date || null }).eq("id", consultation.id);
+    const { error } = await sb.from("consultations").update(pick({ ...v, follow_up_date: v.follow_up_date || null }, ALLOWED.consultationUpdate)).eq("id", consultation.id);
     if (error) throw error;
     qc.setQueryData(["consultation", consultation.id, "core"], (old: any) => (old ? { ...old, ...v } : old));
   }, { enabled: !readOnly });
