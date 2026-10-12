@@ -7,44 +7,48 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { usePatients, usePharmacyInventory, useHospitalId } from "@/hooks/useHospitalData";
+import { usePatients, usePharmacyInventory } from "@/hooks/useHospitalData";
+import { friendlyError } from "@/lib/errors";
 import { useCollectPayment } from "@/hooks/useCollectPayment";
 
 export function DispenseDrugDialog() {
-  const [f, setF] = useState<any>({ payment_status: "pending", quantity_dispensed: 1 });
+  const [f, setF] = useState<any>({ quantity_dispensed: 1 });
   const { toast } = useToast(); const qc = useQueryClient();
   const { data: patients = [] } = usePatients();
   const { data: drugs = [] } = usePharmacyInventory();
-  const { data: hospitalId } = useHospitalId();
   const { collect, isProcessing } = useCollectPayment();
 
   const drug = drugs.find((d: any) => d.id === f.drug_id);
   const patient = patients.find((p: any) => p.id === f.patient_id);
   const amount = drug ? Number(drug.unit_price || 0) * Number(f.quantity_dispensed || 0) : 0;
 
-  const dispense = async () => {
-    if (!drug) return null;
-    const { data, error } = await supabase
-      .from("pharmacy_dispensing")
-      .insert({ ...f, drug_name: drug.drug_name, hospital_id: hospitalId })
-      .select()
-      .maybeSingle();
+  // dispense_drug records the dispensing and reduces the stock in one step.
+  const dispense = async (): Promise<string | null> => {
+    if (!drug || !f.patient_id) return null;
+    const { data, error } = await supabase.rpc("dispense_drug", {
+      p_drug_id: drug.id,
+      p_patient_id: f.patient_id,
+      p_qty: Number(f.quantity_dispensed) || 1,
+      p_dosage: f.dosage || undefined,
+      p_notes: f.notes || undefined,
+    });
     if (error) throw error;
-    await supabase.from("pharmacy_inventory")
-      .update({ quantity_in_stock: Math.max(0, drug.quantity_in_stock - f.quantity_dispensed) })
-      .eq("id", drug.id);
     qc.invalidateQueries({ queryKey: ["pharmacy-dispensing"] });
     qc.invalidateQueries({ queryKey: ["pharmacy-inventory"] });
-    return data;
+    return data as string;
   };
 
   return (
     <FormDialog title="Dispense Drug" triggerLabel="Dispense">
       {(close) => (
         <form onSubmit={async (e) => { e.preventDefault();
-          await dispense();
-          toast({ title: "Dispensed" });
-          close();
+          try {
+            await dispense();
+            toast({ title: "Dispensed" });
+            close();
+          } catch (err) {
+            toast({ title: "Couldn't dispense", description: friendlyError(err), variant: "destructive" });
+          }
         }} className="space-y-3">
           <div><Label>Patient</Label>
             <Select value={f.patient_id} onValueChange={(v) => setF({ ...f, patient_id: v })}>
@@ -75,17 +79,14 @@ export function DispenseDrugDialog() {
               className="flex-1"
               disabled={!drug || !patient || amount <= 0 || isProcessing}
               onClick={async () => {
-                const row = await dispense();
-                if (!row) return;
-                close();
-                await collect({
-                  purpose: "pharmacy",
-                  amount,
-                  email: patient?.email,
-                  referenceId: (row as any).id,
-                  hospitalId,
-                  patientId: f.patient_id,
-                });
+                try {
+                  const dispensingId = await dispense();
+                  if (!dispensingId) return;
+                  close();
+                  await collect({ purpose: "pharmacy", dispensingId });
+                } catch (err) {
+                  toast({ title: "Couldn't dispense", description: friendlyError(err), variant: "destructive" });
+                }
               }}
             >
               Dispense & collect

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { CreditCard, TrendingUp, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useHospitalBilling, useHospitalId } from "@/hooks/useHospitalData";
+import { useHospitalBilling } from "@/hooks/useHospitalData";
 import { AddBillDialog } from "@/components/hospital/dialogs/AddBillDialog";
 import { useCollectPayment } from "@/hooks/useCollectPayment";
 import { QueryState } from "@/components/common/QueryState";
@@ -12,7 +12,6 @@ const filters = ["All", "Paid", "Pending", "Partial"];
 
 export default function HospitalBilling() {
   const { data: billing = [], isLoading, isError, error, refetch } = useHospitalBilling();
-  const { data: hospitalId } = useHospitalId();
   const [activeFilter, setActiveFilter] = useState("All");
   const { collect, isProcessing } = useCollectPayment();
 
@@ -30,15 +29,7 @@ export default function HospitalBilling() {
     { label: "Avg. Bill", value: `₦${avg.toLocaleString()}`, colorClass: "text-info", icon: CreditCard },
   ];
 
-  const handleCollect = (b: any) =>
-    collect({
-      purpose: "billing",
-      amount: Number(b.total),
-      email: b.patients?.email,
-      referenceId: b.id,
-      hospitalId: b.hospital_id ?? hospitalId,
-      patientId: b.patient_id,
-    });
+  const handleCollect = (b: any) => collect({ purpose: "bill", billId: b.id });
 
   return (
     <HospitalLayout>

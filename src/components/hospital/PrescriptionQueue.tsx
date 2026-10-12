@@ -8,14 +8,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Pill } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 import { useHospitalId, usePharmacyInventory } from "@/hooks/useHospitalData";
 
 const sb = supabase as any;
 
 /** Active prescriptions waiting to be dispensed at this hospital. */
 export function usePrescriptionQueue() {
-  const { data: hospitalId } = useHospitalId();
   const qc = useQueryClient();
+  const { data: hospitalId } = useHospitalId();
   useEffect(() => {
     if (!hospitalId) return;
     const ch = supabase.channel(`rx-queue-${hospitalId}-${Math.random().toString(36).slice(2)}`)
@@ -63,7 +64,6 @@ export function PrescriptionQueue() {
 
 function DispenseRxDialog({ rx, onClose }: { rx: any; onClose: () => void }) {
   const { data: drugs = [] } = usePharmacyInventory();
-  const { data: hospitalId } = useHospitalId();
   const qc = useQueryClient();
   const [drugId, setDrugId] = useState<string>("");
   const [qty, setQty] = useState(1);
@@ -81,18 +81,14 @@ function DispenseRxDialog({ rx, onClose }: { rx: any; onClose: () => void }) {
   async function go() {
     setBusy(true);
     try {
-      const { error } = await sb.from("pharmacy_dispensing").insert({
-        hospital_id: hospitalId, patient_id: rx.patient_id, drug_id: drug?.id || null, drug_name: drug?.drug_name || rx.drug_name,
-        dosage: [rx.dosage, rx.frequency, rx.duration].filter(Boolean).join(" "), quantity_dispensed: qty, payment_status: "pending", notes: `Prescription ${String(rx.id).slice(0, 8)}`,
-      });
+      if (!drug) throw new Error("Pick the stock item to dispense from.");
+      // dispense_prescription records the dispensing, reduces the stock and completes the prescription.
+      const { error } = await sb.rpc("dispense_prescription", { p_rx_id: rx.id, p_drug_id: drug.id, p_qty: qty });
       if (error) throw error;
-      if (drug) await sb.from("pharmacy_inventory").update({ quantity_in_stock: Math.max(0, (drug.quantity_in_stock || 0) - qty) }).eq("id", drug.id);
-      const { error: e2 } = await sb.from("prescriptions").update({ status: "completed" }).eq("id", rx.id);
-      if (e2) throw e2;
       toast.success("Dispensed");
       ["pharmacy", "pharmacy-dispensing", "pharmacy-inventory"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
       onClose();
-    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+    } catch (e: any) { toast.error(e?.message === "Pick the stock item to dispense from." ? e.message : friendlyError(e)); } finally { setBusy(false); }
   }
 
   return (
@@ -102,14 +98,14 @@ function DispenseRxDialog({ rx, onClose }: { rx: any; onClose: () => void }) {
         <div className="space-y-3">
           <div><Label>Stock item</Label>
             <Select value={drugId} onValueChange={setDrugId}>
-              <SelectTrigger><SelectValue placeholder="Not in stock list (dispense without stock)" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select the stock item" /></SelectTrigger>
               <SelectContent>{(drugs as any[]).map((d) => <SelectItem key={d.id} value={d.id}>{d.drug_name} {d.strength || ""} (stock: {d.quantity_in_stock})</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div><Label>Quantity</Label><Input type="number" min={1} value={qty} onChange={(e) => setQty(+e.target.value || 1)} /></div>
           {drug && <p className="text-sm text-muted-foreground">Amount: ₦{(Number(drug.unit_price || 0) * qty).toLocaleString()}</p>}
         </div>
-        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={busy} onClick={go}>{busy && <Loader2 className="w-4 h-4 animate-spin" />}Dispense</Button></DialogFooter>
+        <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={busy || !drug} onClick={go}>{busy && <Loader2 className="w-4 h-4 animate-spin" />}Dispense</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );

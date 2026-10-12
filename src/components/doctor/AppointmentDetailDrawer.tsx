@@ -2,6 +2,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { pick, ALLOWED } from "@/lib/allowed";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -16,6 +18,7 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const qc = useQueryClient();
+  const nav = useNavigate();
   const { data: cs } = useConsultationStatus(appointment?.id ? [appointment.id] : []);
 
   if (!appointment) return null;
@@ -25,9 +28,9 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
 
   async function update(patch: any, msg: string) {
     setSaving(true);
-    const { error } = await supabase.from("patient_appointments").update(patch).eq("id", a.id);
+    const { error } = await supabase.from("patient_appointments").update(pick(patch, ALLOWED.appointmentUpdate) as any).eq("id", a.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error("We couldn't update the appointment. Please try again.");
     toast.success(msg);
     qc.invalidateQueries({ queryKey: ["doctor", "appointments"] });
     qc.invalidateQueries({ queryKey: ["doctor", "dashboard"] });
@@ -36,17 +39,8 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
     onClose();
   }
 
-  async function startCall() {
-    if (!a.meeting_link) {
-      toast.error("No video room created for this appointment");
-      return;
-    }
-    // Record call start time
-    await supabase
-      .from("patient_appointments")
-      .update({ call_started_at: new Date().toISOString() } as any)
-      .eq("id", a.id);
-    window.open(a.meeting_link, "_blank");
+  function startCall() {
+    nav(`/consult/${a.id}?mode=appointment`);
   }
 
   async function completeCall() {
@@ -57,8 +51,9 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
     await update(
       {
         status: "completed",
-        call_ended_at: new Date().toISOString(),
-        consultation_notes: note,
+        notes: a.notes ? `${a.notes}
+
+Consultation summary: ${note}` : `Consultation summary: ${note}`,
       } as any,
       "Consultation completed"
     );
@@ -119,10 +114,10 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
                 <Button disabled={saving} variant="outline" className="w-full" onClick={() => update({ status: "cancelled" }, "Cancelled")}>Cancel appointment</Button>
               </>
             )}
-            {a.status === "completed" && a.consultation_notes && (
+            {a.status === "completed" && a.notes && (
               <div className="p-3 bg-muted/30 rounded-lg">
                 <div className="text-xs text-muted-foreground mb-1">Consultation Summary</div>
-                <p className="text-sm">{a.consultation_notes}</p>
+                <p className="text-sm">{a.notes}</p>
               </div>
             )}
             {p?.user_id && (

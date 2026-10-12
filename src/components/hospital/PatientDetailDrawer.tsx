@@ -82,12 +82,12 @@ export function PatientDetailDrawer({ patient, onClose }: Props) {
     enabled: open,
     queryKey: ["pd-bills", pid],
     queryFn: async () => {
-      const { data } = await supabase.from("hospital_billing").select("total_amount, status").eq("patient_id", pid);
+      const { data } = await supabase.from("hospital_billing").select("total, payment_status").eq("patient_id", pid);
       return data || [];
     },
   });
 
-  const outstanding = (bills || []).filter((b: any) => b.status !== "paid").reduce((s: number, b: any) => s + Number(b.total_amount || 0), 0);
+  const outstanding = (bills || []).filter((b: any) => b.payment_status !== "paid").reduce((s: number, b: any) => s + Number(b.total || 0), 0);
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>

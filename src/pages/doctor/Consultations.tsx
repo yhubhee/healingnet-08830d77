@@ -10,10 +10,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
 import { QueryState } from "@/components/common/QueryState";
-import { useInitializeConsultationPayment, useCompleteConsultationTransfer, useConsultationPaymentStatus } from "@/hooks/useConsultationPayment";
+import { pick, ALLOWED } from "@/lib/allowed";
+import { friendlyError } from "@/lib/errors";
+import { Input } from "@/components/ui/input";
 import { JoinCallButton } from "@/components/JoinCallButton";
 
-const filters = ["all", "pending", "accepted", "completed", "cancelled"] as const;
+const filters = ["all", "pending", "accepted", "completed", "rejected", "cancelled"] as const;
 
 export default function DoctorConsultations() {
   const [filter, setFilter] = useState<typeof filters[number]>("all");
@@ -31,72 +33,46 @@ export default function DoctorConsultations() {
     },
   });
 
-  const initPaymentMut = useInitializeConsultationPayment();
-  const completeTransferMut = useCompleteConsultationTransfer();
+  // The doctor's listed fee is the starting point; the fee is fixed when the request is accepted.
+  const { data: listedFee } = useQuery({
+    enabled: !!ctx?.doctor?.id,
+    queryKey: ["doctor", "listed-fee", ctx?.doctor?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("doctor_marketplace").select("external_virtual_fee").eq("doctor_id", ctx!.doctor.id).maybeSingle();
+      return data?.external_virtual_fee ?? null;
+    },
+  });
+  const [fees, setFees] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   const list = (data || []).filter((c: any) => filter === "all" || c.status === filter);
 
-  async function update(id: string, patch: any, msg: string) {
-    const { error } = await supabase.from("consultation_requests").update(patch).eq("id", id);
-    if (error) return toast.error(error.message);
+  async function update(id: string, patch: any, msg: string): Promise<boolean> {
+    setSaving(true);
+    const { error } = await supabase.from("consultation_requests").update(pick(patch, ALLOWED.consultationRequestUpdate) as any).eq("id", id);
+    setSaving(false);
+    if (error) { toast.error(friendlyError(error, "We couldn't update this request. Please try again.")); return false; }
     toast.success(msg);
     qc.invalidateQueries({ queryKey: ["doctor", "consultations"] });
+    return true;
   }
 
+  // Accepting fixes the fee: it can only change while the request is pending.
   async function accept(c: any) {
-    // Initiate payment for consultation
-    try {
-      // Get patient info including email
-      const { data: patientInfo } = await supabase
-        .from("patients")
-        .select("*, users!inner(email)")
-        .eq("id", c.patient_id)
-        .single();
-
-      const pi = patientInfo as any;
-      const patientEmail = pi?.users?.[0]?.email || pi?.email;
-
-      if (!patientEmail) {
-        toast.error("Unable to process payment - patient email not found");
-        return;
-      }
-
-      // Initialize payment
-      await initPaymentMut.mutateAsync({
-        email: patientEmail,
-        amount: Number(c.fee_agreed) || 0,
-        consultation_id: c.id,
-        patient_id: c.patient_id,
-        doctor_id: c.doctor_id,
-      });
-
-      // Update consultation status to accepted
-      await update(c.id, { status: "accepted" }, "Consultation accepted. Payment initiated for patient.");
-      toast.info("Payment link sent to patient");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to process payment");
+    const fee = Number(fees[c.id] ?? c.fee_agreed ?? listedFee ?? 0);
+    if (!Number.isFinite(fee) || fee <= 0) {
+      toast.error("Enter the consultation fee before accepting.");
+      return;
     }
+    await update(c.id, { fee_agreed: fee, status: "accepted" }, "Consultation accepted. The requesting hospital can now pay the fee.");
   }
 
   async function complete() {
     if (!notesFor) return;
-    try {
-      // Complete consultation first
-      await update(notesFor.id, { status: "completed", doctor_notes: note, call_ended_at: new Date().toISOString() }, "Consultation completed");
-
-      // Transfer funds to doctor
-      try {
-        // Get doctor's bank details (you'll need to add this to doctor profile)
-        // For now, we'll show a message that payment transfer should be configured
-        toast.info("Consultation marked complete. Admin will process payment transfer.");
-      } catch (error: any) {
-        toast.error("Consultation marked complete, but payment transfer failed");
-      }
-
+    const ok = await update(notesFor.id, { status: "completed", doctor_notes: note }, "Consultation completed");
+    if (ok) {
       setNotesFor(null);
       setNote("");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to complete consultation");
     }
   }
 
@@ -158,25 +134,36 @@ export default function DoctorConsultations() {
                 </span>
               </div>
               <p className="text-sm mt-3 italic text-muted-foreground flex-1">"{c.reason}"</p>
-              {c.fee_agreed && (
+              {c.status === "pending" ? (
                 <div className="mt-3 pt-3 border-t border-border">
-                  <div className="text-xs text-muted-foreground">Fee</div>
-                  <div className="font-bold text-primary">₦{Number(c.fee_agreed).toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground mb-1">Fee (₦), fixed once you accept</div>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={fees[c.id] ?? (c.fee_agreed ?? listedFee ?? "")}
+                    onChange={(e) => setFees((f) => ({ ...f, [c.id]: e.target.value }))}
+                  />
                 </div>
-              )}
+              ) : c.fee_agreed ? (
+                <div className="mt-3 pt-3 border-t border-border">
+                  <div className="text-xs text-muted-foreground">Fee {c.paid_at ? "(paid)" : "(locked)"}</div>
+                  <div className="font-bold text-primary">₦{Number(c.fee_agreed).toLocaleString()}</div>
+                  <div className="text-[11px] text-muted-foreground">The fee can't be changed after acceptance.</div>
+                </div>
+              ) : null}
               <div className="mt-3 pt-3 border-t border-border flex gap-2 flex-wrap">
                 {c.status === "pending" && (
                   <>
                     <Button
                       size="sm"
                       onClick={() => accept(c)}
-                      disabled={initPaymentMut.isPending}
+                      disabled={saving}
                       className="gap-1"
                     >
                       <Zap className="w-4 h-4" />
-                      {initPaymentMut.isPending ? "Processing..." : "Accept"}
+                      {saving ? "Saving..." : "Accept"}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => update(c.id, { status: "cancelled" }, "Declined")}>
+                    <Button size="sm" variant="outline" disabled={saving} onClick={() => update(c.id, { status: "rejected" }, "Declined")}>
                       <XCircle className="w-4 h-4" />
                       Decline
                     </Button>
@@ -215,6 +202,9 @@ export default function DoctorConsultations() {
                     Complete
                   </Button>
                 )}
+                {c.status === "accepted" && (
+                  <Button size="sm" variant="ghost" disabled={saving} onClick={() => update(c.id, { status: "cancelled" }, "Cancelled")}>Cancel</Button>
+                )}
                 {c.status === "completed" && c.doctor_notes && (
                   <span className="text-xs text-muted-foreground">Notes: {c.doctor_notes.slice(0, 80)}</span>
                 )}
@@ -252,8 +242,8 @@ export default function DoctorConsultations() {
             <Button variant="outline" onClick={() => setNotesFor(null)}>
               Cancel
             </Button>
-            <Button onClick={complete} disabled={completeTransferMut.isPending}>
-              {completeTransferMut.isPending ? "Processing..." : "Mark completed"}
+            <Button onClick={complete} disabled={saving}>
+              {saving ? "Saving..." : "Mark completed"}
             </Button>
           </div>
         </DialogContent>

@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
+import { getMyDoctorId } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, PhoneOff, Circle, FileText, ChevronLeft } from "lucide-react";
+
+const CALL_NOT_AVAILABLE = "The video call opens once the doctor has accepted the appointment.";
 
 type Mode = "consultation" | "appointment";
 
@@ -33,37 +36,24 @@ export default function VideoConsult() {
         if (!user) { nav("/login"); return; }
 
         const table = mode === "consultation" ? "consultation_requests" : "patient_appointments";
-        const sel = mode === "consultation"
-          ? "*, patients(first_name,last_name,user_id), doctors(first_name,last_name,user_id)"
-          : "*, patients(first_name,last_name,user_id), doctors(first_name,last_name,user_id)";
+        const sel = "*, patients(first_name,last_name), doctors(first_name,last_name)";
         const { data: row, error } = await supabase.from(table as any).select(sel).eq("id", id).maybeSingle();
-        if (error || !row) throw new Error(error?.message || "Not found");
+        if (error || !row) throw new Error("We couldn't find this video call.");
         if (!mounted) return;
         setMeta(row);
         setNotes((row as any).doctor_notes || (row as any).notes || "");
 
-        const owner = (row as any).doctors?.user_id === user.id;
-        setIsOwner(owner);
-        const userName = owner
-          ? `Dr. ${(row as any).doctors?.first_name || ""} ${(row as any).doctors?.last_name || ""}`.trim()
-          : `${(row as any).patients?.first_name || "Patient"} ${(row as any).patients?.last_name || ""}`.trim();
+        setIsOwner((await getMyDoctorId()) === (row as any).doctor_id);
 
-        let roomUrl = (row as any).meeting_link;
-        let roomName = (row as any).daily_room_name;
-
-        // Create room on the fly if missing or non-Daily
-        if (!roomUrl || !roomUrl.includes("daily.co")) {
-          const { data: created, error: cErr } = await supabase.functions.invoke("daily-room", {
-            body: { action: "create", [mode === "consultation" ? "consultation_id" : "appointment_id"]: id },
-          });
-          if (cErr || created?.error) throw new Error(cErr?.message || created?.error);
-          roomUrl = created.room_url; roomName = created.room_name;
-        }
-
-        const { data: tok, error: tErr } = await supabase.functions.invoke("daily-room", {
-          body: { action: "token", room_name: roomName, user_name: userName, is_owner: owner },
+        // One call: the server creates the room on first join and decides who owns it.
+        const { data: join, error: jErr } = await supabase.functions.invoke("daily-room", {
+          body: { kind: mode === "consultation" ? "consultation_request" : "appointment", id },
         });
-        if (tErr || tok?.error) throw new Error(tErr?.message || tok?.error);
+        if (jErr || !join?.url || !join?.token) {
+          const status = (jErr as any)?.context?.status;
+          if (status === 403) throw new Error(CALL_NOT_AVAILABLE);
+          throw new Error("We couldn't start the video call. Please try again.");
+        }
 
         const call = DailyIframe.createFrame(containerRef.current!, {
           iframeStyle: { width: "100%", height: "100%", border: "0", borderRadius: "12px" },
@@ -72,18 +62,14 @@ export default function VideoConsult() {
         });
         callRef.current = call;
         call.on("left-meeting", () => leave());
-        call.on("joined-meeting", () => {
-          setJoined(true);
-          // mark call start
-          supabase.from(table as any).update({ call_started_at: new Date().toISOString() }).eq("id", id);
-        });
+        call.on("joined-meeting", () => setJoined(true));
         call.on("recording-started", () => setRecord(true));
         call.on("recording-stopped", () => setRecord(false));
 
-        await call.join({ url: roomUrl, token: tok.token });
+        await call.join({ url: join.url, token: join.token });
         if (mounted) setLoading(false);
       } catch (e: any) {
-        toast.error(e?.message || "Failed to join");
+        toast.error(e?.message || "We couldn't join the video call.");
         setLoading(false);
       }
     })();
@@ -94,7 +80,7 @@ export default function VideoConsult() {
     const call = callRef.current; if (!call) return;
     try {
       if (record) await call.stopRecording(); else await call.startRecording();
-    } catch (e: any) { toast.error(e?.message || "Recording error"); }
+    } catch { toast.error("Recording could not be changed."); }
   }
 
   async function saveNotes() {
@@ -104,12 +90,10 @@ export default function VideoConsult() {
     const field = mode === "consultation" ? "doctor_notes" : "notes";
     const { error } = await supabase.from(table as any).update({ [field]: notes }).eq("id", id);
     setSavingNotes(false);
-    if (error) toast.error(error.message); else toast.success("Notes saved");
+    if (error) toast.error("We couldn't save the notes. Please try again."); else toast.success("Notes saved");
   }
 
   async function leave() {
-    const table = mode === "consultation" ? "consultation_requests" : "patient_appointments";
-    if (id) await supabase.from(table as any).update({ call_ended_at: new Date().toISOString() }).eq("id", id);
     if (isOwner) await saveNotes();
     nav(-1);
   }

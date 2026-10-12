@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertCircle } from "lucide-react";
+import { pick, ALLOWED } from "@/lib/allowed";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -33,7 +34,6 @@ export function CreateConsultationDialog() {
 
     if (marketplace?.external_virtual_fee) {
       setDoctorFee(marketplace.external_virtual_fee);
-      setF((prev: any) => ({ ...prev, fee_agreed: marketplace.external_virtual_fee }));
     } else {
       setDoctorFee(null);
     }
@@ -50,10 +50,9 @@ export function CreateConsultationDialog() {
         <form onSubmit={async (e) => {
           e.preventDefault();
           await handleSubmit(
-            supabase.from("consultation_requests").insert({
-              ...f,
-              requesting_hospital_id: hospitalId,
-            }),
+            supabase.from("consultation_requests").insert(
+              pick({ ...f, requesting_hospital_id: hospitalId }, ALLOWED.consultationRequestInsert) as any,
+            ),
             {
               toast,
               close,
@@ -62,7 +61,7 @@ export function CreateConsultationDialog() {
               onSuccess: () => {
                 toast({
                   title: "Success",
-                  description: "Consultation request created. Payment will be processed when doctor accepts.",
+                  description: "Consultation request created. You can pay once the doctor has accepted.",
                 });
               },
             }
@@ -139,8 +138,8 @@ export function CreateConsultationDialog() {
             <div className="bg-info/10 border border-info/20 rounded-lg p-3 flex items-start gap-3">
               <AlertCircle className="w-4 h-4 text-info mt-0.5 flex-shrink-0" />
               <div className="text-sm">
-                <p className="font-medium">Consultation Fee: <span className="text-info font-bold">{feeDisplay}</span></p>
-                <p className="text-muted-foreground text-xs mt-1">Patient will be charged when doctor accepts this request.</p>
+                <p className="font-medium">Listed fee: <span className="text-info font-bold">{feeDisplay}</span></p>
+                <p className="text-muted-foreground text-xs mt-1">The doctor confirms the final fee when accepting. You can pay once the request is accepted.</p>
               </div>
             </div>
           )}

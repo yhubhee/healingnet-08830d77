@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useConsultationRequests } from "@/hooks/useHospitalData";
 import { CreateConsultationDialog } from "@/components/hospital/dialogs/CreateConsultationDialog";
+import { useStartConsultationPayment } from "@/hooks/useConsultationPayment";
+import { friendlyError } from "@/lib/errors";
+import { toast } from "sonner";
 import { QueryState } from "@/components/common/QueryState";
 
-const tabs = ["All", "Pending", "Accepted", "Completed"];
+const tabs = ["All", "Pending", "Accepted", "Completed", "Rejected", "Cancelled"];
 
 export default function HospitalConsultations() {
   const { data: consults = [], isLoading, isError, error, refetch } = useConsultationRequests();
   const [activeTab, setActiveTab] = useState("All");
+  const pay = useStartConsultationPayment();
   const filtered = activeTab === "All" ? consults : consults.filter((c: any) => c.status === activeTab.toLowerCase());
 
   return (
@@ -38,7 +42,7 @@ export default function HospitalConsultations() {
                   <p className="text-sm text-muted-foreground">{c.specialty_needed || "—"} • {c.doctors ? `Dr. ${c.doctors.first_name} ${c.doctors.last_name}` : "—"}</p>
                 </div>
                 <span className={cn("text-xs font-semibold px-3 py-1 rounded-full",
-                  c.status === "completed" ? "bg-success/15 text-success" : c.status === "accepted" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
+                  c.status === "completed" ? "bg-success/15 text-success" : c.status === "accepted" ? "bg-primary/15 text-primary" : c.status === "rejected" || c.status === "cancelled" ? "bg-muted text-muted-foreground" : "bg-warning/15 text-warning"
                 )}>{c.status || "pending"}</span>
               </div>
               <div className="flex gap-4 text-xs text-muted-foreground">
@@ -47,6 +51,23 @@ export default function HospitalConsultations() {
                 <span>{new Date(c.created_at).toLocaleDateString()}</span>
               </div>
               {c.reason && <p className="text-sm text-muted-foreground mt-2">{c.reason}</p>}
+              {c.status === "accepted" && (
+                <div className="mt-3 pt-3 border-t border-border flex items-center justify-between gap-3">
+                  <div className="text-sm">
+                    Fee: <span className="font-bold">₦{Number(c.fee_agreed || 0).toLocaleString()}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{c.paid_at ? "Paid" : "Locked by the doctor"}</span>
+                  </div>
+                  {!c.paid_at && Number(c.fee_agreed) > 0 && (
+                    <Button
+                      size="sm"
+                      disabled={pay.isPending}
+                      onClick={() => pay.mutate(c.id, { onError: (e) => toast.error(friendlyError(e, (e as Error)?.message || "We couldn't start the payment.")) })}
+                    >
+                      {pay.isPending ? "Starting…" : "Pay consultation fee"}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

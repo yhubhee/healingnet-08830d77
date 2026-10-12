@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { friendlyError } from "@/lib/errors";
 
 interface Props {
   title: string;
@@ -40,7 +41,7 @@ export async function handleSubmit(
   opts: { toast: any; close: () => void; qc: any; invalidate: string[]; successMsg?: string; onSuccess?: () => void }
 ) {
   const { error } = await promise;
-  if (error) return opts.toast({ title: "Failed", description: error.message, variant: "destructive" });
+  if (error) return opts.toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
   opts.toast({ title: opts.successMsg || "Saved" });
   opts.onSuccess?.();
   opts.close();
