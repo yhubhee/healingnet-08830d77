@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.18"
   }
   public: {
     Tables: {
@@ -223,6 +223,7 @@ export type Database = {
           fee_agreed: number | null
           id: string
           meeting_link: string | null
+          paid_at: string | null
           patient_id: string
           patient_summary: string | null
           preferred_date: string | null
@@ -248,6 +249,7 @@ export type Database = {
           fee_agreed?: number | null
           id?: string
           meeting_link?: string | null
+          paid_at?: string | null
           patient_id: string
           patient_summary?: string | null
           preferred_date?: string | null
@@ -273,6 +275,7 @@ export type Database = {
           fee_agreed?: number | null
           id?: string
           meeting_link?: string | null
+          paid_at?: string | null
           patient_id?: string
           patient_summary?: string | null
           preferred_date?: string | null
@@ -742,7 +745,29 @@ export type Database = {
           start_time?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "doctor_availability_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_availability_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_availability_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctor_marketplace: {
         Row: {
@@ -845,7 +870,22 @@ export type Database = {
           updated_at?: string
           virtual_consultation_fee?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "doctor_settings_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: true
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_settings_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: true
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctors: {
         Row: {
@@ -1015,6 +1055,30 @@ export type Database = {
           },
         ]
       }
+      function_calls: {
+        Row: {
+          created_at: string
+          fn: string
+          id: string
+          subject_user_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          fn: string
+          id?: string
+          subject_user_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          fn?: string
+          id?: string
+          subject_user_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       hospital_beds: {
         Row: {
           assigned_at: string | null
@@ -1178,10 +1242,10 @@ export type Database = {
           employment_type: string
           hospital_id: string
           id: string
-          is_active: boolean | null
+          is_active: boolean
           notes: string | null
           salary: number | null
-          status: string | null
+          status: string
           updated_at: string
         }
         Insert: {
@@ -1194,10 +1258,10 @@ export type Database = {
           employment_type?: string
           hospital_id: string
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           notes?: string | null
           salary?: number | null
-          status?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -1210,10 +1274,10 @@ export type Database = {
           employment_type?: string
           hospital_id?: string
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           notes?: string | null
           salary?: number | null
-          status?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: [
@@ -1256,7 +1320,15 @@ export type Database = {
           prefs?: Json
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "hospital_notification_prefs_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: true
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hospital_notifications: {
         Row: {
@@ -1298,6 +1370,42 @@ export type Database = {
             columns: ["hospital_id"]
             isOneToOne: false
             referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospital_patients: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          hospital_id: string
+          patient_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          hospital_id: string
+          patient_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          hospital_id?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hospital_patients_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hospital_patients_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
             referencedColumns: ["id"]
           },
         ]
@@ -1410,7 +1518,7 @@ export type Database = {
           first_name: string
           hospital_id: string
           id: string
-          is_active: boolean | null
+          is_active: boolean
           last_login: string | null
           last_name: string
           phone: string | null
@@ -1426,7 +1534,7 @@ export type Database = {
           first_name: string
           hospital_id: string
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           last_login?: string | null
           last_name: string
           phone?: string | null
@@ -1442,7 +1550,7 @@ export type Database = {
           first_name?: string
           hospital_id?: string
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           last_login?: string | null
           last_name?: string
           phone?: string | null
@@ -1495,7 +1603,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "hospital_subscriptions_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hospital_wards: {
         Row: {
@@ -1552,16 +1668,21 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
-          is_active: boolean | null
+          is_active: boolean
           lat: number | null
           license_number: string | null
           lng: number | null
           logo_url: string | null
           name: string
           phone: string | null
+          plan_expires_at: string | null
           state: string | null
           subscription_status: string
+          trial_ends_at: string | null
           updated_at: string
+          verification_notes: string | null
+          verification_status: string
+          verified_at: string | null
         }
         Insert: {
           active_plan?: string
@@ -1570,16 +1691,21 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           lat?: number | null
           license_number?: string | null
           lng?: number | null
           logo_url?: string | null
           name: string
           phone?: string | null
+          plan_expires_at?: string | null
           state?: string | null
           subscription_status?: string
+          trial_ends_at?: string | null
           updated_at?: string
+          verification_notes?: string | null
+          verification_status?: string
+          verified_at?: string | null
         }
         Update: {
           active_plan?: string
@@ -1588,16 +1714,21 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
-          is_active?: boolean | null
+          is_active?: boolean
           lat?: number | null
           license_number?: string | null
           lng?: number | null
           logo_url?: string | null
           name?: string
           phone?: string | null
+          plan_expires_at?: string | null
           state?: string | null
           subscription_status?: string
+          trial_ends_at?: string | null
           updated_at?: string
+          verification_notes?: string | null
+          verification_status?: string
+          verified_at?: string | null
         }
         Relationships: []
       }
@@ -2065,7 +2196,36 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "patient_appointments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_appointments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_appointments_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       patient_checkins: {
         Row: {
@@ -2339,6 +2499,7 @@ export type Database = {
         Row: {
           amount: number
           authorization_url: string | null
+          billing_cycle: string | null
           channel: string | null
           created_at: string
           currency: string
@@ -2348,6 +2509,8 @@ export type Database = {
           metadata: Json
           paid_at: string | null
           patient_id: string | null
+          payee_doctor_id: string | null
+          payer_user_id: string | null
           paystack_reference: string
           plan: string | null
           purpose: string
@@ -2358,6 +2521,7 @@ export type Database = {
         Insert: {
           amount: number
           authorization_url?: string | null
+          billing_cycle?: string | null
           channel?: string | null
           created_at?: string
           currency?: string
@@ -2367,6 +2531,8 @@ export type Database = {
           metadata?: Json
           paid_at?: string | null
           patient_id?: string | null
+          payee_doctor_id?: string | null
+          payer_user_id?: string | null
           paystack_reference: string
           plan?: string | null
           purpose: string
@@ -2377,6 +2543,7 @@ export type Database = {
         Update: {
           amount?: number
           authorization_url?: string | null
+          billing_cycle?: string | null
           channel?: string | null
           created_at?: string
           currency?: string
@@ -2386,6 +2553,8 @@ export type Database = {
           metadata?: Json
           paid_at?: string | null
           patient_id?: string | null
+          payee_doctor_id?: string | null
+          payer_user_id?: string | null
           paystack_reference?: string
           plan?: string | null
           purpose?: string
@@ -2408,6 +2577,20 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "payments_payee_doctor_id_fkey"
+            columns: ["payee_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_payee_doctor_id_fkey"
+            columns: ["payee_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
         ]
       }
       pharmacy_dispensing: {
@@ -2423,6 +2606,7 @@ export type Database = {
           notes: string | null
           patient_id: string
           payment_status: string | null
+          prescription_id: string | null
           quantity_dispensed: number | null
         }
         Insert: {
@@ -2437,6 +2621,7 @@ export type Database = {
           notes?: string | null
           patient_id: string
           payment_status?: string | null
+          prescription_id?: string | null
           quantity_dispensed?: number | null
         }
         Update: {
@@ -2451,6 +2636,7 @@ export type Database = {
           notes?: string | null
           patient_id?: string
           payment_status?: string | null
+          prescription_id?: string | null
           quantity_dispensed?: number | null
         }
         Relationships: [
@@ -2482,6 +2668,13 @@ export type Database = {
             referencedRelation: "patients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pharmacy_dispensing_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "prescriptions"
+            referencedColumns: ["id"]
+          },
         ]
       }
       pharmacy_inventory: {
@@ -2496,7 +2689,7 @@ export type Database = {
           hospital_id: string
           id: string
           location: string | null
-          quantity_in_stock: number | null
+          quantity_in_stock: number
           reorder_level: number | null
           strength: string | null
           supplier: string | null
@@ -2514,7 +2707,7 @@ export type Database = {
           hospital_id: string
           id?: string
           location?: string | null
-          quantity_in_stock?: number | null
+          quantity_in_stock?: number
           reorder_level?: number | null
           strength?: string | null
           supplier?: string | null
@@ -2532,7 +2725,7 @@ export type Database = {
           hospital_id?: string
           id?: string
           location?: string | null
-          quantity_in_stock?: number | null
+          quantity_in_stock?: number
           reorder_level?: number | null
           strength?: string | null
           supplier?: string | null
@@ -2548,6 +2741,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plan_prices: {
+        Row: {
+          amount_kobo: number
+          billing_cycle: string
+          currency: string
+          is_active: boolean
+          plan: string
+          updated_at: string
+        }
+        Insert: {
+          amount_kobo: number
+          billing_cycle: string
+          currency?: string
+          is_active?: boolean
+          plan: string
+          updated_at?: string
+        }
+        Update: {
+          amount_kobo?: number
+          billing_cycle?: string
+          currency?: string
+          is_active?: boolean
+          plan?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       prescriptions: {
         Row: {
@@ -2821,7 +3059,36 @@ export type Database = {
           updated_at?: string
           urgency?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "triage_sessions_chosen_doctor_id_fkey"
+            columns: ["chosen_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "triage_sessions_chosen_doctor_id_fkey"
+            columns: ["chosen_doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "triage_sessions_chosen_hospital_id_fkey"
+            columns: ["chosen_hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "triage_sessions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_notifications: {
         Row: {
@@ -2950,22 +3217,31 @@ export type Database = {
       }
     }
     Functions: {
-      can_doctor_access_patient: {
-        Args: { _doctor_id: string; _patient_id: string }
-        Returns: boolean
+      adjust_stock: {
+        Args: { p_delta: number; p_drug_id: string }
+        Returns: number
       }
-      create_hospital_with_admin: {
+      can_join_call: { Args: { _id: string; _kind: string }; Returns: boolean }
+      complete_signup: {
+        Args: { p_data?: Json; p_role: string }
+        Returns: string
+      }
+      dispense_drug: {
         Args: {
-          _address: string
-          _email: string
-          _first_name: string
-          _last_name: string
-          _name: string
-          _phone: string
-          _plan: string
+          p_dosage?: string
+          p_drug_id: string
+          p_notes?: string
+          p_patient_id: string
+          p_qty: number
         }
         Returns: string
       }
+      dispense_prescription: {
+        Args: { p_drug_id: string; p_qty: number; p_rx_id: string }
+        Returns: string
+      }
+      doctor_hospital_ids: { Args: { _doctor_id: string }; Returns: string[] }
+      doctor_private_profile: { Args: { p_doctor_id: string }; Returns: Json }
       doctor_user_id: { Args: { _doctor_id: string }; Returns: string }
       emit_hospital_notification: {
         Args: {
@@ -2991,32 +3267,47 @@ export type Database = {
         }
         Returns: undefined
       }
-      get_doctor_hospital_id: { Args: { _doctor_id: string }; Returns: string }
-      get_doctor_hospital_ids: {
-        Args: { _doctor_id: string }
+      fulfill_payment: {
+        Args: {
+          p_currency: string
+          p_paid_amount: number
+          p_payment_id: string
+        }
+        Returns: boolean
+      }
+      my_doctor_id: { Args: never; Returns: string }
+      my_hospital_ids: {
+        Args: never
         Returns: {
           hospital_id: string
+          membership: string
+          role: string
         }[]
-      }
-      get_hospital_plan: { Args: { _hospital_id: string }; Returns: string }
-      get_user_doctor_id: { Args: { _user_id: string }; Returns: string }
-      get_user_hospital_id: { Args: { _user_id: string }; Returns: string }
-      is_doctor_at_hospital: {
-        Args: { _doctor_id: string; _hospital_id: string }
-        Returns: boolean
-      }
-      is_hospital_admin: {
-        Args: { _hospital_id: string; _user_id: string }
-        Returns: boolean
-      }
-      is_hospital_staff: {
-        Args: { _hospital_id: string; _user_id: string }
-        Returns: boolean
       }
       patient_display_name: { Args: { _patient_id: string }; Returns: string }
       patient_user_id: { Args: { _patient_id: string }; Returns: string }
       recompute_lab_order_status: {
         Args: { _order_id: string }
+        Returns: undefined
+      }
+      register_patient: {
+        Args: { p_hospital_id: string; p_patient: Json }
+        Returns: string
+      }
+      respond_to_invitation: {
+        Args: { p_accept: boolean; p_link_id: string }
+        Returns: undefined
+      }
+      review_doctor: {
+        Args: { p_approve: boolean; p_doctor_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      review_hospital: {
+        Args: { p_approve: boolean; p_hospital_id: string; p_notes?: string }
+        Returns: undefined
+      }
+      save_doctor_availability: {
+        Args: { p_global: boolean; p_hospital_ids: string[]; p_slots: Json }
         Returns: undefined
       }
       start_consultation: {
@@ -3031,6 +3322,7 @@ export type Database = {
         Args: { p_consultation_id: string }
         Returns: Json
       }
+      submit_doctor_verification: { Args: { p_data: Json }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
