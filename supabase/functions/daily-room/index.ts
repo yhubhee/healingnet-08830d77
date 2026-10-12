@@ -116,9 +116,7 @@ Deno.serve(handle("daily-room", async (req) => {
 
   const db = serviceClient();
   const table = TABLE[kind];
-  const columns = kind === "consultation_request"
-    ? "id, doctor_id, patient_id, daily_room_name, meeting_link, call_started_at"
-    : "id, doctor_id, patient_id, daily_room_name, meeting_link";
+  const columns = "id, doctor_id, patient_id, daily_room_name, meeting_link, call_started_at";
   const { data: row, error: rowErr } = await db.from(table).select(columns).eq("id", id).maybeSingle();
   if (rowErr || !row) throw new HttpError(500, "Something went wrong. Please try again.", `call lookup: ${describeError(rowErr)}`);
   const call = row as unknown as {
@@ -172,8 +170,8 @@ Deno.serve(handle("daily-room", async (req) => {
 
   const token = await meetingToken(room.name, userName, isDoctor, room.config?.exp ?? nowSeconds() + CALL_SECONDS);
 
-  // Record when the doctor first joins a consultation call (appointments have no call timestamp column).
-  if (isDoctor && kind === "consultation_request" && !call.call_started_at) {
+  // Record when the doctor first joins the call. end_call() sets call_ended_at later.
+  if (isDoctor && !call.call_started_at) {
     await db.from(table).update({ call_started_at: new Date().toISOString() }).eq("id", id).is("call_started_at", null);
   }
 
