@@ -2423,6 +2423,48 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_share_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          patient_id: string
+          used_at: string | null
+          used_by_hospital_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          patient_id: string
+          used_at?: string | null
+          used_by_hospital_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          patient_id?: string
+          used_at?: string | null
+          used_by_hospital_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_share_codes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_share_codes_used_by_hospital_id_fkey"
+            columns: ["used_by_hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null
@@ -3226,6 +3268,13 @@ export type Database = {
         Args: { p_data?: Json; p_role: string }
         Returns: string
       }
+      create_patient_share_code: {
+        Args: never
+        Returns: {
+          code: string
+          expires_at: string
+        }[]
+      }
       dispense_drug: {
         Args: {
           p_dosage?: string
@@ -3274,6 +3323,10 @@ export type Database = {
           p_payment_id: string
         }
         Returns: boolean
+      }
+      link_patient_by_code: {
+        Args: { p_code: string; p_hospital_id: string }
+        Returns: string
       }
       my_doctor_id: { Args: never; Returns: string }
       my_hospital_ids: {
