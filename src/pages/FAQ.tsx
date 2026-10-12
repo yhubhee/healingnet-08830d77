@@ -25,7 +25,7 @@ const groups: { title: string; items: { q: string; a: string }[] }[] = [
   {
     title: "Billing & subscriptions",
     items: [
-      { q: "What does a subscription cost?", a: "EMR Essentials starts at ₦75,000/month and Telemedicine Suite at ₦150,000/month. Annual billing saves ~17%. Patients are free forever." },
+      { q: "What does a subscription cost?", a: "Plans are priced in Naira and billed monthly or yearly. See the Pricing page for current prices. Every new hospital gets a 30-day EMR trial, and patients are free forever." },
       { q: "Can I switch plans?", a: "Yes — upgrade or downgrade from Settings → Subscription. Data and configuration carry over." },
       { q: "Do you support insurance & HMO billing?", a: "Yes. File and track claims with all major HMOs and NHIS directly from the patient encounter." },
     ],

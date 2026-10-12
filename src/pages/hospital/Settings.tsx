@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { useHospitalInfo, useHospitalSubscription, useHospitalStaff } from "@/hooks/useHospitalData";
+import { useHospitalInfo, useHospitalStaff } from "@/hooks/useHospitalData";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +13,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { InviteStaffDialog } from "@/components/hospital/dialogs/InviteStaffDialog";
 import { Check, Lock, Mail } from "lucide-react";
 import { QueryState } from "@/components/common/QueryState";
+import { useSubscription } from "@/hooks/useSubscription";
+import { usePlanPrices, priceNaira, formatNaira, type BillingCycle, type PlanName } from "@/hooks/usePlanPrices";
+import { paystackService } from "@/services/paystack";
+import { pick, ALLOWED } from "@/lib/allowed";
+import { friendlyError } from "@/lib/errors";
 
 const NOTIF_KEYS = [
   { key: "checkins", label: "Patient check-ins" },
@@ -25,7 +30,9 @@ const NOTIF_KEYS = [
 
 export default function HospitalSettings() {
   const { data: hospital, isLoading, isError, error, refetch } = useHospitalInfo();
-  const { data: subscription } = useHospitalSubscription();
+  const { data: sub } = useSubscription();
+  const { data: prices } = usePlanPrices();
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const { data: staff = [] } = useHospitalStaff();
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -35,26 +42,21 @@ export default function HospitalSettings() {
   const [savingInfo, setSavingInfo] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
 
-  async function startUpgrade() {
-    if (!hospital?.id) return;
-    const email = (hospital as any).email;
-    if (!email) return toast({ title: "Add a hospital email first", description: "Save a contact email under Hospital Info before upgrading.", variant: "destructive" });
+  // The server works out the price, the payer's email and where Paystack sends them back.
+  async function startCheckout(plan: PlanName) {
     setUpgrading(true);
-    const { data, error } = await supabase.functions.invoke("paystack-initialize", {
-      body: {
+    try {
+      const { authorization_url } = await paystackService.startCheckout({
         purpose: "subscription",
-        plan: "telemedicine",
-        amount: 150000,
-        email,
-        hospitalId: hospital.id,
-        callbackUrl: `${window.location.origin}/hospital/confirming-payment?hospital=${hospital.id}`,
-      },
-    });
-    setUpgrading(false);
-    if (error || !(data as any)?.authorization_url) {
-      return toast({ title: "Couldn't start checkout", description: (error as any)?.message || "Please try again.", variant: "destructive" });
+        plan,
+        billing_cycle: cycle,
+        callback_path: "/hospital/confirming-payment",
+      });
+      window.location.href = authorization_url;
+    } catch (e: any) {
+      setUpgrading(false);
+      toast({ title: "Couldn't start checkout", description: e?.message || "Please try again.", variant: "destructive" });
     }
-    window.location.href = (data as any).authorization_url;
   }
 
   useEffect(() => { if (hospital) setForm(hospital); }, [hospital]);
@@ -73,14 +75,14 @@ export default function HospitalSettings() {
   async function saveInfo() {
     if (!hospital?.id) return;
     setSavingInfo(true);
-    const { error } = await supabase.from("hospitals").update({
+    const { error } = await supabase.from("hospitals").update(pick({
       name: form.name, phone: form.phone, email: form.email, address: form.address,
       license_number: form.license_number, city: form.city || null, state: form.state || null,
       lat: form.lat === "" || form.lat == null ? null : Number(form.lat),
       lng: form.lng === "" || form.lng == null ? null : Number(form.lng),
-    }).eq("id", hospital.id);
+    }, ALLOWED.hospitalUpdate) as any).eq("id", hospital.id);
     setSavingInfo(false);
-    if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Hospital info saved" });
     qc.invalidateQueries({ queryKey: ["hospital-info"] });
   }
@@ -92,7 +94,7 @@ export default function HospitalSettings() {
         setForm((f: any) => ({ ...f, lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }));
         toast({ title: "Location captured", description: "Don't forget to save." });
       },
-      (err) => toast({ title: "Could not get location", description: err.message, variant: "destructive" }),
+      (err) => toast({ title: "Could not get location", description: "Check that location access is allowed in your browser.", variant: "destructive" }),
       { enableHighAccuracy: true, timeout: 8000 },
     );
   }
@@ -105,13 +107,18 @@ export default function HospitalSettings() {
 
   async function deactivateStaff(id: string) {
     const { error } = await supabase.from("hospital_staff").update({ is_active: false }).eq("id", id);
-    if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Staff deactivated" });
     qc.invalidateQueries({ queryKey: ["hospital-staff"] });
   }
 
-  const plan = (subscription as any)?.plan || "emr";
-  const isTele = plan === "telemedicine";
+  const state = sub?.state ?? "none";
+  const livePlan = state === "active" ? sub!.plan : state === "trialing" ? "emr" : "none";
+  const isTele = livePlan === "telemedicine";
+  const planLabel = livePlan === "telemedicine" ? "Telemedicine Suite" : livePlan === "emr" ? "EMR Essentials" : "No active plan";
+  const cycleLabel = cycle === "yearly" ? "/yr" : "/mo";
+  const emrPrice = formatNaira(priceNaira(prices, "emr", cycle));
+  const telePrice = formatNaira(priceNaira(prices, "telemedicine", cycle));
 
   return (
     <HospitalLayout>
@@ -160,38 +167,50 @@ export default function HospitalSettings() {
 
           <TabsContent value="subscription" className="mt-6">
             <div className="bg-card border border-border rounded-xl p-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-2">
                 <div>
                   <p className="text-sm text-muted-foreground">Current plan</p>
-                  <h3 className="text-2xl font-heading font-bold capitalize">{isTele ? "Telemedicine Suite" : "EMR Essentials"}</h3>
+                  <h3 className="text-2xl font-heading font-bold capitalize">{state === "trialing" ? "EMR trial" : planLabel}</h3>
                 </div>
-                <Badge variant={isTele ? "default" : "secondary"}>{(subscription as any)?.status || "active"}</Badge>
+                <Badge variant={state === "active" ? "default" : "secondary"}>{state === "trialing" ? "Trial" : state === "active" ? "Active" : state === "expired" ? "Expired" : "None"}</Badge>
               </div>
+              {state === "trialing" && <p className="text-sm text-muted-foreground mb-4">Trial: {sub!.trialDaysLeft} day{sub!.trialDaysLeft === 1 ? "" : "s"} left</p>}
+              {state === "active" && sub?.expiresAt && <p className="text-sm text-muted-foreground mb-4">Renews or ends on {new Date(sub.expiresAt).toLocaleDateString()}</p>}
+              {state === "expired" && <p className="text-sm text-destructive mb-4">Your plan has expired. Renew in Settings.</p>}
+
+              <div className="inline-flex items-center gap-1 p-1 bg-background border border-border rounded-full mb-4">
+                {(["monthly", "yearly"] as const).map((c) => (
+                  <button key={c} onClick={() => setCycle(c)} className={`px-4 py-1 rounded-full text-sm capitalize ${cycle === c ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{c}</button>
+                ))}
+              </div>
+
               <div className="grid md:grid-cols-2 gap-4 mb-6">
-                <div className={`border-2 rounded-xl p-4 ${!isTele ? "border-primary bg-primary/5" : "border-border"}`}>
-                  <h4 className="font-heading font-bold mb-2">EMR Essentials — ₦75K/mo</h4>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
+                <div className={`border-2 rounded-xl p-4 ${livePlan === "emr" ? "border-primary bg-primary/5" : "border-border"}`}>
+                  <h4 className="font-heading font-bold mb-2">EMR Essentials — {emrPrice}{cycleLabel}</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground mb-4">
                     <li className="flex gap-2"><Check className="w-4 h-4 text-success" /> Patients, EMR, Queue, Lab</li>
                     <li className="flex gap-2"><Check className="w-4 h-4 text-success" /> Pharmacy & Billing</li>
                     <li className="flex gap-2"><Check className="w-4 h-4 text-success" /> Bed & Ward management</li>
                   </ul>
+                  {!isTele && (
+                    <Button variant="outline" onClick={() => startCheckout("emr")} disabled={upgrading || !prices}>
+                      {upgrading ? "Starting checkout..." : state === "active" ? "Renew EMR Essentials" : "Subscribe to EMR Essentials"}
+                    </Button>
+                  )}
                 </div>
                 <div className={`border-2 rounded-xl p-4 ${isTele ? "border-primary bg-primary/5" : "border-border"}`}>
-                  <h4 className="font-heading font-bold mb-2">Telemedicine Suite — ₦150K/mo</h4>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
+                  <h4 className="font-heading font-bold mb-2">Telemedicine Suite — {telePrice}{cycleLabel}</h4>
+                  <ul className="text-sm space-y-1 text-muted-foreground mb-4">
                     <li className="flex gap-2"><Check className="w-4 h-4 text-success" /> Everything in EMR</li>
                     <li className="flex gap-2"><Check className="w-4 h-4 text-success" /> Consultation requests</li>
                     <li className="flex gap-2"><Check className="w-4 h-4 text-success" /> Doctor marketplace access</li>
                   </ul>
+                  <Button onClick={() => startCheckout("telemedicine")} disabled={upgrading || !prices}>
+                    {upgrading ? "Starting checkout..." : isTele ? "Renew Telemedicine Suite" : "Upgrade to Telemedicine"}
+                  </Button>
                 </div>
               </div>
-              {!isTele ? (
-                <Button onClick={startUpgrade} disabled={upgrading}>
-                  {upgrading ? "Starting checkout..." : "Upgrade to Telemedicine — ₦150,000/mo"}
-                </Button>
-              ) : (
-                <p className="text-sm text-muted-foreground flex items-center gap-2"><Lock className="w-4 h-4" /> You're on the highest tier.</p>
-              )}
+              <p className="text-xs text-muted-foreground flex items-center gap-2"><Lock className="w-3 h-3" /> Payments are processed securely by Paystack. Prices come from HealingNet's current price list.</p>
             </div>
           </TabsContent>
 

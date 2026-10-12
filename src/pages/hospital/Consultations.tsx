@@ -1,4 +1,5 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
+import { VerificationNotice } from "@/components/hospital/HospitalStatusBanners";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -26,6 +27,7 @@ export default function HospitalConsultations() {
         </div>
         <CreateConsultationDialog />
       </div>
+      <VerificationNotice />
       <div className="flex flex-wrap gap-1 mb-6">
         {tabs.map((t) => (<Button key={t} variant={activeTab === t ? "default" : "secondary"} size="sm" onClick={() => setActiveTab(t)}>{t}</Button>))}
       </div>

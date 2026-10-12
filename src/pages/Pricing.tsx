@@ -27,8 +27,8 @@ const faqs = [
   { q: "What counts as a staff seat?", a: "Any unique user with a hospital login — admin, receptionist, nurse, lab tech, pharmacist, manager or medical officer. Doctors invited to your hospital count as staff." },
   { q: "Do patients pay?", a: "Never. The patient portal is free forever. Hospitals pay for staff access; patients book, view records and message their care team at no cost." },
   { q: "Can I switch plans later?", a: "Yes. Upgrade from EMR Essentials to the Telemedicine Suite anytime from Settings → Subscription. Your data carries over instantly." },
-  { q: "Is there a free trial?", a: "Yes — sign up and explore the entire EMR Essentials feature set. We'll work with you on commercial terms before any charge." },
-  { q: "What about payment methods?", a: "Naira bank transfer, card, and POS supported via standard channels. For Telemedicine Suite, annual billing comes with ~17% discount." },
+  { q: "Is there a free trial?", a: "Yes. Every new hospital gets a 30-day EMR Essentials trial. Confirm your email and start using it straight away." },
+  { q: "What about payment methods?", a: "Naira bank transfer, card, and POS supported via standard channels. Annual billing is available on both plans." },
   { q: "Is my data ever locked in?", a: "No. We provide CSV/JSON exports of your data on request. Your records belong to your hospital." },
 ];
 
@@ -41,7 +41,7 @@ function Cell({ v }: { v: boolean | string }) {
 export default function Pricing() {
   return (
     <PageShell>
-      <PageMeta title="Pricing — HealingNet plans for Nigerian hospitals" description="Simple, transparent Naira pricing. EMR Essentials from ₦75K/mo or Telemedicine Suite from ₦150K/mo. Patients always free." />
+      <PageMeta title="Pricing — HealingNet plans for Nigerian hospitals" description="Simple, transparent Naira pricing for EMR Essentials and the Telemedicine Suite. Patients always free." />
       <PageHero
         eyebrow="Pricing"
         title="Naira pricing. No surprises."

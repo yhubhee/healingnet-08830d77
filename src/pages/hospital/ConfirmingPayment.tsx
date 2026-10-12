@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { getStaffHospitalId } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, Clock, Heart } from "lucide-react";
@@ -11,10 +12,16 @@ import { Loader2, CheckCircle2, Clock, Heart } from "lucide-react";
 export default function ConfirmingPayment() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const hospitalId = params.get("hospital");
+  const [hospitalId, setHospitalId] = useState<string | null>(params.get("hospital"));
   const [status, setStatus] = useState<string>("pending");
   const [plan, setPlan] = useState<string>("none");
   const [elapsed, setElapsed] = useState(0);
+
+  // Paystack sends the user back without a hospital id, so look up the one they work at.
+  useEffect(() => {
+    if (hospitalId) return;
+    getStaffHospitalId().then(setHospitalId);
+  }, [hospitalId]);
 
   useEffect(() => {
     if (!hospitalId) return;

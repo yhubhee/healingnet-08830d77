@@ -2,22 +2,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import { usePlanPrices, priceNaira, formatNaira } from "@/hooks/usePlanPrices";
 
 const plans = [
   {
     id: "emr",
     name: "EMR Essentials",
     tagline: "Everything to run a modern hospital",
-    monthly: 75000,
-    yearly: 750000,
     features: ["Patient records & queue", "EMR with structured notes", "Billing & revenue tracking", "Laboratory module", "Pharmacy inventory", "Maternity & Surgery", "Insurance claims", "Basic analytics", "Up to 25 staff members"],
   },
   {
     id: "telemedicine",
     name: "Telemedicine Suite",
     tagline: "Essentials + virtual care superpowers",
-    monthly: 150000,
-    yearly: 1500000,
     featured: true,
     features: ["Everything in EMR Essentials", "Teleconsultations & video calls", "Doctor marketplace access", "External consultations", "Patient messaging", "Advanced analytics & reports", "Priority support", "Unlimited staff members"],
   },
@@ -25,6 +22,7 @@ const plans = [
 
 export function Pricing() {
   const [yearly, setYearly] = useState(false);
+  const { data: prices } = usePlanPrices();
   return (
     <section id="pricing" className="py-20 bg-card/30">
       <div className="container mx-auto">
@@ -33,7 +31,7 @@ export function Pricing() {
           <p className="text-muted-foreground text-lg mb-6">Patients use HealingNet free, forever.</p>
           <div className="inline-flex items-center gap-1 p-1 bg-background border border-border rounded-full">
             <button onClick={() => setYearly(false)} className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors ${!yearly ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Monthly</button>
-            <button onClick={() => setYearly(true)} className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors ${yearly ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Yearly <span className="text-xs opacity-80">−17%</span></button>
+            <button onClick={() => setYearly(true)} className={`px-5 py-1.5 rounded-full text-sm font-medium transition-colors ${yearly ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Yearly</button>
           </div>
         </div>
 
@@ -48,7 +46,7 @@ export function Pricing() {
               <h3 className="text-xl font-heading font-bold mb-1">{p.name}</h3>
               <p className="text-sm text-muted-foreground mb-5">{p.tagline}</p>
               <div className="mb-6">
-                <span className="text-4xl font-heading font-bold">₦{((yearly ? p.yearly : p.monthly) / 1000).toFixed(0)}K</span>
+                <span className="text-4xl font-heading font-bold">{formatNaira(priceNaira(prices, p.id as "emr" | "telemedicine", yearly ? "yearly" : "monthly"))}</span>
                 <span className="text-muted-foreground">/{yearly ? "year" : "month"}</span>
               </div>
               <Button asChild className="w-full mb-6" variant={p.featured ? "default" : "outline"}>

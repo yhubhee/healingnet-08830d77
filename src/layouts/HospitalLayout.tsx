@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { HospitalSidebar } from "@/components/hospital/HospitalSidebar";
 import { HospitalHeader } from "@/components/hospital/HospitalHeader";
+import { HospitalStatusBanners } from "@/components/hospital/HospitalStatusBanners";
 import { DataErrorBanner } from "@/components/ui/data-error-banner";
 
 interface HospitalLayoutProps {
@@ -14,6 +15,7 @@ export function HospitalLayout({ children }: HospitalLayoutProps) {
       <div className="lg:ml-64">
         <HospitalHeader />
         <main className="p-4 lg:p-8">
+          <HospitalStatusBanners />
           <DataErrorBanner />
           {children}
         </main>

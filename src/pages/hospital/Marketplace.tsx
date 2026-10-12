@@ -1,4 +1,5 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
+import { VerificationNotice } from "@/components/hospital/HospitalStatusBanners";
 import { Search, Star, Award } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ export default function HospitalMarketplace() {
         <h1 className="text-2xl font-heading font-bold mb-1">Doctor Marketplace</h1>
         <p className="text-muted-foreground">Find and request external specialist consultations</p>
       </div>
+      <VerificationNotice />
       <div className="flex flex-wrap gap-3 mb-6">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
