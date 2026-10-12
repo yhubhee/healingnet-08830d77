@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDoctor } from "@/hooks/useDoctor";
 import { useHospitalId, useDoctors } from "@/hooks/useHospitalData";
+import { friendlyError } from "@/lib/errors";
 
 interface Props {
   patientId: string;
@@ -79,7 +80,7 @@ export function DoctorReferralDialog({ patientId, trigger, onSuccess }: Props) {
     setSaving(false);
 
     if (error) {
-      toast({ title: "Failed", description: error.message, variant: "destructive" });
+      toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
       return;
     }
 

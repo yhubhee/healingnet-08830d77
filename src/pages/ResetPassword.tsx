@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { friendlyError } from "@/lib/errors";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -16,7 +17,7 @@ export default function ResetPassword() {
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
-    if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Password updated" });
     navigate("/login");
   }

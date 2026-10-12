@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePatients } from "@/hooks/useHospitalData";
+import { friendlyError } from "@/lib/errors";
 
 export function AssignBedDialog({ bed, open, onClose }: { bed: any; open: boolean; onClose: () => void }) {
   const [patientId, setPatientId] = useState("");
@@ -15,7 +16,7 @@ export function AssignBedDialog({ bed, open, onClose }: { bed: any; open: boolea
 
   async function submit() {
     const { error } = await supabase.from("hospital_beds").update({ patient_id: patientId, status: "occupied", assigned_at: new Date().toISOString() }).eq("id", bed.id);
-    if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Bed assigned" });
     qc.invalidateQueries({ queryKey: ["hospital-beds"] });
     onClose();

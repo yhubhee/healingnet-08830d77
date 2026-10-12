@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SectionCard } from "./SectionCard";
 import { useTreatmentItems } from "@/hooks/useConsultation";
+import { friendlyError } from "@/lib/errors";
 
 const sb = supabase as any;
 const ROUTES = ["PO", "IV", "IM", "SC", "SL", "PR", "Topical", "Inhalation", "Eye/Ear drops"];
@@ -29,7 +30,7 @@ export function TreatmentCard({ consultation, readOnly, allergies, userId }: { c
 
   async function remove(id: string) {
     const { error } = await sb.from("consultation_treatment_items").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     qc.invalidateQueries({ queryKey: ["consultation", consultation.id, "treatment"] });
   }
 
@@ -100,7 +101,7 @@ function AddDrugDialog({ consultation, allergies, userId, nextLine, onClose }: {
       instructions: f.instructions || null, give_in_clinic: f.give_in_clinic, created_by: userId,
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Line added");
     qc.invalidateQueries({ queryKey: ["consultation", consultation.id, "treatment"] });
     onClose();

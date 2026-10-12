@@ -10,6 +10,7 @@ import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { RequestLetterDialog } from "@/components/patient/RequestLetterDialog";
 import { QueryState } from "@/components/common/QueryState";
+import { friendlyError } from "@/lib/errors";
 
 const TYPE_META: Record<string, { label: string; Icon: any }> = {
   fit_to_work: { label: "Fit-to-Work / Fit-to-Travel Letter", Icon: Plane },
@@ -71,7 +72,7 @@ export default function PatientLetters() {
       if (l.doctors?.specialty) doc.text(l.doctors.specialty, 40, y);
       doc.save(`${l.letter_type}-${l.id.slice(0, 8)}.pdf`);
     } catch (e: any) {
-      toast.error(e.message || "Could not generate PDF");
+      toast.error(friendlyError(e, "Could not generate PDF"));
     }
   }
 

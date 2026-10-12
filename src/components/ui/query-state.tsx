@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
+import { friendlyError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 
 interface QueryStateProps {
@@ -37,9 +38,7 @@ export function QueryState({
   }
 
   if (isError) {
-    const message =
-      (error as { message?: string } | undefined)?.message ||
-      "We couldn't load this right now.";
+    const message = friendlyError(error, "We couldn't load this right now.");
     return (
       <div className="p-10 flex flex-col items-center justify-center gap-3 text-center">
         <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">

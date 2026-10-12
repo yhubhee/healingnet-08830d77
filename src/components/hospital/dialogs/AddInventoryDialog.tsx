@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useHospitalId } from "@/hooks/useHospitalData";
+import { friendlyError } from "@/lib/errors";
 
 export function AddInventoryDialog() {
   const [open, setOpen] = useState(false);
@@ -25,7 +26,7 @@ export function AddInventoryDialog() {
       reorder_level: parseInt(f.reorder_level) || 50, unit_price: parseFloat(f.unit_price) || 0,
       supplier: f.supplier, expiry_date: f.expiry_date || null,
     });
-    if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Drug added" });
     setOpen(false); setF({});
     qc.invalidateQueries({ queryKey: ["pharmacy-inventory"] });

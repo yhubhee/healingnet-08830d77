@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Phone, Mail, Heart, Shield } from "lucide-react";
 import { QueryState } from "@/components/common/QueryState";
+import { friendlyError } from "@/lib/errors";
 
 export default function PatientProfile() {
   const [p, setP] = useState<any>(null);
@@ -13,7 +14,7 @@ export default function PatientProfile() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
     const { data, error } = await supabase.from("patients").select("*").eq("user_id", user.id).maybeSingle();
-    if (error) setLoadError(new Error(error.message));
+    if (error) setLoadError(new Error(friendlyError(error)));
     else { setLoadError(null); setP(data); }
     setLoading(false);
   };

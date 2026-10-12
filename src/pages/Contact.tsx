@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Phone, MapPin, Clock, MessageSquare, HeadphonesIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { friendlyError } from "@/lib/errors";
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
@@ -29,7 +30,7 @@ export default function Contact() {
     });
     setLoading(false);
     if (error) {
-      toast({ title: "Couldn't send", description: error.message, variant: "destructive" });
+      toast({ title: "Couldn't send", description: friendlyError(error), variant: "destructive" });
       return;
     }
     toast({ title: "Message sent", description: "Thanks — we'll get back to you within one business day." });

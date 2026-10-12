@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useHospitalId } from "@/hooks/useHospitalData";
 import { DynamicEMRForm } from "@/components/hospital/DynamicEMRForm";
+import { friendlyError } from "@/lib/errors";
 
 const ENTRY_TYPES = ["consultation_note", "vitals", "diagnosis", "lab_order", "procedure", "prescription", "allergy", "immunization", "discharge_summary"];
 
@@ -54,7 +55,7 @@ export default function AddEMREntry() {
       qc.invalidateQueries({ queryKey: ["emr-entries"] });
       navigate("/hospital/emr");
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({ title: "Error", description: friendlyError(err), variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

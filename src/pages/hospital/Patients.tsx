@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { QueryState } from "@/components/common/QueryState";
+import { friendlyError } from "@/lib/errors";
 
 const STATUS_OPTIONS = [
   { value: "outpatient", label: "Outpatient", color: "bg-success/15 text-success" },
@@ -55,7 +56,7 @@ export default function HospitalPatients() {
 
   async function updateStatus(id: string, status: string) {
     const { error } = await supabase.from("patients").update({ status }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Status updated");
     qc.invalidateQueries({ queryKey: ["patients"] });
   }

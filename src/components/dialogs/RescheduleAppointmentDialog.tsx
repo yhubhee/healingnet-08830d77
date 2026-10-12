@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { friendlyError } from "@/lib/errors";
 
 interface Props {
   appointment: any;
@@ -123,7 +124,7 @@ export function RescheduleAppointmentDialog({ appointment, trigger, onSuccess }:
     setSavingReschedule(false);
 
     if (error) {
-      toast({ title: "Failed", description: error.message, variant: "destructive" });
+      toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
       return;
     }
 

@@ -13,6 +13,7 @@ import { useInvestigationCatalog, matchItem, type PickerItem } from "@/hooks/use
 import { AlertTriangle, Loader2, Search, X, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { friendlyError } from "@/lib/errors";
 
 const sb = supabase as any;
 export type PickerMode = "lab" | "radiology" | "more";
@@ -128,7 +129,7 @@ function PickerBody({ mode, consultation, onDone }: { mode: PickerMode; consulta
       qc.invalidateQueries({ queryKey: ["lab-results"] });
       onDone();
     } catch (e: any) {
-      toast.error(e.message || "Couldn't send the order");
+      toast.error(friendlyError(e, "Couldn't send the order"));
     } finally { setBusy(false); }
   }
 

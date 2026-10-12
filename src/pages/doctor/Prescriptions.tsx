@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
 import { QueryState } from "@/components/common/QueryState";
+import { friendlyError } from "@/lib/errors";
 
 const tabs = ["all", "active", "completed", "cancelled"] as const;
 
@@ -24,9 +25,7 @@ export default function DoctorPrescriptions() {
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "prescriptions", ctx?.doctor?.id],
     queryFn: async () => {
-      console.log("🔍 DoctorPrescriptions: Doctor ID:", ctx?.doctor?.id);
       const { data, error } = await supabase.from("prescriptions").select("*, patients(first_name,last_name)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
-      console.log("🔍 Doctor prescriptions query:", { count: data?.length, error, doctor_id: ctx?.doctor?.id });
       if (error) throw error;
       return data || [];
     },
@@ -40,7 +39,7 @@ export default function DoctorPrescriptions() {
 
   async function discontinue(id: string) {
     const { error } = await supabase.from("prescriptions").update({ status: "cancelled" }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Discontinued");
     qc.invalidateQueries({ queryKey: ["doctor", "prescriptions"] });
   }
@@ -50,7 +49,7 @@ export default function DoctorPrescriptions() {
       drug_name: r.drug_name, dosage: r.dosage, frequency: r.frequency, duration: r.duration,
       instructions: r.instructions, refills_allowed: r.refills_allowed, status: "active",
     });
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Renewed");
     qc.invalidateQueries({ queryKey: ["doctor", "prescriptions"] });
   }

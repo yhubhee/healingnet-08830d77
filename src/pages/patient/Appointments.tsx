@@ -56,7 +56,6 @@ export default function PatientAppointments() {
           hospitals: a.hospital_id ? hospitalMap.get(a.hospital_id) : null,
         }));
       } catch (err) {
-        console.error("Error fetching patient appointments:", err);
         throw err;
       }
     },

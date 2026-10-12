@@ -9,6 +9,7 @@ import { useDoctor } from "@/hooks/useDoctor";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, FileText } from "lucide-react";
+import { friendlyError } from "@/lib/errors";
 
 const ENTRY_TYPES = ["consultation_note", "diagnosis", "treatment_plan", "discharge_summary", "vitals", "examination", "progress_note", "referral_note", "procedure_note", "follow_up", "allergy", "vaccination", "other"];
 
@@ -29,7 +30,7 @@ export function AddEmrNoteDialog({ trigger, patientId }: { trigger: React.ReactN
       entry_type: form.entry_type, title: form.title, content: form.content,
     });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Note added");
     qc.invalidateQueries({ queryKey: ["doctor", "patient-detail"] });
     setOpen(false);

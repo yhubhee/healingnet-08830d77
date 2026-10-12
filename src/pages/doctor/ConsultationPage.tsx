@@ -20,6 +20,7 @@ import { TreatmentCard } from "@/components/consultation/TreatmentCard";
 import { PatientSummary } from "@/components/consultation/PatientSummary";
 import { SaveRegistryContext, SaveStatus, ageFromDob, useAutosave, useConsultationCore, useConsultationRow, useReportSave, useTreatmentItems, useInvestigations } from "@/hooks/useConsultation";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { friendlyError } from "@/lib/errors";
 
 const sb = supabase as any;
 
@@ -169,7 +170,7 @@ function SubmitBar({ consultation, readOnly, overall, complaintCount }: { consul
     setBusy(true);
     const { data, error } = await sb.rpc("submit_consultation", { p_consultation_id: consultation.id });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     setOpen(false);
     toast.success(`Consultation submitted · ${data?.prescriptions ?? 0} prescription(s) sent to pharmacy`);
     qc.invalidateQueries({ queryKey: ["consultation", consultation.id] });

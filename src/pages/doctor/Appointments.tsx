@@ -53,7 +53,6 @@ export default function DoctorAppointments() {
           patients: patientMap.get(a.patient_id),
         }));
       } catch (err) {
-        console.error("Error fetching appointments:", err);
         throw err;
       }
     },

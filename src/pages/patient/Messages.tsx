@@ -5,6 +5,7 @@ import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { QueryState } from "@/components/common/QueryState";
+import { friendlyError } from "@/lib/errors";
 
 interface Msg { id: string; from_user_id: string; to_user_id: string; body: string; created_at: string; is_read: boolean; subject?: string | null }
 
@@ -23,7 +24,7 @@ export default function PatientMessages() {
     setMe(user.id);
     const { data, error } = await supabase.from("patient_messages").select("*").or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`).order("created_at", { ascending: true });
     if (error) {
-      setLoadError(new Error(error.message));
+      setLoadError(new Error(friendlyError(error)));
     } else {
       setLoadError(null);
       setMessages((data || []) as Msg[]);
@@ -46,7 +47,7 @@ export default function PatientMessages() {
     setSending(true);
     const { error } = await supabase.from("patient_messages").insert({ from_user_id: me, to_user_id: activeWith, body: draft.trim() });
     setSending(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     setDraft("");
     load();
   }

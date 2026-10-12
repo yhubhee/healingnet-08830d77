@@ -136,7 +136,7 @@ function MarketplaceCard({ market, setMarket, approved }: any) {
     setSaving(true);
     const { error } = await supabase.from("doctor_marketplace").upsert(market, { onConflict: "doctor_id" });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Marketplace updated");
   }
   return (

@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { LETTER_TYPES } from "@/components/doctor/IssueLetterDialog";
+import { friendlyError } from "@/lib/errors";
 
 export function RequestLetterDialog({ patientId, trigger }: { patientId: string; trigger: React.ReactNode }) {
   const qc = useQueryClient();
@@ -64,7 +65,7 @@ export function RequestLetterDialog({ patientId, trigger }: { patientId: string;
       setOpen(false);
       setNotes("");
     } catch (e: any) {
-      toast.error(e.message || "Could not submit request");
+      toast.error(friendlyError(e, "Could not submit request"));
     } finally {
       setSaving(false);
     }

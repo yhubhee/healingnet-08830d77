@@ -13,6 +13,7 @@ import { getStaffHospitalId } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 
 const wardTypes = ["general", "private", "icu", "maternity", "pediatric", "surgical"];
 const bedTypes = ["standard", "electric", "icu", "crib", "bariatric"];
@@ -74,7 +75,7 @@ export default function HospitalBedManagement() {
     const hospitalId = await getStaffHospitalId();
     if (!hospitalId) { toast.error("Not associated with a hospital"); return; }
     const { error } = await supabase.from("hospital_wards" as any).insert({ ...wardForm, hospital_id: hospitalId } as any);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Ward added");
     setWardDialogOpen(false);
     setWardForm({ ward_name: "", ward_type: "general", total_beds: 0, floor: "" });
@@ -85,7 +86,7 @@ export default function HospitalBedManagement() {
     const hospitalId = await getStaffHospitalId();
     if (!hospitalId) { toast.error("Not associated with a hospital"); return; }
     const { error } = await supabase.from("hospital_beds" as any).insert({ ...bedForm, hospital_id: hospitalId, status: "available" } as any);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Bed added");
     setBedDialogOpen(false);
     setBedForm({ bed_number: "", ward_id: "", bed_type: "standard", daily_rate: 0 });
@@ -95,7 +96,7 @@ export default function HospitalBedManagement() {
   async function handleAssignPatient() {
     if (!selectedBed || !assignPatientId) return;
     const { error } = await supabase.from("hospital_beds" as any).update({ patient_id: assignPatientId, status: "occupied", assigned_at: new Date().toISOString() } as any).eq("id", selectedBed.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Patient assigned to bed");
     setAssignDialogOpen(false);
     setSelectedBed(null);
@@ -105,7 +106,7 @@ export default function HospitalBedManagement() {
 
   async function handleDischargeBed(bedId: string) {
     const { error } = await supabase.from("hospital_beds" as any).update({ patient_id: null, status: "available", assigned_at: null, discharged_at: new Date().toISOString() } as any).eq("id", bedId);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Patient discharged from bed");
     queryClient.invalidateQueries({ queryKey: ["hospital-beds"] });
   }

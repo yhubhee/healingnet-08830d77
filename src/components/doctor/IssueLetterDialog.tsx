@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
+import { friendlyError } from "@/lib/errors";
 
 export const LETTER_TYPES = [
   { value: "fit_to_work", label: "Fit-to-Work / Fit-to-Travel Letter" },
@@ -80,7 +81,7 @@ export function IssueLetterDialog({ patientId, trigger, existingLetter, open: op
       qc.invalidateQueries({ queryKey: ["pending-letters", patientId] });
       setOpen(false);
     } catch (e: any) {
-      toast.error(e.message || "Failed to issue letter");
+      toast.error(friendlyError(e, "Failed to issue letter"));
     } finally {
       setSaving(false);
     }

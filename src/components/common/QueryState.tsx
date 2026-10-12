@@ -1,4 +1,5 @@
 import { AlertCircle, Loader2 } from "lucide-react";
+import { friendlyError } from "@/lib/errors";
 import { Button } from "@/components/ui/button";
 
 interface QueryStateProps {
@@ -31,8 +32,7 @@ export function QueryState({
   }
 
   if (isError) {
-    const message =
-      error instanceof Error ? error.message : "Something went wrong.";
+    const message = friendlyError(error, "Something went wrong.");
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center gap-3 border border-destructive/20 bg-destructive/5 rounded-lg">
         <AlertCircle className="h-6 w-6 text-destructive" />

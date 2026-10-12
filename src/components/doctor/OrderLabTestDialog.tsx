@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Loader2, FlaskConical, X, Plus, Search, ChevronDown } from "lucide-react";
 import { LAB_CATALOG, LAB_BUNDLES, LAB_CATEGORIES, findCatalogTest, type LabCategory } from "@/lib/lab/catalog";
 import { cn } from "@/lib/utils";
+import { friendlyError } from "@/lib/errors";
 
 export function OrderLabTestDialog({ trigger, patientId: lockedPatientId }: { trigger: React.ReactNode; patientId?: string }) {
   const [open, setOpen] = useState(false);
@@ -67,7 +68,7 @@ export function OrderLabTestDialog({ trigger, patientId: lockedPatientId }: { tr
     const { data: lr, error } = await supabase.from("lab_results").insert({
       patient_id: patientId, hospital_id: hospitalId, ordered_by: ctx!.doctor.id, notes, status: "pending",
     }).select().single();
-    if (error || !lr) { setSaving(false); return toast.error(error?.message || "Failed"); }
+    if (error || !lr) { setSaving(false); return toast.error(friendlyError(error, "Failed")); }
 
     const rows: any[] = [];
     selected.forEach((id) => {
@@ -92,7 +93,7 @@ export function OrderLabTestDialog({ trigger, patientId: lockedPatientId }: { tr
     });
     const { error: tErr } = await supabase.from("lab_result_tests").insert(rows);
     setSaving(false);
-    if (tErr) return toast.error(tErr.message);
+    if (tErr) return toast.error(friendlyError(tErr));
     toast.success(`Lab order created (${rows.length} test${rows.length > 1 ? "s" : ""})`);
     qc.invalidateQueries({ queryKey: ["doctor", "labs"] });
     qc.invalidateQueries({ queryKey: ["doctor", "patient-detail"] });

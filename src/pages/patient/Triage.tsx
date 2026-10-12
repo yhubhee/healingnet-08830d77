@@ -16,6 +16,7 @@ import { TriageStep7HospitalSelectionStep } from "@/components/triage/TriageStep
 import { TriageStep8ConfirmationStep } from "@/components/triage/TriageStep8ConfirmationStep";
 import { TriageStep7_5DateTimeStep } from "@/components/triage/TriageStep7_5DateTimeStep";
 import { SkipTriageModal } from "@/components/triage/SkipTriageModal";
+import { friendlyError } from "@/lib/errors";
 
 type Sex = "male" | "female";
 interface Evidence { id: string; name: string; present: boolean }
@@ -108,7 +109,7 @@ export default function PatientTriage() {
       if (error) throw error;
       setStep(2);
     } catch (e: any) {
-      toast.error(e.message || "Could not save");
+      toast.error(friendlyError(e, "Could not save"));
     } finally {
       setSavingDemo(false);
     }
@@ -117,7 +118,7 @@ export default function PatientTriage() {
   async function callNurse(payload: any): Promise<NurseResponse | null> {
     const { data, error } = await supabase.functions.invoke("triage-nurse", { body: payload });
     if (error || (data as any)?.error) {
-      toast.error((data as any)?.error || error?.message || "AI nurse unavailable");
+      toast.error((data as any)?.error || friendlyError(error, "AI nurse unavailable"));
       return null;
     }
     return data as NurseResponse;
@@ -339,7 +340,7 @@ export default function PatientTriage() {
       const ranked = rankHospitals(coords, hospitalData || [], specSet);
       setHospitalsForDoctor(ranked);
     } catch (error: any) {
-      toast.error(error.message || "Failed to load hospitals");
+      toast.error(friendlyError(error, "Failed to load hospitals"));
     } finally {
       setLoadingHospitals(false);
     }

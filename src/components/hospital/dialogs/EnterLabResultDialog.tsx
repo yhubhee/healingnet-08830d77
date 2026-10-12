@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { computeFlag, type FlagLevel } from "@/lib/lab/panels";
 import { findCatalogTest, resolveRange, type CatalogTest, type ParamKind } from "@/lib/lab/catalog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { friendlyError } from "@/lib/errors";
 
 type ParamResult = {
   name: string;
@@ -353,7 +354,7 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
         onClose();
       }
     } catch (err: any) {
-      toast({ title: "Could not save results", description: err.message, variant: "destructive" });
+      toast({ title: "Could not save results", description: friendlyError(err), variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -385,13 +386,13 @@ export function EnterLabResultDialog({ order, open, onClose }: { order: any; ope
       } catch (reportErr: any) {
         toast({
           title: "Results saved",
-          description: `Report generation failed: ${reportErr.message}. You can re-issue the report later.`,
+          description: "Report generation failed. You can re-issue the report later.",
         });
       }
 
       onClose();
     } catch (err: any) {
-      toast({ title: "Could not save results", description: err.message, variant: "destructive" });
+      toast({ title: "Could not save results", description: friendlyError(err), variant: "destructive" });
     } finally {
       setSaving(false);
     }

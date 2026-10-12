@@ -10,6 +10,7 @@ import { useDoctor, useDoctorPatients } from "@/hooks/useDoctor";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Pill } from "lucide-react";
+import { friendlyError } from "@/lib/errors";
 
 export function NewPrescriptionDialog({ trigger, patientId: lockedPatientId }: { trigger: React.ReactNode; patientId?: string }) {
   const [open, setOpen] = useState(false);
@@ -29,7 +30,6 @@ export function NewPrescriptionDialog({ trigger, patientId: lockedPatientId }: {
     if (!form.drug_name) return toast.error("Drug name required");
     if (!hospitalId) return toast.error("You're not linked to any hospital yet");
     setSaving(true);
-    console.log("📝 Creating prescription:", { patient_id: patientId, doctor_id: ctx!.doctor.id, hospital_id: hospitalId });
     const { error } = await supabase.from("prescriptions").insert({
       patient_id: patientId, doctor_id: ctx!.doctor.id, hospital_id: hospitalId,
       drug_name: form.drug_name, dosage: form.dosage, frequency: form.frequency,
@@ -38,10 +38,8 @@ export function NewPrescriptionDialog({ trigger, patientId: lockedPatientId }: {
     });
     setSaving(false);
     if (error) {
-      console.error("❌ Prescription creation error:", error);
-      return toast.error(error.message);
+      return toast.error(friendlyError(error));
     }
-    console.log("✅ Prescription created successfully");
     toast.success("Prescription issued");
     qc.invalidateQueries({ queryKey: ["doctor", "prescriptions"] });
     qc.invalidateQueries({ queryKey: ["doctor", "patient-detail"] });

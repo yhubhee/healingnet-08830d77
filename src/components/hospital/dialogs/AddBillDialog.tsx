@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useHospitalId, usePatients } from "@/hooks/useHospitalData";
+import { friendlyError } from "@/lib/errors";
 
 export function AddBillDialog() {
   const [open, setOpen] = useState(false);
@@ -30,7 +31,7 @@ export function AddBillDialog() {
       hospital_id: hospitalId, patient_id: f.patient_id, billing_type: f.billing_type, description: f.description,
       amount, tax, discount, total, payment_method: f.payment_method, payment_status: "pending",
     });
-    if (error) return toast({ title: "Failed", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Bill created" });
     setOpen(false); setF({ billing_type: "consultation", payment_method: "cash" });
     qc.invalidateQueries({ queryKey: ["hospital-billing"] });

@@ -4,6 +4,7 @@ import { Bell, Lock, Globe, Shield, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNotificationPrefs, useSaveNotificationPrefs } from "@/hooks/useUserNotifications";
 import { QueryState } from "@/components/common/QueryState";
+import { friendlyError } from "@/lib/errors";
 
 export default function PatientSettings() {
   const { data: prefs, isLoading, isError, error, refetch } = useNotificationPrefs();
@@ -37,7 +38,7 @@ export default function PatientSettings() {
     setForm(next);
     savePrefs.mutate(next, {
       onSuccess: () => toast.success("Preferences saved"),
-      onError: (e: any) => toast.error(e.message || "Could not save preferences"),
+      onError: (e: any) => toast.error(friendlyError(e, "Could not save preferences")),
     });
   }
 

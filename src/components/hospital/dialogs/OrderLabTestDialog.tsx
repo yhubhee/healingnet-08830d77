@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePatients, useDoctors, useHospitalId } from "@/hooks/useHospitalData";
 import { Plus, X } from "lucide-react";
+import { friendlyError } from "@/lib/errors";
 
 export function OrderLabTestDialog() {
   const [patientId, setPatientId] = useState("");
@@ -22,7 +23,7 @@ export function OrderLabTestDialog() {
   async function submit(e: React.FormEvent, close: () => void) {
     e.preventDefault();
     const { data: lab, error } = await supabase.from("lab_results").insert({ patient_id: patientId, hospital_id: hospitalId!, ordered_by: doctorId || null, status: "pending" }).select().single();
-    if (error || !lab) return toast({ title: "Failed", description: error?.message, variant: "destructive" });
+    if (error || !lab) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
     const rows = tests.filter((t) => t.test_name).map((t) => ({ ...t, lab_result_id: lab.id }));
     if (rows.length) await supabase.from("lab_result_tests").insert(rows);
     toast({ title: "Lab order created" });

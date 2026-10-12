@@ -8,6 +8,7 @@ import { Loader2, Save, Globe, Building2, Bell, User } from "lucide-react";
 import { toast } from "sonner";
 import { signOut } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { friendlyError } from "@/lib/errors";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -153,7 +154,7 @@ export default function DoctorSettings() {
       }
       toast.success("Settings saved");
     } catch (e: any) {
-      toast.error(e.message || "Failed to save");
+      toast.error(friendlyError(e, "Failed to save"));
     } finally {
       setSaving(false);
     }

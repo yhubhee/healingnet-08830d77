@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, Play, RotateCcw, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 
 const sb = supabase as any;
 
@@ -37,7 +38,7 @@ export function StartConsultationButton({ appointment, status, size, className }
       setBusy(true);
       const { data, error } = await sb.rpc("start_consultation", { p_patient_id: appointment.patient_id, p_appointment_id: appointment.id });
       setBusy(false);
-      if (error) return toast.error(error.message);
+      if (error) return toast.error(friendlyError(error));
       window.location.assign(`/doctor/consultation/${data}`);
     }}>{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />}{label}</Button>
   );

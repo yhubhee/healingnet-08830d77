@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { Calendar, Pill, FlaskConical, FileText, ArrowRight, Stethoscope, Loader2, Clock, AlertCircle, Plus } from "lucide-react";
 import { usePatientProfile, usePatientAppointments, usePatientPrescriptions, usePatientLabResults, usePatientEmr } from "@/hooks/usePatientData";
 import { Button } from "@/components/ui/button";
+import { ShareRecordsCard } from "@/components/patient/ShareRecordsCard";
 import { QueryState } from "@/components/common/QueryState";
 
 export default function PatientDashboard() {
@@ -76,6 +77,8 @@ export default function PatientDashboard() {
         </div>
         <Link to="/patient/triage" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-1 hover:opacity-90 transition-opacity">Start triage <ArrowRight className="w-4 h-4" /></Link>
       </div>
+
+      <ShareRecordsCard />
 
       {loading ? (
         <div className="flex items-center gap-2 text-muted-foreground">

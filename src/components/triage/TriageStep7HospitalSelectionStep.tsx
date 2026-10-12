@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { rankHospitals } from "@/lib/triage/proximity";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 
 interface RankedHospital {
   id: string;
@@ -83,7 +84,7 @@ export function TriageStep7HospitalSelectionStep({
 
       setHospitals(ranked);
     } catch (error: any) {
-      toast.error(error.message || "Failed to load hospitals");
+      toast.error(friendlyError(error, "Failed to load hospitals"));
     } finally {
       setLoadingHospitals(false);
     }

@@ -13,16 +13,12 @@ export default function PatientPrescriptions() {
     queryKey: ["patient", "prescriptions"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log("🔍 PatientPrescriptions: Auth user:", user?.id);
       if (!user) {
-        console.warn("⚠️ No auth user found");
         return [];
       }
       const { data: p, error: pError } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
-      console.log("🔍 Patient lookup result:", { patient_id: p?.id, error: pError });
       if (pError) throw pError;
       if (!p) {
-        console.warn("⚠️ No patient record found for user");
         return [];
       }
       const { data, error } = await supabase
@@ -30,7 +26,6 @@ export default function PatientPrescriptions() {
         .select("*, doctors(first_name,last_name)")
         .eq("patient_id", p.id)
         .order("created_at", { ascending: false });
-      console.log("🔍 Prescriptions query result:", { count: data?.length, error, patient_id: p.id });
       if (error) throw error;
       return data || [];
     },

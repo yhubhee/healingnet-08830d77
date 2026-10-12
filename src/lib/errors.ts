@@ -6,6 +6,7 @@ const KNOWN: [RegExp, string][] = [
   [/status change is not allowed/i, "That status change isn't allowed."],
   [/permission denied|row-level security|not allowed|42501/i, "You don't have permission to do that."],
   [/duplicate key|23505/i, "That record already exists."],
+  [/foreign key|23503/i, "That person needs a HealingNet account first."],
   [/jwt|not authenticated|invalid.*token/i, "Please sign in again."],
   [/failed to fetch|network/i, "Network problem. Check your connection and try again."],
 ];

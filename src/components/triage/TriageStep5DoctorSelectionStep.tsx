@@ -2,6 +2,7 @@ import { ArrowRight, ArrowLeft, Loader2, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { friendlyError } from "@/lib/errors";
 
 interface Doctor {
   id: string;
@@ -56,7 +57,7 @@ export function TriageStep5DoctorSelectionStep({ specialty, onSelectDoctor, onBa
         setDoctors(allDoctors || []);
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to load doctors");
+      toast.error(friendlyError(error, "Failed to load doctors"));
     } finally {
       setLoadingDoctors(false);
     }

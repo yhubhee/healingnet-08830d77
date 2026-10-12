@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { pick, ALLOWED } from "@/lib/allowed";
 import { useHospitalId } from "@/hooks/useHospitalData";
 
 const ROLES = ["admin","receptionist","nurse","lab_tech","pharmacist","manager","medical_officer"];
@@ -21,7 +22,7 @@ export function InviteStaffDialog() {
         <form onSubmit={async (e) => { e.preventDefault();
           // For invite: in absence of an email-invite system, we create the row with a placeholder user_id;
           // a true invite system would email a signup link.
-          await handleSubmit(supabase.from("hospital_staff").insert({ ...f, hospital_id: hospitalId, user_id: "00000000-0000-0000-0000-000000000000" }), { toast, close, qc, invalidate: ["hospital-staff"], successMsg: "Staff invited (pending signup)" });
+          await handleSubmit(supabase.from("hospital_staff").insert(pick({ ...f, hospital_id: hospitalId, user_id: "00000000-0000-0000-0000-000000000000" }, ALLOWED.hospitalStaffInsert) as any), { toast, close, qc, invalidate: ["hospital-staff"], successMsg: "Staff invited (pending signup)" });
         }} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div><Label>First name</Label><Input required value={f.first_name || ""} onChange={(e) => setF({ ...f, first_name: e.target.value })} /></div>

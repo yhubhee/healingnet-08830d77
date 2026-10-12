@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
 import { QueryState } from "@/components/common/QueryState";
 import { buildLabReportDocument, downloadReportPdf, printReport } from "@/lib/reports/documents";
+import { friendlyError } from "@/lib/errors";
 
 export default function DoctorLabOrders() {
   const [tab, setTab] = useState<"pending" | "completed">("pending");
@@ -37,7 +38,7 @@ export default function DoctorLabOrders() {
   }
   async function cancel(id: string) {
     const { error } = await supabase.from("lab_results").update({ status: "cancelled" }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Cancelled");
     qc.invalidateQueries({ queryKey: ["doctor", "labs"] });
   }

@@ -9,6 +9,7 @@ import { useInvestigations } from "@/hooks/useConsultation";
 import { useState } from "react";
 import { printRequestSlip } from "./requestSlip";
 import { OrderPickerDialog, type PickerMode } from "./OrderPickerDialog";
+import { friendlyError } from "@/lib/errors";
 
 const sb = supabase as any;
 
@@ -42,12 +43,12 @@ export function InvestigationsCard({ consultation, readOnly }: { consultation: a
 
   async function cancelTest(t: any) {
     const { error } = await sb.from("lab_result_tests").delete().eq("id", t.id).eq("status", "pending");
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Test removed"); refresh();
   }
   async function cancelRequest(r: any) {
     const { error } = await sb.from("diagnostic_requests").update({ cancelled_at: new Date().toISOString() }).eq("id", r.id).is("performed_at", null);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(friendlyError(error));
     toast.success("Request cancelled"); refresh();
   }
 

@@ -13,6 +13,7 @@ import { AppointmentDetailDrawer } from "@/components/doctor/AppointmentDetailDr
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { QueryState } from "@/components/common/QueryState";
+import { friendlyError } from "@/lib/errors";
 
 export default function DoctorDashboard() {
   const { data: ctx, isLoading: ctxLoading, isError: ctxError, error: ctxErr, refetch: ctxRefetch } = useDoctor();
@@ -170,7 +171,7 @@ export default function DoctorDashboard() {
                     onClick={() => {
                       callInMutation.mutate(c.id, {
                         onSuccess: () => toast({ title: "Success", description: `Called in ${c.patients?.first_name}` }),
-                        onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+                        onError: (err) => toast({ title: "Error", description: friendlyError(err), variant: "destructive" }),
                       });
                     }}
                     disabled={callInMutation.isPending}
