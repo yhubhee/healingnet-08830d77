@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ALLOWED, pick } from "@/lib/allowed";
 import { useDoctor } from "@/hooks/useDoctor";
 import { friendlyError } from "@/lib/errors";
 
@@ -71,7 +72,7 @@ export function IssueLetterDialog({ patientId, trigger, existingLetter, open: op
       };
       let error;
       if (existingLetter?.id) {
-        ({ error } = await supabase.from("patient_letters" as any).update(payload).eq("id", existingLetter.id));
+        ({ error } = await supabase.from("patient_letters" as any).update(pick(payload, ALLOWED.letterUpdate)).eq("id", existingLetter.id));
       } else {
         ({ error } = await supabase.from("patient_letters" as any).insert(payload));
       }

@@ -197,7 +197,7 @@ begin
   if _kind = 'appointment' then
     select * into _a from public.patient_appointments where id = _id;
     if not found
-       or not (_a.doctor_id = private.my_doctor_id()
+       or not (coalesce(_a.doctor_id = private.my_doctor_id(), false)
                or private.is_own_patient(_a.patient_id)
                or private.is_hospital_staff(_a.hospital_id)) then
       raise exception 'Not allowed' using errcode = '42501';
@@ -208,7 +208,7 @@ begin
   elsif _kind = 'consultation_request' then
     select * into _r from public.consultation_requests where id = _id;
     if not found
-       or not (_r.doctor_id = private.my_doctor_id()
+       or not (coalesce(_r.doctor_id = private.my_doctor_id(), false)
                or private.is_own_patient(_r.patient_id)
                or private.is_hospital_staff(_r.requesting_hospital_id)) then
       raise exception 'Not allowed' using errcode = '42501';
