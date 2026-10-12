@@ -47,19 +47,14 @@ export function TriageStep8ConfirmationStep({
     try {
       let finalHospitalId = hospitalId || null;
 
-      if (visitType === "telemedicine") {
-        const { data: resolvedHospitalId, error: hospitalError } = await supabase.rpc("get_doctor_hospital_id", { _doctor_id: doctorId });
-        if (hospitalError) throw hospitalError;
-        finalHospitalId = resolvedHospitalId;
-      }
+      const { data: hospitalIds, error: hospitalError } = await supabase.rpc("doctor_hospital_ids", { _doctor_id: doctorId });
+      if (hospitalError) throw hospitalError;
+      const doctorHospitals = (hospitalIds ?? []) as string[];
 
-      if (visitType === "in-person" && finalHospitalId) {
-        const { data: isValidHospital, error: validationError } = await supabase.rpc("is_doctor_at_hospital", {
-          _doctor_id: doctorId,
-          _hospital_id: finalHospitalId,
-        });
-        if (validationError) throw validationError;
-        if (!isValidHospital) throw new Error("This doctor is not linked to the selected hospital. Please choose another hospital or online consultation.");
+      if (visitType === "telemedicine") {
+        finalHospitalId = doctorHospitals[0] ?? null;
+      } else if (finalHospitalId && !doctorHospitals.includes(finalHospitalId)) {
+        throw new Error("This doctor is not linked to the selected hospital. Please choose another hospital or online consultation.");
       }
 
       if (!finalHospitalId) {
@@ -90,36 +85,10 @@ export function TriageStep8ConfirmationStep({
 
       const appointmentId = appointmentData?.id;
 
-      if (visitType === "telemedicine") {
-        const { data: roomData, error: roomError } = await supabase.functions.invoke("daily-room", {
-          body: {
-            action: "create",
-            appointment_id: appointmentId,
-            doctor_name: `Dr. ${doctorName}`,
-            patient_name: patient.first_name,
-          },
-        });
-
-        if (roomError) {
-          throw new Error("Failed to create video room: " + (roomError.message || "Unknown error"));
-        }
-
-        // Store meeting link and room name in appointment
-        if (roomData?.meeting_link || roomData?.room_name) {
-          await supabase
-            .from("patient_appointments")
-            .update({
-              meeting_link: roomData?.meeting_link,
-              daily_room_name: roomData?.room_name,
-            })
-            .eq("id", appointmentId);
-        }
-      }
-
       toast.success("Appointment booked successfully!");
       nav("/patient/appointments");
     } catch (error: any) {
-      toast.error(error.message || "Booking failed");
+      toast.error(error?.code ? "We couldn't book that appointment. Please try again." : error?.message || "Booking failed");
     } finally {
       setConfirming(false);
     }

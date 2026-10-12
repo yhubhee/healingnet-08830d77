@@ -1,13 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useId } from "react";
+import { pick, ALLOWED } from "@/lib/allowed";
+import { getStaffHospitalId, getMyDoctorId } from "@/lib/roles";
 
 // Helper to get hospital_id from current user
 async function getHospitalId() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data } = await supabase.rpc("get_user_hospital_id", { _user_id: user.id });
-  return data as string | null;
+  return getStaffHospitalId();
 }
 
 export function useHospitalId() {
@@ -88,7 +87,7 @@ export function useUpdateCheckin() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; [key: string]: any }) => {
-      const { error } = await supabase.from("patient_checkins").update(updates).eq("id", id);
+      const { error } = await supabase.from("patient_checkins").update(pick(updates, ALLOWED.checkinUpdate) as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -108,18 +107,6 @@ export function useCallInPatient() {
 
       const { error } = await supabase.from("patient_checkins").update({ status: "called" }).eq("id", checkinId);
       if (error) throw error;
-
-      const { data: patient } = await supabase.from("patients").select("first_name, last_name").eq("id", checkin.patient_id).single();
-      const { data: doctor } = await supabase.from("doctors").select("first_name, last_name").eq("id", checkin.assigned_doctor_id).single();
-
-      // Create notification for hospital staff
-      await supabase.from("hospital_notifications").insert({
-        hospital_id: checkin.hospital_id,
-        title: "Patient Called In",
-        message: `Dr. ${doctor?.first_name} ${doctor?.last_name} called in ${patient?.first_name} ${patient?.last_name}`,
-        type: "call_in",
-        related_patient_id: checkin.patient_id,
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["patient-checkins"] });
@@ -480,7 +467,7 @@ export function useHospitalSubscription() {
   return useQuery({
     queryKey: ["hospital-subscription"],
     queryFn: async () => {
-      const { data: hid } = await supabase.rpc("get_user_hospital_id", { _user_id: (await supabase.auth.getUser()).data.user!.id });
+      const hid = await getStaffHospitalId();
       if (!hid) return null;
       const { data } = await supabase.from("hospital_subscriptions" as any).select("*").eq("hospital_id", hid).order("started_at", { ascending: false }).limit(1).maybeSingle();
       return data;
@@ -493,10 +480,7 @@ export function useDoctorId() {
   return useQuery({
     queryKey: ["doctor-id"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data } = await supabase.rpc("get_user_doctor_id", { _user_id: user.id });
-      return data as string | null;
+      return getMyDoctorId();
     },
   });
 }

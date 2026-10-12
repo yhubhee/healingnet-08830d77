@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { routeForUser } from "@/lib/roles";
 import { Heart } from "lucide-react";
 
 export default function Login() {
@@ -21,18 +22,7 @@ export default function Login() {
   }, []);
 
   async function routeByRole(userId: string) {
-    // Check doctor first — hospital_id can resolve for doctors via hospital_doctors,
-    // which would incorrectly send them to the hospital dashboard.
-    const { data: docId } = await supabase.rpc("get_user_doctor_id", { _user_id: userId });
-    if (docId) return navigate("/doctor");
-    const { data: staff } = await supabase
-      .from("hospital_staff")
-      .select("hospital_id")
-      .eq("user_id", userId)
-      .eq("is_active", true)
-      .maybeSingle();
-    if (staff?.hospital_id) return navigate("/hospital");
-    navigate("/patient");
+    navigate(await routeForUser(userId));
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -40,7 +30,7 @@ export default function Login() {
     setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast({ title: "Login failed", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Login failed", description: "Check your email and password and try again.", variant: "destructive" });
     if (data.user) routeByRole(data.user.id);
   }
 

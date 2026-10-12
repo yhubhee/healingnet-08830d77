@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useHospitalWards, useHospitalBeds, useRealtimeBeds, usePatients } from "@/hooks/useHospitalData";
+import { getStaffHospitalId } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -70,7 +71,7 @@ export default function HospitalBedManagement() {
   const tabs = ["Overview", "Wards", "All Beds", "Occupied", "Available"];
 
   async function handleAddWard() {
-    const hospitalId = (await supabase.rpc("get_user_hospital_id", { _user_id: (await supabase.auth.getUser()).data.user?.id! })).data;
+    const hospitalId = await getStaffHospitalId();
     if (!hospitalId) { toast.error("Not associated with a hospital"); return; }
     const { error } = await supabase.from("hospital_wards" as any).insert({ ...wardForm, hospital_id: hospitalId } as any);
     if (error) { toast.error(error.message); return; }
@@ -81,7 +82,7 @@ export default function HospitalBedManagement() {
   }
 
   async function handleAddBed() {
-    const hospitalId = (await supabase.rpc("get_user_hospital_id", { _user_id: (await supabase.auth.getUser()).data.user?.id! })).data;
+    const hospitalId = await getStaffHospitalId();
     if (!hospitalId) { toast.error("Not associated with a hospital"); return; }
     const { error } = await supabase.from("hospital_beds" as any).insert({ ...bedForm, hospital_id: hospitalId, status: "available" } as any);
     if (error) { toast.error(error.message); return; }
