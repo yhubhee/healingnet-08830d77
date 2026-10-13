@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.18"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       consultation_addenda: {
@@ -3349,7 +3374,6 @@ export type Database = {
       doctor_hospital_ids: { Args: { _doctor_id: string }; Returns: string[] }
       doctor_private_profile: { Args: { p_doctor_id: string }; Returns: Json }
       doctor_user_id: { Args: { _doctor_id: string }; Returns: string }
-      end_call: { Args: { _id: string; _kind: string }; Returns: boolean }
       emit_hospital_notification: {
         Args: {
           _hospital_id: string
@@ -3374,6 +3398,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      end_call: { Args: { _id: string; _kind: string }; Returns: boolean }
       fulfill_payment: {
         Args: {
           p_currency: string
@@ -3572,6 +3597,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
