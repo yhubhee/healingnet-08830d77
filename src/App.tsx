@@ -3,8 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense, type ReactNode } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 const About = lazy(() => import("./pages/About"));
@@ -20,6 +21,9 @@ import CompleteSignup from "./pages/CompleteSignup";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RequirePlan } from "./components/auth/RequirePlan";
 import { PageLoadingFallback } from "./components/common/PageLoadingFallback";
+import { RequireAdmin } from "./admin/RequireAdmin";
+
+const AdminApp = lazy(() => import("./admin/AdminApp"));
 
 const HospitalDashboard = lazy(() => import("./pages/hospital/Dashboard"));
 const HospitalQueue = lazy(() => import("./pages/hospital/Queue"));
@@ -73,7 +77,9 @@ const VideoConsult = lazy(() => import("./pages/VideoConsult"));
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError: (error) => {
+    onError: (error, query) => {
+      // Admin screens show their own inline error with a Retry button.
+      if (query.meta?.inlineError) return;
       toast.error("Couldn't load some information", {
         description: "Please check your connection and try again.",
       });
@@ -82,12 +88,24 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1 } },
 });
 
+// Only the admin console offers a light theme; everywhere else stays dark.
+function AppThemeProvider({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
+  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+  return (
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} storageKey="hn-admin-theme" forcedTheme={isAdmin ? undefined : "dark"}>
+      {children}
+    </ThemeProvider>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
       <BrowserRouter>
+        <AppThemeProvider>
+        <Toaster />
+        <Sonner />
         <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -160,9 +178,13 @@ const App = () => (
           <Route path="/hospital/confirming-payment" element={<ProtectedRoute><ConfirmingPayment /></ProtectedRoute>} />
           <Route path="/hospital/beds" element={<ProtectedRoute><HospitalBedManagement /></ProtectedRoute>} />
 
+          {/* Platform admin console (HealingNet staff). The database enforces admin rights; the guard is UX only. */}
+          <Route path="/admin/*" element={<ProtectedRoute><RequireAdmin><AdminApp /></RequireAdmin></ProtectedRoute>} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
+        </AppThemeProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

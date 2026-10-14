@@ -16,8 +16,10 @@ export async function getMyDoctorId(): Promise<string | null> {
 // Pending staff invites are accepted once per user per page load, right after sign-in.
 const invitesChecked = new Set<string>();
 
-// Where to send a signed-in user: /doctor, /hospital, /patient, or the role picker.
+// Where to send a signed-in user: /admin, /doctor, /hospital, /patient, or the role picker.
 export async function routeForUser(userId: string): Promise<string> {
+  const { data: isAdmin } = await supabase.rpc("admin_whoami");
+  if (isAdmin === true) return "/admin";
   if (!invitesChecked.has(userId)) {
     invitesChecked.add(userId);
     await supabase.rpc("accept_my_staff_invites"); // best effort; nothing to do if there are none

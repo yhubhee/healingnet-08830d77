@@ -71,6 +71,55 @@
     --background: 222 47% 11%;
     --foreground: 214 32% 91%;
   }
+
+  /* Chart series (validated categorical order: blue, orange, aqua, yellow). */
+  :root, .dark {
+    --chart-1: #3987e5;
+    --chart-2: #d95926;
+    --chart-3: #199e70;
+    --chart-4: #c98500;
+  }
+
+  /* Light theme. Only reachable in the admin console (the rest of the app is forced dark). */
+  .light {
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 189 88% 28%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 224 45% 38%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 19% 35%;
+    --accent: 189 60% 92%;
+    --accent-foreground: 189 88% 22%;
+    --destructive: 0 72% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 160 84% 26%;
+    --success-foreground: 0 0% 100%;
+    --warning: 30 95% 34%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 32%;
+    --info-foreground: 0 0% 100%;
+    --border: 214 25% 86%;
+    --input: 214 25% 80%;
+    --ring: 189 88% 28%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 189 88% 28%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 20% 94%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 25% 86%;
+    --sidebar-ring: 189 88% 28%;
+    --chart-1: #2a78d6;
+    --chart-2: #eb6834;
+    --chart-3: #1baf7a;
+    --chart-4: #eda100;
+  }
 }
 
 @layer base {
