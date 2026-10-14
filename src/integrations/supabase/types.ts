@@ -1029,6 +1029,48 @@ export type Database = {
         }
         Relationships: []
       }
+      email_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          data: Json
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          send_after: string
+          sent_at: string | null
+          status: string
+          template: string
+          to_user_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          data?: Json
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          send_after?: string
+          sent_at?: string | null
+          status?: string
+          template: string
+          to_user_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          data?: Json
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          send_after?: string
+          sent_at?: string | null
+          status?: string
+          template?: string
+          to_user_id?: string
+        }
+        Relationships: []
+      }
       emr_entries: {
         Row: {
           attachments: Json | null
@@ -3382,6 +3424,7 @@ export type Database = {
         Returns: number
       }
       admin_doctor_detail: { Args: { p_doctor_id: string }; Returns: Json }
+      admin_email_queue: { Args: never; Returns: Json }
       admin_extend_trial: {
         Args: { p_days: number; p_hospital_id: string; p_reason?: string }
         Returns: string
@@ -3456,6 +3499,51 @@ export type Database = {
       }
       admin_verification_queue: { Args: never; Returns: Json }
       admin_whoami: { Args: never; Returns: boolean }
+      book_appointment: {
+        Args: {
+          p_date: string
+          p_doctor_id: string
+          p_hospital_id: string
+          p_is_telemedicine?: boolean
+          p_reason?: string
+          p_time: string
+        }
+        Returns: string
+      }
+      bookable_doctors: {
+        Args: { p_hospital_id: string; p_specialty?: string }
+        Returns: {
+          bio: string
+          first_name: string
+          id: string
+          last_name: string
+          matches_specialty: boolean
+          profile_image_url: string
+          rating: number
+          specialty: string
+          years_experience: number
+        }[]
+      }
+      bookable_hospitals: {
+        Args: {
+          p_lat?: number
+          p_lng?: number
+          p_search?: string
+          p_specialty?: string
+        }
+        Returns: {
+          address: string
+          city: string
+          distance_km: number
+          doctors_in_specialty: number
+          doctors_total: number
+          id: string
+          logo_url: string
+          name: string
+          offers_telemedicine: boolean
+          state: string
+        }[]
+      }
       can_join_call: { Args: { _id: string; _kind: string }; Returns: boolean }
       complete_signup: {
         Args: { p_data?: Json; p_role: string }
@@ -3485,6 +3573,32 @@ export type Database = {
       doctor_hospital_ids: { Args: { _doctor_id: string }; Returns: string[] }
       doctor_private_profile: { Args: { p_doctor_id: string }; Returns: Json }
       doctor_user_id: { Args: { _doctor_id: string }; Returns: string }
+      email_outbox_claim: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempts: number
+          created_at: string
+          data: Json
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          send_after: string
+          sent_at: string | null
+          status: string
+          template: string
+          to_user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "email_outbox"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      email_outbox_finish: {
+        Args: { p_error?: string; p_id: string; p_result: string }
+        Returns: undefined
+      }
       emit_hospital_notification: {
         Args: {
           _hospital_id: string
