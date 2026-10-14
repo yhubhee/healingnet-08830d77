@@ -29,7 +29,7 @@ export function TriageStep2SymptomsStep({
         <button
           onClick={onSkip}
           className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-3 py-2 rounded-lg border border-border hover:border-muted-foreground transition-colors"
-          title="Skip the AI triage and manually select a doctor"
+          title="Skip triage and book an appointment directly"
         >
           <SkipForward className="w-3 h-3" />
           Skip

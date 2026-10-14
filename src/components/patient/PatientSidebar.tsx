@@ -7,7 +7,7 @@ import { signOut } from "@/hooks/useAuth";
 
 const links = [
   { label: "Dashboard", path: "/patient", icon: LayoutDashboard, end: true },
-  { label: "AI Triage", path: "/patient/triage", icon: Stethoscope },
+  { label: "Triage assistant", path: "/patient/triage", icon: Stethoscope },
   { label: "Appointments", path: "/patient/appointments", icon: Calendar },
   { label: "Prescriptions", path: "/patient/prescriptions", icon: Pill },
   { label: "Lab Results", path: "/patient/lab-results", icon: FlaskConical },

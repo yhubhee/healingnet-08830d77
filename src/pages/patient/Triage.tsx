@@ -1,6 +1,7 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { rankHospitals, RankedHospital } from "@/lib/triage/proximity";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -43,6 +44,13 @@ interface NurseResponse {
 }
 
 const MAX_QUESTIONS = 8;
+
+// Friendly text for triage-nurse HTTP errors.
+const TRIAGE_ERRORS: Record<number, string> = {
+  401: "Please sign in again.",
+  429: "Too many requests. Wait a minute.",
+  400: "Something in your answers couldn't be read. Please try again.",
+};
 
 export default function PatientTriage() {
   const nav = useNavigate();
@@ -117,8 +125,20 @@ export default function PatientTriage() {
 
   async function callNurse(payload: any): Promise<NurseResponse | null> {
     const { data, error } = await supabase.functions.invoke("triage-nurse", { body: payload });
-    if (error || (data as any)?.error) {
-      toast.error((data as any)?.error || friendlyError(error, "AI nurse unavailable"));
+    if (error) {
+      let status = 0;
+      if (error instanceof FunctionsHttpError) {
+        const res = error.context as Response;
+        status = res.status;
+        // Read the server's { error } so the body is consumed; only the status is logged.
+        try { await res.json(); } catch { /* no JSON body */ }
+      }
+      console.warn(`[triage] triage-nurse returned HTTP ${status || "network error"}`);
+      toast.error(TRIAGE_ERRORS[status] ?? "The triage service is unavailable right now.");
+      return null;
+    }
+    if ((data as any)?.error) {
+      toast.error("The triage service is unavailable right now.");
       return null;
     }
     return data as NurseResponse;
@@ -226,7 +246,7 @@ export default function PatientTriage() {
       // Save session
       const { data: { user } } = await supabase.auth.getUser();
       if (user && patient) {
-        // Map triage_level from LLM to database urgency values
+        // Map the triage service's triage_level to database urgency values
         const triageLevelMap: Record<string, string> = {
           "self_care": "routine",
           "consultation": "soon",
@@ -400,9 +420,9 @@ export default function PatientTriage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-heading font-bold flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" /> AI Nurse — Symptom Triage
+            <Sparkles className="w-6 h-6 text-primary" /> Triage assistant
           </h1>
-          <p className="text-muted-foreground text-sm">An LLM-powered medical triage assistant. Not a diagnosis — guidance only.</p>
+          <p className="text-muted-foreground text-sm">Answer a few questions about your symptoms. This is guidance, not a diagnosis.</p>
         </div>
 
         {/* Stepper */}

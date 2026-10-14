@@ -72,7 +72,7 @@ export default function PatientDashboard() {
           <Stethoscope className="w-8 h-8 text-primary" />
           <div>
             <h3 className="font-heading font-bold">Not sure what's wrong?</h3>
-            <p className="text-sm text-muted-foreground">Run our 4-step AI symptom triage and get matched to the right specialist.</p>
+            <p className="text-sm text-muted-foreground">Answer a few questions with our triage assistant and get matched to the right specialist.</p>
           </div>
         </div>
         <Link to="/patient/triage" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-1 hover:opacity-90 transition-opacity">Start triage <ArrowRight className="w-4 h-4" /></Link>

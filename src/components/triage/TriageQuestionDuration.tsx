@@ -97,7 +97,7 @@ export function TriageQuestionDuration({
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" /> AI nurse thinking…
+              <Loader2 className="w-4 h-4 animate-spin" /> Triage assistant is checking…
             </span>
           ) : (
             "Continue"

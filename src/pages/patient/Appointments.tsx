@@ -83,7 +83,7 @@ export default function PatientAppointments() {
           <p className="text-muted-foreground text-sm">Manage your bookings and consultations</p>
         </div>
         <div className="flex gap-2">
-          <Link to="/patient/triage" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium"><Stethoscope className="w-4 h-4" />Start AI triage</Link>
+          <Link to="/patient/triage" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium"><Stethoscope className="w-4 h-4" />Start triage</Link>
         </div>
       </div>
 

@@ -145,7 +145,7 @@ export function TriageStep3InterviewStep({ question, askedCount, maxQuestions, o
         </div>
         {loading && (
           <p className="text-xs text-muted-foreground mt-4 flex items-center gap-2">
-            <Loader2 className="w-3 h-3 animate-spin" /> AI nurse thinking…
+            <Loader2 className="w-3 h-3 animate-spin" /> Triage assistant is checking…
           </p>
         )}
       </div>

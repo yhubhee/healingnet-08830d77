@@ -15,17 +15,17 @@ export function SkipTriageModal({ open, onClose, onConfirm }: Props) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-warning" />
-            Skip AI Triage?
+            Skip triage?
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to skip the AI-powered symptom analysis?
+            Are you sure you want to skip the symptom check?
           </DialogDescription>
         </DialogHeader>
 
         <div className="bg-warning/10 border border-warning/20 rounded-lg p-4 space-y-2">
           <h4 className="font-medium text-sm">⚠️ What you're giving up:</h4>
           <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-            <li>• <strong>Smart Doctor Matching:</strong> AI helps find the right specialist based on your symptoms</li>
+            <li>• <strong>Smart Doctor Matching:</strong> Your answers point you to the right specialist</li>
             <li>• <strong>Condition Analysis:</strong> Understanding what might be causing your symptoms</li>
             <li>• <strong>Urgency Assessment:</strong> Getting guidance on how soon you should seek care</li>
             <li>• <strong>Doctor Reference:</strong> Your doctor won't see the detailed symptom analysis</li>
