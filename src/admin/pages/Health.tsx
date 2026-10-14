@@ -3,16 +3,16 @@ import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
-  AlertTriangle, BadgeAlert, CalendarClock, CheckCircle2, CreditCard, Database, ExternalLink, KeyRound, PhoneOff,
+  AlertTriangle, BadgeAlert, Inbox, MailCheck, MailX, CalendarClock, CheckCircle2, CreditCard, Database, ExternalLink, KeyRound, PhoneOff,
   UserPlus, XCircle,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
-import { useHealth } from "../api";
-import { fmtNum, times } from "../format";
-import { ErrorState, Section } from "../components/bits";
+import { useEmailQueue, useHealth } from "../api";
+import { fmtNum, times, titleCase } from "../format";
+import { ErrorState, RelTime, Section } from "../components/bits";
 import { C } from "../components/charts";
 
 /** Database size limit on the Supabase free plan. Change here if the plan changes. */
@@ -44,6 +44,52 @@ function Tile({ label, value, level, icon: Icon, hint, to }: { label: string; va
 }
 
 const lvl = (n: number, warnAbove = 0, badAbove = Infinity): Level => (n > badAbove ? "bad" : n > warnAbove ? "warn" : "ok");
+
+/** Email outbox health from admin_email_queue() (no addresses or content). */
+function EmailQueueSection() {
+  const q = useEmailQueue();
+  const e = q.data;
+  return (
+    <section aria-labelledby="email-heading" className="space-y-3">
+      <h2 id="email-heading" className="font-heading text-lg font-bold">Email</h2>
+      {q.isLoading ? (
+        <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-3">{times(3).map((i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}</div>
+      ) : q.isError || !e ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : (
+        <>
+          <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-3">
+            <Tile label="Waiting to send" value={e.pending} icon={Inbox}
+              level={e.pending > 0 && (e.oldest_pending_minutes ?? 0) > 5 ? "warn" : "ok"}
+              hint={e.pending > 0 && e.oldest_pending_minutes != null ? `Oldest waiting ${fmtNum(e.oldest_pending_minutes)} min` : "Queue is empty"} />
+            <Tile label="Sent (24 h)" value={e.sent_24h} icon={MailCheck} level="ok" hint="Delivered to the mail server" />
+            <Tile label="Failed (7 days)" value={e.failed_7d} icon={MailX} level={e.failed_7d > 0 ? "bad" : "ok"} hint="Gave up after 5 attempts" />
+          </div>
+          {e.recent_failures.length > 0 && (
+            <Section title="Recent failures">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b text-left text-xs text-muted-foreground">
+                    <th scope="col" className="py-2 pr-3 font-medium">Template</th><th scope="col" className="py-2 pr-3 font-medium text-right">Attempts</th>
+                    <th scope="col" className="py-2 pr-3 font-medium">Error</th><th scope="col" className="py-2 font-medium">Queued</th>
+                  </tr></thead>
+                  <tbody>
+                    {e.recent_failures.map((f, i) => (
+                      <tr key={i} className="border-b last:border-0">
+                        <td className="py-2 pr-3">{titleCase(f.template)}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{f.attempts}</td>
+                        <td className="py-2 pr-3"><code className="text-xs">{f.last_error ?? "—"}</code></td>
+                        <td className="py-2 whitespace-nowrap"><RelTime iso={f.created_at} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Section>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
 
 export default function Health() {
   const q = useHealth();
@@ -81,6 +127,8 @@ export default function Health() {
         <Tile label="Plans expiring (7 d)" value={h.plans_expiring_7d} level={lvl(h.plans_expiring_7d)} icon={CalendarClock} hint="Paid hospital plans" />
         <Tile label="Pending staff invites" value={h.staff_invites_pending} level={lvl(h.staff_invites_pending, 50)} icon={UserPlus} hint="Not yet accepted, not expired" />
       </div>
+
+      <EmailQueueSection />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Section title="Edge functions (24 h)" className="lg:col-span-2">

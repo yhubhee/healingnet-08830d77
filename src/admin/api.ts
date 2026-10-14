@@ -119,6 +119,14 @@ export interface Health {
   doctor_licences_expired: number; plans_expiring_7d: number; database_size_mb: number;
 }
 
+export interface EmailQueue {
+  pending: number;
+  sent_24h: number;
+  failed_7d: number;
+  oldest_pending_minutes: number | null;
+  recent_failures: { template: string; attempts: number; last_error: string | null; created_at: string }[];
+}
+
 export interface ContactMessage { id: string; name: string; email: string; subject: string | null; message: string; created_at: string; handled_at: string | null }
 
 export interface AuditRow extends AuditEntry { id: string; target_type: string; target_id: string | null; target_name: string | null }
@@ -149,6 +157,7 @@ export const keys = {
   doctor: (id: string) => ["admin", "doctor", id] as const,
   payments: ["admin", "payments"] as const,
   health: ["admin", "health"] as const,
+  emailQueue: ["admin", "email-queue"] as const,
   messages: ["admin", "messages"] as const,
   audit: ["admin", "audit"] as const,
 };
@@ -230,6 +239,10 @@ export function usePayments(f: { status?: string; purpose?: string; review?: str
 
 export function useHealth() {
   return useQuery({ queryKey: keys.health, queryFn: () => call<Health>("admin_system_health"), meta, ...live });
+}
+
+export function useEmailQueue() {
+  return useQuery({ queryKey: keys.emailQueue, queryFn: () => call<EmailQueue>("admin_email_queue"), meta, ...live });
 }
 
 export function useMessages(f: { handled: boolean; page: number }) {
