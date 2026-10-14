@@ -13,7 +13,7 @@ export function ReviewActions({
   kind: "hospital" | "doctor"; id: string; name: string;
   /** Called after the server accepts the decision. */
   onDone?: () => void;
-  /** Called as soon as the admin confirms, to remove the item from view; undone on error via onDone(false). */
+  /** Called with true as soon as the admin confirms (hide the item), and with false if the server refuses. */
   onOptimistic?: (removed: boolean) => void;
   size?: "sm" | "default";
 }) {
@@ -27,20 +27,22 @@ export function ReviewActions({
     onOptimistic?.(true);
     setApproving(false);
     setRejecting(false);
-    const opts = {
-      onSuccess: () => {
+    // mutateAsync, not mutate(cb): the card may unmount once hidden, and the toast / undo must still run.
+    const p = kind === "hospital"
+      ? hospital.mutateAsync({ id, approve, notes: reason })
+      : doctor.mutateAsync({ id, approve, reason });
+    p.then(
+      () => {
         toast.success(approve ? `${name} approved` : `${name} rejected`, {
           description: approve ? "They have been notified." : `Reason: ${reason}`,
         });
         onDone?.();
       },
-      onError: (e: unknown) => {
+      (e: unknown) => {
         onOptimistic?.(false);
         toast.error(`Couldn't ${approve ? "approve" : "reject"} ${name}`, { description: actionError(e) });
       },
-    };
-    if (kind === "hospital") hospital.mutate({ id, approve, notes: reason }, opts);
-    else doctor.mutate({ id, approve, reason }, opts);
+    );
   };
 
   return (
