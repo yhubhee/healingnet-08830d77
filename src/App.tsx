@@ -71,6 +71,7 @@ const DoctorSettings = lazy(() => import("./pages/doctor/Settings"));
 const DoctorMessages = lazy(() => import("./pages/doctor/Messages"));
 const DoctorPatientDetail = lazy(() => import("./pages/doctor/PatientDetail"));
 const DoctorInvitations = lazy(() => import("./pages/doctor/Invitations"));
+const DoctorOnboarding = lazy(() => import("./pages/doctor/Onboarding"));
 const DoctorNotifications = lazy(() => import("./pages/doctor/Notifications"));
 const DoctorConsultationPage = lazy(() => import("./pages/doctor/ConsultationPage"));
 const VideoConsult = lazy(() => import("./pages/VideoConsult"));
@@ -150,6 +151,7 @@ const App = () => (
           <Route path="/doctor/consultations" element={<ProtectedRoute><DoctorConsultations /></ProtectedRoute>} />
           <Route path="/doctor/consultation/:consultationId" element={<ProtectedRoute><DoctorConsultationPage /></ProtectedRoute>} />
           <Route path="/doctor/invitations" element={<ProtectedRoute><DoctorInvitations /></ProtectedRoute>} />
+          <Route path="/doctor/onboarding" element={<ProtectedRoute><DoctorOnboarding /></ProtectedRoute>} />
           <Route path="/doctor/notifications" element={<ProtectedRoute><DoctorNotifications /></ProtectedRoute>} />
           <Route path="/doctor/profile" element={<ProtectedRoute><DoctorProfile /></ProtectedRoute>} />
           <Route path="/doctor/verification" element={<ProtectedRoute><DoctorVerification /></ProtectedRoute>} />
