@@ -39,6 +39,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_user_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       consultation_addenda: {
         Row: {
           author_id: string
@@ -533,6 +563,8 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          handled_at: string | null
+          handled_by: string | null
           id: string
           message: string
           name: string
@@ -541,6 +573,8 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
+          handled_at?: string | null
+          handled_by?: string | null
           id?: string
           message: string
           name: string
@@ -549,6 +583,8 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+          handled_at?: string | null
+          handled_by?: string | null
           id?: string
           message?: string
           name?: string
@@ -3345,6 +3381,81 @@ export type Database = {
         Args: { p_delta: number; p_drug_id: string }
         Returns: number
       }
+      admin_doctor_detail: { Args: { p_doctor_id: string }; Returns: Json }
+      admin_extend_trial: {
+        Args: { p_days: number; p_hospital_id: string; p_reason?: string }
+        Returns: string
+      }
+      admin_hospital_detail: { Args: { p_hospital_id: string }; Returns: Json }
+      admin_list_audit: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
+      admin_list_contact_messages: {
+        Args: { p_handled?: boolean; p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
+      admin_list_doctors: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
+      admin_list_hospitals: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_plan?: string
+          p_search?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
+      admin_list_payments: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_purpose?: string
+          p_review?: string
+          p_search?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
+      admin_mark_contact_handled: {
+        Args: { p_handled?: boolean; p_id: string }
+        Returns: undefined
+      }
+      admin_overview: { Args: never; Returns: Json }
+      admin_resolve_refund: {
+        Args: { p_note: string; p_payment_id: string }
+        Returns: undefined
+      }
+      admin_review_doctor: {
+        Args: { p_approve: boolean; p_doctor_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      admin_review_hospital: {
+        Args: { p_approve: boolean; p_hospital_id: string; p_notes?: string }
+        Returns: undefined
+      }
+      admin_set_hospital_active: {
+        Args: { p_active: boolean; p_hospital_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      admin_system_health: { Args: never; Returns: Json }
+      admin_timeseries: {
+        Args: { p_days?: number; p_metric: string }
+        Returns: {
+          day: string
+          value: number
+        }[]
+      }
+      admin_verification_queue: { Args: never; Returns: Json }
+      admin_whoami: { Args: never; Returns: boolean }
       can_join_call: { Args: { _id: string; _kind: string }; Returns: boolean }
       complete_signup: {
         Args: { p_data?: Json; p_role: string }
