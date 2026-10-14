@@ -2,6 +2,7 @@ import { useState } from "react";
 import { friendlyError } from "@/lib/errors";
 import { FormDialog, handleSubmit } from "./FormDialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,8 +21,9 @@ export function EditDoctorDialog({ doctor, open, onOpenChange }: Props) {
   const [f, setF] = useState<any>({
     employment_type: doctor.employment_type || "full_time",
     department: doctor.department || "",
-    salary: doctor.salary || "",
-    commission_rate: doctor.commission_rate || "",
+    contract_start: doctor.contract_start || "",
+    contract_end: doctor.contract_end || "",
+    notes: doctor.notes || "",
   });
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -34,8 +36,9 @@ export function EditDoctorDialog({ doctor, open, onOpenChange }: Props) {
         .update({
           employment_type: f.employment_type,
           department: f.department,
-          salary: f.salary ? Number(f.salary) : null,
-          commission_rate: f.commission_rate ? Number(f.commission_rate) : null,
+          contract_start: f.contract_start || null,
+          contract_end: f.contract_end || null,
+          notes: f.notes.trim() || null,
         })
         .eq("id", doctor.id);
 
@@ -63,7 +66,7 @@ export function EditDoctorDialog({ doctor, open, onOpenChange }: Props) {
               Dr. {doctor.doctors?.first_name} {doctor.doctors?.last_name}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label>Employment</Label>
               <Select value={f.employment_type} onValueChange={(v) => setF({ ...f, employment_type: v })}>
@@ -82,15 +85,19 @@ export function EditDoctorDialog({ doctor, open, onOpenChange }: Props) {
               <Input value={f.department} onChange={(e) => setF({ ...f, department: e.target.value })} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <Label>Salary (₦)</Label>
-              <Input type="number" value={f.salary} onChange={(e) => setF({ ...f, salary: e.target.value })} />
+              <Label htmlFor="edit-contract-start">Contract start</Label>
+              <Input id="edit-contract-start" type="date" value={f.contract_start} onChange={(e) => setF({ ...f, contract_start: e.target.value })} />
             </div>
             <div>
-              <Label>Commission %</Label>
-              <Input type="number" value={f.commission_rate} onChange={(e) => setF({ ...f, commission_rate: e.target.value })} />
+              <Label htmlFor="edit-contract-end">Contract end</Label>
+              <Input id="edit-contract-end" type="date" min={f.contract_start || undefined} value={f.contract_end} onChange={(e) => setF({ ...f, contract_end: e.target.value })} />
             </div>
+          </div>
+          <div>
+            <Label htmlFor="edit-notes">Notes</Label>
+            <Textarea id="edit-notes" rows={2} value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })} />
           </div>
           <div className="flex gap-2 pt-3">
             <Button variant="outline" type="button" className="flex-1" onClick={() => onOpenChange(false)}>

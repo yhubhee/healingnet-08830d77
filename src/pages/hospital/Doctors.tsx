@@ -53,12 +53,12 @@ export default function HospitalDoctors() {
             <div className="col-span-full text-center p-8 text-muted-foreground">No doctors found</div>
           ) : filtered.map((d: any) => (
             <div key={d.id} className="bg-card border border-border rounded-xl p-5 hover:border-primary transition-colors">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded-full gradient-info flex items-center justify-center text-sm font-bold text-foreground">
                   {d.doctors?.first_name?.[0]}{d.doctors?.last_name?.[0]}
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-heading font-bold">Dr. {d.doctors?.first_name} {d.doctors?.last_name}</h3>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-heading font-bold truncate">Dr. {d.doctors?.first_name} {d.doctors?.last_name}</h3>
                   <p className="text-sm text-muted-foreground">{d.doctors?.specialty || "—"}</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export default function HospitalDoctors() {
                   <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider",
                     d.status === "pending" ? "bg-yellow-100 text-yellow-700" : d.status === "active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                   )}>
-                    {d.status || "active"}
+                    {d.status === "pending" ? "Pending acceptance" : d.status === "active" ? (d.is_active === false ? "Inactive" : "Active") : d.status === "declined" ? "Declined" : d.status || "Active"}
                   </span>
                 </div>
               </div>

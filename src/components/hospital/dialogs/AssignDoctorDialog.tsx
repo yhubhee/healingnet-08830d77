@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { FormDialog, handleSubmit } from "./FormDialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -55,12 +56,19 @@ export function AssignDoctorDialog() {
               toast({ title: "Please select a doctor", variant: "destructive" });
               return;
             }
+            if (f.contract_start && f.contract_end && f.contract_end < f.contract_start) {
+              toast({ title: "The contract end must be after the start", variant: "destructive" });
+              return;
+            }
             // The database notifies the doctor about the invitation by itself.
             await handleSubmit(
               supabase.from("hospital_doctors").insert(
-                pick({ ...f, hospital_id: hospitalId, is_active: true, status: "pending" }, ALLOWED.hospitalDoctorInsert) as any
+                pick({ ...f, notes: f.notes?.trim() || null, hospital_id: hospitalId, is_active: true, status: "pending" }, ALLOWED.hospitalDoctorInsert) as any
               ),
-              { toast, close, qc, invalidate: ["hospital-doctors"] }
+              {
+                toast, close, qc, invalidate: ["hospital-doctors"],
+                successMsg: "Invitation sent. The doctor will get an email and must accept before they can see your patients or be booked.",
+              }
             );
           }}
           className="space-y-3"
@@ -73,11 +81,13 @@ export function AssignDoctorDialog() {
                   variant="outline"
                   role="combobox"
                   aria-expanded={open}
-                  className="w-full justify-between"
+                  className="w-full justify-between font-normal"
                 >
+                  <span className="truncate">
                   {selectedDoctor
                     ? `Dr. ${selectedDoctor.first_name} ${selectedDoctor.last_name} — ${selectedDoctor.specialty}`
                     : "Search doctors..."}
+                  </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -117,7 +127,7 @@ export function AssignDoctorDialog() {
               </PopoverContent>
             </Popover>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <Label>Employment</Label>
               <Select value={f.employment_type} onValueChange={(v) => setF({ ...f, employment_type: v })}>
@@ -136,20 +146,21 @@ export function AssignDoctorDialog() {
               <Input value={f.department || ""} onChange={(e) => setF({ ...f, department: e.target.value })} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <Label>Salary (₦)</Label>
-              <Input type="number" value={f.salary || ""} onChange={(e) => setF({ ...f, salary: +e.target.value })} />
+              <Label htmlFor="contract-start">Contract start</Label>
+              <Input id="contract-start" type="date" value={f.contract_start || ""} onChange={(e) => setF({ ...f, contract_start: e.target.value || null })} />
             </div>
             <div>
-              <Label>Commission %</Label>
-              <Input
-                type="number"
-                value={f.commission_rate || ""}
-                onChange={(e) => setF({ ...f, commission_rate: +e.target.value })}
-              />
+              <Label htmlFor="contract-end">Contract end (optional)</Label>
+              <Input id="contract-end" type="date" min={f.contract_start || undefined} value={f.contract_end || ""} onChange={(e) => setF({ ...f, contract_end: e.target.value || null })} />
             </div>
           </div>
+          <div>
+            <Label htmlFor="invite-notes">Notes (optional)</Label>
+            <Textarea id="invite-notes" rows={2} value={f.notes || ""} onChange={(e) => setF({ ...f, notes: e.target.value })} placeholder="e.g. Tuesday and Thursday clinics" />
+          </div>
+          <p className="text-xs text-muted-foreground">HealingNet doesn't handle staff pay. Agree salary or commission with the doctor directly.</p>
           <Button type="submit" className="w-full">
             Send Invitation
           </Button>
