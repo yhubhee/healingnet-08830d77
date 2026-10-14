@@ -1,7 +1,10 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Phone, Mail, Heart, Shield } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { User, Phone, Mail, Heart, Shield, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ShareRecordsCard } from "@/components/patient/ShareRecordsCard";
 import { QueryState } from "@/components/common/QueryState";
 import { friendlyError } from "@/lib/errors";
 
@@ -19,19 +22,29 @@ export default function PatientProfile() {
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+  const { hash } = useLocation();
+  // "Share my records" in the account menu links to #share.
+  useEffect(() => {
+    if (p && hash === "#share") document.getElementById("share")?.scrollIntoView({ behavior: "smooth" });
+  }, [p, hash]);
 
   if (loading || loadError) return <PatientLayout><QueryState isLoading={loading} isError={!!loadError} error={loadError} onRetry={() => load()}>{null}</QueryState></PatientLayout>;
   if (!p) return <PatientLayout><p className="text-muted-foreground text-sm">Profile not found.</p></PatientLayout>;
 
   return (
     <PatientLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-heading font-bold">My Profile</h1>
-        <p className="text-muted-foreground text-sm">Personal and medical information</p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-heading font-bold">My Profile</h1>
+          <p className="text-muted-foreground text-sm">Personal and medical information</p>
+        </div>
+        <Button asChild variant="outline"><Link to="/patient/complete-profile?edit=1"><Pencil className="w-4 h-4 mr-1.5" />Edit profile</Link></Button>
       </div>
 
       <div className="bg-gradient-to-r from-primary/15 to-info/15 border border-primary/20 rounded-xl p-6 mb-6 flex items-center gap-5 flex-wrap">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-info text-primary-foreground flex items-center justify-center text-2xl font-bold">{p.first_name?.[0]}{p.last_name?.[0]}</div>
+        <div className="w-20 h-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-primary to-info text-primary-foreground flex items-center justify-center text-2xl font-bold">
+          {p.profile_image_url ? <img src={p.profile_image_url} alt="" className="h-full w-full object-cover" /> : <>{p.first_name?.[0]}{p.last_name?.[0]}</>}
+        </div>
         <div className="flex-1 min-w-[200px]">
           <h2 className="text-xl font-heading font-bold">{p.first_name} {p.last_name}</h2>
           <p className="text-sm text-muted-foreground">{p.gender || "—"} {p.date_of_birth && `• Born ${p.date_of_birth}`}</p>
@@ -63,6 +76,7 @@ export default function PatientProfile() {
           <Field label="Policy number" value={p.insurance_policy_number} />
         </Section>
       </div>
+      <div id="share" className="mt-5 scroll-mt-20"><ShareRecordsCard /></div>
     </PatientLayout>
   );
 }
