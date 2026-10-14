@@ -19,5 +19,9 @@ verify_jwt = false
 [functions.send-email]
 verify_jwt = true
 
+# Called every minute by a scheduled job without a JWT; authenticated by x-internal-secret.
+[functions.email-worker]
+verify_jwt = false
+
 [functions.triage-nurse]
 verify_jwt = true
