@@ -6,6 +6,7 @@ import { AdminLayout } from "./AdminLayout";
 
 const Overview = lazy(() => import("./pages/Overview"));
 const Verifications = lazy(() => import("./pages/Verifications"));
+const Hospitals = lazy(() => import("./pages/Hospitals"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageSkeleton() {
@@ -27,6 +28,7 @@ export default function AdminApp() {
         <Routes>
           <Route index element={<Overview />} />
           <Route path="verifications" element={<Verifications />} />
+          <Route path="hospitals" element={<Hospitals />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
