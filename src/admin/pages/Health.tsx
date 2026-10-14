@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 import { useHealth } from "../api";
-import { fmtNum } from "../format";
+import { fmtNum, times } from "../format";
 import { ErrorState, Section } from "../components/bits";
 import { C } from "../components/charts";
 
@@ -52,7 +52,7 @@ export default function Health() {
   if (q.isLoading) {
     return (
       <div className="space-y-6" aria-busy="true" aria-label="Loading system health">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}</div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{times(8).map((i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}</div>
         <Skeleton className="h-64 rounded-2xl" />
       </div>
     );

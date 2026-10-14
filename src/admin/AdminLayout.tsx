@@ -244,11 +244,12 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider open={open} onOpenChange={setOpen}>
       <AdminSidebar />
+      {/* SidebarInset renders the page <main>. */}
       <SidebarInset className="min-w-0">
         <TopBar />
-        <main id="admin-main" className="mx-auto w-full max-w-[1400px] flex-1 p-4 pb-24 sm:p-6 md:pb-8 lg:p-8">
+        <div id="admin-main" className="mx-auto w-full max-w-[1400px] flex-1 p-4 pb-24 sm:p-6 md:pb-8 lg:p-8">
           {children}
-        </main>
+        </div>
         <BottomTabs />
       </SidebarInset>
       <GlobalDetails />

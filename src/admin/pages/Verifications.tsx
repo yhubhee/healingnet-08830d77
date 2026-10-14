@@ -4,7 +4,7 @@ import { Clock, Hospital as HospitalIcon, PartyPopper, Stethoscope } from "lucid
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVerificationQueue, type QueueDoctor, type QueueHospital } from "../api";
-import { daysSince, fmtDate, fmtNum } from "../format";
+import { daysSince, fmtDate, fmtNum, times } from "../format";
 import { EmptyState, ErrorState, Fact, RelTime } from "../components/bits";
 import { CredentialDocuments } from "../components/Documents";
 import { LicenceExpiry } from "../components/LicenceExpiry";
@@ -96,13 +96,13 @@ export default function Verifications() {
 
   return (
     <Tabs value={tab} onValueChange={(v) => set({ tab: v === "hospitals" ? null : v })}>
-      <TabsList className="mb-4">
+      <TabsList className="mb-4 h-auto max-w-full flex-wrap justify-start">
         <TabsTrigger value="hospitals" className="gap-2"><HospitalIcon className="h-4 w-4" aria-hidden />Hospitals <span className="tabular-nums">({q.data ? hospitals.length : "…"})</span></TabsTrigger>
         <TabsTrigger value="doctors" className="gap-2"><Stethoscope className="h-4 w-4" aria-hidden />Doctors <span className="tabular-nums">({q.data ? doctors.length : "…"})</span></TabsTrigger>
       </TabsList>
       {q.isLoading ? (
         <div className="space-y-4" aria-busy="true" aria-label="Loading queue">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}
+          {times(3).map((i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}
         </div>
       ) : q.isError ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : (
         <>

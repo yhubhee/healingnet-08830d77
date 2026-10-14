@@ -9,7 +9,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { useOverview, type Overview as OverviewData } from "../api";
-import { fmtNum, koboToNaira } from "../format";
+import { fmtNum, koboToNaira, times } from "../format";
 import { ErrorState, Money, Section } from "../components/bits";
 import { C, ChartCard, RangeSelect, useRange } from "../components/charts";
 
@@ -96,7 +96,7 @@ function PlanMix({ o }: { o: OverviewData }) {
 function KpiSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-busy="true" aria-label="Loading numbers">
-      {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-[108px] rounded-2xl" />)}
+      {times(8).map((i) => <Skeleton key={i} className="h-[108px] rounded-2xl" />)}
     </div>
   );
 }

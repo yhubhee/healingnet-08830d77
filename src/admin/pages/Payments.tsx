@@ -63,7 +63,7 @@ export default function Payments() {
   return (
     <div>
       <Tabs value={tab} onValueChange={(v) => set({ tab: v === "all" ? null : v })} className="mb-4">
-        <TabsList>
+        <TabsList className="h-auto max-w-full flex-wrap justify-start">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="refunds">Refunds needed</TabsTrigger>
           <TabsTrigger value="resolved">Refunds resolved</TabsTrigger>

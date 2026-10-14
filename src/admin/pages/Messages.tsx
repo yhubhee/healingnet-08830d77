@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMarkContactHandled, useMessages, type ContactMessage } from "../api";
-import { actionError } from "../format";
+import { actionError, times } from "../format";
 import { EmptyState, ErrorState, Pager, RelTime } from "../components/bits";
 import { useUrlState } from "../components/url-state";
 
@@ -57,13 +57,13 @@ export default function Messages() {
   return (
     <div>
       <Tabs value={handled ? "handled" : "open"} onValueChange={(v) => set({ tab: v === "open" ? null : v })} className="mb-4">
-        <TabsList>
+        <TabsList className="h-auto max-w-full flex-wrap justify-start">
           <TabsTrigger value="open">Open</TabsTrigger>
           <TabsTrigger value="handled">Handled</TabsTrigger>
         </TabsList>
       </Tabs>
       {q.isLoading ? (
-        <div className="space-y-3" aria-busy="true" aria-label="Loading messages">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}</div>
+        <div className="space-y-3" aria-busy="true" aria-label="Loading messages">{times(4).map((i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}</div>
       ) : q.isError ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : q.data && q.data.rows.length === 0 ? (
         <EmptyState icon={handled ? Mail : Inbox} text={handled ? "No handled messages yet." : "Inbox zero. No open messages."} />
       ) : q.data && (

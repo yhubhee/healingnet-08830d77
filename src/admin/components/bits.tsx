@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { friendlyError } from "@/lib/errors";
 import { PAGE_SIZE, type PlanState } from "../api";
-import { ago, daysUntil, fmtDateTime, fmtNum, naira, nairaShort, titleCase } from "../format";
+import { ago, daysUntil, fmtDateTime, fmtNum, naira, nairaShort, titleCase, times } from "../format";
 
 // ---------------------------------------------------------------------------
 // Status badges: colour plus an icon and a text label, never colour alone.
@@ -155,14 +155,14 @@ export function ListSkeleton({ rows = 8 }: { rows?: number }) {
     <div aria-busy="true" aria-label="Loading">
       <div className="hidden overflow-hidden rounded-2xl border md:block">
         <Skeleton className="h-10 rounded-none" />
-        {Array.from({ length: rows }).map((_, i) => (
+        {times(rows).map((i) => (
           <div key={i} className="flex items-center gap-4 border-t px-4 py-3">
             <Skeleton className="h-4 w-1/4" /><Skeleton className="h-4 w-20" /><Skeleton className="h-4 w-24" /><Skeleton className="ml-auto h-4 w-16" />
           </div>
         ))}
       </div>
       <div className="space-y-2 md:hidden">
-        {Array.from({ length: Math.min(rows, 5) }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
+        {times(Math.min(rows, 5)).map((i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
       </div>
     </div>
   );

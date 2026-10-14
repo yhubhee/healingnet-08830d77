@@ -2,7 +2,7 @@
 import { Ban, CalendarPlus, Check, Mail, RotateCcw, ScrollText, X, type LucideIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAudit, type AuditRow } from "../api";
-import { actionLabel, fmtDateTime } from "../format";
+import { actionLabel, fmtDateTime, times } from "../format";
 import { EmptyState, ErrorState, Pager, RelTime } from "../components/bits";
 import { useUrlState } from "../components/url-state";
 import { useDetail } from "../components/detail-state";
@@ -47,7 +47,7 @@ export default function Audit() {
   const q = useAudit(page);
 
   if (q.isLoading) {
-    return <div className="space-y-3" aria-busy="true" aria-label="Loading audit log">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-2xl" />)}</div>;
+    return <div className="space-y-3" aria-busy="true" aria-label="Loading audit log">{times(6).map((i) => <Skeleton key={i} className="h-16 rounded-2xl" />)}</div>;
   }
   if (q.isError || !q.data) return <ErrorState error={q.error} onRetry={() => q.refetch()} />;
   if (q.data.rows.length === 0) return <EmptyState icon={ScrollText} text="No admin actions recorded yet." />;
