@@ -101,7 +101,7 @@ export default function DoctorNotifications() {
               </div>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/doctor/invitations")}>
+              <Button variant="outline" size="sm" className="w-full" onClick={() => navigate("/doctor/hospitals")}>
                 View &amp; respond to invitation
               </Button>
             </CardContent>
