@@ -59,6 +59,7 @@ const PatientSettings = lazy(() => import("./pages/patient/Settings"));
 const PatientNotifications = lazy(() => import("./pages/patient/Notifications"));
 const PatientTriage = lazy(() => import("./pages/patient/Triage"));
 const PatientCompleteProfile = lazy(() => import("./pages/patient/CompleteProfile"));
+const PatientBook = lazy(() => import("./pages/patient/Book"));
 
 const DoctorDashboard = lazy(() => import("./pages/doctor/Dashboard"));
 const DoctorAppointments = lazy(() => import("./pages/doctor/Appointments"));
@@ -134,6 +135,7 @@ const App = () => (
           <Route path="/patient/notifications" element={<ProtectedRoute><PatientNotifications /></ProtectedRoute>} />
           <Route path="/patient/settings" element={<ProtectedRoute><PatientSettings /></ProtectedRoute>} />
           <Route path="/patient/triage" element={<ProtectedRoute><PatientTriage /></ProtectedRoute>} />
+          <Route path="/patient/book" element={<ProtectedRoute><PatientBook /></ProtectedRoute>} />
           <Route path="/patient/complete-profile" element={<ProtectedRoute><PatientCompleteProfile /></ProtectedRoute>} />
           {/* Legacy deep links from older notifications */}
           <Route path="/patient/dashboard" element={<Navigate to="/patient" replace />} />

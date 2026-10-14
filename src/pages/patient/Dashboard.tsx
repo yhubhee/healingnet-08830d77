@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Calendar, Pill, FlaskConical, FileText, ArrowRight, Stethoscope, Loader2, Clock, AlertCircle, Plus } from "lucide-react";
+import { Calendar, Pill, FlaskConical, FileText, ArrowRight, Stethoscope, Loader2, Clock, AlertCircle, Plus, CalendarPlus } from "lucide-react";
 import { usePatientProfile, usePatientAppointments, usePatientPrescriptions, usePatientLabResults, usePatientEmr } from "@/hooks/usePatientData";
 import { Button } from "@/components/ui/button";
 import { ShareRecordsCard } from "@/components/patient/ShareRecordsCard";
@@ -75,7 +75,10 @@ export default function PatientDashboard() {
             <p className="text-sm text-muted-foreground">Answer a few questions with our triage assistant and get matched to the right specialist.</p>
           </div>
         </div>
-        <Link to="/patient/triage" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-1 hover:opacity-90 transition-opacity">Start triage <ArrowRight className="w-4 h-4" /></Link>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Link to="/patient/book" className="border border-primary/40 bg-card px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center justify-center gap-1 hover:bg-primary/10 transition-colors"><CalendarPlus className="w-4 h-4" />Book appointment</Link>
+          <Link to="/patient/triage" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center justify-center gap-1 hover:opacity-90 transition-opacity">Start triage <ArrowRight className="w-4 h-4" /></Link>
+        </div>
       </div>
 
       <ShareRecordsCard />

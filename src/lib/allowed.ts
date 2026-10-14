@@ -7,7 +7,6 @@ export function pick<T extends Record<string, any>>(obj: T, keys: readonly strin
 
 export const ALLOWED = {
   checkinUpdate: ["assigned_doctor_id", "called_time", "checkin_type", "consultation_end", "consultation_start", "department", "notes", "queue_number", "status", "urgency", "vitals"],
-  appointmentInsert: ["doctor_id", "hospital_id", "is_telemedicine", "notes", "patient_id", "reason", "requested_date", "requested_time", "status"],
   appointmentUpdate: ["consultation_notes", "doctor_id", "is_telemedicine", "notes", "reason", "requested_date", "requested_time", "status"],
   consultationRequestInsert: ["doctor_id", "patient_id", "patient_summary", "preferred_date", "preferred_time", "reason", "request_type", "requesting_hospital_id", "specialty_needed", "urgency"],
   consultationRequestUpdate: ["doctor_notes", "fee_agreed", "patient_summary", "preferred_date", "preferred_time", "reason", "request_type", "specialty_needed", "status", "urgency"],

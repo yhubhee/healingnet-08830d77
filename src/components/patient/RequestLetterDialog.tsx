@@ -45,9 +45,11 @@ export function RequestLetterDialog({ patientId, trigger }: { patientId: string;
       const def = LETTER_TYPES.find((l) => l.value === letterType)!;
       let hospitalId: string | null = null;
       if (doctorId !== "any") {
-        const { data: hd } = await supabase.from("hospital_doctors")
-          .select("hospital_id").eq("doctor_id", doctorId).eq("is_active", true).maybeSingle();
-        hospitalId = (hd as any)?.hospital_id ?? null;
+        // The hospital where the patient last saw this doctor (patients can't read hospital_doctors).
+        const { data: appt } = await supabase.from("patient_appointments")
+          .select("hospital_id").eq("patient_id", patientId).eq("doctor_id", doctorId)
+          .order("requested_date", { ascending: false }).limit(1).maybeSingle();
+        hospitalId = (appt as any)?.hospital_id ?? null;
       }
       const { error } = await supabase.from("patient_letters" as any).insert({
         patient_id: patientId,

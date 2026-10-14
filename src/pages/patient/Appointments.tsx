@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Video } from "lucide-react";
+import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Video, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
 import { Button } from "@/components/ui/button";
@@ -82,8 +82,9 @@ export default function PatientAppointments() {
           <h1 className="text-2xl font-heading font-bold">Appointments</h1>
           <p className="text-muted-foreground text-sm">Manage your bookings and consultations</p>
         </div>
-        <div className="flex gap-2">
-          <Link to="/patient/triage" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium"><Stethoscope className="w-4 h-4" />Start triage</Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/patient/book" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium"><CalendarPlus className="w-4 h-4" />Book appointment</Link>
+          <Link to="/patient/triage" className="inline-flex items-center gap-2 border border-border px-4 py-2 rounded-lg font-medium"><Stethoscope className="w-4 h-4" />Start triage</Link>
         </div>
       </div>
 
