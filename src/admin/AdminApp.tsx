@@ -8,6 +8,7 @@ const Overview = lazy(() => import("./pages/Overview"));
 const Verifications = lazy(() => import("./pages/Verifications"));
 const Hospitals = lazy(() => import("./pages/Hospitals"));
 const Doctors = lazy(() => import("./pages/Doctors"));
+const Payments = lazy(() => import("./pages/Payments"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageSkeleton() {
@@ -31,6 +32,7 @@ export default function AdminApp() {
           <Route path="verifications" element={<Verifications />} />
           <Route path="hospitals" element={<Hospitals />} />
           <Route path="doctors" element={<Doctors />} />
+          <Route path="payments" element={<Payments />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
