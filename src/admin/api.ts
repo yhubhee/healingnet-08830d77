@@ -159,17 +159,9 @@ export function useOverview() {
   return useQuery({ queryKey: keys.overview, queryFn: () => call<Overview>("admin_overview"), meta, ...live });
 }
 
-export function useSeries(metric: Metric, days: number, opts: { live?: boolean } = {}) {
-  return useQuery({
-    queryKey: keys.series(metric, days),
-    queryFn: async () => {
-      const rows = await call<{ day: string; value: number | string }[]>("admin_timeseries", { p_metric: metric, p_days: days });
-      return (rows ?? []).map((r) => ({ day: r.day, value: Number(r.value) || 0 })) as SeriesPoint[];
-    },
-    meta,
-    placeholderData: keepPreviousData,
-    ...(opts.live ? live : {}),
-  });
+export async function fetchSeries(metric: Metric, days: number): Promise<SeriesPoint[]> {
+  const rows = await call<{ day: string; value: number | string }[]>("admin_timeseries", { p_metric: metric, p_days: days });
+  return (rows ?? []).map((r) => ({ day: r.day, value: Number(r.value) || 0 }));
 }
 
 export function useVerificationQueue() {

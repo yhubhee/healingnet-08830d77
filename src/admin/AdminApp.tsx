@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AdminLayout } from "./AdminLayout";
 
+const Overview = lazy(() => import("./pages/Overview"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageSkeleton() {
@@ -23,6 +24,7 @@ export default function AdminApp() {
     <AdminLayout>
       <Suspense fallback={<PageSkeleton />}>
         <Routes>
+          <Route index element={<Overview />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
