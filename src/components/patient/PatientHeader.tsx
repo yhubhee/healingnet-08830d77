@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { PatientAccountMenu } from "./PatientAccountMenu";
 
 export function PatientHeader() {
   const { data: profile } = usePatientProfile();
@@ -30,14 +31,14 @@ export function PatientHeader() {
   return (
     <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="flex items-center justify-between px-4 lg:px-8 h-16">
-        <div className="lg:ml-0 ml-12">
+        <div className="lg:ml-0 ml-12 min-w-0">
           <p className="text-sm text-muted-foreground">Welcome back,</p>
-          <p className="font-heading font-bold">{profile ? `${profile.first_name} ${profile.last_name}` : "Patient"}</p>
+          <p className="font-heading font-bold truncate">{profile ? `${profile.first_name} ${profile.last_name}` : "Patient"}</p>
         </div>
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="relative w-10 h-10 rounded-lg hover:bg-card transition-colors flex items-center justify-center">
+              <button className="relative w-10 h-10 rounded-lg hover:bg-card transition-colors flex items-center justify-center" aria-label={unread.length ? `Notifications, ${unread.length} unread` : "Notifications"}>
                 <Bell className="w-5 h-5" />
                 {unread.length > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
@@ -46,7 +47,7 @@ export function PatientHeader() {
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-2rem))]">
               <DropdownMenuLabel className="flex items-center justify-between">
                 Notifications
                 {unread.length > 0 && <span className="text-xs text-primary">{unread.length} new</span>}
@@ -82,9 +83,7 @@ export function PatientHeader() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
-            {profile?.first_name?.[0] || "P"}
-          </div>
+          <PatientAccountMenu />
         </div>
       </div>
     </header>
