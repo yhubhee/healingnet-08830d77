@@ -1,24 +1,26 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { PageShell } from "@/components/landing/PageShell";
+import { PageMeta } from "@/components/landing/PageMeta";
+import { CareSearch } from "@/components/marketing/CareSearch";
+import { mkButton } from "@/components/marketing/buttons";
+import { useCareLink } from "@/components/marketing/useCareLink";
+import { SickDayIllustration } from "@/components/marketing/illustrations";
 
-const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
-
+export default function NotFound() {
+  const careLink = useCareLink();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
-      </div>
-    </div>
+    <PageShell>
+      <PageMeta title="Page not found | HealingNet" description="We couldn't find that page." noindex />
+      <section className="mk-container max-w-2xl py-16 text-center md:py-24">
+        <SickDayIllustration className="mx-auto mb-8 h-40 w-auto md:h-48" />
+        <h1>This page took a sick day</h1>
+        <p className="mt-4 text-lg text-muted-foreground">We couldn't find the page you were looking for. It may have moved, or the link may be wrong.</p>
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link to="/" className={mkButton({ size: "lg" })}>Go to the home page</Link>
+          <Link to={careLink("/patient/book")} className={mkButton({ variant: "secondary", size: "lg" })}>Book a visit</Link>
+        </div>
+        <CareSearch className="mt-12 text-left" />
+      </section>
+    </PageShell>
   );
-};
-
-export default NotFound;
+}

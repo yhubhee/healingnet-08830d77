@@ -1,89 +1,87 @@
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { PageShell } from "@/components/landing/PageShell";
-import { PageHero } from "@/components/landing/PageHero";
 import { PageMeta } from "@/components/landing/PageMeta";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Hero } from "@/components/marketing/Hero";
+import { FaqAccordion } from "@/components/marketing/FaqAccordion";
+import { CtaBand } from "@/components/marketing/CtaBand";
+import { PATIENT_FAQS, HOSPITAL_FAQS, DOCTOR_FAQS, PAYMENT_FAQS, type Faq } from "@/components/marketing/faqs";
+import { cn } from "@/lib/utils";
 
-const groups: { title: string; items: { q: string; a: string }[] }[] = [
-  {
-    title: "Security & data",
-    items: [
-      { q: "Is my hospital data secure?", a: "Yes. All data is encrypted in transit and at rest. Every table uses row-level security so users only see what their role allows. Sensitive actions are audit-logged." },
-      { q: "Where is my data stored?", a: "On managed cloud infrastructure with daily automated backups. Your hospital owns the data and can request a full export anytime." },
-      { q: "Can different staff see different things?", a: "Yes. We support 7+ granular roles (admin, receptionist, nurse, lab tech, pharmacist, manager, medical officer), each scoped to relevant modules and patients." },
-    ],
-  },
-  {
-    title: "Setup & onboarding",
-    items: [
-      { q: "How long does setup take?", a: "Most hospitals are live within a day. You sign up, configure wards/departments, invite staff, and start checking in patients the same evening." },
-      { q: "Do you migrate our existing patient data?", a: "Yes — we offer guided CSV/Excel migration. For larger datasets we work with your team directly." },
-      { q: "Do you provide training?", a: "Yes. We provide written guides, in-app walkthroughs, and live onboarding sessions for staff." },
-    ],
-  },
-  {
-    title: "Billing & subscriptions",
-    items: [
-      { q: "What does a subscription cost?", a: "Plans are priced in Naira and billed monthly or yearly. See the Pricing page for current prices. Every new hospital gets a 30-day EMR trial, and patients are free forever." },
-      { q: "Can I switch plans?", a: "Yes — upgrade or downgrade from Settings → Subscription. Data and configuration carry over." },
-      { q: "Do you support insurance & HMO billing?", a: "Yes. File and track claims with all major HMOs and NHIS directly from the patient encounter." },
-    ],
-  },
-  {
-    title: "For patients",
-    items: [
-      { q: "Do patients pay?", a: "No. Patients use HealingNet completely free to book appointments, view results and message their care team." },
-      { q: "Can I see my records?", a: "Yes. From the patient portal you can view appointments, prescriptions, lab results and your full medical record at any HealingNet hospital you've visited." },
-      { q: "Can I do a teleconsult?", a: "Yes — provided your hospital uses the Telemedicine Suite plan. You'll see a 'Teleconsult' option when booking." },
-    ],
-  },
-  {
-    title: "For doctors",
-    items: [
-      { q: "Can I work across multiple hospitals?", a: "Yes. Doctors can be invited to multiple hospitals and switch context from their portal. Earnings are tracked per hospital." },
-      { q: "Is there a marketplace for external consultations?", a: "Yes. With the Telemedicine Suite, doctors can take consultation requests from other hospitals with transparent fee splits." },
-    ],
-  },
-  {
-    title: "Integrations",
-    items: [
-      { q: "Do you have an API?", a: "An API is on our roadmap. Today, all data is exportable as CSV/JSON on request. Contact us for integration discussions." },
-      { q: "Do you support lab analyzers?", a: "Direct analyzer integration is on the roadmap. Today, lab techs enter results into structured forms (11 categories, auto-flagging abnormal values)." },
-    ],
-  },
+const TABS: { id: string; label: string; items: Faq[] }[] = [
+  { id: "patients", label: "Patients", items: PATIENT_FAQS },
+  { id: "hospitals", label: "Hospitals", items: HOSPITAL_FAQS },
+  { id: "doctors", label: "Doctors", items: DOCTOR_FAQS },
+  { id: "payments", label: "Payments & privacy", items: PAYMENT_FAQS },
 ];
 
+/** Grouped FAQ. Each tab has a deep link: /faq#patients, /faq#hospitals, /faq#doctors, /faq#payments. */
 export default function FAQ() {
+  const { hash } = useLocation();
+  const navigate = useNavigate();
+  const fromHash = () => TABS.find((t) => `#${t.id}` === hash)?.id ?? TABS[0].id;
+  const [active, setActive] = useState(fromHash);
+
+  useEffect(() => setActive(fromHash()), [hash]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function select(id: string) {
+    setActive(id);
+    navigate({ hash: id }, { replace: true });
+  }
+
+  function onKeyDown(e: React.KeyboardEvent, index: number) {
+    const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    const next = TABS[(index + step + TABS.length) % TABS.length];
+    select(next.id);
+    document.getElementById(`tab-${next.id}`)?.focus();
+  }
+
+  const tab = TABS.find((t) => t.id === active) ?? TABS[0];
+
   return (
     <PageShell>
-      <PageMeta title="FAQ — HealingNet questions answered" description="Answers to common questions about HealingNet's security, setup, pricing, patient experience, doctor workflows and integrations." />
-      <PageHero
-        eyebrow="FAQ"
-        title="Questions, answered."
-        subtitle="If your question isn't here, reach us at hello@healingnet.app or via the Contact page."
+      <PageMeta
+        title="Frequently asked questions | HealingNet"
+        description="Answers for patients, hospitals and doctors: the free trial, team limits, video visits, payments in naira and how your records are protected."
       />
+      <Hero eyebrow="FAQ" title="Questions and answers" subtitle="Can't find what you need? Get in touch and we'll help." />
 
-      <section className="py-16 container mx-auto max-w-3xl space-y-10">
-        {groups.map((g) => (
-          <div key={g.title}>
-            <h2 className="text-xl font-heading font-bold mb-4 text-primary">{g.title}</h2>
-            <Accordion type="single" collapsible className="space-y-2">
-              {g.items.map((f, i) => (
-                <AccordionItem key={i} value={`${g.title}-${i}`} className="bg-card border border-border rounded-xl px-5">
-                  <AccordionTrigger className="font-heading font-semibold hover:no-underline text-left">{f.q}</AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">{f.a}</AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+      <section className="pb-16 md:pb-24">
+        <div className="mk-container max-w-3xl">
+          <div role="tablist" aria-label="Question groups" className="-mx-4 mb-8 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
+            {TABS.map((t, i) => (
+              <button
+                key={t.id}
+                id={`tab-${t.id}`}
+                role="tab"
+                type="button"
+                aria-selected={active === t.id}
+                aria-controls={`panel-${t.id}`}
+                tabIndex={active === t.id ? 0 : -1}
+                onClick={() => select(t.id)}
+                onKeyDown={(e) => onKeyDown(e, i)}
+                className={cn(
+                  "min-h-11 shrink-0 rounded-full border px-5 text-sm font-semibold transition-colors md:text-base",
+                  active === t.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-muted",
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
-        ))}
+          <div id={`panel-${tab.id}`} role="tabpanel" aria-labelledby={`tab-${tab.id}`}>
+            <h2 className="sr-only">{tab.label}</h2>
+            <FaqAccordion key={tab.id} items={tab.items} idPrefix={tab.id} />
+          </div>
+          <p className="mt-8 text-muted-foreground">
+            Still have a question? <Link to="/contact" className="font-semibold text-primary underline underline-offset-4">Contact us</Link>.
+          </p>
+        </div>
       </section>
 
-      <section className="py-12 container mx-auto text-center">
-        <p className="text-muted-foreground mb-4">Still have questions?</p>
-        <Button asChild><Link to="/contact">Contact us</Link></Button>
-      </section>
+      <CtaBand />
     </PageShell>
   );
 }
