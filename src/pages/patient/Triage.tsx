@@ -1,5 +1,6 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { Sparkles } from "lucide-react";
@@ -53,7 +54,10 @@ export default function PatientTriage() {
   const [sex, setSex] = useState<Sex | "">("");
   const [savingDemo, setSavingDemo] = useState(false);
 
-  const [freeText, setFreeText] = useState("");
+  // ?complaint= (from the public site's reason chips) pre-fills the first complaint box only.
+  const [params] = useSearchParams();
+  const [freeText, setFreeText] = useState(() =>
+    (params.get("complaint") ?? "").replace(/[\u0000-\u001f\u007f<>]/g, " ").trim().slice(0, 200));
   const [parsing, setParsing] = useState(false);
   const [skipTriageOpen, setSkipTriageOpen] = useState(false);
 
