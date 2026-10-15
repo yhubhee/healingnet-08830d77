@@ -286,6 +286,11 @@
     .marketing :where(h3) { font-size: 1.5rem; }
   }
 
+  /* Anchored sections (/patients#video, /faq#payments) clear the sticky header. */
+  .marketing :where([id]) {
+    scroll-margin-top: 6rem;
+  }
+
   .marketing :where(a, button, input, select, textarea, [tabindex]):focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;

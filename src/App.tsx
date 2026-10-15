@@ -9,8 +9,9 @@ import { ThemeProvider } from "next-themes";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 const About = lazy(() => import("./pages/About"));
-const Services = lazy(() => import("./pages/Services"));
-const FeaturesPage = lazy(() => import("./pages/Features"));
+const PatientsPage = lazy(() => import("./pages/Patients"));
+const HospitalsPage = lazy(() => import("./pages/Hospitals"));
+const DoctorsPage = lazy(() => import("./pages/Doctors"));
 const PricingPage = lazy(() => import("./pages/Pricing"));
 const FAQPage = lazy(() => import("./pages/FAQ"));
 const ContactPage = lazy(() => import("./pages/Contact"));
@@ -113,8 +114,12 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/about" element={<About />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/patients" element={<PatientsPage />} />
+          <Route path="/hospitals" element={<HospitalsPage />} />
+          <Route path="/doctors" element={<DoctorsPage />} />
+          {/* Replaced public pages */}
+          <Route path="/services" element={<Navigate to="/patients" replace />} />
+          <Route path="/features" element={<Navigate to="/hospitals" replace />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/contact" element={<ContactPage />} />
