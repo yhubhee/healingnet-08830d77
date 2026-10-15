@@ -1,0 +1,126 @@
+{
+  "note": "Photos for the public website. Pexels License (https://www.pexels.com/license/): free for commercial use. Credited in public/images/CREDITS.md. aspect = crop ratio, focal = point to keep (0-1).",
+  "images": [
+    {
+      "id": "hero-patient-phone",
+      "sourcePage": "https://www.pexels.com/photo/elegant-nigerian-woman-with-smartphone-indoors-31826822/",
+      "downloadUrl": "https://images.pexels.com/photos/31826822/pexels-photo-31826822.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "Darkshade Photos",
+      "authorUrl": "https://www.pexels.com/@darkshadephotos/",
+      "license": "Pexels License",
+      "alt": "A woman in a red headwrap and patterned dress looks at her smartphone at home",
+      "aspect": "4:5",
+      "focal": { "x": 0.5, "y": 0.4 }
+    },
+    {
+      "id": "video-doctor",
+      "sourcePage": "https://www.pexels.com/photo/doctor-in-scrubs-using-a-smartphone-and-a-tablet-for-online-medical-consultation-19957215/",
+      "downloadUrl": "https://images.pexels.com/photos/19957215/pexels-photo-19957215.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "Tessy Agbonome",
+      "authorUrl": "https://www.pexels.com/@tessy-agbonome-521343232/",
+      "license": "Pexels License",
+      "alt": "A smiling doctor in a white coat talks to a patient through a phone on a tripod",
+      "aspect": "4:3",
+      "focal": { "x": 0.5, "y": 0.45 }
+    },
+    {
+      "id": "inperson-clinic",
+      "sourcePage": "https://www.pexels.com/photo/medical-checkup-in-a-lagos-clinic-30678208/",
+      "downloadUrl": "https://images.pexels.com/photos/30678208/pexels-photo-30678208.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "Ninthgrid",
+      "authorUrl": "https://www.pexels.com/@ninthgrid-2149521550/",
+      "license": "Pexels License",
+      "alt": "A doctor checks a man's blood pressure at a clinic in Lagos",
+      "aspect": "4:3",
+      "focal": { "x": 0.55, "y": 0.5 }
+    },
+    {
+      "id": "triage-phone",
+      "sourcePage": "https://www.pexels.com/photo/positive-black-woman-reading-text-message-on-smartphone-6000094/",
+      "downloadUrl": "https://images.pexels.com/photos/6000094/pexels-photo-6000094.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "Ono Kosuki",
+      "authorUrl": "https://www.pexels.com/@ono-kosuki/",
+      "license": "Pexels License",
+      "alt": "A woman reads a message on her smartphone outdoors",
+      "aspect": "4:3",
+      "focal": { "x": 0.45, "y": 0.4 }
+    },
+    {
+      "id": "records-laptop",
+      "sourcePage": "https://www.pexels.com/photo/a-doctor-typing-on-laptop-4989171/",
+      "downloadUrl": "https://images.pexels.com/photos/4989171/pexels-photo-4989171.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "Ivan S",
+      "authorUrl": "https://www.pexels.com/@ivan-s/",
+      "license": "Pexels License",
+      "alt": "A doctor in a white coat types notes on a laptop",
+      "aspect": "4:3",
+      "focal": { "x": 0.5, "y": 0.6 }
+    },
+    {
+      "id": "privacy-phone",
+      "sourcePage": "https://www.pexels.com/photo/woman-with-braided-hair-using-smartphone-indoors-33837427/",
+      "downloadUrl": "https://images.pexels.com/photos/33837427/pexels-photo-33837427.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "Muhammad-Taha Ibrahim",
+      "authorUrl": "https://www.pexels.com/@planeteelevene/",
+      "license": "Pexels License",
+      "alt": "A woman with long braids uses her phone by a window at home",
+      "aspect": "4:5",
+      "focal": { "x": 0.5, "y": 0.4 }
+    },
+    {
+      "id": "doctor-portrait",
+      "sourcePage": "https://www.pexels.com/photo/man-holding-a-medicine-4989190/",
+      "downloadUrl": "https://images.pexels.com/photos/4989190/pexels-photo-4989190.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "Ivan S",
+      "authorUrl": "https://www.pexels.com/@ivan-s/",
+      "license": "Pexels License",
+      "alt": "A smiling doctor with a stethoscope holds up a pack of tablets",
+      "aspect": "4:5",
+      "focal": { "x": 0.5, "y": 0.35 }
+    },
+    {
+      "id": "lab-technician",
+      "sourcePage": "https://www.pexels.com/photo/focused-african-american-researcher-in-protective-eyewear-doing-test-with-liquids-3825436/",
+      "downloadUrl": "https://images.pexels.com/photos/3825436/pexels-photo-3825436.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "RF._.studio",
+      "authorUrl": "https://www.pexels.com/@rethaferguson/",
+      "license": "Pexels License",
+      "alt": "A laboratory scientist in safety glasses and gloves runs a test with test tubes",
+      "aspect": "4:3",
+      "focal": { "x": 0.55, "y": 0.34 }
+    },
+    {
+      "id": "nurse-tablet",
+      "sourcePage": "https://www.pexels.com/photo/focused-woman-with-documents-in-hospital-6098051/",
+      "downloadUrl": "https://images.pexels.com/photos/6098051/pexels-photo-6098051.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "Laura James",
+      "authorUrl": "https://www.pexels.com/@laura-james/",
+      "license": "Pexels License",
+      "alt": "A nurse in scrubs reads from a tablet in a hospital corridor",
+      "aspect": "4:3",
+      "focal": { "x": 0.5, "y": 0.45 }
+    },
+    {
+      "id": "mother-baby",
+      "sourcePage": "https://www.pexels.com/photo/smiling-mother-and-baby-looking-at-camera-6393377/",
+      "downloadUrl": "https://images.pexels.com/photos/6393377/pexels-photo-6393377.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "William Fortunato",
+      "authorUrl": "https://www.pexels.com/@william-fortunato/",
+      "license": "Pexels License",
+      "alt": "A smiling mother holds her baby close",
+      "aspect": "4:5",
+      "focal": { "x": 0.5, "y": 0.4 }
+    },
+    {
+      "id": "doctor-patient-talk",
+      "sourcePage": "https://www.pexels.com/photo/doctor-communicating-with-black-patient-in-hallway-of-hospital-6303643/",
+      "downloadUrl": "https://images.pexels.com/photos/6303643/pexels-photo-6303643.jpeg?auto=compress&cs=tinysrgb&w=2400",
+      "author": "Klaus Nielsen",
+      "authorUrl": "https://www.pexels.com/@klaus-nielsen/",
+      "license": "Pexels License",
+      "alt": "A doctor talks a patient through notes on a tablet",
+      "aspect": "4:5",
+      "focal": { "x": 0.5, "y": 0.5 }
+    }
+  ]
+}
