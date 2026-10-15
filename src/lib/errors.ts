@@ -16,6 +16,8 @@ const KNOWN: [RegExp, string][] = [
 export function friendlyError(e: unknown, fallback = "Something went wrong. Please try again."): string {
   const msg = String((e as any)?.message ?? e ?? "");
   const code = String((e as any)?.code ?? "");
+  // The database writes plain-English messages for plan limits; show them as they are.
+  if ((e as any)?.hint === "staff_limit_reached" && msg) return msg;
   for (const [re, text] of KNOWN) if (re.test(msg) || re.test(code)) return text;
   return fallback;
 }

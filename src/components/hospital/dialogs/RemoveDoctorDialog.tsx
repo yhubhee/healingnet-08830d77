@@ -25,6 +25,7 @@ export function RemoveDoctorDialog({ doctor, open, onOpenChange }: Props) {
 
       toast({ title: "Doctor removed successfully" });
       qc.invalidateQueries({ queryKey: ["hospital-doctors"] });
+      qc.invalidateQueries({ queryKey: ["seat-usage"] });
 
       onOpenChange(false);
     } catch (err: any) {

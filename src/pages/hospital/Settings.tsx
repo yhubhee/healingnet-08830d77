@@ -14,6 +14,7 @@ import { InviteStaffDialog } from "@/components/hospital/dialogs/InviteStaffDial
 import { Check, Lock, Mail } from "lucide-react";
 import { QueryState } from "@/components/common/QueryState";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useSeatUsage, SEAT_QUERY_KEY } from "@/hooks/useSeatUsage";
 import { usePlanPrices, priceNaira, formatNaira, type BillingCycle, type PlanName } from "@/hooks/usePlanPrices";
 import { paystackService } from "@/services/paystack";
 import { pick, ALLOWED } from "@/lib/allowed";
@@ -37,6 +38,7 @@ export default function HospitalSettings() {
   const { data: invites = [] } = useStaffInvites();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { data: seats } = useSeatUsage(hospital?.id);
 
   const [form, setForm] = useState<any>({});
   const [prefs, setPrefs] = useState<Record<string, boolean>>({});
@@ -111,6 +113,16 @@ export default function HospitalSettings() {
     if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
     toast({ title: "Staff deactivated" });
     qc.invalidateQueries({ queryKey: ["hospital-staff"] });
+    qc.invalidateQueries({ queryKey: [SEAT_QUERY_KEY] });
+  }
+
+  // A pending invite holds a team seat until it is accepted, expires or is cancelled.
+  async function cancelInvite(id: string) {
+    const { error } = await supabase.rpc("cancel_staff_invite", { _invite_id: id });
+    if (error) return toast({ title: "Couldn't cancel the invite", description: friendlyError(error), variant: "destructive" });
+    toast({ title: "Invite cancelled" });
+    qc.invalidateQueries({ queryKey: ["staff-invites"] });
+    qc.invalidateQueries({ queryKey: [SEAT_QUERY_KEY] });
   }
 
   const state = sub?.state ?? "none";
@@ -221,6 +233,23 @@ export default function HospitalSettings() {
                 <h3 className="text-lg font-heading font-bold">Staff Members</h3>
                 <InviteStaffDialog />
               </div>
+              {seats && (
+                seats.seatLimit === null ? (
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {seats.activeStaff} staff and {seats.activeDoctors} doctor{seats.activeDoctors === 1 ? "" : "s"} · unlimited team members on Telemedicine Suite.
+                  </p>
+                ) : (
+                  <div className="mb-4 space-y-1">
+                    <p className={`text-sm ${seats.used >= seats.seatLimit ? "text-warning" : "text-muted-foreground"}`}>
+                      {seats.used} of {seats.seatLimit} team seats used: {seats.activeStaff} staff, {seats.activeDoctors} doctor{seats.activeDoctors === 1 ? "" : "s"}
+                      {seats.pendingInvites > 0 && `, ${seats.pendingInvites} pending invite${seats.pendingInvites === 1 ? "" : "s"}`}.
+                    </p>
+                    {seats.used >= seats.seatLimit && (
+                      <p className="text-xs text-muted-foreground">You've reached the EMR Essentials limit. Deactivate someone, cancel an invite, remove a doctor, or upgrade to Telemedicine Suite in the Subscription tab for unlimited team members.</p>
+                    )}
+                  </div>
+                )
+              )}
               {/* Mobile cards */}
               <div className="md:hidden space-y-3">
                 {invites.map((i: any) => (
@@ -230,7 +259,10 @@ export default function HospitalSettings() {
                       <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{i.email}</p>
                       <p className="text-xs text-muted-foreground capitalize">{String(i.role).replace(/_/g, " ")}</p>
                     </div>
-                    <Badge variant="outline">Invited</Badge>
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge variant="outline">Invited</Badge>
+                      <Button size="sm" variant="ghost" onClick={() => cancelInvite(i.id)}>Cancel invite</Button>
+                    </div>
                   </div>
                 ))}
                 {staff.length === 0 && invites.length === 0 ? <p className="text-center text-muted-foreground py-6 text-sm">No staff yet</p> : staff.map((s: any) => (
@@ -260,7 +292,7 @@ export default function HospitalSettings() {
                         <td className="p-3 text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{i.email}</td>
                         <td className="p-3 capitalize">{String(i.role).replace(/_/g, " ")}</td>
                         <td className="p-3"><Badge variant="outline">Invited</Badge></td>
-                        <td className="p-3"></td>
+                        <td className="p-3 text-right"><Button size="sm" variant="ghost" onClick={() => cancelInvite(i.id)}>Cancel invite</Button></td>
                       </tr>
                     ))}
                     {staff.length === 0 && invites.length === 0 ? (

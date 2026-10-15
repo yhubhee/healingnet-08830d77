@@ -3632,6 +3632,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      cancel_staff_invite: { Args: { _invite_id: string }; Returns: undefined }
+      hospital_seat_usage: {
+        Args: { _hospital_id: string }
+        Returns: {
+          active_doctors: number
+          active_staff: number
+          pending_invites: number
+          seat_limit: number | null
+        }[]
+      }
       invite_staff: {
         Args: {
           _email: string

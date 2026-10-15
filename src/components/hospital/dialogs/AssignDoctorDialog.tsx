@@ -66,7 +66,7 @@ export function AssignDoctorDialog() {
                 pick({ ...f, notes: f.notes?.trim() || null, hospital_id: hospitalId, is_active: true, status: "pending" }, ALLOWED.hospitalDoctorInsert) as any
               ),
               {
-                toast, close, qc, invalidate: ["hospital-doctors"],
+                toast, close, qc, invalidate: ["hospital-doctors", "seat-usage"],
                 successMsg: "Invitation sent. The doctor will get an email and must accept before they can see your patients or be booked.",
               }
             );

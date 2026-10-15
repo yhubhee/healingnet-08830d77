@@ -46,6 +46,7 @@ export function EditDoctorDialog({ doctor, open, onOpenChange }: Props) {
 
       toast({ title: "Doctor updated successfully" });
       qc.invalidateQueries({ queryKey: ["hospital-doctors"] });
+      qc.invalidateQueries({ queryKey: ["seat-usage"] });
 
       onOpenChange(false);
     } catch (err: any) {
