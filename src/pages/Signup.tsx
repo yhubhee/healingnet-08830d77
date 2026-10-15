@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, User, Building2, Stethoscope } from "lucide-react";
+import { User, Building2, Stethoscope, Gift, CreditCard, Check } from "lucide-react";
 import { RoleFields, detailsToData, emptyDetails, type Role, type SignupDetails } from "@/components/auth/RoleFields";
 import { usePlanPrices, priceNaira, formatNaira } from "@/hooks/usePlanPrices";
 import { paystackService } from "@/services/paystack";
+import { saveNext, destinationAfterLogin } from "@/lib/safeNext";
+import { cn } from "@/lib/utils";
+import { PageMeta } from "@/components/landing/PageMeta";
+import { AuthLayout, authCard, authInput, authPrimary } from "@/components/marketing/AuthLayout";
 
 function signupErrorMessage(message?: string) {
   if (message && /already (registered|exists)/i.test(message)) return "An account with this email already exists. Try signing in instead.";
@@ -16,9 +20,15 @@ function signupErrorMessage(message?: string) {
   return "We couldn't create your account. Please check your details and try again.";
 }
 
+const ROLES: Role[] = ["patient", "doctor", "hospital"];
+
 export default function Signup() {
   const [params] = useSearchParams();
-  const [role, setRole] = useState<Role | null>(null);
+  // ?role= pre-selects the role (from the public site's buttons); the flow is unchanged.
+  const [role, setRole] = useState<Role | null>(() => {
+    const r = params.get("role") as Role | null;
+    return r && ROLES.includes(r) ? r : null;
+  });
   const [details, setDetails] = useState<SignupDetails>(emptyDetails());
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +37,9 @@ export default function Signup() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: prices } = usePlanPrices();
+
+  // ?next= (validated) is kept for the first sign-in; auth redirect URLs stay unchanged.
+  useEffect(() => saveNext(params.get("next")), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -78,89 +91,84 @@ export default function Signup() {
     setLoading(false);
     if (signUp.session) {
       toast({ title: role === "doctor" ? "Doctor account created!" : "Account created!", description: "Welcome to HealingNet." });
-      navigate(role === "doctor" ? "/doctor" : "/patient");
+      navigate(destinationAfterLogin(role === "doctor" ? "/doctor" : "/patient"));
     } else {
       toast({ title: "Account created!", description: "Check your email to confirm your address, then sign in." });
       navigate("/login");
     }
   }
 
+  const meta = <PageMeta title="Create your account | HealingNet" description="Create a free HealingNet account as a patient or doctor, or start your hospital's 30-day free trial." />;
+
   if (!role) {
+    const roleCards = [
+      { id: "patient" as const, icon: User, title: "I'm a Patient", text: "Book appointments, view records & message doctors. Free forever." },
+      { id: "doctor" as const, icon: Stethoscope, title: "I'm a Doctor", text: "Manage your patients, prescriptions & telemedicine consults." },
+      { id: "hospital" as const, icon: Building2, title: "I represent a Hospital", text: "Set up your hospital, choose a plan & onboard your team." },
+    ];
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-card to-background">
-        <div className="w-full max-w-2xl">
-          <Link to="/" className="flex items-center gap-2 justify-center mb-8 font-heading font-bold text-2xl">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
-              <Heart className="w-5 h-5 text-primary-foreground" fill="currentColor" />
-            </div>
-            HealingNet
-          </Link>
-          <h1 className="text-3xl font-heading font-bold text-center mb-2">Get started with HealingNet</h1>
-          <p className="text-muted-foreground text-center mb-8">Choose how you'll use the platform</p>
-          <div className="grid md:grid-cols-3 gap-4">
-            <button onClick={() => setRole("patient")} className="bg-card border-2 border-border hover:border-primary rounded-2xl p-6 text-left transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-info/10 flex items-center justify-center mb-4"><User className="w-6 h-6 text-info" /></div>
-              <h3 className="font-heading font-bold text-lg mb-1">I'm a Patient</h3>
-              <p className="text-sm text-muted-foreground">Book appointments, view records & message doctors. Free forever.</p>
+      <AuthLayout wide>
+        {meta}
+        <h1 className="mb-2 text-[2rem] md:text-[2.75rem]">Get started with HealingNet</h1>
+        <p className="mb-8 text-base text-muted-foreground">Choose how you'll use the platform</p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {roleCards.map((r) => (
+            <button key={r.id} onClick={() => setRole(r.id)} className="rounded-3xl border-2 border-border bg-card p-6 text-left transition-colors hover:border-primary focus-visible:border-primary">
+              <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10"><r.icon className="h-6 w-6 text-primary" aria-hidden /></span>
+              <span className="mb-1 block font-display text-xl font-semibold">{r.title}</span>
+              <span className="block text-base text-muted-foreground">{r.text}</span>
             </button>
-            <button onClick={() => setRole("doctor")} className="bg-card border-2 border-border hover:border-primary rounded-2xl p-6 text-left transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-4"><Stethoscope className="w-6 h-6 text-success" /></div>
-              <h3 className="font-heading font-bold text-lg mb-1">I'm a Doctor</h3>
-              <p className="text-sm text-muted-foreground">Manage your patients, prescriptions & telemedicine consults.</p>
-            </button>
-            <button onClick={() => setRole("hospital")} className="bg-card border-2 border-border hover:border-primary rounded-2xl p-6 text-left transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4"><Building2 className="w-6 h-6 text-primary" /></div>
-              <h3 className="font-heading font-bold text-lg mb-1">I represent a Hospital</h3>
-              <p className="text-sm text-muted-foreground">Set up your hospital, choose a plan & onboard your team.</p>
-            </button>
-          </div>
-          <p className="text-sm text-center mt-6 text-muted-foreground">
-            Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
-          </p>
+          ))}
         </div>
-      </div>
+        <p className="mt-8 text-center text-base text-muted-foreground">
+          Already have an account? <Link to="/login" className="font-semibold text-primary underline-offset-4 hover:underline">Sign in</Link>
+        </p>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-card to-background">
-      <div className="w-full max-w-lg">
-        <Link to="/" className="flex items-center gap-2 justify-center mb-8 font-heading font-bold text-2xl">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
-            <Heart className="w-5 h-5 text-primary-foreground" fill="currentColor" />
-          </div>
-          HealingNet
-        </Link>
-        <div className="bg-card border border-border rounded-2xl p-8">
-          <button onClick={() => setRole(null)} className="text-sm text-muted-foreground hover:text-foreground mb-4">← Change role</button>
-          <h1 className="text-2xl font-heading font-bold mb-1">{role === "hospital" ? "Create your hospital account" : role === "doctor" ? "Create your doctor account" : "Create your patient account"}</h1>
-          <p className="text-muted-foreground text-sm mb-6">{role === "hospital" ? "Set up your hospital in under 2 minutes" : role === "doctor" ? "Join the network and reach more patients" : "Free forever — no credit card needed"}</p>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-            <div><Label>Password</Label><Input type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-            <RoleFields role={role} value={details} onChange={setDetails} />
-            {role === "hospital" && (
-              <div>
-                <Label>Choose your plan</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {(["emr", "telemedicine"] as const).map((p) => (
-                    <button key={p} type="button" onClick={() => setPlan(p)}
-                      className={`p-3 rounded-lg border-2 text-left transition-colors ${plan === p ? "border-primary bg-primary/5" : "border-border"}`}>
-                      <div className="font-heading font-bold text-sm">{p === "emr" ? "EMR Essentials" : "Telemedicine Suite"}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
+    <AuthLayout wide={role === "hospital"} photo={role === "doctor" ? "doctor-portrait" : role === "hospital" ? "nurse-tablet" : "mother-baby"}>
+      {meta}
+      <div className={authCard}>
+        <button onClick={() => setRole(null)} className="mb-4 inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground">← Change role</button>
+        <h1 className="mb-2 text-[2rem] md:text-[2.5rem]">{role === "hospital" ? "Create your hospital account" : role === "doctor" ? "Create your doctor account" : "Create your patient account"}</h1>
+        <p className="mb-6 text-base text-muted-foreground">{role === "hospital" ? "Set up your hospital in under 2 minutes" : role === "doctor" ? "Join the network and reach more patients" : "Free forever — no credit card needed"}</p>
+        <form onSubmit={handleSubmit} className="space-y-4 [&_input]:h-12 [&_input]:rounded-2xl [&_input]:text-base">
+          <div className="space-y-1.5"><Label htmlFor="signup-email">Email</Label><Input id="signup-email" type="email" autoComplete="email" className={authInput} value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+          <div className="space-y-1.5"><Label htmlFor="signup-password">Password</Label><Input id="signup-password" type="password" autoComplete="new-password" minLength={6} className={authInput} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+          <RoleFields role={role} value={details} onChange={setDetails} />
+          {role === "hospital" && (
+            <fieldset>
+              <legend className="text-sm font-medium">Choose your plan</legend>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                {(["emr", "telemedicine"] as const).map((p) => {
+                  const selected = plan === p;
+                  return (
+                    <button key={p} type="button" onClick={() => setPlan(p)} aria-pressed={selected}
+                      className={cn("relative rounded-3xl border-2 p-5 text-left transition-colors", selected ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/50")}>
+                      {selected && <span className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="h-4 w-4" aria-hidden /></span>}
+                      <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                        {p === "emr" ? <Gift className="h-5 w-5" aria-hidden /> : <CreditCard className="h-5 w-5" aria-hidden />}
+                      </span>
+                      <span className="block font-semibold">{p === "emr" ? "Free trial (EMR Essentials, 30 days)" : "Skip the trial: Telemedicine Suite"}</span>
+                      <span className="mt-1 block text-sm text-muted-foreground">
                         {p === "emr"
-                          ? `30-day free trial, then ${formatNaira(priceNaira(prices, "emr", "monthly"))}/mo`
-                          : `${formatNaira(priceNaira(prices, "telemedicine", "monthly"))}/mo, pay now`}
-                      </div>
+                          ? `No card needed. Then ${formatNaira(priceNaira(prices, "emr", "monthly"))}/mo if you subscribe.`
+                          : `${formatNaira(priceNaira(prices, "telemedicine", "monthly"))}/mo, pay now through Paystack. Includes video visits.`}
+                      </span>
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            )}
-            <Button type="submit" className="w-full" disabled={loading}>{loading ? "Creating account…" : role === "hospital" && plan === "telemedicine" ? "Create Account & Pay" : role === "hospital" ? "Start free trial" : "Create Account"}</Button>
-          </form>
-        </div>
+            </fieldset>
+          )}
+          <Button type="submit" className={authPrimary} disabled={loading}>{loading ? "Creating account…" : role === "hospital" && plan === "telemedicine" ? "Create Account & Pay" : role === "hospital" ? "Start free trial" : "Create Account"}</Button>
+        </form>
+        <p className="mt-6 text-center text-base text-muted-foreground">
+          Already have an account? <Link to="/login" className="font-semibold text-primary underline-offset-4 hover:underline">Sign in</Link>
+        </p>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

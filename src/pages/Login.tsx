@@ -1,28 +1,33 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { routeForUser } from "@/lib/roles";
-import { Heart } from "lucide-react";
+import { saveNext, destinationAfterLogin } from "@/lib/safeNext";
+import { PageMeta } from "@/components/landing/PageMeta";
+import { AuthLayout, authCard, authInput, authPrimary, authSecondary } from "@/components/marketing/AuthLayout";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {
+    // ?next= (validated) is kept for the first sign-in; auth redirect URLs stay unchanged.
+    saveNext(params.get("next"));
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) routeByRole(data.session.user.id);
     });
   }, []);
 
   async function routeByRole(userId: string) {
-    navigate(await routeForUser(userId));
+    navigate(destinationAfterLogin(await routeForUser(userId)));
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -38,30 +43,24 @@ export default function Login() {
     await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/login` } });
   }
 
+  const next = params.get("next");
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-card to-background">
-      <div className="w-full max-w-md">
-        <Link to="/" className="flex items-center gap-2 justify-center mb-8 font-heading font-bold text-2xl">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
-            <Heart className="w-5 h-5 text-primary-foreground" fill="currentColor" />
-          </div>
-          HealingNet
-        </Link>
-        <div className="bg-card border border-border rounded-2xl p-8">
-          <h1 className="text-2xl font-heading font-bold mb-1">Welcome back</h1>
-          <p className="text-muted-foreground text-sm mb-6">Sign in to continue to your dashboard</p>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-            <div><Label>Password</Label><Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-            <Button type="submit" className="w-full" disabled={loading}>{loading ? "Signing in…" : "Sign In"}</Button>
-          </form>
-          <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />OR<div className="flex-1 h-px bg-border" /></div>
-          <Button onClick={handleGoogle} variant="outline" className="w-full">Continue with Google</Button>
-          <p className="text-sm text-center mt-6 text-muted-foreground">
-            Don't have an account? <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
-          </p>
-        </div>
+    <AuthLayout>
+      <PageMeta title="Log in | HealingNet" description="Log in to HealingNet to see your appointments, records and dashboard." />
+      <div className={authCard}>
+        <h1 className="mb-2 text-[2rem] md:text-[2.5rem]">Welcome back</h1>
+        <p className="mb-6 text-base text-muted-foreground">Sign in to continue to your dashboard</p>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-1.5"><Label htmlFor="login-email">Email</Label><Input id="login-email" type="email" autoComplete="email" className={authInput} value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+          <div className="space-y-1.5"><Label htmlFor="login-password">Password</Label><Input id="login-password" type="password" autoComplete="current-password" className={authInput} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+          <Button type="submit" className={authPrimary} disabled={loading}>{loading ? "Signing in…" : "Sign In"}</Button>
+        </form>
+        <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><div className="h-px flex-1 bg-border" />OR<div className="h-px flex-1 bg-border" /></div>
+        <Button onClick={handleGoogle} variant="outline" className={authSecondary}>Continue with Google</Button>
+        <p className="mt-6 text-center text-base text-muted-foreground">
+          Don't have an account? <Link to={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"} className="font-semibold text-primary underline-offset-4 hover:underline">Sign up</Link>
+        </p>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
