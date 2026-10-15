@@ -16,6 +16,9 @@ export default {
       fontFamily: {
         sans: ['Roboto', 'sans-serif'],
         heading: ['Roboto Condensed', 'sans-serif'],
+        // Public website only (used inside .marketing).
+        display: ['Fraunces Variable', 'serif'],
+        body: ['Plus Jakarta Sans Variable', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

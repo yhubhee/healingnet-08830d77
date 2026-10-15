@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.90.0",
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "@fontsource/roboto": "^5.2.9",
     "@fontsource/roboto-condensed": "^5.2.8",
     "@hookform/resolvers": "^3.10.0",
@@ -80,6 +82,7 @@
     "globals": "^15.15.0",
     "postcss": "^8.5.6",
     "postgres": "^3.4.9",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
