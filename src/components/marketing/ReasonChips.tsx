@@ -6,7 +6,7 @@ import { Reveal } from "./Reveal";
 
 /** One-tap reasons for a visit; each opens the triage assistant with the reason filled in. */
 export function ReasonChips({ title = "Common reasons people visit" }: { title?: string }) {
-  const careLink = useCareLink();
+  const { linkProps } = useCareLink();
   return (
     <section className="mk-section pb-8 md:pb-12" aria-labelledby="reasons-title">
       <Reveal className="mk-container">
@@ -17,7 +17,7 @@ export function ReasonChips({ title = "Common reasons people visit" }: { title?:
           {REASONS.map((r) => (
             <li key={r} className="shrink-0 snap-start">
               <Link
-                to={careLink(triagePath(r))}
+                {...linkProps(triagePath(r))}
                 className="group inline-flex min-h-12 items-center gap-2 rounded-full border border-border bg-card px-5 text-base font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
               >
                 {r}

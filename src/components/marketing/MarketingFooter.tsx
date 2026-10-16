@@ -42,7 +42,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
 ];
 
 export function MarketingFooter() {
-  const careLink = useCareLink();
+  const { linkProps } = useCareLink();
   const year = new Date().getFullYear();
   return (
     <footer className="border-t border-border bg-muted/60 text-[0.95rem]">
@@ -62,7 +62,7 @@ export function MarketingFooter() {
                 {col.links.map((l) => (
                   <li key={l.label}>
                     <Link
-                      to={l.to.startsWith("/patient/") ? careLink(l.to) : l.to}
+                      {...(l.to.startsWith("/patient/") ? linkProps(l.to) : { to: l.to })}
                       className="inline-flex min-h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline md:min-h-9"
                     >
                       {l.label}
@@ -79,7 +79,7 @@ export function MarketingFooter() {
           <ul className="flex flex-wrap gap-x-5 gap-y-1">
             {FOOTER_SPECIALTIES.map((s) => (
               <li key={s.label}>
-                <Link to={careLink(bookPath(s.value))} className="inline-flex min-h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline md:min-h-9">
+                <Link {...linkProps(bookPath(s.value))} className="inline-flex min-h-11 items-center text-muted-foreground underline-offset-4 hover:text-foreground hover:underline md:min-h-9">
                   {s.label}
                 </Link>
               </li>

@@ -1,5 +1,4 @@
 import { useId, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Search, Stethoscope, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mkButton } from "./buttons";
@@ -14,8 +13,7 @@ const NOT_SURE = "__not_sure__";
  * (through sign-up when signed out); the booking flow handles location itself.
  */
 export function CareSearch({ className }: { className?: string }) {
-  const navigate = useNavigate();
-  const careLink = useCareLink();
+  const { go } = useCareLink();
   const id = useId();
   const listId = `${id}-list`;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,7 +34,7 @@ export function CareSearch({ className }: { className?: string }) {
   function choose(index: number) {
     const value = options[index];
     if (value === NOT_SURE) {
-      navigate(careLink(triagePath()));
+      void go(triagePath());
       return;
     }
     const s = results[index];
@@ -49,7 +47,7 @@ export function CareSearch({ className }: { className?: string }) {
     e.preventDefault();
     // Typed but not picked: take the first match if there is one.
     const pick = selected && query === selected.label ? selected : results[0] && query.trim() ? results[0] : null;
-    navigate(careLink(pick ? bookPath(pick.value) : "/patient/book"));
+    void go(pick ? bookPath(pick.value) : "/patient/book");
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {

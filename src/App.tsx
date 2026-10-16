@@ -21,11 +21,15 @@ const Signup = lazy(() => import("./pages/Signup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import { MarketingFallback } from "./components/marketing/MarketingFallback";
-import CompleteSignup from "./pages/CompleteSignup";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { RequirePlan } from "./components/auth/RequirePlan";
 import { PageLoadingFallback } from "./components/common/PageLoadingFallback";
-import { RequireAdmin } from "./admin/RequireAdmin";
+
+// Auth guards and the role picker load on demand, so the public pages' first load
+// doesn't carry the Supabase client or dashboard code. They render inside the
+// <Suspense> around <Routes>, so a protected page shows the same loading state.
+const CompleteSignup = lazy(() => import("./pages/CompleteSignup"));
+const ProtectedRoute = lazy(() => import("./components/auth/ProtectedRoute").then((m) => ({ default: m.ProtectedRoute })));
+const RequirePlan = lazy(() => import("./components/auth/RequirePlan").then((m) => ({ default: m.RequirePlan })));
+const RequireAdmin = lazy(() => import("./admin/RequireAdmin").then((m) => ({ default: m.RequireAdmin })));
 
 // Public pages load with a light placeholder instead of the dark app one.
 const Public = ({ children }: { children: ReactNode }) => <Suspense fallback={<MarketingFallback />}>{children}</Suspense>;

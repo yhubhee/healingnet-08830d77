@@ -7,7 +7,7 @@ import { useCareLink } from "@/components/marketing/useCareLink";
 import { SickDayIllustration } from "@/components/marketing/illustrations";
 
 export default function NotFound() {
-  const careLink = useCareLink();
+  const { linkProps } = useCareLink();
   return (
     <PageShell>
       <PageMeta title="Page not found | HealingNet" description="We couldn't find that page." noindex />
@@ -17,7 +17,7 @@ export default function NotFound() {
         <p className="mt-4 text-lg text-muted-foreground">We couldn't find the page you were looking for. It may have moved, or the link may be wrong.</p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link to="/" className={mkButton({ size: "lg" })}>Go to the home page</Link>
-          <Link to={careLink("/patient/book")} className={mkButton({ variant: "secondary", size: "lg" })}>Book a visit</Link>
+          <Link {...linkProps("/patient/book")} className={mkButton({ variant: "secondary", size: "lg" })}>Book a visit</Link>
         </div>
         <CareSearch className="mt-12 text-left" />
       </section>

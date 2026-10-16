@@ -36,7 +36,7 @@ function PaymentCard() {
 }
 
 export default function Patients() {
-  const careLink = useCareLink();
+  const { linkProps } = useCareLink();
   return (
     <PageShell>
       <PageMeta
@@ -51,7 +51,7 @@ export default function Patients() {
       >
         <div className="flex flex-col gap-3 sm:flex-row">
           <Link to="/signup" className={mkButton({ size: "lg" })}>Create free account</Link>
-          <Link to={careLink("/patient/triage")} className={mkButton({ variant: "secondary", size: "lg" })}>Check your symptoms</Link>
+          <Link {...linkProps("/patient/triage")} className={mkButton({ variant: "secondary", size: "lg" })}>Check your symptoms</Link>
         </div>
         <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><Smartphone className="h-4 w-4" aria-hidden />Works in your phone's browser. No app to download.</p>
       </Hero>
