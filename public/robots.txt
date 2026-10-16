@@ -1,14 +1,12 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
+# Public website. Signed-in areas aren't useful in search results.
 User-agent: *
 Allow: /
+Disallow: /patient/
+Disallow: /doctor/
+Disallow: /hospital/
+Disallow: /admin/
+Disallow: /consult/
+Disallow: /complete-signup
+Disallow: /reset-password
+
+Sitemap: https://healingnet-08830d77.vercel.app/sitemap.xml

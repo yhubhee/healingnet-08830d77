@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { lazy, Suspense, type ReactNode } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 const About = lazy(() => import("./pages/About"));
 const PatientsPage = lazy(() => import("./pages/Patients"));
@@ -17,14 +16,19 @@ const FAQPage = lazy(() => import("./pages/FAQ"));
 const ContactPage = lazy(() => import("./pages/Contact"));
 const PrivacyPage = lazy(() => import("./pages/Privacy"));
 const TermsPage = lazy(() => import("./pages/Terms"));
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ResetPassword from "./pages/ResetPassword";
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+import { MarketingFallback } from "./components/marketing/MarketingFallback";
 import CompleteSignup from "./pages/CompleteSignup";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RequirePlan } from "./components/auth/RequirePlan";
 import { PageLoadingFallback } from "./components/common/PageLoadingFallback";
 import { RequireAdmin } from "./admin/RequireAdmin";
+
+// Public pages load with a light placeholder instead of the dark app one.
+const Public = ({ children }: { children: ReactNode }) => <Suspense fallback={<MarketingFallback />}>{children}</Suspense>;
 
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 
@@ -115,21 +119,21 @@ const App = () => (
         <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/patients" element={<PatientsPage />} />
-          <Route path="/hospitals" element={<HospitalsPage />} />
-          <Route path="/doctors" element={<DoctorsPage />} />
+          <Route path="/about" element={<Public><About /></Public>} />
+          <Route path="/patients" element={<Public><PatientsPage /></Public>} />
+          <Route path="/hospitals" element={<Public><HospitalsPage /></Public>} />
+          <Route path="/doctors" element={<Public><DoctorsPage /></Public>} />
           {/* Replaced public pages */}
           <Route path="/services" element={<Navigate to="/patients" replace />} />
           <Route path="/features" element={<Navigate to="/hospitals" replace />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/faq" element={<FAQPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/pricing" element={<Public><PricingPage /></Public>} />
+          <Route path="/faq" element={<Public><FAQPage /></Public>} />
+          <Route path="/contact" element={<Public><ContactPage /></Public>} />
+          <Route path="/privacy" element={<Public><PrivacyPage /></Public>} />
+          <Route path="/terms" element={<Public><TermsPage /></Public>} />
+          <Route path="/login" element={<Public><Login /></Public>} />
+          <Route path="/signup" element={<Public><Signup /></Public>} />
+          <Route path="/reset-password" element={<Public><ResetPassword /></Public>} />
           <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
 
           {/* Patient Portal */}
@@ -198,7 +202,7 @@ const App = () => (
           {/* Platform admin console (HealingNet staff). The database enforces admin rights; the guard is UX only. */}
           <Route path="/admin/*" element={<ProtectedRoute><RequireAdmin><AdminApp /></RequireAdmin></ProtectedRoute>} />
 
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<Public><NotFound /></Public>} />
         </Routes>
         </Suspense>
         </AppThemeProvider>
