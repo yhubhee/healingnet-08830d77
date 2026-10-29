@@ -86,7 +86,7 @@ test.describe("hospital", () => {
     recordCreated("patients", data?.id, pName());
     expect(data?.id).toBeTruthy();
 
-    await page.getByPlaceholder(/Search/).first().fill(P().last);
+    await page.locator("main").getByPlaceholder(/Search/).first().fill(P().last); // not the header search, hidden on mobile
     await expect(page.getByText(P().last).first()).toBeVisible();
     await checkPage(page, issues);
   });
