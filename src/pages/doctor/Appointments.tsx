@@ -22,7 +22,8 @@ const statusLabel: Record<string, string> = { rejected: "declined" };
 export default function DoctorAppointments() {
   const [filter, setFilter] = useState<typeof statuses[number]>("all");
   const [q, setQ] = useState("");
-  const [active, setActive] = useState<any>(null);
+  // The id, not a copy of the row, so the drawer shows the latest status after a refetch.
+  const [activeId, setActiveId] = useState<string | null>(null);
   const { data: ctx } = useDoctor();
   const { data, isLoading, isError, error, refetch } = useQuery({
     enabled: !!ctx?.doctor?.id,
@@ -69,6 +70,7 @@ export default function DoctorAppointments() {
     return true;
   });
 
+  const active = (data || []).find((a: any) => a.id === activeId) ?? null;
   const { data: cs } = useConsultationStatus((data || []).map((a: any) => a.id));
   const respond = useRespondToAppointment();
 
@@ -103,7 +105,7 @@ export default function DoctorAppointments() {
         <div className="space-y-3">
           {list.map((a: any) => (
             <div key={a.id} data-testid="doctor-appointment-card" data-appointment-id={a.id} className="w-full bg-card border border-border rounded-xl p-5 flex items-start gap-4 flex-wrap hover:border-primary/40 transition-colors">
-              <button onClick={() => setActive(a)} className="flex-1 min-w-[200px] text-left">
+              <button onClick={() => setActiveId(a.id)} className="flex-1 min-w-[200px] text-left">
                 <div className="w-14 h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-2"><Clock className="w-5 h-5" /></div>
                 <h3 className="font-heading font-bold">{a.patients ? `${a.patients.first_name} ${a.patients.last_name}` : "Patient"}</h3>
                 {a.reason && <p className="text-sm text-muted-foreground">{a.reason}</p>}
@@ -136,7 +138,7 @@ export default function DoctorAppointments() {
         </div>}
       </QueryState>
 
-      <AppointmentDetailDrawer appointment={active} onClose={() => setActive(null)} />
+      <AppointmentDetailDrawer appointment={active} onClose={() => setActiveId(null)} />
     </DoctorLayout>
   );
 }
