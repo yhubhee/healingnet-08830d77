@@ -88,7 +88,7 @@ test.describe("appointment flow across roles", () => {
     await doctor.goto("/doctor/appointments");
     const dc = card(doctor, "doctor-appointment-card", id);
     await expect(dc).toContainText(/pending/i);
-    await dc.getByRole("button", { name: "Accept" }).click();
+    await dc.getByRole("button", { name: "Accept", exact: true }).click();
     await toast(doctor, "Appointment accepted");
     await expect(dc).toContainText(/accepted/i);
     await checkPage(doctor, issues);
@@ -105,11 +105,11 @@ test.describe("appointment flow across roles", () => {
 
     const hospital = await as("hospital");
     await hospital.goto("/hospital/appointments");
-    await card(hospital, "hospital-appointment-card", id).getByRole("button", { name: "Decline" }).click();
+    await card(hospital, "hospital-appointment-card", id).getByRole("button", { name: "Decline", exact: true }).click();
     const dialog = hospital.getByRole("dialog", { name: "Decline appointment" });
-    await expect(dialog.getByRole("button", { name: "Decline" })).toBeDisabled(); // reason is required
+    await expect(dialog.getByRole("button", { name: "Decline", exact: true })).toBeDisabled(); // reason is required
     await dialog.getByLabel("Reason").fill(why);
-    await dialog.getByRole("button", { name: "Decline" }).click();
+    await dialog.getByRole("button", { name: "Decline", exact: true }).click();
     await toast(hospital, "Appointment declined");
     expect(await appointmentRow(id)).toMatchObject({ status: "rejected", decline_reason: why });
 
@@ -129,7 +129,7 @@ test.describe("appointment flow across roles", () => {
     await doctor.goto("/doctor/appointments");
     const dc = card(doctor, "doctor-appointment-card", id);
     await expect(dc).toContainText("Video");
-    await dc.getByRole("button", { name: "Accept" }).click();
+    await dc.getByRole("button", { name: "Accept", exact: true }).click();
     await toast(doctor, "Appointment accepted");
     // The join button lives in the appointment drawer.
     await dc.getByRole("button", { name: /Flow 6 video/ }).click();

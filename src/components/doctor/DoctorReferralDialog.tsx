@@ -132,10 +132,10 @@ export function DoctorReferralDialog({ patientId, trigger, onSuccess }: Props) {
                 </SelectTrigger>
                 <SelectContent>
                   {doctors
-                    .filter((d: any) => d.doctors?.id !== doctor?.doctor?.id)
+                    .filter((d: any) => d.id !== doctor?.doctor?.id)
                     .map((d: any) => (
-                      <SelectItem key={d.doctors?.id} value={d.doctors?.id || ""}>
-                        Dr. {d.doctors?.first_name} {d.doctors?.last_name} ({d.doctors?.specialty})
+                      <SelectItem key={d.id} value={d.id}>
+                        Dr. {d.first_name} {d.last_name}{d.specialty ? ` (${d.specialty})` : ""}
                       </SelectItem>
                     ))}
                 </SelectContent>

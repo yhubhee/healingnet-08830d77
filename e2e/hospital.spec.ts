@@ -53,7 +53,7 @@ test.describe("hospital", () => {
     await page.getByRole("option", { name: new RegExp(escapeRe(acc.doctorName)) }).click();
     await toast(page, /^Assigned to/);
     await expect(c).toContainText(acc.doctorName);
-    await c.getByRole("button", { name: "Accept" }).click();
+    await c.getByRole("button", { name: "Accept", exact: true }).click();
     await toast(page, "Appointment accepted");
 
     // Upcoming: cancel asks first.

@@ -61,14 +61,14 @@ test.describe("doctor", () => {
     await expect(card(page, "open-request-card", openId)).toHaveCount(0);
     expect(await appointmentRow(openId, "doctor")).toMatchObject({ status: "accepted", doctor_id: acc.doctorId });
 
-    await card(page, "doctor-appointment-card", acceptId).getByRole("button", { name: "Accept" }).click();
+    await card(page, "doctor-appointment-card", acceptId).getByRole("button", { name: "Accept", exact: true }).click();
     await toast(page, "Appointment accepted");
     expect((await appointmentRow(acceptId, "doctor")).status).toBe("accepted");
 
-    await card(page, "doctor-appointment-card", declineId).getByRole("button", { name: "Decline" }).click();
+    await card(page, "doctor-appointment-card", declineId).getByRole("button", { name: "Decline", exact: true }).click();
     const dialog = page.getByRole("dialog", { name: "Decline appointment" });
     await dialog.getByLabel("Reason").fill(e2e("Fully booked that day"));
-    await dialog.getByRole("button", { name: "Decline" }).click();
+    await dialog.getByRole("button", { name: "Decline", exact: true }).click();
     await toast(page, "Appointment declined");
     expect(await appointmentRow(declineId, "doctor")).toMatchObject({ status: "rejected" });
     await checkPage(page, issues);
@@ -82,7 +82,7 @@ test.describe("doctor", () => {
     const page = await as("doctor");
     await page.goto("/doctor/appointments");
     const c = card(page, "doctor-appointment-card", id);
-    await c.getByRole("button", { name: "Accept" }).click();
+    await c.getByRole("button", { name: "Accept", exact: true }).click();
     await toast(page, "Appointment accepted");
     await c.getByRole("button", { name: /Start consultation/ }).click();
     await expect(page).toHaveURL(/\/doctor\/consultation\//);
