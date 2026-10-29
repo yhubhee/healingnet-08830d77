@@ -87,7 +87,7 @@ test.describe("hospital", () => {
     expect(data?.id).toBeTruthy();
 
     await page.locator("main").getByPlaceholder(/Search/).first().fill(P().last); // not the header search, hidden on mobile
-    await expect(page.getByText(P().last).first()).toBeVisible();
+    await expect(page.locator("main").getByText(P().last).filter({ visible: true }).first()).toBeVisible(); // cards on mobile, a table on desktop
     await checkPage(page, issues);
   });
 
