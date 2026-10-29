@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { notifyManager, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -17,7 +17,9 @@ export function DataErrorBanner() {
     const recount = () =>
       setFailed(cache.getAll().filter((q) => q.state.status === "error").length);
     recount();
-    const unsubscribe = cache.subscribe(recount);
+    // The cache notifies synchronously, even while another component is rendering
+    // a new query; batchCalls defers the update, as TanStack's own hooks do.
+    const unsubscribe = cache.subscribe(notifyManager.batchCalls(recount));
     return unsubscribe;
   }, [queryClient]);
 
