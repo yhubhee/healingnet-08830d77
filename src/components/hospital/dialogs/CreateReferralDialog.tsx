@@ -19,7 +19,9 @@ export function CreateReferralDialog() {
     <FormDialog title="Create Referral" triggerLabel="New Referral">
       {(close) => (
         <form onSubmit={async (e) => { e.preventDefault();
-          await handleSubmit(supabase.from("hospital_referrals").insert({ ...f, hospital_id: hospitalId }), { toast, close, qc, invalidate: ["hospital-referrals"] });
+          // The table allows internal, external_outgoing and external_incoming; a referral made here goes out.
+          const referral_type = f.referral_type === "internal" ? "internal" : "external_outgoing";
+          await handleSubmit(supabase.from("hospital_referrals").insert({ ...f, referral_type, hospital_id: hospitalId }), { toast, close, qc, invalidate: ["hospital-referrals"] });
         }} className="space-y-3">
           <div><Label>Patient</Label>
             <Select value={f.patient_id} onValueChange={(v) => setF({ ...f, patient_id: v })}>
