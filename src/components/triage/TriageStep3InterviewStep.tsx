@@ -48,7 +48,7 @@ function AnswerBtn({
     >
       <div className="flex items-center justify-center gap-2">
         {tone === "success" && <CheckCircle2 className="w-4 h-4" />}
-        {tone === "destructive" && <span className="text-lg leading-none">✕</span>}
+        {tone === "destructive" && <span aria-hidden="true" className="text-lg leading-none">✕</span>}
         {tone === "muted" && <HelpCircle className="w-4 h-4" />}
         {label}
       </div>
