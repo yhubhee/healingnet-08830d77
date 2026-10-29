@@ -204,7 +204,7 @@ export default function PatientTriage() {
     const { error } = await supabase.from("triage_sessions").insert({
       patient_id: patient.id,
       symptoms: evidence.map((e) => `${e.name}:${e.present ? "yes" : "no"}`).concat(freeText ? [freeText] : []),
-      severity_self: 0,
+      severity_self: null, // 1-10 when known; the interview doesn't collect it as a number
       severity_score: r.severity_score || Math.round(((r.differential[0]?.probability || 0.3) * 10)),
       recommended_specialty: r.recommended_specialty,
       urgency: triageLevelMap[r.triage_level] || "soon",
