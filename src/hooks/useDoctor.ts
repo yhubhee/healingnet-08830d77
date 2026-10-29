@@ -66,19 +66,59 @@ export function useDoctorPatients(doctorId?: string) {
   });
 }
 
+// Hospitals where this doctor is active: the scope for open ("any available doctor") requests.
+async function activeHospitalIds(doctorId: string) {
+  const { data, error } = await supabase
+    .from("hospital_doctors")
+    .select("hospital_id")
+    .eq("doctor_id", doctorId)
+    .eq("status", "active");
+  if (error) throw error;
+  return (data || []).map((r: any) => r.hospital_id as string);
+}
+
+export function useOpenRequests(doctorId?: string) {
+  return useQuery({
+    enabled: !!doctorId,
+    queryKey: ["doctor", "open-requests", doctorId],
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const ids = await activeHospitalIds(doctorId!);
+      if (!ids.length) return [];
+      const { data, error } = await supabase
+        .from("patient_appointments")
+        .select("id, patient_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, created_at, patients(first_name, last_name), hospitals(name)")
+        .is("doctor_id", null)
+        .eq("status", "pending")
+        .in("hospital_id", ids)
+        .order("requested_date", { ascending: true })
+        .order("requested_time", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+  });
+}
+
 export function useDoctorBadges(doctorId?: string, userId?: string) {
   return useQuery({
     enabled: !!doctorId,
     queryKey: ["doctor", "badges", doctorId],
     refetchInterval: 10000,
     queryFn: async () => {
-      const [appts, cons, msgs] = await Promise.all([
+      const hospitalIds = await activeHospitalIds(doctorId!);
+      const [appts, open, cons, msgs] = await Promise.all([
         supabase.from("patient_appointments").select("id", { count: "exact", head: true }).eq("doctor_id", doctorId!).eq("status", "pending"),
+        hospitalIds.length
+          ? supabase.from("patient_appointments").select("id", { count: "exact", head: true }).is("doctor_id", null).eq("status", "pending").in("hospital_id", hospitalIds)
+          : Promise.resolve({ count: 0 } as any),
         supabase.from("consultation_requests").select("id", { count: "exact", head: true }).eq("doctor_id", doctorId!).eq("status", "pending"),
         userId ? supabase.from("patient_messages").select("id", { count: "exact", head: true }).eq("to_user_id", userId).eq("is_read", false) : Promise.resolve({ count: 0 } as any),
       ]);
       return {
-        appointments: appts.count || 0,
+        appointments: (appts.count || 0) + ((open as any).count || 0),
+        ownPending: appts.count || 0,
+        openRequests: (open as any).count || 0,
         consultations: cons.count || 0,
         messages: (msgs as any).count || 0,
       };

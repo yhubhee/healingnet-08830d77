@@ -32,9 +32,11 @@ import {
   BriefcaseMedical,
   Building2,
   ArrowLeft,
+  CalendarCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useHospitalPendingAppointmentCount } from "@/hooks/useHospitalData";
 
 interface NavGroup {
   label: string;
@@ -49,6 +51,7 @@ const navGroups: NavGroup[] = [
     children: [
       { label: "All Patients", path: "/hospital/patients", icon: List },
       { label: "Patient Queue", path: "/hospital/queue", icon: Clock },
+      { label: "Appointments", path: "/hospital/appointments", icon: CalendarCheck },
       { label: "Maternity", path: "/hospital/maternity", icon: Baby },
       { label: "Surgery", path: "/hospital/surgery", icon: Scissors },
       { label: "Referrals", path: "/hospital/referrals", icon: Share2 },
@@ -101,6 +104,8 @@ export function HospitalSidebar() {
     },
     refetchInterval: 30_000,
   });
+
+  const { data: pendingAppointments = 0 } = useHospitalPendingAppointmentCount();
 
   const toggleGroup = (label: string) => {
     setOpenGroups((prev) =>
@@ -206,6 +211,11 @@ export function HospitalSidebar() {
                         {child.label === "Patient Queue" && queueCount > 0 && (
                           <span className="bg-destructive text-destructive-foreground text-xs font-bold px-1.5 py-0.5 rounded-full">
                             {queueCount}
+                          </span>
+                        )}
+                        {child.path === "/hospital/appointments" && pendingAppointments > 0 && (
+                          <span aria-label={`${pendingAppointments} pending requests`} className="bg-destructive text-destructive-foreground text-xs font-bold px-1.5 py-0.5 rounded-full">
+                            {pendingAppointments}
                           </span>
                         )}
                         {child.badge && (

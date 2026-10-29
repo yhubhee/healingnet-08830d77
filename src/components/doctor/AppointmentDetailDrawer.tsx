@@ -13,6 +13,8 @@ import { OrderLabTestDialog } from "./OrderLabTestDialog";
 import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
 import { DoctorReferralDialog } from "./DoctorReferralDialog";
 import { StartConsultationButton, useConsultationStatus } from "@/components/consultation/StartConsultationButton";
+import { DeclineAppointmentDialog } from "@/components/appointments/DeclineAppointmentDialog";
+import { useRespondToAppointment, appointmentError } from "@/hooks/useAppointmentActions";
 
 export function AppointmentDetailDrawer({ appointment, onClose }: { appointment: any | null; onClose: () => void }) {
   const [note, setNote] = useState("");
@@ -20,6 +22,7 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
   const qc = useQueryClient();
   const nav = useNavigate();
   const { data: cs } = useConsultationStatus(appointment?.id ? [appointment.id] : []);
+  const respond = useRespondToAppointment();
 
   if (!appointment) return null;
   const a = appointment;
@@ -37,6 +40,16 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
     qc.invalidateQueries({ queryKey: ["patient", "appointments"] });
     qc.invalidateQueries({ queryKey: ["patient-appointments"] });
     onClose();
+  }
+
+  async function accept() {
+    try {
+      await respond.mutateAsync({ id: a.id, accept: true });
+      toast.success("Accepted");
+      onClose();
+    } catch (e) {
+      toast.error(appointmentError(e));
+    }
   }
 
   function startCall() {
@@ -88,8 +101,9 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
             )}
             {a.status === "pending" && (
               <div className="grid grid-cols-2 gap-2">
-                <Button disabled={saving} onClick={() => update({ status: "accepted" }, "Accepted")} className="bg-success text-success-foreground hover:bg-success/90"><CheckCircle2 className="w-4 h-4" />Accept</Button>
-                <Button disabled={saving} variant="outline" onClick={() => update({ status: "cancelled" }, "Declined")}><XCircle className="w-4 h-4" />Decline</Button>
+                <Button disabled={saving || respond.isPending} onClick={accept} className="bg-success text-success-foreground hover:bg-success/90"><CheckCircle2 className="w-4 h-4" />Accept</Button>
+                <DeclineAppointmentDialog appointmentId={a.id} onDone={onClose}
+                  trigger={<Button disabled={saving || respond.isPending} variant="outline"><XCircle className="w-4 h-4" />Decline</Button>} />
               </div>
             )}
             {a.status === "accepted" && isTelemedicine && (

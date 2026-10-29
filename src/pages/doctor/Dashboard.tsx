@@ -93,8 +93,10 @@ export default function DoctorDashboard() {
     },
   });
 
-  const cards = [
+  const cards: { label: string; value: number; icon: any; color: string; href?: string; hint?: string }[] = [
     { label: "Today's Appointments", value: dash?.today.length || 0, icon: Calendar, color: "bg-info/10 text-info" },
+    { label: "Pending Appointments", value: badges?.appointments || 0, icon: Calendar, color: "bg-warning/10 text-warning", href: "/doctor/appointments",
+      hint: `${badges?.openRequests || 0} Open requests` },
     { label: "Pending Consults", value: badges?.consultations || 0, icon: MessageSquare, color: "bg-warning/10 text-warning" },
     { label: "Checked In", value: checkins.length || 0, icon: Clock, color: "bg-success/10 text-success" },
     { label: "Unread Messages", value: badges?.messages || 0, icon: Mail, color: "bg-primary/10 text-primary" },
@@ -115,14 +117,21 @@ export default function DoctorDashboard() {
         <Link to="/doctor/settings"><Button variant="outline" size="sm"><Calendar className="w-4 h-4" />My Schedule</Button></Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {cards.map((c, i) => (
-          <div key={c.label} className="bg-card border border-border rounded-xl p-5 animate-fade-in transition-transform hover:scale-105 hover:shadow-lg" style={{ animationDelay: `${i * 100}ms` }}>
-            <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform", c.color)}><c.icon className="w-5 h-5" /></div>
-            <div className="text-2xl font-heading font-bold">{c.value}</div>
-            <div className="text-xs text-muted-foreground">{c.label}</div>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        {cards.map((c, i) => {
+          const body = (
+            <>
+              <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-transform", c.color)}><c.icon className="w-5 h-5" /></div>
+              <div className="text-2xl font-heading font-bold">{c.value}</div>
+              <div className="text-xs text-muted-foreground">{c.label}</div>
+              {c.hint && <div className="text-xs text-warning mt-1">{c.hint}</div>}
+            </>
+          );
+          const cls = "block bg-card border border-border rounded-xl p-5 animate-fade-in transition-transform hover:scale-105 hover:shadow-lg";
+          return c.href
+            ? <Link key={c.label} to={c.href} className={cls} style={{ animationDelay: `${i * 100}ms` }}>{body}</Link>
+            : <div key={c.label} className={cls} style={{ animationDelay: `${i * 100}ms` }}>{body}</div>;
+        })}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-5">

@@ -131,6 +131,7 @@ export function RescheduleAppointmentDialog({ appointment, trigger, onSuccess }:
     toast({ title: "Appointment rescheduled successfully" });
     qc.invalidateQueries({ queryKey: ["patient", "appointments"] });
     qc.invalidateQueries({ queryKey: ["doctor", "appointments"] });
+    qc.invalidateQueries({ queryKey: ["hospital", "appointments"] });
     setOpen(false);
     onSuccess?.();
   }
@@ -146,7 +147,11 @@ export function RescheduleAppointmentDialog({ appointment, trigger, onSuccess }:
         </DialogHeader>
 
         <div className="space-y-4">
-          {loading ? (
+          {!appointment?.doctor_id ? (
+            <div className="p-4 rounded-lg bg-muted/40 text-sm text-muted-foreground">
+              Times come from the doctor's schedule, so this appointment can be rescheduled once a doctor is assigned.
+            </div>
+          ) : loading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
               <Loader2 className="w-4 h-4 animate-spin" />
               Loading availability…

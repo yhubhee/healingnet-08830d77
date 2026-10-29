@@ -2304,6 +2304,9 @@ export type Database = {
           consultation_notes: string | null
           created_at: string
           daily_room_name: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decline_reason: string | null
           doctor_id: string | null
           hospital_id: string
           id: string
@@ -2323,6 +2326,9 @@ export type Database = {
           consultation_notes?: string | null
           created_at?: string
           daily_room_name?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decline_reason?: string | null
           doctor_id?: string | null
           hospital_id: string
           id?: string
@@ -2342,6 +2348,9 @@ export type Database = {
           consultation_notes?: string | null
           created_at?: string
           daily_room_name?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decline_reason?: string | null
           doctor_id?: string | null
           hospital_id?: string
           id?: string
@@ -3499,6 +3508,22 @@ export type Database = {
       }
       admin_verification_queue: { Args: never; Returns: Json }
       admin_whoami: { Args: never; Returns: boolean }
+      appointment_assign_doctor: {
+        Args: {
+          p_accept?: boolean
+          p_appointment_id: string
+          p_doctor_id: string
+        }
+        Returns: undefined
+      }
+      appointment_claim: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
+      appointment_respond: {
+        Args: { p_accept: boolean; p_appointment_id: string; p_reason?: string }
+        Returns: undefined
+      }
       book_appointment: {
         Args: {
           p_date: string
@@ -3545,6 +3570,7 @@ export type Database = {
         }[]
       }
       can_join_call: { Args: { _id: string; _kind: string }; Returns: boolean }
+      cancel_staff_invite: { Args: { _invite_id: string }; Returns: undefined }
       complete_signup: {
         Args: { p_data?: Json; p_role: string }
         Returns: string
@@ -3632,14 +3658,13 @@ export type Database = {
         }
         Returns: boolean
       }
-      cancel_staff_invite: { Args: { _invite_id: string }; Returns: undefined }
       hospital_seat_usage: {
         Args: { _hospital_id: string }
         Returns: {
           active_doctors: number
           active_staff: number
           pending_invites: number
-          seat_limit: number | null
+          seat_limit: number
         }[]
       }
       invite_staff: {

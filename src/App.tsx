@@ -38,6 +38,7 @@ const AdminApp = lazy(() => import("./admin/AdminApp"));
 
 const HospitalDashboard = lazy(() => import("./pages/hospital/Dashboard"));
 const HospitalQueue = lazy(() => import("./pages/hospital/Queue"));
+const HospitalAppointments = lazy(() => import("./pages/hospital/Appointments"));
 const HospitalDoctors = lazy(() => import("./pages/hospital/Doctors"));
 const HospitalPatients = lazy(() => import("./pages/hospital/Patients"));
 const HospitalBilling = lazy(() => import("./pages/hospital/Billing"));
@@ -183,6 +184,7 @@ const App = () => (
           {/* Hospital Portal */}
           <Route path="/hospital" element={<ProtectedRoute><HospitalDashboard /></ProtectedRoute>} />
           <Route path="/hospital/queue" element={<ProtectedRoute><HospitalQueue /></ProtectedRoute>} />
+          <Route path="/hospital/appointments" element={<ProtectedRoute><RequirePlan plan="emr"><HospitalAppointments /></RequirePlan></ProtectedRoute>} />
           <Route path="/hospital/doctors" element={<ProtectedRoute><HospitalDoctors /></ProtectedRoute>} />
           <Route path="/hospital/patients" element={<ProtectedRoute><HospitalPatients /></ProtectedRoute>} />
           <Route path="/hospital/billing" element={<ProtectedRoute><HospitalBilling /></ProtectedRoute>} />

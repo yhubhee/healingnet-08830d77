@@ -3,13 +3,28 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Video, CalendarPlus } from "lucide-react";
+import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Video, CalendarPlus, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
 import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/common/QueryState";
 
 const tabs = ["upcoming", "past", "cancelled"] as const;
+const tabLabels: Record<typeof tabs[number], string> = { upcoming: "Upcoming", past: "Past", cancelled: "Cancelled and declined" };
+
+// The status in plain words, as the patient should read it.
+function statusText(a: any): string {
+  const doctor = a.doctors ? `Dr. ${a.doctors.first_name} ${a.doctors.last_name}` : null;
+  switch (a.status) {
+    case "pending": return "Waiting for the hospital to confirm";
+    case "accepted":
+    case "confirmed": return doctor ? `Confirmed with ${doctor}` : "Confirmed";
+    case "rejected": return a.decline_reason ? `Declined: ${a.decline_reason}` : "Declined";
+    case "completed": return "Completed";
+    case "cancelled": return "Cancelled";
+    default: return a.status;
+  }
+}
 
 export default function PatientAppointments() {
   const [tab, setTab] = useState<typeof tabs[number]>("upcoming");
@@ -26,7 +41,7 @@ export default function PatientAppointments() {
         // Fetch appointments without complex joins
         const { data: appts, error: fetchError } = await supabase
           .from("patient_appointments")
-          .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, meeting_link, daily_room_name")
+          .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, meeting_link, daily_room_name, decline_reason")
           .eq("patient_id", p.id)
           .order("requested_date", { ascending: false });
 
@@ -64,7 +79,7 @@ export default function PatientAppointments() {
   const filtered = (data || []).filter((a: any) => {
     if (tab === "upcoming") return ["pending", "accepted", "confirmed"].includes(a.status);
     if (tab === "past") return ["completed", "done"].includes(a.status);
-    return a.status === "cancelled";
+    return ["cancelled", "rejected"].includes(a.status);
   });
 
   const statusBadge = (s: string) => ({
@@ -73,6 +88,7 @@ export default function PatientAppointments() {
     confirmed: "bg-success/15 text-success",
     completed: "bg-muted text-muted-foreground",
     cancelled: "bg-destructive/15 text-destructive",
+    rejected: "bg-destructive/15 text-destructive",
   } as Record<string, string>)[s] || "bg-muted";
 
   return (
@@ -88,9 +104,9 @@ export default function PatientAppointments() {
         </div>
       </div>
 
-      <div className="flex gap-1 mb-5 bg-muted/30 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 mb-5 bg-muted/30 p-1 rounded-lg w-full sm:w-fit overflow-x-auto">
         {tabs.map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={cn("px-4 py-1.5 rounded-md text-sm capitalize", tab === t ? "bg-card text-foreground shadow" : "text-muted-foreground")}>{t}</button>
+          <button key={t} onClick={() => setTab(t)} className={cn("px-3 sm:px-4 py-1.5 rounded-md text-sm whitespace-nowrap", tab === t ? "bg-card text-foreground shadow" : "text-muted-foreground")}>{tabLabels[t]}</button>
         ))}
       </div>
 
@@ -99,27 +115,27 @@ export default function PatientAppointments() {
           {filtered.length === 0 && (
             <div className="bg-card border border-border rounded-xl p-12 text-center">
               <Calendar className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-              <p className="text-muted-foreground text-sm mb-4">No {tab} appointments yet.</p>
+              <p className="text-muted-foreground text-sm mb-4">No {tabLabels[tab].toLowerCase()} appointments yet.</p>
               {tab === "upcoming" && <Link to="/patient/triage" className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm"><Plus className="w-4 h-4" />Book your first appointment</Link>}
             </div>
           )}
           {filtered.map((a: any) => {
-            const doc = a.doctors ? `Dr. ${a.doctors.first_name} ${a.doctors.last_name}` : "Awaiting assignment";
+            const doc = a.doctors ? `Dr. ${a.doctors.first_name} ${a.doctors.last_name}` : "Doctor to be assigned";
             const isTelemedicine = a.is_telemedicine === true;
             return (
-              <div key={a.id} className="bg-card border border-border rounded-xl p-5 flex flex-wrap items-start gap-4">
+              <div key={a.id} data-testid="patient-appointment-card" data-appointment-id={a.id} className="bg-card border border-border rounded-xl p-5 flex flex-wrap items-start gap-4">
                 <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0", isTelemedicine ? "bg-primary/10 text-primary" : "bg-primary/10 text-primary")}>
                   {isTelemedicine ? <Video className="w-5 h-5" /> : <User className="w-5 h-5" />}
                 </div>
-                <div className="flex-1 min-w-[220px]">
+                <div className="flex-1 min-w-0 basis-[220px]">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-heading font-bold">{doc}</h3>
-                    <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium capitalize", statusBadge(a.status))}>{a.status}</span>
+                    <span data-testid="appointment-status" className={cn("px-2 py-0.5 rounded-full text-xs font-medium break-words", statusBadge(a.status))}>{statusText(a)}</span>
                     {isTelemedicine && (
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary">Online Consultation</span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{a.doctors?.specialty || "—"}</p>
+                  {a.doctors?.specialty && <p className="text-sm text-muted-foreground">{a.doctors.specialty}</p>}
                   {a.reason && <p className="text-sm mt-1">{a.reason}</p>}
                   <div className="flex flex-wrap gap-4 mt-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
@@ -145,6 +161,11 @@ export default function PatientAppointments() {
                         <Video className="w-3 h-3" />
                         Join Consultation
                       </Link>
+                    </div>
+                  )}
+                  {a.status === "rejected" && (
+                    <div className="mt-3">
+                      <Link to="/patient/book" className="inline-flex items-center gap-1 text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-lg"><RotateCcw className="w-3 h-3" />Book again</Link>
                     </div>
                   )}
                   {["pending", "accepted", "confirmed"].includes(a.status) && (

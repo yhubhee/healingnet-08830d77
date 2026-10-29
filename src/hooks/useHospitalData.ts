@@ -137,11 +137,53 @@ export function useHospitalDoctors() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("hospital_doctors")
-        .select("*, doctors(first_name, last_name, specialty, rating, years_experience, is_available)")
+        .select("*, doctors(first_name, last_name, specialty, rating, years_experience, is_available, verification_status)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
+  });
+}
+
+// ---- APPOINTMENT REQUESTS ----
+const APPOINTMENT_COLUMNS = "id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, notes, is_telemedicine, created_at, decline_reason, decided_at, patients(first_name, last_name), doctors(first_name, last_name, specialty)";
+
+export function useHospitalAppointments() {
+  const { data: hospitalId } = useHospitalId();
+  return useQuery({
+    enabled: !!hospitalId,
+    queryKey: ["hospital", "appointments", hospitalId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("patient_appointments")
+        .select(APPOINTMENT_COLUMNS)
+        .eq("hospital_id", hospitalId!)
+        .order("requested_date", { ascending: true })
+        .order("requested_time", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useHospitalPendingAppointmentCount() {
+  const { data: hospitalId } = useHospitalId();
+  return useQuery({
+    enabled: !!hospitalId,
+    queryKey: ["hospital", "appointments-pending", hospitalId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("patient_appointments")
+        .select("id", { count: "exact", head: true })
+        .eq("hospital_id", hospitalId!)
+        .eq("status", "pending");
+      if (error) throw error;
+      return count || 0;
+    },
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
   });
 }
 

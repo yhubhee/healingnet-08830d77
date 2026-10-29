@@ -1,11 +1,11 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
-import { Users, UserCheck, CreditCard, Video, Clock, Activity, ArrowUpRight } from "lucide-react";
+import { Users, UserCheck, CreditCard, Video, Clock, Activity, ArrowUpRight, CalendarCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { QueryState } from "@/components/common/QueryState";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { usePatientCheckins, useRealtimeCheckins, useHospitalDoctors, useHospitalBilling, useHospitalNotifications, useRealtimeNotifications, useHospitalId } from "@/hooks/useHospitalData";
+import { usePatientCheckins, useRealtimeCheckins, useHospitalDoctors, useHospitalBilling, useHospitalNotifications, useRealtimeNotifications, useHospitalId, useHospitalPendingAppointmentCount } from "@/hooks/useHospitalData";
 
 const statusColors: Record<string, string> = {
   waiting: "bg-warning/15 text-warning",
@@ -35,6 +35,7 @@ export default function HospitalDashboard() {
   const { data: billing = [], isLoading: billingLoading, isError: billingError, error: billingErr, refetch: billingRefetch } = useHospitalBilling();
   const { data: notifications = [], isLoading: notificationsLoading, isError: notificationsError, error: notificationsErr, refetch: notificationsRefetch } = useHospitalNotifications();
   const { data: hospitalId } = useHospitalId();
+  const { data: pendingAppointments = 0 } = useHospitalPendingAppointmentCount();
 
   const { data: tele } = useQuery({
     enabled: !!hospitalId,
@@ -67,6 +68,7 @@ export default function HospitalDashboard() {
 
   const stats = [
     { label: "Patients Today", value: String(todayCheckins.length), subtitle: "check-ins today", icon: Users, gradient: "gradient-primary", trend: "neutral" as const, href: "/hospital/queue" },
+    { label: "Appointment Requests", value: String(pendingAppointments), subtitle: "pending appointments", icon: CalendarCheck, gradient: "gradient-warning", trend: "neutral" as const, href: "/hospital/appointments" },
     { label: "Active Doctors", value: String(activeDocCount), subtitle: `${hospitalDoctors.length} total`, icon: UserCheck, gradient: "gradient-success", trend: "neutral" as const, href: "/hospital/doctors" },
     { label: "Telemedicine", value: String(tele?.active || 0), subtitle: `${tele?.today || 0} today · ${tele?.pending || 0} pending`, icon: Video, gradient: "gradient-info", trend: (tele?.active || 0) > 0 ? "up" as const : "neutral" as const, href: "/hospital/consultations", live: (tele?.active || 0) > 0 },
     { label: "External Consults", value: String(tele?.pending || 0), subtitle: "pending requests", icon: Video, gradient: "gradient-warning", trend: "neutral" as const, href: "/hospital/consultations" },
@@ -90,7 +92,7 @@ export default function HospitalDashboard() {
         <p className="text-muted-foreground">Dashboard — Today: {todayStr}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 mb-8">
         {stats.map((stat) => (
           <Link to={stat.href} key={stat.label} className={cn("relative rounded-xl p-5 text-foreground overflow-hidden card-hover block", stat.gradient)}>
             <stat.icon className="stat-card-icon" />
