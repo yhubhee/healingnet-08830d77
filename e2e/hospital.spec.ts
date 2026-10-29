@@ -167,6 +167,12 @@ test.describe("hospital", () => {
         await fieldAfter(d, "Procedure").fill(e2e("Appendicectomy"));
         await fieldAfter(d, "Date").fill(isoDaysAgo(-30));
         await fieldAfter(d, "Time").fill("10:00");
+        // Surgeon is required: first check the message, then pick the test doctor.
+        await d.locator('button[type="submit"]').click();
+        await toast(page, "Please select a surgeon");
+        const acc = await accounts();
+        await d.locator(`xpath=.//label[starts-with(normalize-space(), "Surgeon")]/following::*[@role="combobox"][1]`).first().click();
+        await page.getByRole("option", { name: new RegExp(escapeRe(acc.doctorName)) }).first().click();
       },
     },
     {

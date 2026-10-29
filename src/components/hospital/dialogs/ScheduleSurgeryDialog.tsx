@@ -20,8 +20,13 @@ export function ScheduleSurgeryDialog() {
     <FormDialog title="Schedule Surgery" triggerLabel="Schedule" size="xl">
       {(close) => (
         <form onSubmit={async (e) => { e.preventDefault();
-          await handleSubmit(supabase.from("surgery_records").insert({ ...f, hospital_id: hospitalId, status: "scheduled" }), { toast, close, qc, invalidate: ["surgery-records"], successMsg: "Surgery scheduled" });
-          setF({ procedure_type: "elective", anaesthesia_type: "general" });
+          // Selects can't use `required`, and both columns are NOT NULL.
+          if (!f.patient_id) return toast({ title: "Please select a patient", variant: "destructive" });
+          if (!f.surgeon_id) return toast({ title: "Please select a surgeon", variant: "destructive" });
+          await handleSubmit(supabase.from("surgery_records").insert({ ...f, hospital_id: hospitalId, status: "scheduled" }), {
+            toast, close, qc, invalidate: ["surgery-records"], successMsg: "Surgery scheduled",
+            onSuccess: () => setF({ procedure_type: "elective", anaesthesia_type: "general" }),
+          });
         }} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Patient</Label>
