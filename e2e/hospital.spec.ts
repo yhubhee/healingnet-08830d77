@@ -139,7 +139,7 @@ test.describe("hospital", () => {
     await checkPage(page, issues);
   });
 
-  const addActions: { route: string; heading: RegExp | string; trigger: string; fill: (page: Page, d: Locator) => Promise<void>; table: string; note: string }[] = [
+  const addActions: { route: string; heading: RegExp | string; trigger: string; fill: (page: Page, d: Locator) => Promise<void>; table: string; note: string; submit?: string }[] = [
     {
       route: "/hospital/lab", heading: "Laboratory Management", trigger: "Order Test", table: "lab_results", note: "[E2E] lab order",
       fill: async (page, d) => { await pickPatient(page, d); await d.getByPlaceholder("Test name").first().fill("[E2E] FBC"); },
@@ -153,15 +153,16 @@ test.describe("hospital", () => {
       fill: async (page, d) => { await pickPatient(page, d); await fieldAfter(d, "Description").fill(e2e("Consultation fee")); await fieldAfter(d, "Amount").fill("1000"); },
     },
     {
-      route: "/hospital/beds", heading: "Bed Management", trigger: "Add Ward", table: "wards", note: e2e("Ward"),
-      fill: async (_p, d) => { await fieldAfter(d, "Ward Name").fill(e2e("Ward")); await fieldAfter(d, "Beds").fill("2"); },
+      // The page's own dialog: name, type and floor; its button isn't type="submit".
+      route: "/hospital/beds", heading: "Bed Management", trigger: "Add Ward", table: "hospital_wards", note: e2e("Ward"), submit: "Add Ward",
+      fill: async (_p, d) => { await fieldAfter(d, "Ward Name").fill(e2e("Ward")); },
     },
     {
       route: "/hospital/maternity", heading: "Maternity", trigger: "Register ANC", table: "anc_records", note: "[E2E] ANC record for the run's [E2E] patient",
       fill: async (page, d) => { await pickPatient(page, d); await fieldAfter(d, "LMP Date").fill(isoDaysAgo(60)); },
     },
     {
-      route: "/hospital/surgery", heading: "Surgery", trigger: "Schedule", table: "surgeries", note: e2e("Appendicectomy"),
+      route: "/hospital/surgery", heading: "Surgery", trigger: "Schedule", table: "surgery_records", note: e2e("Appendicectomy"),
       fill: async (page, d) => {
         await pickPatient(page, d);
         await fieldAfter(d, "Procedure").fill(e2e("Appendicectomy"));
@@ -176,7 +177,7 @@ test.describe("hospital", () => {
       },
     },
     {
-      route: "/hospital/referrals", heading: "Referrals", trigger: "New Referral", table: "referrals", note: e2e("Referral reason"),
+      route: "/hospital/referrals", heading: "Referrals", trigger: "New Referral", table: "hospital_referrals", note: e2e("Referral reason"),
       fill: async (page, d) => { await pickPatient(page, d); await fieldAfter(d, "Reason").fill(e2e("Referral reason")); },
     },
     {
@@ -199,7 +200,7 @@ test.describe("hospital", () => {
       const dialog = page.getByRole("dialog");
       await expect(dialog).toBeVisible();
       await a.fill(page, dialog);
-      await dialog.locator('button[type="submit"]').click();
+      await (a.submit ? dialog.getByRole("button", { name: a.submit }) : dialog.locator('button[type="submit"]')).click();
       await toast(page, ANY_SUCCESS);
       await expect(dialog).toBeHidden();
       recordCreated(a.table, null, `${a.note} (find by the [E2E] text and run ${RUN})`);

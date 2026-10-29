@@ -108,7 +108,8 @@ test.describe("doctor", () => {
     await page.getByRole("button", { name: "Add Lab" }).click();
     const picker = page.getByRole("dialog");
     await picker.getByPlaceholder(/Search by name or alias/).fill("FBC");
-    await picker.getByRole("checkbox").first().check();
+    // The list loads after the dialog opens; until then the only checkbox is "Fasting required".
+    await picker.getByRole("listitem").filter({ hasText: "Full Blood Count (FBC)" }).getByRole("checkbox").check();
     await picker.getByRole("button", { name: "Send order" }).click();
     await expect(picker).toBeHidden();
 
