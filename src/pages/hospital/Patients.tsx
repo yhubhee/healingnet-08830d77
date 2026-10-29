@@ -46,7 +46,7 @@ export default function HospitalPatients() {
 
   const getAge = (dob: string | null) => {
     if (!dob) return "—";
-    return String(Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 864e5)));
+    return `${Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 864e5))}y`;
   };
 
   const getLastVisit = (patientId: string) => {
@@ -99,7 +99,7 @@ export default function HospitalPatients() {
                   <div>
                     <p className="font-medium">{p.first_name} {p.last_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {getAge(p.date_of_birth)}y • {p.gender || "—"} • {p.phone || "no phone"}
+                      {getAge(p.date_of_birth)} • {p.gender || "—"} • {p.phone || "no phone"}
                     </p>
                     <p className="text-xs text-muted-foreground">Last visit: {getLastVisit(p.id)}</p>
                   </div>
@@ -139,7 +139,7 @@ export default function HospitalPatients() {
                 ) : filtered.map((p: any) => (
                   <tr key={p.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
                     <td className="p-4 font-medium">{p.first_name} {p.last_name}</td>
-                    <td className="p-4 text-sm">{getAge(p.date_of_birth)}y • {p.gender || "—"}</td>
+                    <td className="p-4 text-sm">{getAge(p.date_of_birth)} • {p.gender || "—"}</td>
                     <td className="p-4 text-sm">{p.phone || "—"}</td>
                     <td className="p-4">{p.blood_group ? <span className="bg-primary/15 text-primary text-xs font-semibold px-2 py-0.5 rounded-full">{p.blood_group}</span> : "—"}</td>
                     <td className="p-4 text-sm text-muted-foreground">{getLastVisit(p.id)}</td>
