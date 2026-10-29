@@ -29,3 +29,9 @@ dist-ssr
 !.env.example
 
 supabase/.temp/
+
+# Playwright: saved logins and run output
+e2e/.auth/
+e2e/results/
+playwright-report/
+test-results/
