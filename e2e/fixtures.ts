@@ -111,31 +111,16 @@ export const test = base.extend<Fixtures>({
     const pages = new Map<Role, Page>();
     await use(async (role) => {
       if (pages.has(role)) return pages.get(role)!;
+      // Playwright traces every context made from `browser` (trace: retain-on-failure).
       const ctx = await newContext(browser, role, testInfo);
-      await ctx.tracing.start({ screenshots: true, snapshots: true });
       contexts.push(ctx);
       const page = await ctx.newPage();
       watchPage(page, issues);
       pages.set(role, page);
       return page;
     });
-    // These contexts are made by hand, so take the failure screenshots ourselves.
-    if (testInfo.status !== testInfo.expectedStatus) {
-      for (const [role, page] of pages) {
-        const shot = await page.screenshot({ fullPage: true }).catch(() => null);
-        if (shot) await testInfo.attach(`${role}-on-failure`, { body: shot, contentType: "image/png" });
-      }
-    }
-    for (const [i, c] of contexts.entries()) {
-      if (testInfo.status !== testInfo.expectedStatus) {
-        const file = testInfo.outputPath(`trace-${i}.zip`);
-        await c.tracing.stop({ path: file }).catch(() => {});
-        await testInfo.attach(`trace-${i}`, { path: file, contentType: "application/zip" }).catch(() => {});
-      } else {
-        await c.tracing.stop().catch(() => {});
-      }
-      await c.close();
-    }
+    // Failure screenshots and traces cover these contexts too (see playwright.config.ts).
+    for (const c of contexts) await c.close();
   },
 });
 

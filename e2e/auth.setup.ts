@@ -6,7 +6,8 @@ const HOME = { patient: /\/patient/, doctor: /\/doctor/, hospital: /\/hospital/ 
 for (const role of ROLES) {
   setup(`log in as ${role}`, async ({ page }) => {
     const { email, password } = creds(role);
-    await page.goto("/login");
+    // The first request can wait on Vite's cold compile.
+    await page.goto("/login", { timeout: 120_000 });
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill(password);
     await page.getByRole("button", { name: "Sign In" }).click();
