@@ -244,7 +244,9 @@ test.describe("hospital", () => {
     await toast(page, "Invite saved");
     recordCreated("staff_invites", null, `${email} (cancelled by the test)`);
 
-    const row = page.locator("tr, div").filter({ hasText: email }).last();
+    // The row (desktop table) or card (mobile) that holds both the email and its button.
+    const row = page.locator("tr, div").filter({ hasText: email })
+      .filter({ has: page.getByRole("button", { name: "Cancel invite" }) }).last();
     await row.getByRole("button", { name: "Cancel invite" }).click();
     await expect(page.getByText(email)).toHaveCount(0);
     await checkPage(page, issues);
