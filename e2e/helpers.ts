@@ -58,6 +58,11 @@ function addDays(iso: string, days: number) {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+/** "15:00:00" → "3:00 pm", as the booking time buttons show it. */
+function fmt12(t: string) {
+  const [h, m] = t.split(":").map(Number);
+  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "am" : "pm"}`;
+}
 
 export type BookOptions = {
   doctor: "any" | "test"; visit: "in_person" | "video"; reason: string;
@@ -83,13 +88,23 @@ export async function book(page: Page, opts: BookOptions): Promise<string> {
   const index = nextBookingIndex();
   const start = addDays(lagosToday(), runOffset() + index);
   const times = page.getByRole("group", { name: "Times" });
+  // The picker can't see other patients' bookings, so skip times the test doctor already
+  // holds (bookings left by earlier runs); "any doctor" bookings are later given to them too.
+  const d = await db("doctor");
   let picked = false;
   for (let k = 0; k < 14 && !picked; k++) {
-    await page.locator("#book-date").fill(addDays(start, k));
-    const enabled = times.locator("button:not([disabled])");
-    if (await times.isVisible().catch(() => false) && (await enabled.count()) > 0) {
-      const count = await enabled.count();
-      await enabled.nth((index * 7 + Number.parseInt(RUN, 36)) % count).click();
+    const date = addDays(start, k);
+    await page.locator("#book-date").fill(date);
+    if (!(await times.isVisible().catch(() => false))) continue;
+    const { data: held } = await d.from("patient_appointments").select("requested_time")
+      .eq("doctor_id", acc.doctorId).eq("requested_date", date).in("status", ["pending", "accepted"]);
+    const taken = new Set((held ?? []).map((r: any) => fmt12(String(r.requested_time))));
+    const free = [];
+    for (const b of await times.locator("button:not([disabled])").all()) {
+      if (!taken.has((await b.innerText()).trim())) free.push(b);
+    }
+    if (free.length > 0) {
+      await free[(index * 7 + Number.parseInt(RUN, 36)) % free.length].click();
       picked = true;
     }
   }
