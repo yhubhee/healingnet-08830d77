@@ -19,8 +19,11 @@ test.describe("doctor", () => {
 
   test("onboarding is complete", async ({ as, issues }) => {
     const page = await as("doctor");
-    await visit(page, issues, "/doctor/onboarding");
+    // The page shows this for 2.5 s and then moves to the dashboard, so check it before
+    // visit()'s settle wait can outlast it.
+    await page.goto("/doctor/onboarding");
     await expect(page.getByRole("heading", { name: "Your profile is complete" })).toBeVisible();
+    await checkPage(page, issues);
   });
 
   test("My hospitals lists the test hospital", async ({ as, issues }) => {
