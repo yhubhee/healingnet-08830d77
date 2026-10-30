@@ -89,7 +89,12 @@ export function recordCreated(table: string, id: string | null | undefined, note
 
 /** A short tag unique to this run, so text created by different runs never collides. */
 export const RUN = process.env.E2E_RUN_ID || (process.env.E2E_RUN_ID = Date.now().toString(36).slice(-6));
-export const e2e = (text: string) => `[E2E] ${text} ${RUN}`;
+// Desktop and mobile run the same tests in one run, so inside a test the tag also
+// names the project; outside a test (module-level ledger notes) it is just the run.
+const tag = () => {
+  try { return `${RUN}${base.info().project.name === "mobile" ? "m" : "d"}`; } catch { return RUN; }
+};
+export const e2e = (text: string) => `[E2E] ${text} ${tag()}`;
 
 // ---------------------------------------------------------------------------
 // Fixtures

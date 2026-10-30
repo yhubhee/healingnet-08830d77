@@ -8,15 +8,16 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  timeout: 90_000,
-  expect: { timeout: 15_000 },
+  timeout: 180_000,
+  // 30 s, not 15 s: on the 4 GB test machine the dev server can take that long to serve a lazy page.
+  expect: { timeout: 30_000 },
   reporter: [["list"], ["json", { outputFile: "e2e/results/results.json" }], ["html", { open: "never", outputFolder: "e2e/results/html" }]],
   outputDir: "e2e/results/artifacts",
   use: {
     baseURL: "http://localhost:8080",
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
-    actionTimeout: 15_000,
+    actionTimeout: 30_000,
     navigationTimeout: 30_000,
     // Booking asks for location; deny it so runs are repeatable.
     permissions: [],
