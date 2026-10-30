@@ -254,12 +254,12 @@ export default function HospitalSettings() {
               <div className="md:hidden space-y-3">
                 {invites.map((i: any) => (
                   <div key={i.id} className="rounded-lg border border-dashed border-border p-4 flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-sm">{[i.first_name, i.last_name].filter(Boolean).join(" ") || i.email}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{i.email}</p>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm break-words">{[i.first_name, i.last_name].filter(Boolean).join(" ") || i.email}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3 shrink-0" /><span className="break-all">{i.email}</span></p>
                       <p className="text-xs text-muted-foreground capitalize">{String(i.role).replace(/_/g, " ")}</p>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex shrink-0 flex-col items-end gap-2">
                       <Badge variant="outline">Invited</Badge>
                       <Button size="sm" variant="ghost" onClick={() => cancelInvite(i.id)}>Cancel invite</Button>
                     </div>
@@ -268,9 +268,9 @@ export default function HospitalSettings() {
                 {staff.length === 0 && invites.length === 0 ? <p className="text-center text-muted-foreground py-6 text-sm">No staff yet</p> : staff.map((s: any) => (
                   <div key={s.id} className="rounded-lg border border-border p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-medium text-sm">{s.first_name} {s.last_name}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3" />{s.email}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="w-3 h-3 shrink-0" /><span className="break-all">{s.email}</span></p>
                         <p className="text-xs text-muted-foreground capitalize">{s.role}</p>
                       </div>
                       <Badge variant={s.is_active ? "default" : "secondary"}>{s.is_active ? "Active" : "Inactive"}</Badge>
