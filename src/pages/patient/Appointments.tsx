@@ -8,6 +8,12 @@ import { cn } from "@/lib/utils";
 import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
 import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/common/QueryState";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { useCancelAppointment, appointmentError } from "@/hooks/useAppointmentActions";
 
 const tabs = ["upcoming", "past", "cancelled"] as const;
 const tabLabels: Record<typeof tabs[number], string> = { upcoming: "Upcoming", past: "Past", cancelled: "Cancelled and declined" };
@@ -28,6 +34,16 @@ function statusText(a: any): string {
 
 export default function PatientAppointments() {
   const [tab, setTab] = useState<typeof tabs[number]>("upcoming");
+  const cancel = useCancelAppointment();
+
+  async function onCancel(id: string) {
+    try {
+      await cancel.mutateAsync(id);
+      toast.success("Appointment cancelled");
+    } catch (e) {
+      toast.error(appointmentError(e));
+    }
+  }
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["patient", "appointments"],
@@ -174,6 +190,26 @@ export default function PatientAppointments() {
                         appointment={a}
                         trigger={<Button variant="outline" size="sm">Reschedule</Button>}
                       />
+                      {/* The database lets a patient cancel a pending or accepted booking. */}
+                      {["pending", "accepted"].includes(a.status) && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" disabled={cancel.isPending} className="text-destructive hover:text-destructive">Cancel</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel this appointment?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {doc} on {new Date(a.requested_date).toDateString()}{a.requested_time ? ` at ${String(a.requested_time).slice(0, 5)}` : ""}. The hospital will be told.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Keep it</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => onCancel(a.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Yes, cancel</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                     </div>
                   )}
                 </div>
