@@ -23,6 +23,8 @@ Pass 3 (each spec file in turn, one dev server, desktop and mobile; counts inclu
 | patient | 37 | 0 |
 | doctor | 23 | 0 |
 | hospital | 43 | 0 |
+
+After #23 (toasts at the top below 640 px), doctor spec on mobile: 12 passed, 1 failed (#28); after the #28 test fix, 13 passed, 0 failed.
 "Test" in the Cause column means the test was wrong, not the app.
 
 | # | Role | Page | What happens | Expected | Cause | Fix commit | Status |
@@ -52,15 +54,16 @@ Pass 3 (each spec file in turn, one dev server, desktop and mobile; counts inclu
 | 20 | all | pages under test | Page drops back to the full-screen "Loading…" (`PageLoadingFallback`) or an element vanishes; a different handful of tests fails each run | Page stays loaded | **Test setup.** Vite watched `e2e/results`, so every trace file Playwright wrote there made Vite **reload the page under test**. `vite.config.ts` now ignores `e2e/`. Low memory (about 100 to 370 MB free of 4 GB) made it worse, so setup also opens each role's main pages once and the waits are 30 s. The app's checks are unchanged | a8864bf, 4a9a95d | Fixed (test setup); confirmed in pass 3 |
 | 21 | patient | `/patient/appointments` | Console: realtime WebSocket handshake got HTTP 520 | No console errors | Supabase's realtime endpoint returned 520 (an upstream/Cloudflare error) once in pass 2; not something the app sends wrong, and not seen in pass 3 | | External |
 | 22 | patient | `/patient/book` | `book_appointment` returns 400 and the test never reaches the appointments page | Booking saved | **Test.** The chosen slot was already held by the test doctor (an accepted `[E2E]` booking from an earlier run). The app is right: the picker can't see other patients' bookings, the database refuses the slot, and a toast says "That time was just taken". `book()` now reads the doctor's held times (as the doctor, through RLS) and skips them | 4b01212 | Fixed (test) |
-| 23 | doctor | consultation (mobile) | "Submit consultation" can't be tapped: the stacked toasts ("Examination saved", "1 item ordered", "Line added") cover the fixed Submit bar | Submit reachable | Sonner toasts sit bottom-right, over the bottom action bar at 360 px. For a person they clear after a few seconds; in the test they never closed because the pointer rested on them (Sonner pauses on hover). The test now moves the pointer away and waits for them | 87433ac (test) | **Needs decision** |
+| 23 | doctor | consultation (mobile) | "Submit consultation" can't be tapped: the stacked toasts ("Examination saved", "1 item ordered", "Line added") cover the fixed Submit bar | Submit reachable | Sonner toasts sit bottom-right, over the bottom action bar at 360 px. For a person they clear after a few seconds; in the test they never closed because the pointer rested on them (Sonner pauses on hover). Decided: below 640 px Sonner toasts now show at the top (as the Radix toaster already did), and the test's wait-for-toasts workaround is gone. Doctor spec on mobile passes | 2d55d17 | Fixed |
 | 24 | doctor | appointment drawer → Refer | Referral always stops at "Missing required information" | Referral created | `DoctorReferralDialog` took the hospital from `useHospitalId()`, which only returns hospitals where the user is **staff**, so for a doctor it was null. It now gets the appointment's `hospital_id`. RLS already allows it (`can_work_at` includes active doctors, Telemedicine counts as `emr`, and booking links the patient to the hospital), so no migration was needed. New test: refer from an accepted appointment | 5cb9ca9 | Fixed |
 | 25 | hospital | `/hospital/beds` (mobile) | Page is 32 px wider than 360 px | No horizontal scroll | Add Ward + Add Bed sat beside the heading without wrapping (same as #18); the header now wraps | e5a6f58 | Fixed |
 | 26 | hospital | `/hospital/settings` → Staff (mobile) | "Invited" badge and "Cancel invite" spill past the card's right edge | Inside the card | The card's text column had no `min-w-0`, so a long email pushed the right column out. Text column can shrink, email wraps | 27fd47d | Fixed |
 | 27 | hospital | `/hospital/settings` → Staff (mobile) | "Cancel invite" not found | Invite cancelled | **Test.** It took the innermost element containing the email, which on mobile is the email line, not the card. It now takes the element holding both the email and the button | 0130031 | Fixed (test) |
+| 28 | doctor | `/doctor/onboarding` (mobile) | "Your profile is complete" not found; the page had moved on to the dashboard | Heading seen | **Test.** The page shows the message for 2.5 s and then redirects (by design). `visit()` waits up to 15 s for the network to settle first, which on the slow machine outlasted it. The test now checks the heading straight after loading | 83a18b6 | Fixed (test) |
 
 ## Needs decision
 
-**#23 Toasts over the mobile Submit bar.** Recommendation: on small screens show toasts at the top (`position="top-center"` below `md`), or lift them above fixed bottom bars with Sonner's `offset`. It changes where every toast appears on mobile, so it's left for you. (#10 was decided: build the Cancel button.)
+None open. (#10: build the Cancel button. #23: toasts at the top below 640 px. Both done.)
 
 ## Found while fixing, not fixed
 
