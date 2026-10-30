@@ -128,6 +128,10 @@ test.describe("doctor", () => {
     await fieldAfter(section(page, "Diagnosis & plan"), "Provisional diagnosis").fill("[E2E] Tension headache");
     await expect(page.getByText(/^Saved \d|All changes saved/)).toBeVisible({ timeout: 20_000 });
 
+    // On mobile the toasts sit over the Submit bar (BUGS.md #23), and they don't close while
+    // the pointer rests on them; move it away and let them go, as a person would.
+    await page.mouse.move(0, 0);
+    await expect(page.locator("[data-sonner-toast]")).toHaveCount(0);
     await page.getByRole("button", { name: "Submit consultation" }).click();
     const confirm = page.getByRole("alertdialog");
     await confirm.getByRole("button", { name: "Submit" }).click();
