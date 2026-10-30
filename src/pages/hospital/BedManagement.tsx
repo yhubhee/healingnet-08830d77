@@ -120,7 +120,7 @@ export default function HospitalBedManagement() {
 
   return (
     <HospitalLayout>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap gap-3 items-center justify-between">
         <div>
           <h1 className="text-2xl font-heading font-bold mb-1">Bed Management</h1>
           <p className="text-muted-foreground">Ward management, bed allocation, occupancy tracking, and billing rates</p>
