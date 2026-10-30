@@ -7,6 +7,9 @@ export default defineConfig(() => ({
   server: {
     host: "::",
     port: 8080,
+    // Playwright writes traces under e2e/results while tests run; watching them
+    // made Vite reload the page under test.
+    watch: { ignored: ["**/e2e/**", "**/playwright-report/**"] },
   },
   plugins: [react()],
   resolve: {
