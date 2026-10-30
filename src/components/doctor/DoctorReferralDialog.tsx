@@ -10,16 +10,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDoctor } from "@/hooks/useDoctor";
-import { useHospitalId, useDoctors } from "@/hooks/useHospitalData";
+import { useDoctors } from "@/hooks/useHospitalData";
 import { friendlyError } from "@/lib/errors";
 
 interface Props {
   patientId: string;
+  /** The hospital the referral is made from: the appointment's hospital. */
+  hospitalId: string;
   trigger?: React.ReactNode;
   onSuccess?: () => void;
 }
 
-export function DoctorReferralDialog({ patientId, trigger, onSuccess }: Props) {
+export function DoctorReferralDialog({ patientId, hospitalId, trigger, onSuccess }: Props) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     referral_type: "internal",
@@ -35,7 +37,6 @@ export function DoctorReferralDialog({ patientId, trigger, onSuccess }: Props) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: doctor } = useDoctor();
-  const { data: hospitalId } = useHospitalId();
   const { data: doctors = [] } = useDoctors();
 
   async function handleSubmit() {

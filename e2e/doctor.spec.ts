@@ -139,6 +139,35 @@ test.describe("doctor", () => {
     expect(data?.provisional_diagnosis).toBe("[E2E] Tension headache");
   });
 
+  test("refer a patient from an accepted appointment", async ({ as, issues }) => {
+    test.setTimeout(180_000);
+    const patient = await as("patient");
+    const id = await book(patient, { doctor: "test", visit: "in_person", reason: e2e("Doctor spec referral") });
+
+    const page = await as("doctor");
+    await page.goto("/doctor/appointments");
+    const c = card(page, "doctor-appointment-card", id);
+    await c.getByRole("button", { name: "Accept", exact: true }).click();
+    await toast(page, "Appointment accepted");
+    await c.getByRole("button", { name: /Doctor spec referral/ }).click();
+    await page.getByRole("button", { name: "Refer", exact: true }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Create Patient Referral" });
+    await dialog.getByRole("combobox").first().click();
+    await page.getByRole("option", { name: /External/ }).click();
+    await dialog.getByPlaceholder("Enter hospital name").fill(e2e("Referral hospital"));
+    const reason = e2e("Doctor referral reason");
+    await dialog.getByPlaceholder("Describe why the patient needs referral").fill(reason);
+    await dialog.getByRole("button", { name: "Create Referral" }).click();
+    await toast(page, "Referral created successfully");
+
+    const d = await db("doctor");
+    const { data } = await d.from("hospital_referrals").select("id, referral_type").eq("reason", reason).maybeSingle();
+    recordCreated("hospital_referrals", (data as any)?.id, reason);
+    expect(data).toMatchObject({ referral_type: "external_outgoing" });
+    await checkPage(page, issues);
+  });
+
   test("patient detail and issue a letter", async ({ as, issues }) => {
     const acc = await accounts();
     const page = await as("doctor");

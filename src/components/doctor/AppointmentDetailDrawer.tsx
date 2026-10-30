@@ -111,7 +111,7 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
                 <Button disabled={saving} onClick={startCall} className="w-full"><Video className="w-4 h-4" />Join video call</Button>
                 <Textarea placeholder="Add consultation summary..." value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
                 <Button disabled={saving || !note.trim()} onClick={completeCall} className="w-full bg-success text-success-foreground hover:bg-success/90"><CheckCircle2 className="w-4 h-4" />Complete consultation</Button>
-                <DoctorReferralDialog patientId={a.patient_id} trigger={<Button variant="outline" className="w-full">Refer to another doctor</Button>} />
+                <DoctorReferralDialog patientId={a.patient_id} hospitalId={a.hospital_id} trigger={<Button variant="outline" className="w-full">Refer to another doctor</Button>} />
                 <Button disabled={saving} variant="outline" className="w-full" onClick={() => update({ status: "cancelled" }, "Cancelled")}>Cancel appointment</Button>
               </>
             )}
@@ -121,7 +121,7 @@ export function AppointmentDetailDrawer({ appointment, onClose }: { appointment:
                 <div className="grid grid-cols-3 gap-2">
                   <NewPrescriptionDialog patientId={a.patient_id} trigger={<Button variant="outline" size="sm">+ Rx</Button>} />
                   <OrderLabTestDialog patientId={a.patient_id} trigger={<Button variant="outline" size="sm">+ Lab</Button>} />
-                  <DoctorReferralDialog patientId={a.patient_id} trigger={<Button variant="outline" size="sm">Refer</Button>} />
+                  <DoctorReferralDialog patientId={a.patient_id} hospitalId={a.hospital_id} trigger={<Button variant="outline" size="sm">Refer</Button>} />
                 </div>
                 <Button disabled={saving} variant="outline" className="w-full" onClick={() => update({ status: "cancelled" }, "Cancelled")}>Cancel appointment</Button>
               </>
