@@ -143,8 +143,6 @@ test.describe("appointment flow across roles", () => {
   });
 
   test("7. patient cancels a pending booking; the hospital sees it cancelled", async ({ as, issues }) => {
-    // Needs decision (e2e/BUGS.md #10): /patient/appointments has no Cancel action yet.
-    test.fixme(true, "The patient appointments page has no Cancel button (Needs decision)");
     const patient = await as("patient");
     const id = await book(patient, { doctor: "any", visit: "in_person", reason: e2e("Flow 7 patient cancels") });
 
