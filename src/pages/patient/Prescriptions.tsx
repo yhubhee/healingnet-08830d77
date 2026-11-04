@@ -1,103 +1,103 @@
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PatientLayout } from "@/layouts/PatientLayout";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Pill, RefreshCw, User, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { QueryState } from "@/components/common/QueryState";
-import { buildPrescriptionDocument, downloadReportPdf } from "@/lib/reports/documents";
+import { usePatientProfile } from "@/hooks/usePatientData";
+import { cn } from "@/lib/utils";
+import type { RxPayload } from "@/lib/pharmacy";
+import { RxCard, type PatientRequest } from "@/components/patient/rx/RxCard";
+import type { CheckResult } from "@/components/patient/rx/MedicineCheck";
+
+// The most recent prescription documents loaded on this page.
+const MAX_DOCS = 40;
 
 export default function PatientPrescriptions() {
-  const [tab, setTab] = useState<"active" | "completed">("active");
-  const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["patient", "prescriptions"],
+  const qc = useQueryClient();
+  const { data: profile } = usePatientProfile();
+  const pid = profile?.id as string | undefined;
+  const [tab, setTab] = useState<"current" | "all">("all");
+
+  // Each prescription row belongs to a document; load each document's full view (status, items, dispenses).
+  const docs = useQuery({
+    enabled: !!pid,
+    queryKey: ["patient", "rx-documents", pid],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return [];
-      }
-      const { data: p, error: pError } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
-      if (pError) throw pError;
-      if (!p) {
-        return [];
-      }
-      const { data, error } = await supabase
-        .from("prescriptions")
-        .select("*, doctors(first_name,last_name)")
-        .eq("patient_id", p.id)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("prescriptions").select("rx_document_id, created_at")
+        .eq("patient_id", pid!).not("rx_document_id", "is", null).order("created_at", { ascending: false }).limit(500);
       if (error) throw error;
-      return data || [];
+      const ids = [...new Set((data ?? []).map((r) => r.rx_document_id as string))].slice(0, MAX_DOCS);
+      const out = await Promise.all(ids.map(async (id) => {
+        const { data, error } = await supabase.rpc("rx_document", { p_document_id: id });
+        if (error) throw error;
+        return data as unknown as RxPayload;
+      }));
+      return out.filter((d) => d && d.status !== "not_found")
+        .sort((a, b) => +new Date(b.issued_at ?? 0) - +new Date(a.issued_at ?? 0));
     },
   });
 
-  const list = (data || []).filter((r: any) => r.status === tab);
+  const extras = useQuery({
+    enabled: !!pid,
+    queryKey: ["patient", "rx-requests", pid],
+    queryFn: async () => {
+      const [req, rev, chk] = await Promise.all([
+        supabase.from("rx_pharmacy_requests").select("*, pharmacies(name)").eq("patient_id", pid!).order("created_at", { ascending: false }).limit(300),
+        supabase.from("pharmacy_reviews").select("request_id, rating").eq("patient_id", pid!),
+        supabase.from("medicine_checks").select("prescription_id, result, created_at").eq("patient_id", pid!).order("created_at", { ascending: false }).limit(500),
+      ]);
+      const e = req.error || rev.error || chk.error;
+      if (e) throw e;
+      const reviews: Record<string, number> = {};
+      (rev.data ?? []).forEach((r) => { reviews[r.request_id] = r.rating; });
+      const checks: Record<string, CheckResult> = {};
+      (chk.data ?? []).forEach((c) => { if (c.prescription_id && !checks[c.prescription_id]) checks[c.prescription_id] = c.result as CheckResult; });
+      return { requests: (req.data ?? []) as unknown as PatientRequest[], reviews, checks };
+    },
+  });
+
+  // Live: pharmacy replies and collections.
+  useEffect(() => {
+    if (!pid) return;
+    const ch = supabase
+      .channel(`patient-rx-requests-${pid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "rx_pharmacy_requests", filter: `patient_id=eq.${pid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["patient", "rx-requests"] });
+        qc.invalidateQueries({ queryKey: ["patient", "rx-documents"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [pid, qc]);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["patient", "rx-requests"] });
+    qc.invalidateQueries({ queryKey: ["patient", "rx-documents"] });
+  };
+
+  const all = docs.data ?? [];
+  const list = useMemo(() => (tab === "current" ? all.filter((d) => d.status === "valid") : all), [all, tab]);
+  const byDoc = (id?: string) => (extras.data?.requests ?? []).filter((r) => r.rx_document_id === id);
 
   return (
     <PatientLayout>
       <div className="mb-6">
         <h1 className="text-2xl font-heading font-bold">Prescriptions</h1>
-        <p className="text-muted-foreground text-sm">All medications prescribed to you</p>
+        <p className="text-muted-foreground text-sm">Show the code or QR at any HealingNet pharmacy, or send it to one near you. You pay at the counter.</p>
       </div>
 
-      <div className="flex gap-1 mb-5 bg-muted/30 p-1 rounded-lg w-fit">
-        {(["active", "completed"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={cn("px-4 py-1.5 rounded-md text-sm capitalize", tab === t ? "bg-card text-foreground shadow" : "text-muted-foreground")}>{t}</button>
+      <div className="mb-5 flex w-fit gap-1 rounded-lg bg-muted/30 p-1">
+        {([["all", "All"], ["current", "Valid now"]] as const).map(([t, label]) => (
+          <button key={t} onClick={() => setTab(t)} className={cn("min-h-9 rounded-md px-4 py-1.5 text-sm", tab === t ? "bg-card text-foreground shadow" : "text-muted-foreground")}>{label}</button>
         ))}
       </div>
 
-      <QueryState
-        isLoading={isLoading}
-        isError={isError}
-        error={error}
-        onRetry={() => refetch()}
-        isEmpty={list.length === 0}
-        emptyMessage={`No ${tab} prescriptions.`}
-      >
-        <div className="grid md:grid-cols-2 gap-4">
-          {list.map((r: any) => {
-            const refillsLeft = (r.refills_allowed || 0) - (r.refills_used || 0);
-            return (
-              <div key={r.id} className="bg-card border border-border rounded-xl p-5">
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-success/10 text-success flex items-center justify-center"><Pill className="w-5 h-5" /></div>
-                  <div className="flex-1">
-                    <h3 className="font-heading font-bold">{r.drug_name}</h3>
-                    <p className="text-sm text-muted-foreground">{r.dosage} {r.frequency && `• ${r.frequency}`}</p>
-                  </div>
-                  <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", r.status === "active" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")}>{r.status}</span>
-                </div>
-                {r.instructions && <p className="text-sm mt-3 text-muted-foreground italic">"{r.instructions}"</p>}
-                <div className="grid grid-cols-3 gap-2 mt-4 text-xs">
-                  <div><div className="text-muted-foreground">Duration</div><div className="font-medium">{r.duration || "—"}</div></div>
-                  <div><div className="text-muted-foreground">Refills left</div><div className="font-medium">{refillsLeft}</div></div>
-                  <div><div className="text-muted-foreground">Issued</div><div className="font-medium">{new Date(r.created_at).toLocaleDateString()}</div></div>
-                </div>
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
-                  <div className="text-xs text-muted-foreground flex items-center gap-1"><User className="w-3.5 h-3.5" />{r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : "—"}</div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      className="text-sm text-primary inline-flex items-center gap-1"
-                      onClick={() =>
-                        downloadReportPdf(
-                          buildPrescriptionDocument({
-                            patientName: "You",
-                            doctorName: r.doctors ? `${r.doctors.first_name} ${r.doctors.last_name}` : null,
-                            issuedAt: r.created_at,
-                            referenceId: r.id,
-                            items: [r],
-                          })
-                        )
-                      }
-                    >
-                      <Download className="w-3.5 h-3.5" />Report
-                    </button>
-                    {r.status === "active" && refillsLeft > 0 && <button className="text-sm text-primary inline-flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5" />Request refill</button>}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      <QueryState isLoading={docs.isLoading || !profile} isError={docs.isError} error={docs.error} onRetry={() => docs.refetch()}
+        isEmpty={list.length === 0} emptyMessage={tab === "current" ? "No valid prescriptions right now. See All for older ones." : "No prescriptions yet."}>
+        <div className="grid gap-4 xl:grid-cols-2">
+          {list.map((d) => (
+            <RxCard key={d.document_id} doc={d} requests={byDoc(d.document_id)} reviews={extras.data?.reviews ?? {}}
+              checks={extras.data?.checks ?? {}} profile={profile} onChanged={refresh} />
+          ))}
         </div>
       </QueryState>
     </PatientLayout>
