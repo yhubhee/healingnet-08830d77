@@ -120,3 +120,298 @@ lab_results: 1f615f52-a5df-444e-870e-718b08b43092, 479cbf71-c542-4a60-9db2-f0ad6
 - **patient_share_codes:** single-use 15-minute codes, now expired or used: 5AZPY9, AJEKFS, GHQ94R, K7WAQE, KXUXKS, MDBDPR, PY4TFV, QJ5F55, XMGAHE (from the run ledger; earlier runs' codes weren't recorded).
 - **triage_sessions:** one per triage run by the test patient. They hold no `[E2E]` text; find them by the test patient's `patient_id` and today's date.
 - **Storage, `avatars` bucket:** test avatars under the test patient's folder `5d159e4e-a06f-475b-8ae2-6559c403bff7/` (`avatar-1793274585454.png`, `avatar-1793332433882.png`, `avatar-1793332520332.png`, `avatar-1793333437941.png`, `avatar-1793333524113.png`, plus any from earlier runs). The newest one is the account's current photo.
+
+---
+
+## Pharmacy network runs (2026-11-04)
+
+From the run ledger (`e2e/results/created.jsonl`) for every run in this round: pharmacy spec passes 1, 2 and final, the public-tests run, and the first run of the other four specs on the new code. Nothing has been deleted.
+
+Delete children before parents: `pharmacy_fees`, `pharmacy_reviews` and `rx_dispenses` before `rx_pharmacy_requests`; `medicine_checks` and `rx_dispenses` before `prescriptions`; `prescriptions` and `rx_pharmacy_requests` before `rx_documents`. `rx_access_log` rows (one per pharmacy view or dispense of these documents) go with their `rx_documents` row (on delete cascade).
+
+Also created by triggers or functions, with no id in the ledger:
+
+- **user_notifications:** "Prescription dispensed" and pharmacy-reply notifications to the test patient; "New prescription request" notifications to the test pharmacy. Find them by `reference_id` = the documents and requests below.
+- **rx_access_log:** every pharmacy view and dispense of the documents below.
+- **doctors (test doctor):** `practice_address` (`[E2E] 12 Ikot Ekpene Road, Uyo …`) and `signature_data` were set by the spec. Keep them; the doctor needs a signature to issue valid prescriptions.
+
+### prescriptions (26)
+
+| id | note |
+| --- | --- |
+| 8c12d1ef-6a0f-4a22-92be-569df7ebf4dd | [E2E] Amoxicillin 500mg p1am |
+| 1f3a1317-a2fd-4d03-870a-1af8045cca34 | [E2E] Lisinopril 10mg p1am |
+| 48e68ca0-e3bd-40d1-b76f-cad29f7137a4 | [E2E] Amoxicillin 500mg p2ad |
+| 94dc54eb-619f-42a4-ab30-c77ea4b7e694 | [E2E] Lisinopril 10mg p2ad |
+| 22813154-a873-4b00-8fd6-220cc3776978 | [E2E] Metformin 500mg p2ad |
+| 8ef19d66-fb7b-4281-bff5-967d9fc7eb75 | [E2E] Omeprazole 20mg p2ad |
+| 0162ef58-8eff-4ca6-a468-2da19f014732 | [E2E] Ibuprofen 400mg p2ad (entered by hospital staff) |
+| 2b9a9529-1164-4eb4-af63-c4050b391205 | [E2E] Amoxicillin 500mg p2am |
+| 96c87491-f5fd-49bc-99b3-85428764aadc | [E2E] Lisinopril 10mg p2am |
+| 95711771-daef-4e48-9da9-1090717a775e | [E2E] Metformin 500mg p2am |
+| 0d93232c-59ea-43c5-bed8-b5025e50393c | [E2E] Omeprazole 20mg p2am |
+| 5f37bfd4-fbe1-43a5-838d-1e483ea010b6 | [E2E] Ibuprofen 400mg p2am (entered by hospital staff) |
+| 878c19b4-495c-4a86-80fa-2b35aaab3338 | [E2E] Cetirizine 10mg p3ad |
+| fdfc8de7-f7db-4a20-b5d8-419dd671b2eb | [E2E] Cetirizine 10mg p3am |
+| bdd5f59e-6d64-4499-8aa8-030c0fa99a88 | [E2E] Amoxicillin 500mg p4ad |
+| cfa5308e-ab08-49bb-ab97-d55f69372db2 | [E2E] Lisinopril 10mg p4ad |
+| 7280c9d1-4239-4943-a90d-793f0666dd8b | [E2E] Metformin 500mg p4ad |
+| ba743917-e1f5-40d0-9c01-781ec0139387 | [E2E] Omeprazole 20mg p4ad |
+| f65ce799-0494-40a3-a6c6-5ea88a44a0fc | [E2E] Ibuprofen 400mg p4ad (entered by hospital staff) |
+| c4757a10-7954-45f7-ab65-8d4d66ff5ae2 | [E2E] Cetirizine 10mg p4ad |
+| e21d2436-24e7-4019-8483-9f8969bfd195 | [E2E] Amoxicillin 500mg p4am |
+| 60f853ff-6c36-468f-aea4-0da3630bb35b | [E2E] Lisinopril 10mg p4am |
+| ea50498e-f6cb-4da5-92ab-c97ae5f0abf7 | [E2E] Metformin 500mg p4am |
+| 2fee9e8f-eb87-4367-8e23-4fb44ed2910b | [E2E] Omeprazole 20mg p4am |
+| 152b302c-6ac6-41e6-897f-e20f06bcadac | [E2E] Ibuprofen 400mg p4am (entered by hospital staff) |
+| 2d1cdfff-20be-41fe-89ea-975730b3e62c | [E2E] Cetirizine 10mg p4am |
+
+### rx_documents (26)
+
+| id | note |
+| --- | --- |
+| 0fdb3dcd-65b4-45d1-a618-177ac26670fb | [E2E] Amoxicillin 500mg p1am (HN-2RSCG-04ARX) |
+| 8eb4f814-460e-4b36-9bbf-1e6d19260498 | [E2E] Lisinopril 10mg p1am (HN-DX27Q-MP3FR) |
+| 6d9f6d6c-c927-4397-81fc-17a9c0932c27 | [E2E] Amoxicillin 500mg p2ad (HN-HFPM2-RYFWY) |
+| a20c4c33-ac28-4753-bb76-0dcbfa52890f | [E2E] Lisinopril 10mg p2ad (HN-40B8V-QSBZ9) |
+| ef9929b3-3e6f-49dd-846f-b4ccabf8cf49 | [E2E] Metformin 500mg p2ad (HN-DFV4H-2DT88) |
+| db22d879-ad2b-4e25-84ea-3ae2cff254c5 | [E2E] Omeprazole 20mg p2ad (HN-YN647-JTB50) |
+| 1abb0cac-86c4-4e89-b98a-8eb110bd1563 | [E2E] Ibuprofen 400mg p2ad (HN-DCYG5-Y91EE) |
+| e24454cf-d758-44d1-a71b-d944d274edba | [E2E] Amoxicillin 500mg p2am (HN-T71NS-2A1VE) |
+| 130a6c6c-d29a-4326-b027-59f04f98cd0d | [E2E] Lisinopril 10mg p2am (HN-KRZ1Y-TRMJ2) |
+| 5e532acf-3c8b-4c78-9234-61f3176b47bf | [E2E] Metformin 500mg p2am (HN-08ZYQ-PXBZR) |
+| 0feeeb80-b012-439e-85c7-acb533c4d710 | [E2E] Omeprazole 20mg p2am (HN-VC9JG-DNDSB) |
+| 792b5678-dce9-4bdf-8aa8-359b4d7b3279 | [E2E] Ibuprofen 400mg p2am (HN-22822-9TK2P) |
+| f959cd73-bcae-44eb-9630-043a0ec18b0b | [E2E] Cetirizine 10mg p3ad (HN-VZ6KN-FZ3ND) |
+| 3ee82164-784d-4f44-a11e-ddef55c38fc7 | [E2E] Cetirizine 10mg p3am (HN-PPD49-PNWVY) |
+| 4aaf93c0-aa32-45b2-8c53-6ecd3f388965 | [E2E] Amoxicillin 500mg p4ad (HN-ETP2B-NAMJW) |
+| e43e9a73-3223-4d05-b8a6-06c0598e5a5c | [E2E] Lisinopril 10mg p4ad (HN-BD5VJ-4ZJN2) |
+| be9f05da-6e57-4fc5-b7f0-f5fd6aedfa05 | [E2E] Metformin 500mg p4ad (HN-4N1HD-JVVXC) |
+| 0816b85f-1f7a-41e0-a2c2-f45d1ce019c9 | [E2E] Omeprazole 20mg p4ad (HN-SEW4H-87CTV) |
+| eae44582-267b-4462-8f94-05857d5f1597 | [E2E] Ibuprofen 400mg p4ad (HN-KNQD4-G965Z) |
+| 5662979a-55da-44cd-81bf-1586a971c8c2 | [E2E] Cetirizine 10mg p4ad (HN-C328B-W805K) |
+| 73775dea-ebb5-4a10-b2d4-e9b10131445a | [E2E] Amoxicillin 500mg p4am (HN-30WXS-2BJWE) |
+| 93feaa12-c49b-4c35-b3e9-13786726b6f5 | [E2E] Lisinopril 10mg p4am (HN-ETR2Z-RR2YH) |
+| cca31e93-a42e-4355-9dff-0fde3d4db783 | [E2E] Metformin 500mg p4am (HN-XV3HK-CAZ4M) |
+| cb6d5e49-719d-4fc0-92ba-e1ca20a6275b | [E2E] Omeprazole 20mg p4am (HN-HDN06-B1MAZ) |
+| 88af9c8c-165e-4879-b269-986648fe928c | [E2E] Ibuprofen 400mg p4am (HN-D8A90-GTRCC) |
+| a1096228-b213-466e-b31c-ff99fd1e42fd | [E2E] Cetirizine 10mg p4am (HN-43YQ4-4K323) |
+
+### rx_dispenses (17)
+
+| id | note |
+| --- | --- |
+| 05f1be5c-98bb-42b2-b49d-bf729aea8c31 | [E2E] Amoxicillin 500mg p1am (HN-2RSCG-04ARX) |
+| 75d514c3-0493-42a3-81d3-ca9b11320468 | [E2E] Amoxicillin 500mg p2ad (HN-HFPM2-RYFWY) |
+| 6a3bc26d-d241-471a-9310-dfe7f798d6d9 | [E2E] Lisinopril 10mg p2ad (HN-40B8V-QSBZ9) |
+| 5899b2ed-d44c-410f-a352-37f1418396c2 | [E2E] Lisinopril 10mg p2ad (HN-40B8V-QSBZ9) |
+| a5c36e9c-8ff6-483f-92ea-9a72a6e9cd4a | [E2E] Metformin 500mg p2ad (HN-DFV4H-2DT88) |
+| 236c4165-3188-45a2-ad0d-4de1c3bf327e | [E2E] Amoxicillin 500mg p2am (HN-T71NS-2A1VE) |
+| 79b8d385-8c40-4e9f-894a-1e495c262642 | [E2E] Lisinopril 10mg p2am (HN-KRZ1Y-TRMJ2) |
+| f48a57bc-ee60-4ed5-9d82-d50546606ae3 | [E2E] Lisinopril 10mg p2am (HN-KRZ1Y-TRMJ2) |
+| 21dba10e-aadb-42fe-b811-ab42f45f7a6c | [E2E] Metformin 500mg p2am (HN-08ZYQ-PXBZR) |
+| 26e71172-09e1-4ac0-9e3f-2b6cfe87e0a7 | [E2E] Amoxicillin 500mg p4ad (HN-ETP2B-NAMJW) |
+| 4acdd791-d9e3-4221-9ed5-824844957552 | [E2E] Lisinopril 10mg p4ad (HN-BD5VJ-4ZJN2) |
+| 1d780a41-5842-4e03-b151-5fede060013b | [E2E] Lisinopril 10mg p4ad (HN-BD5VJ-4ZJN2) |
+| 83fc49fd-5121-4b6e-bb1d-df9de810fbb2 | [E2E] Metformin 500mg p4ad (HN-4N1HD-JVVXC) |
+| 39057fc1-c959-497d-95b7-e9478f32784d | [E2E] Amoxicillin 500mg p4am (HN-30WXS-2BJWE) |
+| edc938b6-9594-488a-8ca0-2b7585192b39 | [E2E] Lisinopril 10mg p4am (HN-ETR2Z-RR2YH) |
+| 93ad77b5-afc4-411e-80bc-5ade52453eba | [E2E] Lisinopril 10mg p4am (HN-ETR2Z-RR2YH) |
+| 599bbf87-4ca4-4ccf-a482-6e5f571cc7b3 | [E2E] Metformin 500mg p4am (HN-XV3HK-CAZ4M) |
+
+### rx_pharmacy_requests (8)
+
+| id | note |
+| --- | --- |
+| 569d52c9-7733-427a-bbc0-062b7e97b6af | [E2E] I will pick up after work p2ad |
+| b284b585-8702-43f9-81e3-f74a0953aa38 | [E2E] Please hold until Friday p2ad |
+| f85166ab-7637-4ac0-a101-f5409d21c8f9 | [E2E] I will pick up after work p2am |
+| 285275e5-faf5-4f60-87aa-5d288018cfbc | [E2E] Please hold until Friday p2am |
+| d5f7baa7-6dcc-45a5-aa9c-4d54f00861a9 | [E2E] I will pick up after work p4ad |
+| e3f2655e-6293-4553-8060-3c4a994b351e | [E2E] Please hold until Friday p4ad |
+| 9e8d3747-3c16-4a55-b450-cf327ae64352 | [E2E] I will pick up after work p4am |
+| 3bf2bcde-dba8-4392-8a33-176cedc27cef | [E2E] Please hold until Friday p4am |
+
+### pharmacy_fees (4)
+
+| id | note |
+| --- | --- |
+| 364dd4e9-d108-4142-8ff8-b1c00c6dc7c5 | fee for request 569d52c9-7733-427a-bbc0-062b7e97b6af |
+| 4c9082ce-745b-40b7-abec-0f94c26abccb | fee for request f85166ab-7637-4ac0-a101-f5409d21c8f9 |
+| 146fcbce-0e6a-4e69-8209-a1ceeef07dd0 | fee for request d5f7baa7-6dcc-45a5-aa9c-4d54f00861a9 |
+| a6b1358a-eafc-427e-824d-0be6d8cff02a | fee for request 9e8d3747-3c16-4a55-b450-cf327ae64352 |
+
+### pharmacy_reviews (4)
+
+| id | note |
+| --- | --- |
+| 569d52c9-7733-427a-bbc0-062b7e97b6af | 4-star rating (row keyed by request_id) |
+| f85166ab-7637-4ac0-a101-f5409d21c8f9 | 4-star rating (row keyed by request_id) |
+| d5f7baa7-6dcc-45a5-aa9c-4d54f00861a9 | 4-star rating (row keyed by request_id) |
+| 9e8d3747-3c16-4a55-b450-cf327ae64352 | 4-star rating (row keyed by request_id) |
+
+### medicine_checks (8)
+
+| id | note |
+| --- | --- |
+| 70389b86-c368-4358-b834-168b7e6635aa | genuine for prescription 48e68ca0-e3bd-40d1-b76f-cad29f7137a4 |
+| 9b84ebd9-1faa-4c5b-9f89-ba1076dfd86e | not_found for prescription 94dc54eb-619f-42a4-ab30-c77ea4b7e694 |
+| 885eb5d4-d90d-4f18-a5f4-77252e791e52 | genuine for prescription 2b9a9529-1164-4eb4-af63-c4050b391205 |
+| e36e3da9-c477-4a89-8ce0-f48024ee5fcd | not_found for prescription 96c87491-f5fd-49bc-99b3-85428764aadc |
+| 1766839e-5280-42c1-a034-ec512c403e03 | genuine for prescription bdd5f59e-6d64-4499-8aa8-030c0fa99a88 |
+| 0974f49d-c0c6-4cbb-9986-4ae6c427ffdf | not_found for prescription cfa5308e-ab08-49bb-ab97-d55f69372db2 |
+| 0dce87dd-ce0c-4585-883e-d6b7fa9d9290 | genuine for prescription e21d2436-24e7-4019-8483-9f8969bfd195 |
+| daf49b25-a8b9-4b0b-94a6-8f5a78adbda4 | not_found for prescription 60f853ff-6c36-468f-aea4-0da3630bb35b |
+
+### pharmacy_inventory (8)
+
+| id | note |
+| --- | --- |
+| 4d85e274-37a5-4e69-80bf-b140b6900954 | [E2E] Paracetamol syrup p1am |
+| 123626cd-55a7-413c-a378-c4be0cd24b70 | [E2E] Paracetamol syrup p1bd |
+| bfdfd441-2d39-4944-a714-50d0810af833 | [E2E] Paracetamol syrup p2ad |
+| af20b89c-50e6-4c42-bdd0-656c03e09e7e | [E2E] Paracetamol syrup p2am |
+| (not found) | [E2E] Test drug x1ho (find by the [E2E] text and run x1ho) |
+| (not found) | [E2E] Test drug x1ho (find by the [E2E] text and run x1ho) |
+| 3bbb1c81-d6e7-4f37-b16b-76d19abb937b | [E2E] Paracetamol syrup p4ad |
+| 8b97eec7-093a-4ed0-8e80-4c940895be41 | [E2E] Paracetamol syrup p4am |
+
+### anc_records (2)
+
+| id | note |
+| --- | --- |
+| (not found) | [E2E] ANC record for the run's [E2E] patient (find by the [E2E] text and run x1ho) |
+| (not found) | [E2E] ANC record for the run's [E2E] patient (find by the [E2E] text and run x1ho) |
+
+### consultations (2)
+
+| id | note |
+| --- | --- |
+| 5fcf81a5-5fa7-4590-b670-71a970710582 | for appointment f2dedc4c-b0f7-4054-835d-92c684c03ce9 |
+| 614ad451-6410-4406-a4c9-f605ebf8fef9 | for appointment fc67a071-16c2-4c04-8755-abd876708c17 |
+
+### emr_entries (2)
+
+| id | note |
+| --- | --- |
+| 78a0a4e0-4939-4ab0-aaaa-9e48741bf4a7 | [E2E] EMR note x1hod |
+| b77a93f8-1983-4098-bf92-54fdc28899c9 | [E2E] EMR note x1hom |
+
+### hospital_billing (2)
+
+| id | note |
+| --- | --- |
+| (not found) | [E2E] Consultation fee x1ho (find by the [E2E] text and run x1ho) |
+| (not found) | [E2E] Consultation fee x1ho (find by the [E2E] text and run x1ho) |
+
+### hospital_referrals (4)
+
+| id | note |
+| --- | --- |
+| d7be7cc2-f18f-42d5-98b3-4eee178e3c8e | [E2E] Doctor referral reason x1dod |
+| b0445074-9c00-400f-b688-bb54e4f16db3 | [E2E] Doctor referral reason x1dom |
+| (not found) | [E2E] Referral reason x1ho (find by the [E2E] text and run x1ho) |
+| (not found) | [E2E] Referral reason x1ho (find by the [E2E] text and run x1ho) |
+
+### hospital_wards (2)
+
+| id | note |
+| --- | --- |
+| (not found) | [E2E] Ward x1ho (find by the [E2E] text and run x1ho) |
+| (not found) | [E2E] Ward x1ho (find by the [E2E] text and run x1ho) |
+
+### insurance_claims (2)
+
+| id | note |
+| --- | --- |
+| (not found) | [E2E] Test HMO x1ho (find by the [E2E] text and run x1ho) |
+| (not found) | [E2E] Test HMO x1ho (find by the [E2E] text and run x1ho) |
+
+### lab_results (2)
+
+| id | note |
+| --- | --- |
+| (not found) | [E2E] lab order (find by the [E2E] text and run x1ho) |
+| (not found) | [E2E] lab order (find by the [E2E] text and run x1ho) |
+
+### patient_appointments (26)
+
+| id | note |
+| --- | --- |
+| c09eadb2-74ed-4bf2-94f6-2085201d49f1 | [E2E] Booked from triage x1pad |
+| 5c314c85-14f5-483d-b2e9-c412e75db4e9 | [E2E] Booked from triage x1pam |
+| 5b81f70f-ffdf-486f-8950-867359096b69 | [E2E] Doctor spec open request x1dod |
+| 4b4e9a06-2487-4cb2-9ae2-4ea87a8fd378 | [E2E] Doctor spec accept x1dod |
+| 4d201df1-9c31-467f-a1da-fb421595005d | [E2E] Doctor spec decline x1dod |
+| f2dedc4c-b0f7-4054-835d-92c684c03ce9 | [E2E] Doctor spec consultation x1dod |
+| 8369b23f-6cf8-406e-be4c-6c189f8965c8 | [E2E] Doctor spec referral x1dod |
+| 8a465324-7073-4a79-9137-580b3197c0b7 | [E2E] Doctor spec open request x1dom |
+| 785f0069-72c7-4485-9eb1-9d6c65967315 | [E2E] Doctor spec accept x1dom |
+| 37a35e86-51e6-4eef-ad69-60e387ac2c15 | [E2E] Doctor spec decline x1dom |
+| fc67a071-16c2-4c04-8755-abd876708c17 | [E2E] Doctor spec consultation x1dom |
+| 11e33d1a-c2a4-4e87-b17d-efdae579b041 | [E2E] Doctor spec referral x1dom |
+| f07fb5b2-e965-4e87-a9de-53a4dc6a6c4e | [E2E] Hospital spec appointments page x1hod |
+| 966ae7cb-26ae-4e08-8a6e-07f693340535 | [E2E] Hospital spec appointments page x1hom |
+| 9a8f2949-46c4-454d-ba58-0bf75151e282 | [E2E] Flow 1 any doctor in person x1apd |
+| 431a7058-565e-4354-8923-a9baf94c2e5a | [E2E] Flow 3 hospital assigns x1apd |
+| dc958c2d-2561-44ee-baef-d4f660312598 | [E2E] Flow 4 specific doctor x1apd |
+| e2d7426e-265f-4677-9360-77e32f7d7de4 | [E2E] Flow 5 declined x1apd |
+| 3c7793c5-33cd-4246-9966-ab264786f0ff | [E2E] Flow 6 video x1apd |
+| 091e6b79-cf32-4665-b6ba-67a4adc32e62 | [E2E] Flow 7 patient cancels x1apd |
+| f62ebb41-247d-4438-973a-b950d2f6eac7 | [E2E] Flow 1 any doctor in person x1apm |
+| 0cd2daa0-ac18-4540-9f17-83b72e2812be | [E2E] Flow 3 hospital assigns x1apm |
+| 6c938e19-97f5-4609-b9b1-0a2c6d140d7a | [E2E] Flow 4 specific doctor x1apm |
+| 88764f2b-ff75-44d6-a520-be59db05f91c | [E2E] Flow 5 declined x1apm |
+| bd722479-d351-4dc6-928e-e0a6fe90f65c | [E2E] Flow 6 video x1apm |
+| bfab8a9a-6893-40d1-b32e-e1c8df57e7ac | [E2E] Flow 7 patient cancels x1apm |
+
+### patient_checkins (2)
+
+| id | note |
+| --- | --- |
+| 541a6a45-6484-4cb3-8add-8cc5f2f5b7bc | check-in for [E2E] Ada Okafor x1hod |
+| 780dfaac-0513-4729-a28f-289726421833 | check-in for [E2E] Ada Okafor x1hom |
+
+### patient_letters (2)
+
+| id | note |
+| --- | --- |
+| 494e33e8-97ff-4282-8646-a875347f6397 | [E2E] Fitness letter x1dod |
+| 139aad2b-238b-4520-8f28-b513761bb885 | [E2E] Fitness letter x1dom |
+
+### patient_share_codes (3)
+
+| id | note |
+| --- | --- |
+| S6Z3GD | share code shown to the patient (single use, 15 min) |
+| EFYJ3K | share code shown to the patient (single use, 15 min) |
+| KFMUUR | share code created for the hospital link test |
+
+### patients (2)
+
+| id | note |
+| --- | --- |
+| b81ba51e-5480-4901-93e1-2f6cda2b7493 | [E2E] Ada Okafor x1hod |
+| d99750cf-2e22-4f7f-a2f0-8880f32c8b6f | [E2E] Ada Okafor x1hom |
+
+### staff_invites (2)
+
+| id | note |
+| --- | --- |
+| (not found) | e2e+x1hod@example.com (cancelled by the test) |
+| (not found) | e2e+x1hom@example.com (cancelled by the test) |
+
+### storage.objects (avatars) (2)
+
+| id | note |
+| --- | --- |
+| https://prougveoeumxvyallkcm.supabase.co/storage/v1/object/public/avatars/5d159e4e-a06f-475b-8ae2-6559c403bff7/avatar-1793814892823.png | [E2E] test avatar uploaded for the test patient |
+| https://prougveoeumxvyallkcm.supabase.co/storage/v1/object/public/avatars/5d159e4e-a06f-475b-8ae2-6559c403bff7/avatar-1793814984428.png | [E2E] test avatar uploaded for the test patient |
+
+### surgery_records (2)
+
+| id | note |
+| --- | --- |
+| (not found) | [E2E] Appendicectomy x1ho (find by the [E2E] text and run x1ho) |
+| (not found) | [E2E] Appendicectomy x1ho (find by the [E2E] text and run x1ho) |
+

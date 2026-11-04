@@ -68,3 +68,36 @@ None open. (#10: build the Cancel button. #23: toasts at the top below 640 px. B
 ## Found while fixing, not fixed
 
 - **Triage self-rating.** `severity_self` is now saved as null. If the patient's own 1-10 rating is wanted, the scale answer needs keeping as a number (it's currently only kept as text in the evidence).
+
+---
+
+# Pharmacy network (passes 4 onwards)
+
+New spec `e2e/pharmacy.spec.ts`; logins for the pharmacy (owner who is a verified pharmacist) and the platform admin added to `auth.setup.ts`. Each spec file runs on its own against one dev server, desktop and mobile; counts include the login setups (5 from now on).
+
+| Run | Passed | Failed | Notes |
+| --- | --- | --- | --- |
+| pharmacy, pass 1 | 22 | 3 | #29 (desktop), #30 (desktop, so the rest of the desktop chain was skipped), #31 (mobile, so the rest of the mobile chain was skipped) |
+| pharmacy, pass 2 | 39 | 0 | After #29 to #32 |
+| patient (first run on the new code) | 39 | 0 | |
+| doctor (first run on the new code) | 25 | 0 | |
+| hospital (first run on the new code) | 45 | 0 | |
+| appointment-flow (first run on the new code) | 17 | 0 | |
+| pharmacy, new public tests only | 6 | 0 | Sign-up join-code check, sign-in from /verify returns to the code, Forgot password |
+| **pharmacy, final (full spec)** | **45** | **0** | All green: 20 tests on desktop and mobile, plus 5 logins |
+
+| # | Role | Page | What happens | Expected | Cause | Fix commit | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 29 | hospital | `/hospital/pharmacy` → Add Drug (desktop) | Add to Inventory does nothing: no toast, no row, dialog stays open | Item saved | Not reproduced on re-run. The only silent path is `if (!hospitalId) return;` in the dialog, taken while the hospital id is still loading. The button now waits for it and a submit without it says so | 9db5472 | Fixed (cause not confirmed) |
+| 30 | doctor | `/doctor/profile` → signature (desktop) | Save signature stays disabled | Signature saved | **Test.** On desktop the pad opens below the fold, and mouse events outside the viewport never reach the canvas. The test now scrolls the pad into view first | 57373ca | Fixed (test) |
+| 31 | pharmacy | `/verify/<code>`, third dispense of a 1-refill prescription (mobile) | Message is "… is completed", not "… has already been dispensed"; the refused call's 400 is flagged by the page checks | The database's message | **Test.** That is the database's own message: `rx_dispense` checks the prescription's status before the count, and the second dispense completed it. The test now expects it and drops the 400 it causes on purpose | 57373ca | Fixed (test) |
+| 32 | doctor | signature pad (phones) | Every `resize` event wipes the pad. Phones fire `resize` when the address bar shows or hides | Drawing kept | Found while looking at #30. The pad now refits only when its size really changes and copies the drawing across | 8d8cdc1 | Fixed |
+| 33 | hospital | patient drawer → Recent Prescriptions | Every row says "Prescription" | Drug name | Read `medication_name`, which doesn't exist. Found while building Part A | c5eaf4a | Fixed |
+| 34 | hospital | `/hospital/pharmacy` | The stock table's Edit button did nothing | Edit the item | No handler. Now opens the stock dialog in edit mode (quantity read-only). Found while building Part A | c5eaf4a | Fixed |
+| 35 | all | `/login` | No way to reset a forgotten password: `/reset-password` existed but nothing asked for the reset email | Reset by email | Added Forgot password? and `/forgot-password`; `/reset-password` now handles missing or expired links. Raised by Bhee | 121500e | Fixed |
+
+## Needs decision (pharmacy network)
+
+1. **Pharmacy History and the request inbox can't show drug or patient names.** A pharmacy can't read `prescriptions`, `rx_documents` or `patients`, so History shows date, pharmacist, PCN, quantity and refill only, and the inbox list shows the time, status and patient note (the full document opens with the request). *Recommendation:* a read-only function `pharmacy_dispense_history()` returning drug name and code (no patient details), and the patient's first name plus item count in the inbox list. Needs a migration, so it's Bhee's call.
+2. **Third-dispense wording.** When the last allowed dispense completes a prescription, a later attempt says "X is completed" rather than "X has already been dispensed". *Recommendation:* in a future migration, check the dispense count before the status (or reword), so the counter sees the clearer message. Low priority.
+3. **No hospital screen writes prescriptions.** Staff prescriptions ("Hospital record only") can only come from the API today; the test writes one as hospital staff through RLS. *Recommendation:* nothing for now. Revisit if hospitals need to enter outside prescriptions.
