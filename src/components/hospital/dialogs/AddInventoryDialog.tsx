@@ -29,7 +29,7 @@ export function AddInventoryDialog({ item, trigger }: { item?: any; trigger?: Re
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!hospitalId) return;
+    if (!hospitalId) return toast({ title: "Still loading your hospital", description: "Try again in a moment.", variant: "destructive" });
     const common = {
       drug_name: f.drug_name, generic_name: f.generic_name || null, category: f.category || null,
       strength: f.strength || null, dosage_form: f.dosage_form || "tablet",
@@ -74,7 +74,7 @@ export function AddInventoryDialog({ item, trigger }: { item?: any; trigger?: Re
             <div><Label htmlFor="inv-expiry">Expiry date</Label><Input id="inv-expiry" type="date" value={f.expiry_date} onChange={(e) => setF({ ...f, expiry_date: e.target.value })} /></div>
           </div>
           <div><Label htmlFor="inv-nafdac">NAFDAC no.</Label><Input id="inv-nafdac" maxLength={60} placeholder="e.g. A4-1234" value={f.nafdac_reg_no} onChange={(e) => setF({ ...f, nafdac_reg_no: e.target.value })} /></div>
-          <Button type="submit" className="w-full">{editing ? "Save changes" : "Add to Inventory"}</Button>
+          <Button type="submit" className="w-full" disabled={!hospitalId}>{editing ? "Save changes" : "Add to Inventory"}</Button>
         </form>
       </DialogContent>
     </Dialog>
