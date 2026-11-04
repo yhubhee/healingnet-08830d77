@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export function usePrescriptionQueue() {
     queryKey: ["pharmacy", "rx-queue", hospitalId],
     enabled: !!hospitalId,
     queryFn: async () => {
-      const { data, error } = await sb.from("prescriptions").select("*, patients(first_name,last_name,email), doctors(first_name,last_name)")
+      const { data, error } = await sb.from("prescriptions").select("*, patients(first_name,last_name,email), doctors(first_name,last_name), rx_documents(code)")
         .eq("hospital_id", hospitalId).eq("status", "active").order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
@@ -52,6 +53,9 @@ export function PrescriptionQueue() {
               <p className="text-xs text-muted-foreground">{[r.dosage, r.frequency, r.duration].filter(Boolean).join(" · ") || "—"}</p>
               {r.instructions && <p className="text-xs text-muted-foreground">{r.instructions}</p>}
               <p className="text-xs mt-1">{r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : "Patient"} · {r.doctors ? `Dr ${r.doctors.first_name} ${r.doctors.last_name}` : "—"} · {new Date(r.created_at).toLocaleString()}</p>
+              {r.rx_documents?.code && (
+                <p className="text-xs mt-1"><span className="font-mono">{r.rx_documents.code}</span> · <Link className="text-primary hover:underline" to={`/hospital/prescriptions/${r.rx_document_id}/print`}>View / print</Link></p>
+              )}
             </div>
             <Button size="sm" onClick={() => setActive(r)}>Dispense</Button>
           </div>

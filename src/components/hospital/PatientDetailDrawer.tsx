@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +54,7 @@ export function PatientDetailDrawer({ patient, onClose }: Props) {
     enabled: open,
     queryKey: ["pd-rx", pid],
     queryFn: async () => {
-      const { data } = await supabase.from("prescriptions").select("*").eq("patient_id", pid).order("created_at", { ascending: false }).limit(5);
+      const { data } = await supabase.from("prescriptions").select("*, rx_documents(code)").eq("patient_id", pid).order("created_at", { ascending: false }).limit(5);
       return data || [];
     },
   });
@@ -151,7 +152,14 @@ export function PatientDetailDrawer({ patient, onClose }: Props) {
             <Section icon={Pill} title="Recent Prescriptions">
               {(rxs || []).length === 0 ? <p className="text-sm text-muted-foreground">No prescriptions.</p> :
                 <ul className="text-sm space-y-1">
-                  {(rxs || []).map((r: any) => <li key={r.id}>• {r.medication_name || r.diagnosis || "Prescription"} <span className="text-xs text-muted-foreground capitalize">({r.status})</span></li>)}
+                  {(rxs || []).map((r: any) => (
+                    <li key={r.id}>
+                      • {r.drug_name || "Prescription"} <span className="text-xs text-muted-foreground capitalize">({r.status})</span>
+                      {r.rx_documents?.code && (
+                        <span className="block pl-3 text-xs"><span className="font-mono">{r.rx_documents.code}</span> · <Link className="text-primary hover:underline" to={`/hospital/prescriptions/${r.rx_document_id}/print`}>View / print</Link></span>
+                      )}
+                    </li>
+                  ))}
                 </ul>}
             </Section>
 
