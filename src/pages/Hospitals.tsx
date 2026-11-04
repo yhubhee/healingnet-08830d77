@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
-import { Check, Lock, Stethoscope, Building2, Wallet, Video } from "lucide-react";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Check, Lock, Stethoscope, Building2, Wallet, Video, ScanLine, Send, BadgeCheck } from "lucide-react";
 import { PageShell } from "@/components/landing/PageShell";
 import { PageMeta } from "@/components/landing/PageMeta";
 import { Hero } from "@/components/marketing/Hero";
@@ -22,7 +23,19 @@ const GROUPS = [
   { icon: Video, title: "Virtual care", items: ["Video consultations", "Consultation requests between hospitals", "The doctor marketplace"], note: "Telemedicine Suite" },
 ];
 
+// For pharmacies: only what the product does today. No numbers, no endorsements.
+const PHARMACY_POINTS = [
+  { icon: ScanLine, title: "Verify any HealingNet prescription in seconds", text: "Scan the QR or type the code. You see the doctor, their licence number and whether the prescription is still valid." },
+  { icon: Send, title: "Patients find you and send you prescriptions", text: "Patients near you send their prescription. You reply with stock, price and pickup time, and they pay at your counter." },
+  { icon: BadgeCheck, title: "Free to join while we launch", text: "Sign up your pharmacy, add your pharmacists with a join code, and start once HealingNet has checked your licence." },
+];
+
 export default function Hospitals() {
+  const { hash } = useLocation();
+  // The footer links to /hospitals#pharmacies.
+  useEffect(() => {
+    if (hash === "#pharmacies") document.getElementById("pharmacies")?.scrollIntoView({ block: "start" });
+  }, [hash]);
   return (
     <PageShell>
       <PageMeta
@@ -124,7 +137,29 @@ export default function Hospitals() {
         </div>
       </section>
 
-      <section className="mk-section" aria-labelledby="hospitals-faq-title">
+      <section id="pharmacies" className="mk-section scroll-mt-20" aria-labelledby="pharmacies-title">
+        <div className="mk-container">
+          <Reveal className="mb-8 max-w-2xl">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-primary">For pharmacies</p>
+            <h2 id="pharmacies-title">Fill HealingNet prescriptions with confidence</h2>
+          </Reveal>
+          <ul className="grid gap-4 md:grid-cols-3">
+            {PHARMACY_POINTS.map((p) => (
+              <li key={p.title} className="rounded-3xl border border-border bg-card p-6">
+                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary"><p.icon className="h-5 w-5" aria-hidden /></span>
+                <h3 className="mb-2 text-lg font-semibold">{p.title}</h3>
+                <p className="text-muted-foreground">{p.text}</p>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link to="/signup?role=pharmacy" className={mkButton({ size: "lg" })}>Sign up your pharmacy</Link>
+            <Link to="/signup?role=pharmacist" className={mkButton({ variant: "secondary", size: "lg" })}>Join as a pharmacist</Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mk-section bg-muted/60" aria-labelledby="hospitals-faq-title">
         <Reveal className="mk-container max-w-3xl">
           <h2 id="hospitals-faq-title" className="mb-8">Questions from hospitals</h2>
           <FaqAccordion items={HOSPITAL_FAQS} idPrefix="hospitals" />

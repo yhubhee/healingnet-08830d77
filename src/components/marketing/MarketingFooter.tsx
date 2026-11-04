@@ -19,6 +19,7 @@ const COLUMNS: { title: string; links: { label: string; to: string }[] }[] = [
     links: [
       { label: "For hospitals", to: "/hospitals" },
       { label: "For doctors", to: "/doctors" },
+      { label: "For pharmacies", to: "/hospitals#pharmacies" },
       { label: "Pricing", to: "/pricing" },
       { label: "Book a demo", to: "/contact?topic=demo" },
     ],
