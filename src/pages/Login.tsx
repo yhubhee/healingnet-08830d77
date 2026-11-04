@@ -52,7 +52,7 @@ export default function Login() {
         <p className="mb-6 text-base text-muted-foreground">Sign in to continue to your dashboard</p>
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5"><Label htmlFor="login-email">Email</Label><Input id="login-email" type="email" autoComplete="email" className={authInput} value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-          <div className="space-y-1.5"><Label htmlFor="login-password">Password</Label><Input id="login-password" type="password" autoComplete="current-password" className={authInput} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+          <div className="space-y-1.5"><div className="flex items-baseline justify-between gap-2"><Label htmlFor="login-password">Password</Label><Link to="/forgot-password" className="text-sm font-semibold text-primary underline-offset-4 hover:underline">Forgot password?</Link></div><Input id="login-password" type="password" autoComplete="current-password" className={authInput} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
           <Button type="submit" className={authPrimary} disabled={loading}>{loading ? "Signing in…" : "Sign In"}</Button>
         </form>
         <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><div className="h-px flex-1 bg-border" />OR<div className="h-px flex-1 bg-border" /></div>

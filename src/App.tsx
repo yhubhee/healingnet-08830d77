@@ -19,6 +19,7 @@ const TermsPage = lazy(() => import("./pages/Terms"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 // Public prescription check (the QR on every prescription links here). No sign-in needed.
 const Verify = lazy(() => import("./pages/Verify"));
@@ -144,6 +145,7 @@ const App = () => (
           <Route path="/terms" element={<Public><TermsPage /></Public>} />
           <Route path="/login" element={<Public><Login /></Public>} />
           <Route path="/signup" element={<Public><Signup /></Public>} />
+          <Route path="/forgot-password" element={<Public><ForgotPassword /></Public>} />
           <Route path="/reset-password" element={<Public><ResetPassword /></Public>} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/verify/:code" element={<Verify />} />
