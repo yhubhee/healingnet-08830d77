@@ -1,5 +1,6 @@
 import { DoctorLayout } from "@/layouts/DoctorLayout";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Pill, Search, MoreHorizontal, Plus } from "lucide-react";
@@ -13,6 +14,7 @@ import { toast } from "sonner";
 import { useDoctor } from "@/hooks/useDoctor";
 import { QueryState } from "@/components/common/QueryState";
 import { friendlyError } from "@/lib/errors";
+import { PrescriberReadyBanner } from "@/components/doctor/PrescriberDetails";
 
 const tabs = ["all", "active", "completed", "cancelled"] as const;
 
@@ -25,7 +27,7 @@ export default function DoctorPrescriptions() {
     enabled: !!ctx?.doctor?.id,
     queryKey: ["doctor", "prescriptions", ctx?.doctor?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("prescriptions").select("*, patients(first_name,last_name)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("prescriptions").select("*, patients(first_name,last_name), rx_documents(code)").eq("doctor_id", ctx!.doctor.id).order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
@@ -33,7 +35,7 @@ export default function DoctorPrescriptions() {
 
   const list = (data || []).filter((r: any) => {
     if (tab !== "all" && r.status !== tab) return false;
-    if (q && !`${r.drug_name} ${r.patients?.first_name || ""} ${r.patients?.last_name || ""}`.toLowerCase().includes(q.toLowerCase())) return false;
+    if (q && !`${r.drug_name} ${r.patients?.first_name || ""} ${r.patients?.last_name || ""} ${r.rx_documents?.code || ""}`.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   });
 
@@ -71,13 +73,14 @@ export default function DoctorPrescriptions() {
         <NewPrescriptionDialog trigger={<Button><Plus className="w-4 h-4" />New prescription</Button>} />
       </div>
 
+      <PrescriberReadyBanner />
       <div className="flex gap-3 mb-5 flex-wrap">
-        <div className="flex gap-1 bg-muted/30 p-1 rounded-lg">
+        <div className="flex gap-1 bg-muted/30 p-1 rounded-lg overflow-x-auto max-w-full">
           {tabs.map((t) => <button key={t} onClick={() => setTab(t)} className={cn("px-4 py-1.5 rounded-md text-sm capitalize", tab === t ? "bg-card shadow" : "text-muted-foreground")}>{t}</button>)}
         </div>
         <div className="relative flex-1 min-w-[200px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input className="pl-9" placeholder="Search drug or patient..." value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input className="pl-9" placeholder="Search drug, patient or code..." value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
       </div>
 
@@ -95,6 +98,7 @@ export default function DoctorPrescriptions() {
                     <p className="font-medium text-sm">{r.drug_name}</p>
                     <p className="text-xs text-muted-foreground">{r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : "—"}</p>
                     <p className="text-xs text-muted-foreground">{r.frequency || "—"} • {r.duration || "—"} • {new Date(r.created_at).toLocaleDateString()}</p>
+                    {r.rx_documents?.code && <p className="text-xs font-mono mt-0.5">{r.rx_documents.code}</p>}
                   </div>
                 </div>
                 <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium capitalize shrink-0", r.status === "active" ? "bg-success/15 text-success" : r.status === "cancelled" ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground")}>{r.status}</span>
@@ -102,6 +106,7 @@ export default function DoctorPrescriptions() {
               <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => renew(r)}>Renew</Button>
                 {r.status === "active" && <Button size="sm" variant="outline" onClick={() => discontinue(r.id)}>Discontinue</Button>}
+                {r.rx_document_id && <Button size="sm" variant="outline" asChild><Link to={`/doctor/prescriptions/${r.rx_document_id}/print`}>View / print</Link></Button>}
                 <Button size="sm" variant="ghost" onClick={() => downloadReportPdf(rxDoc(r))}>Download</Button>
               </div>
             </div>
@@ -110,12 +115,20 @@ export default function DoctorPrescriptions() {
 
         <div className="hidden md:block bg-card border border-border rounded-xl overflow-hidden overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-muted/30 text-xs text-muted-foreground"><tr><th className="text-left p-3">Drug</th><th className="text-left p-3">Patient</th><th className="text-left p-3">Frequency</th><th className="text-left p-3">Duration</th><th className="text-left p-3">Date</th><th className="text-left p-3">Status</th><th /></tr></thead>
+            <thead className="bg-muted/30 text-xs text-muted-foreground"><tr><th className="text-left p-3">Drug</th><th className="text-left p-3">Patient</th><th className="text-left p-3">Code</th><th className="text-left p-3">Frequency</th><th className="text-left p-3">Duration</th><th className="text-left p-3">Date</th><th className="text-left p-3">Status</th><th /></tr></thead>
             <tbody>
               {list.map((r: any) => (
                 <tr key={r.id} className="border-t border-border hover:bg-muted/20">
                   <td className="p-3"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-success/10 text-success flex items-center justify-center"><Pill className="w-4 h-4" /></div><span className="font-medium text-sm">{r.drug_name}</span></div></td>
                   <td className="p-3 text-sm">{r.patients ? `${r.patients.first_name} ${r.patients.last_name}` : "—"}</td>
+                  <td className="p-3 text-sm whitespace-nowrap">
+                    {r.rx_documents?.code ? (
+                      <>
+                        <span className="block font-mono">{r.rx_documents.code}</span>
+                        <Link className="text-xs text-primary hover:underline" to={`/doctor/prescriptions/${r.rx_document_id}/print`}>View / print</Link>
+                      </>
+                    ) : "—"}
+                  </td>
                   <td className="p-3 text-sm text-muted-foreground">{r.frequency || "—"}</td>
                   <td className="p-3 text-sm text-muted-foreground">{r.duration || "—"}</td>
                   <td className="p-3 text-sm text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</td>
@@ -126,7 +139,8 @@ export default function DoctorPrescriptions() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => renew(r)}>Renew</DropdownMenuItem>
                         {r.status === "active" && <DropdownMenuItem onClick={() => discontinue(r.id)}>Discontinue</DropdownMenuItem>}
-                        <DropdownMenuItem onClick={() => printReport(rxDoc(r))}>Print</DropdownMenuItem>
+                        {r.rx_document_id && <DropdownMenuItem asChild><Link to={`/doctor/prescriptions/${r.rx_document_id}/print`}>View / print</Link></DropdownMenuItem>}
+                        <DropdownMenuItem onClick={() => printReport(rxDoc(r))}>Print report</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => downloadReportPdf(rxDoc(r))}>Download report</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { PrescriberDetailsCard } from "@/components/doctor/PrescriberDetails";
 
 export default function DoctorProfile() {
   const [doc, setDoc] = useState<any>(null);
@@ -88,6 +89,7 @@ export default function DoctorProfile() {
           <Field label="Council" value={doc.license_council || "—"} />
           <Field label="License expiry" value={doc.license_expiry || "—"} />
         </Section>
+        <PrescriberDetailsCard />
       </div>
     </DoctorLayout>
   );

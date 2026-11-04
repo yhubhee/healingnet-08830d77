@@ -22,6 +22,8 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 // Public prescription check (the QR on every prescription links here). No sign-in needed.
 const Verify = lazy(() => import("./pages/Verify"));
+// Printable prescription, shared by patient, doctor and hospital.
+const RxPrint = lazy(() => import("./pages/RxPrint"));
 import { MarketingFallback } from "./components/marketing/MarketingFallback";
 import { PageLoadingFallback } from "./components/common/PageLoadingFallback";
 
@@ -151,6 +153,7 @@ const App = () => (
           <Route path="/patient" element={<ProtectedRoute><PatientDashboard /></ProtectedRoute>} />
           <Route path="/patient/appointments" element={<ProtectedRoute><PatientAppointments /></ProtectedRoute>} />
           <Route path="/patient/prescriptions" element={<ProtectedRoute><PatientPrescriptions /></ProtectedRoute>} />
+          <Route path="/patient/prescriptions/:documentId/print" element={<ProtectedRoute><RxPrint /></ProtectedRoute>} />
           <Route path="/patient/lab-results" element={<ProtectedRoute><PatientLabResults /></ProtectedRoute>} />
           <Route path="/patient/medical-records" element={<ProtectedRoute><PatientMedicalRecords /></ProtectedRoute>} />
           <Route path="/patient/letters" element={<ProtectedRoute><PatientLetters /></ProtectedRoute>} />
@@ -175,6 +178,7 @@ const App = () => (
           <Route path="/doctor/patients/:id" element={<ProtectedRoute><DoctorPatientDetail /></ProtectedRoute>} />
           <Route path="/doctor/messages" element={<ProtectedRoute><DoctorMessages /></ProtectedRoute>} />
           <Route path="/doctor/prescriptions" element={<ProtectedRoute><DoctorPrescriptions /></ProtectedRoute>} />
+          <Route path="/doctor/prescriptions/:documentId/print" element={<ProtectedRoute><RxPrint /></ProtectedRoute>} />
           <Route path="/doctor/lab-orders" element={<ProtectedRoute><DoctorLabOrders /></ProtectedRoute>} />
           <Route path="/doctor/consultations" element={<ProtectedRoute><DoctorConsultations /></ProtectedRoute>} />
           <Route path="/doctor/consultation/:consultationId" element={<ProtectedRoute><DoctorConsultationPage /></ProtectedRoute>} />
@@ -199,6 +203,7 @@ const App = () => (
           <Route path="/hospital/emr/:type" element={<ProtectedRoute><EMRTypeDetail /></ProtectedRoute>} />
           <Route path="/hospital/lab" element={<ProtectedRoute><HospitalLab /></ProtectedRoute>} />
           <Route path="/hospital/pharmacy" element={<ProtectedRoute><HospitalPharmacy /></ProtectedRoute>} />
+          <Route path="/hospital/prescriptions/:documentId/print" element={<ProtectedRoute><RxPrint /></ProtectedRoute>} />
           <Route path="/hospital/surgery" element={<ProtectedRoute><HospitalSurgery /></ProtectedRoute>} />
           <Route path="/hospital/maternity" element={<ProtectedRoute><HospitalMaternity /></ProtectedRoute>} />
           <Route path="/hospital/referrals" element={<ProtectedRoute><HospitalReferrals /></ProtectedRoute>} />

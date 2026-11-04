@@ -21,6 +21,7 @@ import { PatientSummary } from "@/components/consultation/PatientSummary";
 import { SaveRegistryContext, SaveStatus, ageFromDob, useAutosave, useConsultationCore, useConsultationRow, useReportSave, useTreatmentItems, useInvestigations } from "@/hooks/useConsultation";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { friendlyError } from "@/lib/errors";
+import { PrescriberReadyBanner } from "@/components/doctor/PrescriberDetails";
 
 const sb = supabase as any;
 
@@ -93,6 +94,7 @@ export default function ConsultationPage() {
         {header}
         <div className="grid lg:grid-cols-[1fr_320px] gap-6 mt-4 pb-28">
           <div className="space-y-4 min-w-0">
+            {!readOnly && <PrescriberReadyBanner />}
             {c.mode === "telemedicine" && (
               <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
                 <Video className="w-5 h-5 text-primary" />
