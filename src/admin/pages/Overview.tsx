@@ -29,6 +29,9 @@ function Kpi({ label, icon: Icon, value, sub }: { label: string; icon: Component
 function Attention({ o }: { o: OverviewData }) {
   const items = [
     { n: o.inbox.verifications_pending, label: "pending verifications", to: "/admin/verifications", icon: ShieldCheck },
+    { n: o.inbox.pharmacies_pending ?? 0, label: "pharmacies to verify", to: "/admin/verifications?tab=pharmacies", icon: ShieldCheck },
+    { n: o.inbox.pharmacists_pending ?? 0, label: "pharmacists to verify", to: "/admin/verifications?tab=pharmacists", icon: ShieldCheck },
+    { n: o.inbox.medicine_reports_open ?? 0, label: "open medicine reports", to: "/admin/medicine-reports", icon: AlertTriangle },
     { n: o.inbox.refunds_needed, label: "refunds needed", to: "/admin/payments?tab=refunds", icon: AlertTriangle },
     { n: o.inbox.contact_unhandled, label: "unhandled messages", to: "/admin/messages", icon: Mail },
     { n: o.hospitals.trials_ending_7d, label: "trials ending in 7 days", to: "/admin/hospitals?plan=trialing", icon: CalendarClock },

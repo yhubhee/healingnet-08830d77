@@ -4,13 +4,14 @@ import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useReviewDoctor, useReviewHospital } from "../api";
+import { useReviewPharmacist, useReviewPharmacy } from "../pharmacy-api";
 import { actionError } from "../format";
 import { ConfirmDialog, REJECT_REASONS, ReasonDialog } from "./dialogs";
 
 export function ReviewActions({
   kind, id, name, onDone, onOptimistic, size = "sm",
 }: {
-  kind: "hospital" | "doctor"; id: string; name: string;
+  kind: "hospital" | "doctor" | "pharmacy" | "pharmacist"; id: string; name: string;
   /** Called after the server accepts the decision. */
   onDone?: () => void;
   /** Called with true as soon as the admin confirms (hide the item), and with false if the server refuses. */
@@ -21,7 +22,9 @@ export function ReviewActions({
   const [rejecting, setRejecting] = useState(false);
   const hospital = useReviewHospital();
   const doctor = useReviewDoctor();
-  const busy = hospital.isPending || doctor.isPending;
+  const pharmacy = useReviewPharmacy();
+  const pharmacist = useReviewPharmacist();
+  const busy = hospital.isPending || doctor.isPending || pharmacy.isPending || pharmacist.isPending;
 
   const run = (approve: boolean, reason?: string) => {
     onOptimistic?.(true);
@@ -30,7 +33,11 @@ export function ReviewActions({
     // mutateAsync, not mutate(cb): the card may unmount once hidden, and the toast / undo must still run.
     const p = kind === "hospital"
       ? hospital.mutateAsync({ id, approve, notes: reason })
-      : doctor.mutateAsync({ id, approve, reason });
+      : kind === "doctor"
+      ? doctor.mutateAsync({ id, approve, reason })
+      : kind === "pharmacy"
+      ? pharmacy.mutateAsync({ id, approve, note: reason })
+      : pharmacist.mutateAsync({ id, approve, note: reason });
     p.then(
       () => {
         toast.success(approve ? `${name} approved` : `${name} rejected`, {
@@ -58,7 +65,11 @@ export function ReviewActions({
         title={`Approve ${name}?`}
         description={kind === "hospital"
           ? "The hospital becomes verified and visible to patients."
-          : "The doctor becomes verified and can take consultations."}
+          : kind === "doctor"
+          ? "The doctor becomes verified and can take consultations."
+          : kind === "pharmacy"
+          ? "The pharmacy becomes verified and patients can find it and send it prescriptions."
+          : "The pharmacist becomes verified and can dispense HealingNet prescriptions."}
         onConfirm={() => run(true)}
       />
       <ReasonDialog

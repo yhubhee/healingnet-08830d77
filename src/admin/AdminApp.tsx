@@ -9,6 +9,8 @@ const Overview = lazy(() => import("./pages/Overview"));
 const Verifications = lazy(() => import("./pages/Verifications"));
 const Hospitals = lazy(() => import("./pages/Hospitals"));
 const Doctors = lazy(() => import("./pages/Doctors"));
+const Pharmacies = lazy(() => import("./pages/Pharmacies"));
+const MedicineReports = lazy(() => import("./pages/MedicineReports"));
 const Payments = lazy(() => import("./pages/Payments"));
 const ActivityPage = lazy(() => import("./pages/Activity"));
 const Health = lazy(() => import("./pages/Health"));
@@ -37,6 +39,8 @@ export default function AdminApp() {
           <Route path="verifications" element={<Verifications />} />
           <Route path="hospitals" element={<Hospitals />} />
           <Route path="doctors" element={<Doctors />} />
+          <Route path="pharmacies" element={<Pharmacies />} />
+          <Route path="medicine-reports" element={<MedicineReports />} />
           <Route path="payments" element={<Payments />} />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="health" element={<Health />} />

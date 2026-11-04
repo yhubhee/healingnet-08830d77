@@ -1,9 +1,10 @@
-// /admin/verifications: admin_verification_queue(), oldest first.
+// /admin/verifications: admin_verification_queue() and admin_pharmacy_queue(), oldest first.
 import { useState } from "react";
-import { Clock, Hospital as HospitalIcon, PartyPopper, Stethoscope } from "lucide-react";
+import { BadgeCheck, Clock, Hospital as HospitalIcon, PartyPopper, Pill, Stethoscope } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVerificationQueue, type QueueDoctor, type QueueHospital } from "../api";
+import { usePharmacyQueue, type QueuePharmacist, type QueuePharmacy } from "../pharmacy-api";
 import { daysSince, fmtDate, fmtNum, times } from "../format";
 import { EmptyState, ErrorState, Fact, RelTime } from "../components/bits";
 import { CredentialDocuments } from "../components/Documents";
@@ -82,10 +83,60 @@ function DoctorCard({ d, onRemoved }: { d: QueueDoctor; onRemoved: (id: string, 
   );
 }
 
+function PharmacyCard({ p, onRemoved }: { p: QueuePharmacy; onRemoved: (id: string, removed: boolean) => void }) {
+  return (
+    <article className="rounded-2xl border bg-card p-4 sm:p-6" data-testid="admin-pharmacy-card">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="font-heading text-lg font-bold">{p.name}</h3>
+          <p className="text-sm text-muted-foreground">{[p.address, p.city, p.state].filter(Boolean).join(", ") || "No address"}</p>
+        </div>
+        <Waiting since={p.created_at} />
+      </div>
+      <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <Fact label="Premises licence">{p.premises_licence_no}</Fact>
+        <Fact label="Licence expiry"><LicenceExpiry date={p.premises_licence_expiry} /></Fact>
+        <Fact label="Superintendent">{p.superintendent_name}</Fact>
+        <Fact label="Superintendent PCN">{p.superintendent_pcn_no}</Fact>
+        <Fact label="Email">{p.email && <a className="text-primary underline-offset-2 hover:underline" href={`mailto:${p.email}`}>{p.email}</a>}</Fact>
+        <Fact label="Phone">{p.phone && <a href={`tel:${p.phone}`}>{p.phone}</a>}</Fact>
+      </dl>
+      <p className="mt-3 text-xs text-muted-foreground">Check the premises licence on the PCN register before approving. Signed up {fmtDate(p.created_at)}.</p>
+      <div className="mt-4"><ReviewActions kind="pharmacy" id={p.id} name={p.name} onOptimistic={(r) => onRemoved(p.id, r)} /></div>
+    </article>
+  );
+}
+
+function PharmacistCard({ m, onRemoved }: { m: QueuePharmacist; onRemoved: (id: string, removed: boolean) => void }) {
+  const name = `${m.first_name} ${m.last_name}`.trim();
+  return (
+    <article className="rounded-2xl border bg-card p-4 sm:p-6" data-testid="admin-pharmacist-card">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h3 className="font-heading text-lg font-bold">{name}</h3>
+          <p className="text-sm text-muted-foreground">{m.role === "owner" ? "Owner and pharmacist" : "Pharmacist"} at {m.pharmacy_name}</p>
+        </div>
+        <Waiting since={m.created_at} />
+      </div>
+      <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <Fact label="PCN number">{m.pcn_reg_no}</Fact>
+        <Fact label="Licence expiry"><LicenceExpiry date={m.licence_expiry} /></Fact>
+        <Fact label="Contact">{m.email && <a className="text-primary underline-offset-2 hover:underline" href={`mailto:${m.email}`}>{m.email}</a>}</Fact>
+      </dl>
+      <p className="mt-3 rounded-lg bg-warning/10 p-2 text-xs font-medium text-warning">Check on the PCN register before approving.</p>
+      <div className="mt-4"><ReviewActions kind="pharmacist" id={m.id} name={name} onOptimistic={(r) => onRemoved(m.id, r)} /></div>
+    </article>
+  );
+}
+
+const TABS = ["hospitals", "doctors", "pharmacies", "pharmacists"] as const;
+
 export default function Verifications() {
   const q = useVerificationQueue();
+  const ph = usePharmacyQueue();
   const { get, set } = useUrlState();
-  const tab = get("tab", "hospitals") === "doctors" ? "doctors" : "hospitals";
+  const raw = get("tab", "hospitals");
+  const tab = (TABS as readonly string[]).includes(raw) ? raw : "hospitals";
   // Optimistically hidden items (approved / rejected, waiting for the refetch).
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const hide = (id: string, removed: boolean) =>
@@ -93,18 +144,25 @@ export default function Verifications() {
 
   const hospitals = (q.data?.hospitals ?? []).filter((h) => !hidden.has(h.id));
   const doctors = (q.data?.doctors ?? []).filter((d) => !hidden.has(d.id));
+  const pharmacies = (ph.data?.pharmacies ?? []).filter((p) => !hidden.has(p.id));
+  const pharmacists = (ph.data?.members ?? []).filter((m) => !hidden.has(m.id));
+  const isPharmacyTab = tab === "pharmacies" || tab === "pharmacists";
+  const loading = isPharmacyTab ? ph.isLoading : q.isLoading;
+  const failed = isPharmacyTab ? ph.isError : q.isError;
 
   return (
     <Tabs value={tab} onValueChange={(v) => set({ tab: v === "hospitals" ? null : v })}>
       <TabsList className="mb-4 h-auto max-w-full flex-wrap justify-start">
         <TabsTrigger value="hospitals" className="gap-2"><HospitalIcon className="h-4 w-4" aria-hidden />Hospitals <span className="tabular-nums">({q.data ? hospitals.length : "…"})</span></TabsTrigger>
         <TabsTrigger value="doctors" className="gap-2"><Stethoscope className="h-4 w-4" aria-hidden />Doctors <span className="tabular-nums">({q.data ? doctors.length : "…"})</span></TabsTrigger>
+        <TabsTrigger value="pharmacies" className="gap-2"><Pill className="h-4 w-4" aria-hidden />Pharmacies <span className="tabular-nums">({ph.data ? pharmacies.length : "…"})</span></TabsTrigger>
+        <TabsTrigger value="pharmacists" className="gap-2"><BadgeCheck className="h-4 w-4" aria-hidden />Pharmacists <span className="tabular-nums">({ph.data ? pharmacists.length : "…"})</span></TabsTrigger>
       </TabsList>
-      {q.isLoading ? (
+      {loading ? (
         <div className="space-y-4" aria-busy="true" aria-label="Loading queue">
           {times(3).map((i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}
         </div>
-      ) : q.isError ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : (
+      ) : failed ? <ErrorState error={isPharmacyTab ? ph.error : q.error} onRetry={() => (isPharmacyTab ? ph.refetch() : q.refetch())} /> : (
         <>
           <TabsContent value="hospitals" className="space-y-4">
             {hospitals.length === 0
@@ -115,6 +173,16 @@ export default function Verifications() {
             {doctors.length === 0
               ? <EmptyState icon={PartyPopper} text="No doctors waiting for review." />
               : doctors.map((d) => <DoctorCard key={d.id} d={d} onRemoved={hide} />)}
+          </TabsContent>
+          <TabsContent value="pharmacies" className="space-y-4">
+            {pharmacies.length === 0
+              ? <EmptyState icon={PartyPopper} text="No pharmacies waiting for review." />
+              : pharmacies.map((p) => <PharmacyCard key={p.id} p={p} onRemoved={hide} />)}
+          </TabsContent>
+          <TabsContent value="pharmacists" className="space-y-4">
+            {pharmacists.length === 0
+              ? <EmptyState icon={PartyPopper} text="No pharmacists waiting for review." />
+              : pharmacists.map((m) => <PharmacistCard key={m.id} m={m} onRemoved={hide} />)}
           </TabsContent>
         </>
       )}

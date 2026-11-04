@@ -27,7 +27,11 @@ export interface Overview {
     checkins_7d: number; appointments_7d: number; consultations_7d: number; triage_7d: number;
     triage_emergency_7d: number; consult_requests_7d: number; calls_7d: number; live_calls: number;
   };
-  inbox: { verifications_pending: number; refunds_needed: number; contact_unhandled: number };
+  inbox: {
+    verifications_pending: number; refunds_needed: number; contact_unhandled: number;
+    // Added in the browser from admin_pharmacy_queue() (0 if that call fails).
+    pharmacies_pending: number; pharmacists_pending: number; medicine_reports_open: number;
+  };
 }
 
 export const METRICS = [
@@ -165,7 +169,26 @@ export const keys = {
 const live = { refetchInterval: 60_000, refetchOnWindowFocus: true } as const;
 
 export function useOverview() {
-  return useQuery({ queryKey: keys.overview, queryFn: () => call<Overview>("admin_overview"), meta, ...live });
+  return useQuery({
+    queryKey: keys.overview,
+    queryFn: async () => {
+      const [o, ph] = await Promise.all([
+        call<Overview>("admin_overview"),
+        call<{ pharmacies: unknown[]; members: unknown[]; open_reports: number }>("admin_pharmacy_queue").catch(() => null),
+      ]);
+      return {
+        ...o,
+        inbox: {
+          ...o.inbox,
+          pharmacies_pending: ph?.pharmacies?.length ?? 0,
+          pharmacists_pending: ph?.members?.length ?? 0,
+          medicine_reports_open: Number(ph?.open_reports ?? 0),
+        },
+      } as Overview;
+    },
+    meta,
+    ...live,
+  });
 }
 
 export async function fetchSeries(metric: Metric, days: number): Promise<SeriesPoint[]> {
