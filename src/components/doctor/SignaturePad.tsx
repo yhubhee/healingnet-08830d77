@@ -17,18 +17,30 @@ export default function SignaturePad({ onSave, saving }: { onSave: (dataUrl: str
   useEffect(() => {
     const c = canvas.current;
     if (!c) return;
+    // Phones fire "resize" when the address bar shows or hides, so only refit when the
+    // pad's size really changed, and copy what's already drawn into the new size.
     const fit = () => {
       const r = c.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-      c.width = Math.round(r.width * dpr);
-      c.height = Math.round(r.height * dpr);
+      const w = Math.round(r.width * dpr);
+      const h = Math.round(r.height * dpr);
+      if (w === c.width && h === c.height) return;
+      let old: HTMLCanvasElement | null = null;
+      if (c.width && c.height) {
+        old = document.createElement("canvas");
+        old.width = c.width;
+        old.height = c.height;
+        old.getContext("2d")!.drawImage(c, 0, 0);
+      }
+      c.width = w;
+      c.height = h;
       const ctx = c.getContext("2d")!;
+      if (old) ctx.drawImage(old, 0, 0, old.width, old.height, 0, 0, w, h);
       ctx.scale(dpr, dpr);
       ctx.lineWidth = 2.5;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.strokeStyle = "#111827";
-      setEmpty(true);
     };
     fit();
     window.addEventListener("resize", fit);
