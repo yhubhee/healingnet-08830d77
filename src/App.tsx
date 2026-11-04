@@ -30,11 +30,13 @@ const CompleteSignup = lazy(() => import("./pages/CompleteSignup"));
 const ProtectedRoute = lazy(() => import("./components/auth/ProtectedRoute").then((m) => ({ default: m.ProtectedRoute })));
 const RequirePlan = lazy(() => import("./components/auth/RequirePlan").then((m) => ({ default: m.RequirePlan })));
 const RequireAdmin = lazy(() => import("./admin/RequireAdmin").then((m) => ({ default: m.RequireAdmin })));
+const RequirePharmacy = lazy(() => import("./pharmacy/RequirePharmacy").then((m) => ({ default: m.RequirePharmacy })));
 
 // Public pages load with a light placeholder instead of the dark app one.
 const Public = ({ children }: { children: ReactNode }) => <Suspense fallback={<MarketingFallback />}>{children}</Suspense>;
 
 const AdminApp = lazy(() => import("./admin/AdminApp"));
+const PharmacyApp = lazy(() => import("./pharmacy/PharmacyApp"));
 
 const HospitalDashboard = lazy(() => import("./pages/hospital/Dashboard"));
 const HospitalQueue = lazy(() => import("./pages/hospital/Queue"));
@@ -206,6 +208,9 @@ const App = () => (
           <Route path="/hospital/beds" element={<ProtectedRoute><HospitalBedManagement /></ProtectedRoute>} />
 
           {/* Platform admin console (HealingNet staff). The database enforces admin rights; the guard is UX only. */}
+          {/* Pharmacy app (owners, pharmacists, assistants). The database enforces membership and rights. */}
+          <Route path="/pharmacy/*" element={<ProtectedRoute><RequirePharmacy><PharmacyApp /></RequirePharmacy></ProtectedRoute>} />
+
           <Route path="/admin/*" element={<ProtectedRoute><RequireAdmin><AdminApp /></RequireAdmin></ProtectedRoute>} />
 
           <Route path="*" element={<Public><NotFound /></Public>} />

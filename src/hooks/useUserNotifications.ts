@@ -23,20 +23,24 @@ export const NOTIFICATION_ICONS: Record<string, string> = {
   prescription: "💊",
   billing: "💳",
   call_in: "☎️",
+  verification: "✅",
   system: "⚙️",
 };
 
-export function useUserNotifications() {
+/** The signed-in user's notifications; pass an audience ('patient', 'pharmacy', …) to show only those. */
+export function useUserNotifications(audience?: string) {
   return useQuery({
-    queryKey: ["user-notifications"],
+    queryKey: ["user-notifications", audience ?? "all"],
     queryFn: async () => {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return [] as UserNotification[];
-      const { data, error } = await supabase
+      let q = supabase
         .from("user_notifications")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(100);
+      if (audience) q = q.eq("audience", audience);
+      const { data, error } = await q;
       if (error) throw error;
       return (data || []) as UserNotification[];
     },
@@ -75,17 +79,19 @@ export function useMarkUserNotificationRead() {
   });
 }
 
-export function useMarkAllUserNotificationsRead() {
+export function useMarkAllUserNotificationsRead(audience?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return;
-      const { error } = await supabase
+      let q = supabase
         .from("user_notifications")
         .update({ is_read: true })
         .eq("user_id", auth.user.id)
         .eq("is_read", false);
+      if (audience) q = q.eq("audience", audience);
+      const { error } = await q;
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["user-notifications"] }),
