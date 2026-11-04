@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.18"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_audit_log: {
@@ -963,9 +938,11 @@ export type Database = {
           license_expiry: string | null
           license_number: string | null
           phone: string | null
+          practice_address: string | null
           profile_image_url: string | null
           rating: number | null
           reference_contact: Json | null
+          signature_data: string | null
           specialty: string | null
           updated_at: string
           user_id: string | null
@@ -989,9 +966,11 @@ export type Database = {
           license_expiry?: string | null
           license_number?: string | null
           phone?: string | null
+          practice_address?: string | null
           profile_image_url?: string | null
           rating?: number | null
           reference_contact?: Json | null
+          signature_data?: string | null
           specialty?: string | null
           updated_at?: string
           user_id?: string | null
@@ -1015,9 +994,11 @@ export type Database = {
           license_expiry?: string | null
           license_number?: string | null
           phone?: string | null
+          practice_address?: string | null
           profile_image_url?: string | null
           rating?: number | null
           reference_contact?: Json | null
+          signature_data?: string | null
           specialty?: string | null
           updated_at?: string
           user_id?: string | null
@@ -2258,6 +2239,76 @@ export type Database = {
           },
         ]
       }
+      medicine_checks: {
+        Row: {
+          admin_note: string | null
+          batch_number: string | null
+          created_at: string
+          details: string | null
+          drug_name: string | null
+          id: string
+          nafdac_no: string | null
+          patient_id: string
+          pharmacy_id: string | null
+          prescription_id: string | null
+          result: string
+          reviewed_at: string | null
+          status: string
+        }
+        Insert: {
+          admin_note?: string | null
+          batch_number?: string | null
+          created_at?: string
+          details?: string | null
+          drug_name?: string | null
+          id?: string
+          nafdac_no?: string | null
+          patient_id: string
+          pharmacy_id?: string | null
+          prescription_id?: string | null
+          result: string
+          reviewed_at?: string | null
+          status?: string
+        }
+        Update: {
+          admin_note?: string | null
+          batch_number?: string | null
+          created_at?: string
+          details?: string | null
+          drug_name?: string | null
+          id?: string
+          nafdac_no?: string | null
+          patient_id?: string
+          pharmacy_id?: string | null
+          prescription_id?: string | null
+          result?: string
+          reviewed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medicine_checks_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medicine_checks_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medicine_checks_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "prescriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           created_at: string
@@ -2803,6 +2854,72 @@ export type Database = {
           },
         ]
       }
+      pharmacies: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_listed: boolean
+          join_code: string
+          name: string
+          paused_reason: string | null
+          phone: string | null
+          premises_licence_expiry: string | null
+          premises_licence_no: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          state: string | null
+          superintendent_name: string | null
+          superintendent_pcn_no: string | null
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_listed?: boolean
+          join_code: string
+          name: string
+          paused_reason?: string | null
+          phone?: string | null
+          premises_licence_expiry?: string | null
+          premises_licence_no?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          state?: string | null
+          superintendent_name?: string | null
+          superintendent_pcn_no?: string | null
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_listed?: boolean
+          join_code?: string
+          name?: string
+          paused_reason?: string | null
+          phone?: string | null
+          premises_licence_expiry?: string | null
+          premises_licence_no?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          state?: string | null
+          superintendent_name?: string | null
+          superintendent_pcn_no?: string | null
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: []
+      }
       pharmacy_dispensing: {
         Row: {
           created_at: string
@@ -2887,6 +3004,78 @@ export type Database = {
           },
         ]
       }
+      pharmacy_fee_settings: {
+        Row: {
+          billing_enabled: boolean
+          fee_kobo: number
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          billing_enabled?: boolean
+          fee_kobo?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          billing_enabled?: boolean
+          fee_kobo?: number
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      pharmacy_fees: {
+        Row: {
+          amount_kobo: number
+          created_at: string
+          id: string
+          note: string | null
+          pharmacy_id: string
+          request_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_kobo: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          pharmacy_id: string
+          request_id: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          amount_kobo?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          pharmacy_id?: string
+          request_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_fees_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pharmacy_fees_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "rx_pharmacy_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pharmacy_inventory: {
         Row: {
           batch_number: string | null
@@ -2899,6 +3088,7 @@ export type Database = {
           hospital_id: string
           id: string
           location: string | null
+          nafdac_reg_no: string | null
           quantity_in_stock: number
           reorder_level: number | null
           strength: string | null
@@ -2917,6 +3107,7 @@ export type Database = {
           hospital_id: string
           id?: string
           location?: string | null
+          nafdac_reg_no?: string | null
           quantity_in_stock?: number
           reorder_level?: number | null
           strength?: string | null
@@ -2935,6 +3126,7 @@ export type Database = {
           hospital_id?: string
           id?: string
           location?: string | null
+          nafdac_reg_no?: string | null
           quantity_in_stock?: number
           reorder_level?: number | null
           strength?: string | null
@@ -2948,6 +3140,123 @@ export type Database = {
             columns: ["hospital_id"]
             isOneToOne: false
             referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pharmacy_members: {
+        Row: {
+          created_at: string
+          email: string | null
+          first_name: string
+          id: string
+          is_active: boolean
+          last_name: string
+          licence_expiry: string | null
+          pcn_reg_no: string | null
+          pharmacy_id: string
+          phone: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          role: string
+          updated_at: string
+          user_id: string
+          verification_status: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          first_name: string
+          id?: string
+          is_active?: boolean
+          last_name?: string
+          licence_expiry?: string | null
+          pcn_reg_no?: string | null
+          pharmacy_id: string
+          phone?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+          verification_status?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          is_active?: boolean
+          last_name?: string
+          licence_expiry?: string | null
+          pcn_reg_no?: string | null
+          pharmacy_id?: string
+          phone?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_members_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pharmacy_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          patient_id: string
+          pharmacy_id: string
+          rating: number
+          request_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          patient_id: string
+          pharmacy_id: string
+          rating: number
+          request_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          patient_id?: string
+          pharmacy_id?: string
+          rating?: number
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pharmacy_reviews_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pharmacy_reviews_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pharmacy_reviews_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "rx_pharmacy_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -3010,8 +3319,10 @@ export type Database = {
           id: string
           instructions: string | null
           patient_id: string
+          prescribed_by: string | null
           refills_allowed: number | null
           refills_used: number | null
+          rx_document_id: string | null
           status: string
           updated_at: string
         }
@@ -3027,8 +3338,10 @@ export type Database = {
           id?: string
           instructions?: string | null
           patient_id: string
+          prescribed_by?: string | null
           refills_allowed?: number | null
           refills_used?: number | null
+          rx_document_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -3044,8 +3357,10 @@ export type Database = {
           id?: string
           instructions?: string | null
           patient_id?: string
+          prescribed_by?: string | null
           refills_allowed?: number | null
           refills_used?: number | null
+          rx_document_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -3083,6 +3398,284 @@ export type Database = {
             columns: ["consultation_id"]
             isOneToOne: false
             referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_rx_document_id_fkey"
+            columns: ["rx_document_id"]
+            isOneToOne: false
+            referencedRelation: "rx_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rx_access_log: {
+        Row: {
+          action: string
+          at: string
+          id: string
+          pharmacy_id: string | null
+          rx_document_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          at?: string
+          id?: string
+          pharmacy_id?: string | null
+          rx_document_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          at?: string
+          id?: string
+          pharmacy_id?: string | null
+          rx_document_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rx_access_log_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_access_log_rx_document_id_fkey"
+            columns: ["rx_document_id"]
+            isOneToOne: false
+            referencedRelation: "rx_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rx_dispenses: {
+        Row: {
+          dispensed_at: string
+          id: string
+          is_refill: boolean
+          member_id: string
+          pcn_reg_no: string
+          pharmacist_name: string
+          pharmacy_id: string
+          prescription_id: string
+          quantity: string | null
+          request_id: string | null
+          rx_document_id: string
+        }
+        Insert: {
+          dispensed_at?: string
+          id?: string
+          is_refill?: boolean
+          member_id: string
+          pcn_reg_no: string
+          pharmacist_name: string
+          pharmacy_id: string
+          prescription_id: string
+          quantity?: string | null
+          request_id?: string | null
+          rx_document_id: string
+        }
+        Update: {
+          dispensed_at?: string
+          id?: string
+          is_refill?: boolean
+          member_id?: string
+          pcn_reg_no?: string
+          pharmacist_name?: string
+          pharmacy_id?: string
+          prescription_id?: string
+          quantity?: string | null
+          request_id?: string | null
+          rx_document_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rx_dispenses_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacy_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_dispenses_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_dispenses_prescription_id_fkey"
+            columns: ["prescription_id"]
+            isOneToOne: false
+            referencedRelation: "prescriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_dispenses_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "rx_pharmacy_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_dispenses_rx_document_id_fkey"
+            columns: ["rx_document_id"]
+            isOneToOne: false
+            referencedRelation: "rx_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rx_documents: {
+        Row: {
+          code: string
+          consultation_id: string | null
+          created_at: string
+          doctor_id: string | null
+          expires_at: string
+          hospital_id: string
+          id: string
+          issued_at: string
+          patient_id: string
+          prescriber: Json
+          signature_data: string | null
+        }
+        Insert: {
+          code: string
+          consultation_id?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          expires_at: string
+          hospital_id: string
+          id?: string
+          issued_at?: string
+          patient_id: string
+          prescriber?: Json
+          signature_data?: string | null
+        }
+        Update: {
+          code?: string
+          consultation_id?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          expires_at?: string
+          hospital_id?: string
+          id?: string
+          issued_at?: string
+          patient_id?: string
+          prescriber?: Json
+          signature_data?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rx_documents_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: true
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_documents_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_documents_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_documents_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rx_pharmacy_requests: {
+        Row: {
+          collected_at: string | null
+          created_at: string
+          id: string
+          patient_id: string
+          patient_note: string | null
+          pharmacy_id: string
+          pharmacy_note: string | null
+          price_kobo: number | null
+          ready_by: string | null
+          responded_at: string | null
+          responded_by: string | null
+          rx_document_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          collected_at?: string | null
+          created_at?: string
+          id?: string
+          patient_id: string
+          patient_note?: string | null
+          pharmacy_id: string
+          pharmacy_note?: string | null
+          price_kobo?: number | null
+          ready_by?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          rx_document_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          collected_at?: string | null
+          created_at?: string
+          id?: string
+          patient_id?: string
+          patient_note?: string | null
+          pharmacy_id?: string
+          pharmacy_note?: string | null
+          price_kobo?: number | null
+          ready_by?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          rx_document_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rx_pharmacy_requests_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_pharmacy_requests_pharmacy_id_fkey"
+            columns: ["pharmacy_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rx_pharmacy_requests_rx_document_id_fkey"
+            columns: ["rx_document_id"]
+            isOneToOne: false
+            referencedRelation: "rx_documents"
             referencedColumns: ["id"]
           },
         ]
@@ -3466,6 +4059,10 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_list_medicine_checks: {
+        Args: { p_limit?: number; p_offset?: number; p_status?: string }
+        Returns: Json
+      }
       admin_list_payments: {
         Args: {
           p_limit?: number
@@ -3477,11 +4074,29 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_list_pharmacies: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
       admin_mark_contact_handled: {
         Args: { p_handled?: boolean; p_id: string }
         Returns: undefined
       }
       admin_overview: { Args: never; Returns: Json }
+      admin_pharmacy_fee_settings: {
+        Args: { p_billing_enabled?: boolean; p_fee_kobo?: number }
+        Returns: Json
+      }
+      admin_pharmacy_queue: { Args: never; Returns: Json }
+      admin_resolve_medicine_check: {
+        Args: { p_check_id: string; p_note?: string; p_status: string }
+        Returns: undefined
+      }
       admin_resolve_refund: {
         Args: { p_note: string; p_payment_id: string }
         Returns: undefined
@@ -3494,8 +4109,29 @@ export type Database = {
         Args: { p_approve: boolean; p_hospital_id: string; p_notes?: string }
         Returns: undefined
       }
+      admin_review_pharmacist: {
+        Args: { p_approve: boolean; p_member_id: string; p_note?: string }
+        Returns: undefined
+      }
+      admin_review_pharmacy: {
+        Args: { p_approve: boolean; p_note?: string; p_pharmacy_id: string }
+        Returns: undefined
+      }
       admin_set_hospital_active: {
         Args: { p_active: boolean; p_hospital_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      admin_set_pharmacy_fee_status: {
+        Args: { p_fee_id: string; p_note?: string; p_status: string }
+        Returns: undefined
+      }
+      admin_set_pharmacy_status: {
+        Args: {
+          p_listed: boolean
+          p_pharmacy_id: string
+          p_reason?: string
+          p_status: string
+        }
         Returns: undefined
       }
       admin_system_health: { Args: never; Returns: Json }
@@ -3690,11 +4326,41 @@ export type Database = {
           role: string
         }[]
       }
+      my_pharmacy: { Args: never; Returns: Json }
+      my_prescriber_details: { Args: never; Returns: Json }
       patient_display_name: { Args: { _patient_id: string }; Returns: string }
       patient_user_id: { Args: { _patient_id: string }; Returns: string }
+      pharmacy_directory: {
+        Args: { p_city?: string; p_state?: string }
+        Returns: {
+          address: string
+          city: string
+          id: string
+          name: string
+          phone: string
+          rating: number
+          reviews: number
+          state: string
+        }[]
+      }
+      pharmacy_for_join_code: { Args: { p_code: string }; Returns: Json }
+      pharmacy_set_member_active: {
+        Args: { p_active: boolean; p_member_id: string }
+        Returns: undefined
+      }
       recompute_lab_order_status: {
         Args: { _order_id: string }
         Returns: undefined
+      }
+      record_medicine_check: {
+        Args: {
+          p_batch_number?: string
+          p_details?: string
+          p_nafdac_no?: string
+          p_prescription_id: string
+          p_result: string
+        }
+        Returns: string
       }
       register_patient: {
         Args: { p_hospital_id: string; p_patient: Json }
@@ -3712,6 +4378,29 @@ export type Database = {
         Args: { p_approve: boolean; p_hospital_id: string; p_notes?: string }
         Returns: undefined
       }
+      rx_dispense: { Args: { p_code: string; p_items: Json }; Returns: Json }
+      rx_document: { Args: { p_document_id: string }; Returns: Json }
+      rx_request_cancel: { Args: { p_request_id: string }; Returns: undefined }
+      rx_request_detail: { Args: { p_request_id: string }; Returns: Json }
+      rx_request_respond: {
+        Args: {
+          p_note?: string
+          p_price_kobo?: number
+          p_ready_by?: string
+          p_request_id: string
+          p_status: string
+        }
+        Returns: undefined
+      }
+      rx_review_pharmacy: {
+        Args: { p_comment?: string; p_rating: number; p_request_id: string }
+        Returns: undefined
+      }
+      rx_send_to_pharmacy: {
+        Args: { p_document_id: string; p_note?: string; p_pharmacy_id: string }
+        Returns: string
+      }
+      rx_verify: { Args: { p_code: string }; Returns: Json }
       save_doctor_availability: {
         Args: { p_global: boolean; p_hospital_ids: string[]; p_slots: Json }
         Returns: undefined
@@ -3729,6 +4418,15 @@ export type Database = {
         Returns: Json
       }
       submit_doctor_verification: { Args: { p_data: Json }; Returns: undefined }
+      update_my_pharmacist_details: {
+        Args: {
+          p_licence_expiry: string
+          p_pcn_reg_no: string
+          p_phone?: string
+        }
+        Returns: undefined
+      }
+      update_my_pharmacy: { Args: { p_data: Json }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
@@ -3857,9 +4555,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
