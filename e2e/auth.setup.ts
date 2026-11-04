@@ -1,12 +1,14 @@
 import { test as setup, expect } from "@playwright/test";
 import { ROLES, creds, authFile } from "./env";
 
-const HOME = { patient: /\/patient/, doctor: /\/doctor/, hospital: /\/hospital/ } as const;
+const HOME = { patient: /\/patient/, doctor: /\/doctor/, hospital: /\/hospital/, pharmacy: /\/pharmacy/, admin: /\/admin/ } as const;
 // Each role's main pages, opened once so Vite has compiled them before the specs run.
 const WARM = {
   patient: ["/patient/book", "/patient/appointments"],
   doctor: ["/doctor/appointments"],
   hospital: ["/hospital/appointments", "/hospital/patients"],
+  pharmacy: ["/pharmacy/requests", "/verify"],
+  admin: ["/admin/verifications"],
 } as const;
 
 for (const role of ROLES) {

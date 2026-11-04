@@ -16,8 +16,9 @@ function load(file: string) {
 load(".env.test");
 load(".env");
 
-export type Role = "patient" | "doctor" | "hospital";
-export const ROLES: Role[] = ["patient", "doctor", "hospital"];
+export type Role = "patient" | "doctor" | "hospital" | "pharmacy" | "admin";
+// pharmacy: an owner who is also a verified pharmacist. admin: a HealingNet platform admin.
+export const ROLES: Role[] = ["patient", "doctor", "hospital", "pharmacy", "admin"];
 
 export function creds(role: Role) {
   const email = process.env[`E2E_${role.toUpperCase()}_EMAIL`];
