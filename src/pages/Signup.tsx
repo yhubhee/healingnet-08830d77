@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { User, Building2, Stethoscope, Gift, CreditCard, Check } from "lucide-react";
+import { User, Building2, Stethoscope, Gift, CreditCard, Check, Pill, BadgeCheck } from "lucide-react";
 import { RoleFields, detailsToData, emptyDetails, type Role, type SignupDetails } from "@/components/auth/RoleFields";
 import { usePlanPrices, priceNaira, formatNaira } from "@/hooks/usePlanPrices";
 import { paystackService } from "@/services/paystack";
@@ -20,7 +20,15 @@ function signupErrorMessage(message?: string) {
   return "We couldn't create your account. Please check your details and try again.";
 }
 
-const ROLES: Role[] = ["patient", "doctor", "hospital"];
+const ROLES: Role[] = ["patient", "doctor", "hospital", "pharmacy", "pharmacist"];
+
+const TITLES: Record<Role, [string, string]> = {
+  patient: ["Create your patient account", "Free forever — no credit card needed"],
+  doctor: ["Create your doctor account", "Join the network and reach more patients"],
+  hospital: ["Create your hospital account", "Set up your hospital in under 2 minutes"],
+  pharmacy: ["Create your pharmacy account", "Free to join while we launch. HealingNet checks your licence before patients can find you."],
+  pharmacist: ["Join your pharmacy", "Use the code from your pharmacy owner"],
+};
 
 export default function Signup() {
   const [params] = useSearchParams();
@@ -33,6 +41,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [plan, setPlan] = useState<"emr" | "telemedicine">((params.get("plan") as any) === "telemedicine" ? "telemedicine" : "emr");
+  const [joinOk, setJoinOk] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -44,6 +53,9 @@ export default function Signup() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!role) return;
+    if (role === "pharmacist" && !joinOk) {
+      return toast({ title: "Check the pharmacy code", description: "Enter the code from your pharmacy owner. We show the pharmacy's name when it matches.", variant: "destructive" });
+    }
     setLoading(true);
 
     // One call: a database trigger creates the patient, doctor or hospital records
@@ -88,6 +100,16 @@ export default function Signup() {
       return navigate(signUp.session ? "/hospital" : "/login");
     }
 
+    if (role === "pharmacy" || role === "pharmacist") {
+      setLoading(false);
+      if (!signUp.session) {
+        toast({ title: "Account created!", description: "Check your email to confirm your address, then sign in." });
+        return navigate("/login");
+      }
+      toast({ title: "Account created", description: "HealingNet will check your details. We'll notify you when you're verified." });
+      return navigate(destinationAfterLogin("/pharmacy"));
+    }
+
     setLoading(false);
     if (signUp.session) {
       toast({ title: role === "doctor" ? "Doctor account created!" : "Account created!", description: "Welcome to HealingNet." });
@@ -98,20 +120,22 @@ export default function Signup() {
     }
   }
 
-  const meta = <PageMeta title="Create your account | HealingNet" description="Create a free HealingNet account as a patient or doctor, or start your hospital's 30-day free trial." />;
+  const meta = <PageMeta title="Create your account | HealingNet" description="Create a free HealingNet account as a patient, doctor or pharmacy, or start your hospital's 30-day free trial." />;
 
   if (!role) {
     const roleCards = [
       { id: "patient" as const, icon: User, title: "I'm a Patient", text: "Book appointments, view records & message doctors. Free forever." },
       { id: "doctor" as const, icon: Stethoscope, title: "I'm a Doctor", text: "Manage your patients, prescriptions & telemedicine consults." },
       { id: "hospital" as const, icon: Building2, title: "I represent a Hospital", text: "Set up your hospital, choose a plan & onboard your team." },
+      { id: "pharmacy" as const, icon: Pill, title: "Pharmacy", text: "Register your pharmacy. Verify prescriptions and receive them from patients." },
+      { id: "pharmacist" as const, icon: BadgeCheck, title: "Pharmacist joining a pharmacy", text: "Join your pharmacy's account with the code from the owner." },
     ];
     return (
       <AuthLayout wide>
         {meta}
         <h1 className="mb-2 text-[2rem] md:text-[2.75rem]">Get started with HealingNet</h1>
         <p className="mb-8 text-base text-muted-foreground">Choose how you'll use the platform</p>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {roleCards.map((r) => (
             <button key={r.id} onClick={() => setRole(r.id)} className="rounded-3xl border-2 border-border bg-card p-6 text-left transition-colors hover:border-primary focus-visible:border-primary">
               <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10"><r.icon className="h-6 w-6 text-primary" aria-hidden /></span>
@@ -128,16 +152,16 @@ export default function Signup() {
   }
 
   return (
-    <AuthLayout wide={role === "hospital"} photo={role === "doctor" ? "doctor-portrait" : role === "hospital" ? "nurse-tablet" : "mother-baby"}>
+    <AuthLayout wide={role === "hospital" || role === "pharmacy"} photo={role === "doctor" ? "doctor-portrait" : role === "hospital" ? "nurse-tablet" : "mother-baby"}>
       {meta}
       <div className={authCard}>
         <button onClick={() => setRole(null)} className="mb-4 inline-flex min-h-11 items-center text-sm text-muted-foreground hover:text-foreground">← Change role</button>
-        <h1 className="mb-2 text-[2rem] md:text-[2.5rem]">{role === "hospital" ? "Create your hospital account" : role === "doctor" ? "Create your doctor account" : "Create your patient account"}</h1>
-        <p className="mb-6 text-base text-muted-foreground">{role === "hospital" ? "Set up your hospital in under 2 minutes" : role === "doctor" ? "Join the network and reach more patients" : "Free forever — no credit card needed"}</p>
+        <h1 className="mb-2 text-[2rem] md:text-[2.5rem]">{TITLES[role][0]}</h1>
+        <p className="mb-6 text-base text-muted-foreground">{TITLES[role][1]}</p>
         <form onSubmit={handleSubmit} className="space-y-4 [&_input]:h-12 [&_input]:rounded-2xl [&_input]:text-base">
           <div className="space-y-1.5"><Label htmlFor="signup-email">Email</Label><Input id="signup-email" type="email" autoComplete="email" className={authInput} value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
           <div className="space-y-1.5"><Label htmlFor="signup-password">Password</Label><Input id="signup-password" type="password" autoComplete="new-password" minLength={6} className={authInput} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-          <RoleFields role={role} value={details} onChange={setDetails} />
+          <RoleFields role={role} value={details} onChange={setDetails} onJoinCodeChecked={setJoinOk} />
           {role === "hospital" && (
             <fieldset>
               <legend className="text-sm font-medium">Choose your plan</legend>
@@ -163,7 +187,7 @@ export default function Signup() {
               </div>
             </fieldset>
           )}
-          <Button type="submit" className={authPrimary} disabled={loading}>{loading ? "Creating account…" : role === "hospital" && plan === "telemedicine" ? "Create Account & Pay" : role === "hospital" ? "Start free trial" : "Create Account"}</Button>
+          <Button type="submit" className={authPrimary} disabled={loading || (role === "pharmacist" && !joinOk)}>{loading ? "Creating account…" : role === "hospital" && plan === "telemedicine" ? "Create Account & Pay" : role === "hospital" ? "Start free trial" : "Create Account"}</Button>
         </form>
         <p className="mt-6 text-center text-base text-muted-foreground">
           Already have an account? <Link to="/login" className="font-semibold text-primary underline-offset-4 hover:underline">Sign in</Link>

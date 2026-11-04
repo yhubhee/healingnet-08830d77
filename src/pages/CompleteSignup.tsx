@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, User, Building2, Stethoscope } from "lucide-react";
+import { Heart, User, Building2, Stethoscope, Pill, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,8 @@ const ROLES: { id: Role; title: string; blurb: string; icon: typeof User }[] = [
   { id: "patient", title: "Patient", blurb: "Book appointments and view your records.", icon: User },
   { id: "doctor", title: "Doctor", blurb: "Manage patients, prescriptions and consults.", icon: Stethoscope },
   { id: "hospital", title: "Hospital", blurb: "Set up your hospital. Includes a 30-day EMR trial.", icon: Building2 },
+  { id: "pharmacy", title: "Pharmacy", blurb: "Register your pharmacy. HealingNet checks your licence before patients can find you.", icon: Pill },
+  { id: "pharmacist", title: "Pharmacist", blurb: "Join your pharmacy with the code from the owner.", icon: BadgeCheck },
 ];
 
 /** For signed-in users with no profile yet (e.g. first Google sign-in): pick a role and finish setup. */
@@ -20,6 +22,7 @@ export default function CompleteSignup() {
   const { toast } = useToast();
   const [role, setRole] = useState<Role | null>(null);
   const [details, setDetails] = useState<SignupDetails>(emptyDetails());
+  const [joinOk, setJoinOk] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
 
@@ -42,6 +45,9 @@ export default function CompleteSignup() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!role) return;
+    if (role === "pharmacist" && !joinOk) {
+      return toast({ title: "Check the pharmacy code", description: "Enter the code from your pharmacy owner.", variant: "destructive" });
+    }
     setLoading(true);
     const { error } = await supabase.rpc("complete_signup", { p_role: role, p_data: detailsToData(role, details) });
     if (error) {
@@ -69,7 +75,7 @@ export default function CompleteSignup() {
         <div className="bg-card border border-border rounded-2xl p-8">
           <h1 className="text-2xl font-heading font-bold mb-1">Finish setting up</h1>
           <p className="text-muted-foreground text-sm mb-6">Tell us how you'll use HealingNet.</p>
-          <div className="grid grid-cols-3 gap-2 mb-6">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-6">
             {ROLES.map(({ id, title, blurb, icon: Icon }) => (
               <button key={id} type="button" onClick={() => setRole(id)} title={blurb}
                 className={`p-3 rounded-xl border-2 text-center transition-colors ${role === id ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
@@ -81,8 +87,8 @@ export default function CompleteSignup() {
           {role && (
             <form onSubmit={submit} className="space-y-4">
               <p className="text-xs text-muted-foreground">{ROLES.find((r) => r.id === role)?.blurb}</p>
-              <RoleFields role={role} value={details} onChange={setDetails} />
-              <Button type="submit" className="w-full" disabled={loading}>{loading ? "Saving…" : "Continue"}</Button>
+              <RoleFields role={role} value={details} onChange={setDetails} onJoinCodeChecked={setJoinOk} />
+              <Button type="submit" className="w-full" disabled={loading || (role === "pharmacist" && !joinOk)}>{loading ? "Saving…" : "Continue"}</Button>
             </form>
           )}
         </div>

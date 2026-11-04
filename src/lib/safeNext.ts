@@ -47,12 +47,14 @@ function takeNext(): string | null {
 
 /**
  * Final destination after sign-in. `home` is the user's dashboard from routeForUser
- * (/patient, /doctor, /hospital, /admin or /complete-signup). A saved `next` is used
- * only if it is inside that portal; otherwise the user goes to their dashboard.
+ * (/patient, /doctor, /hospital, /pharmacy, /admin or /complete-signup). A saved `next` is used
+ * only if it is inside that portal or is the public /verify page; otherwise the user goes to their dashboard.
  */
 export function destinationAfterLogin(home: string): string {
   const next = takeNext();
   if (!next || home === "/complete-signup") return home;
   const path = next.split(/[?#]/)[0];
+  // The public prescription check page: a pharmacist signs in from /verify/<code> and comes back to it.
+  if (path === "/verify" || path.startsWith("/verify/")) return next;
   return path === home || path.startsWith(`${home}/`) ? next : home;
 }
