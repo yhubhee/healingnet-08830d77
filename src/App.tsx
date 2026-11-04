@@ -20,6 +20,8 @@ const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+// Public prescription check (the QR on every prescription links here). No sign-in needed.
+const Verify = lazy(() => import("./pages/Verify"));
 import { MarketingFallback } from "./components/marketing/MarketingFallback";
 import { PageLoadingFallback } from "./components/common/PageLoadingFallback";
 
@@ -141,6 +143,8 @@ const App = () => (
           <Route path="/login" element={<Public><Login /></Public>} />
           <Route path="/signup" element={<Public><Signup /></Public>} />
           <Route path="/reset-password" element={<Public><ResetPassword /></Public>} />
+          <Route path="/verify" element={<Verify />} />
+          <Route path="/verify/:code" element={<Verify />} />
           <Route path="/complete-signup" element={<ProtectedRoute><CompleteSignup /></ProtectedRoute>} />
 
           {/* Patient Portal */}
