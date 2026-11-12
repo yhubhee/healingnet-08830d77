@@ -1,5 +1,6 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Bell, Lock, Globe, Shield, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNotificationPrefs, useSaveNotificationPrefs } from "@/hooks/useUserNotifications";
@@ -87,7 +88,7 @@ export default function PatientSettings() {
         <Card title="Security" icon={Lock}>
           <button className="px-4 py-2 border border-border rounded-lg text-sm">Change password</button>
           <button className="px-4 py-2 border border-border rounded-lg text-sm ml-2">Enable 2FA</button>
-          <button className="px-4 py-2 bg-destructive/10 text-destructive border border-destructive/30 rounded-lg text-sm ml-2">Delete account</button>
+          <Link to="/delete-account" className="inline-block px-4 py-2 bg-destructive/10 text-destructive border border-destructive/30 rounded-lg text-sm ml-2">Delete account</Link>
         </Card>
       </div>
     </PatientLayout>

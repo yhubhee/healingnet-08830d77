@@ -51,6 +51,11 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://healingnet-08830d77.vercel.app/delete-account</loc>
+    <lastmod>2026-11-12</lastmod>
+    <priority>0.2</priority>
+  </url>
+  <url>
     <loc>https://healingnet-08830d77.vercel.app/login</loc>
     <lastmod>2026-10-15</lastmod>
     <priority>0.3</priority>

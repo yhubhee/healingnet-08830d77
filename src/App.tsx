@@ -16,6 +16,7 @@ const FAQPage = lazy(() => import("./pages/FAQ"));
 const ContactPage = lazy(() => import("./pages/Contact"));
 const PrivacyPage = lazy(() => import("./pages/Privacy"));
 const TermsPage = lazy(() => import("./pages/Terms"));
+const DeleteAccountPage = lazy(() => import("./pages/DeleteAccount"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -143,6 +144,7 @@ const App = () => (
           <Route path="/contact" element={<Public><ContactPage /></Public>} />
           <Route path="/privacy" element={<Public><PrivacyPage /></Public>} />
           <Route path="/terms" element={<Public><TermsPage /></Public>} />
+          <Route path="/delete-account" element={<Public><DeleteAccountPage /></Public>} />
           <Route path="/login" element={<Public><Login /></Public>} />
           <Route path="/signup" element={<Public><Signup /></Public>} />
           <Route path="/forgot-password" element={<Public><ForgotPassword /></Public>} />
