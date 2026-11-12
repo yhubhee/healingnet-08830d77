@@ -1,29 +1,68 @@
 # What EAS uploads when building the mobile app (mobile/). When this file exists, EAS
 # uses it instead of .gitignore, so everything that must stay out is listed here.
 # Only mobile/ is sent. The website, its .env files, e2e logins and Supabase files are not.
+#
+# Check what would be uploaded before a cloud build (run from mobile/):
+#   npx eas-cli build:inspect --platform android --profile preview --stage archive --output ../../eas-archive-check --force
 
+# 1. Drop everything at the top level, then put mobile back.
+#    Write "!/mobile" with NO trailing slash: EAS tests the folder as "mobile", and a
+#    pattern ending in "/" does not match it, which left the whole app out of the upload.
 /*
-!/mobile/
+!/mobile
 
-# Inside mobile/: generated and local-only files stay out.
-/mobile/node_modules/
-/mobile/.expo/
-/mobile/dist/
-/mobile/web-build/
-/mobile/android/
-/mobile/ios/
-/mobile/coverage/
-/mobile/src/
-/mobile/.env.*
-!/mobile/.env.example
-/mobile/*.apk
-/mobile/*.aab
-/mobile/*.jks
-/mobile/*.p8
-/mobile/*.p12
-/mobile/*.key
-/mobile/*.pem
+# 2. Named explicitly as well, so they stay out even if rule 1 ever stops working.
+/.env
+/.env.*
+/e2e
+/supabase
+/src
+/public
+/legacy
+/docs
+/scripts
+/dist
+/.lovable
+/playwright-report
+/test-results
+/*.patch
 
-# These two are ignored by git but ARE uploaded: the build needs them and neither is secret.
+# 3. Never uploaded, wherever they are. (Folder names have no trailing slash, see rule 1.)
+node_modules
+.git
+.env
+.env.*
+.auth
+.temp
+.claude
+.vscode
+.idea
+*.log
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+*.apk
+*.aab
+*.ipa
+
+# 4. Inside mobile/: generated and local-only files stay out.
+/mobile/.expo
+/mobile/dist
+/mobile/web-build
+/mobile/build
+/mobile/android
+/mobile/ios
+/mobile/coverage
+/mobile/src
+/mobile/*.tsbuildinfo
+
+# 5. Put back the files the build needs. Git ignores the first two, but neither is secret.
+#    Keep these last so they win over the rules above.
 #   mobile/.env                  Supabase address and publishable key
 #   mobile/google-services.json  Firebase config for Android push
+!/mobile/.env
+!/mobile/.env.example
+!/mobile/google-services.json
