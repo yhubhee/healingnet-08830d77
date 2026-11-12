@@ -6,7 +6,7 @@ import type { Appointment } from "@/shared/appointments";
 import type { PushPrefs, Tables } from "@/shared/database";
 import type { CheckResult, PatientRequest, RxPayload } from "@/shared/pharmacy";
 import { usePatient, useSession } from "./session";
-import { pushPrefsTable, supabase } from "./supabase";
+import { supabase } from "./supabase";
 
 // ---- Appointments (src/pages/patient/Appointments.tsx) ----------------------------------
 export const appointmentsKey = (patientId: string | null) => ["appointments", patientId] as const;
@@ -212,9 +212,9 @@ export function usePushPrefs() {
     queryKey: ["notification-prefs", userId],
     enabled: !!userId,
     queryFn: async (): Promise<PushPrefs> => {
-      const { data, error } = await pushPrefsTable()
+      const { data, error } = await supabase.from("notification_preferences")
         .select("push_enabled, push_appointments, push_prescriptions, push_lab_results, push_other, push_show_details")
-        .eq("user_id", userId!).maybeSingle<PushPrefs>();
+        .eq("user_id", userId!).maybeSingle();
       if (error) throw error;
       // No row yet means the defaults (push on, details off), as in the database.
       return data ?? DEFAULT_PUSH_PREFS;
@@ -230,7 +230,7 @@ export function useSavePushPrefs() {
   return useMutation({
     mutationFn: async (patch: Partial<PushPrefs>) => {
       if (!userId) throw new Error("Not authenticated");
-      const { error } = await pushPrefsTable().upsert({ user_id: userId, ...patch }, { onConflict: "user_id" });
+      const { error } = await supabase.from("notification_preferences").upsert({ user_id: userId, ...patch }, { onConflict: "user_id" });
       if (error) throw error;
     },
     onMutate: async (patch) => {

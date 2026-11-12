@@ -2319,6 +2319,12 @@ export type Database = {
           email_letters: boolean
           email_prescriptions: boolean
           language: string | null
+          push_appointments: boolean
+          push_enabled: boolean
+          push_lab_results: boolean
+          push_other: boolean
+          push_prescriptions: boolean
+          push_show_details: boolean
           updated_at: string
           user_id: string
         }
@@ -2331,6 +2337,12 @@ export type Database = {
           email_letters?: boolean
           email_prescriptions?: boolean
           language?: string | null
+          push_appointments?: boolean
+          push_enabled?: boolean
+          push_lab_results?: boolean
+          push_other?: boolean
+          push_prescriptions?: boolean
+          push_show_details?: boolean
           updated_at?: string
           user_id: string
         }
@@ -2343,6 +2355,12 @@ export type Database = {
           email_letters?: boolean
           email_prescriptions?: boolean
           language?: string | null
+          push_appointments?: boolean
+          push_enabled?: boolean
+          push_lab_results?: boolean
+          push_other?: boolean
+          push_prescriptions?: boolean
+          push_show_details?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -2366,6 +2384,8 @@ export type Database = {
           notes: string | null
           patient_id: string
           reason: string | null
+          reminder_1h_sent_at: string | null
+          reminder_24h_sent_at: string | null
           requested_date: string
           requested_time: string | null
           status: string
@@ -2388,6 +2408,8 @@ export type Database = {
           notes?: string | null
           patient_id: string
           reason?: string | null
+          reminder_1h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
           requested_date: string
           requested_time?: string | null
           status?: string
@@ -2410,6 +2432,8 @@ export type Database = {
           notes?: string | null
           patient_id?: string
           reason?: string | null
+          reminder_1h_sent_at?: string | null
+          reminder_24h_sent_at?: string | null
           requested_date?: string
           requested_time?: string | null
           status?: string
@@ -3409,6 +3433,102 @@ export type Database = {
           },
         ]
       }
+      push_devices: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          disabled_at: string | null
+          id: string
+          last_seen_at: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          disabled_at?: string | null
+          id?: string
+          last_seen_at?: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          disabled_at?: string | null
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_outbox: {
+        Row: {
+          attempts: number
+          body: string | null
+          created_at: string
+          data: Json
+          device_id: string
+          id: string
+          last_error: string | null
+          locked_at: string | null
+          notification_id: string | null
+          send_after: string
+          sent_at: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          attempts?: number
+          body?: string | null
+          created_at?: string
+          data?: Json
+          device_id: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          notification_id?: string | null
+          send_after?: string
+          sent_at?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          attempts?: number
+          body?: string | null
+          created_at?: string
+          data?: Json
+          device_id?: string
+          id?: string
+          last_error?: string | null
+          locked_at?: string | null
+          notification_id?: string | null
+          send_after?: string
+          sent_at?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_outbox_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "push_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "push_outbox_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "user_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rx_access_log: {
         Row: {
           action: string
@@ -4218,6 +4338,7 @@ export type Database = {
           expires_at: string
         }[]
       }
+      delete_my_patient_data: { Args: never; Returns: Json }
       dispense_drug: {
         Args: {
           p_dosage?: string
@@ -4348,6 +4469,21 @@ export type Database = {
         Args: { p_active: boolean; p_member_id: string }
         Returns: undefined
       }
+      push_outbox_claim: {
+        Args: { p_limit?: number }
+        Returns: {
+          body: string
+          data: Json
+          id: string
+          title: string
+          token: string
+        }[]
+      }
+      push_outbox_finish: {
+        Args: { p_error?: string; p_id: string; p_result: string }
+        Returns: undefined
+      }
+      queue_appointment_reminders: { Args: never; Returns: number }
       recompute_lab_order_status: {
         Args: { _order_id: string }
         Returns: undefined
@@ -4365,6 +4501,10 @@ export type Database = {
       register_patient: {
         Args: { p_hospital_id: string; p_patient: Json }
         Returns: string
+      }
+      register_push_device: {
+        Args: { p_app_version?: string; p_platform: string; p_token: string }
+        Returns: undefined
       }
       respond_to_invitation: {
         Args: { p_accept: boolean; p_link_id: string }
@@ -4418,6 +4558,7 @@ export type Database = {
         Returns: Json
       }
       submit_doctor_verification: { Args: { p_data: Json }; Returns: undefined }
+      unregister_push_device: { Args: { p_token: string }; Returns: undefined }
       update_my_pharmacist_details: {
         Args: {
           p_licence_expiry: string

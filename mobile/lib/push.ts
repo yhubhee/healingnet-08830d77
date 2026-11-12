@@ -8,7 +8,7 @@ import { Platform } from "react-native";
 import { screenForUrl } from "@/shared/links";
 import { APP_VERSION } from "./env";
 import { DEVICE_KEYS, getFlag, setFlag } from "./storage";
-import { rpcNew } from "./supabase";
+import { supabase } from "./supabase";
 
 // A notification that arrives while the app is open still shows as a banner.
 Notifications.setNotificationHandler({
@@ -66,7 +66,7 @@ export async function registerForPush(): Promise<boolean> {
     if (!projectId) return false;
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
     if (!token) return false;
-    const { error } = await rpcNew("register_push_device", {
+    const { error } = await supabase.rpc("register_push_device", {
       p_token: token,
       p_platform: Platform.OS === "ios" ? "ios" : "android",
       p_app_version: APP_VERSION,
@@ -83,7 +83,7 @@ export async function registerForPush(): Promise<boolean> {
 export async function unregisterPush(): Promise<void> {
   const token = await getFlag(DEVICE_KEYS.pushToken);
   if (!token) return;
-  await rpcNew("unregister_push_device", { p_token: token });
+  await supabase.rpc("unregister_push_device", { p_token: token });
   await setFlag(DEVICE_KEYS.pushToken, null);
 }
 
