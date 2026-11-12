@@ -78,6 +78,18 @@
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "root": "app",
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "7e8c4716-3121-421a-88d7-c0456dbe3c8f"
+      }
+    },
+    "owner": "healingnet"
   }
 }
