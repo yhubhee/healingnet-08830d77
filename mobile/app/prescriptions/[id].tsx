@@ -15,6 +15,7 @@ import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, Divider, EmptyState, Heading, Label, LinkText, Mono, Notice, Small, Strong } from "@/components/ui";
 import { useRefreshRx, useRxDocuments, useRxExtras } from "@/lib/data";
 import { WEB_URL } from "@/lib/env";
+import { useAllowScreenshots } from "@/lib/lock";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { shareRxPdf } from "@/lib/rxPdf";
 import { usePatient } from "@/lib/session";
@@ -41,6 +42,8 @@ export default function PrescriptionDetail() {
   const [pick, setPick] = useState(false);
   const [rate, setRate] = useState<PatientRequest | null>(null);
   const [sharing, setSharing] = useState(false);
+  // The only screen where screenshots are allowed, so the QR can be sent to family.
+  useAllowScreenshots();
 
   const doc = (docs.data ?? []).find((d) => d.document_id === id);
   const code = doc?.code ?? "";
@@ -114,7 +117,7 @@ export default function PrescriptionDetail() {
 
             {/* The QR always sits on white, in dark mode too. */}
             <Card style={{ alignItems: "center", gap: space.md }}>
-              <Small style={{ textAlign: "center" }}>Show this at the pharmacy. The pharmacist scans it to check your prescription.</Small>
+              <Small style={{ textAlign: "center" }}>Show this at the pharmacy. The pharmacist scans it to check your prescription. You can screenshot this screen to send to someone collecting for you.</Small>
               {code ? (
                 <View style={{ backgroundColor: QR_BACKGROUND, padding: space.lg, borderRadius: 16 }} accessible accessibilityRole="image" accessibilityLabel={`QR code for prescription ${code}`}>
                   <QRCode value={verifyUrl(WEB_URL, code)} size={232} backgroundColor={QR_BACKGROUND} color={QR_FOREGROUND} ecl="M" />

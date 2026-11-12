@@ -69,7 +69,7 @@ Also checked against the live project: `register_push_device` refuses a signed-o
 9. Switch System / Light / Dark; the QR stays on white in dark mode.
 10. Settings → Notifications: each switch saves and survives a restart.
 11. Turn on app lock, leave the app for 5 minutes, come back: it asks to unlock.
-12. Open the app switcher: the HealingNet cover shows, not health details.
+12. Open the app switcher: the HealingNet cover shows, not health details. On Android, a screenshot is blocked on every screen except the prescription screen, where it works.
 13. Change the profile photo from the camera and from the gallery.
 14. Sign out, then check that reopening the app shows Welcome and no old data.
 15. Text size: set the phone's font size to largest and check nothing is cut off. Check TalkBack reads every button.
@@ -77,4 +77,4 @@ Also checked against the live project: `register_push_device` refuses a signed-o
 
 ## Records created in the live project
 
-Listed in `e2e/cleanup.md` under "Mobile app 0.1 live check": one `[E2E]` appointment (booked, then cancelled), the notifications the database sent for it, a default `notification_preferences` row for the test patient, and one share code that expires by itself.
+Listed in `e2e/cleanup.md` under "Mobile app 0.1 live check": two `[E2E]` appointments from two runs (each booked, then cancelled), the notifications the database sent for it, a default `notification_preferences` row for the test patient, and two share codes that expire by themselves.

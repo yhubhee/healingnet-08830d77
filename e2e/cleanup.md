@@ -420,17 +420,18 @@ Also created by triggers or functions, with no id in the ledger:
 
 Created by `mobile/scripts/live-check.mjs`, signed in as the test patient.
 
-### patient_appointments (1)
+### patient_appointments (2)
 
 | id | note |
 | --- | --- |
 | 50507012-8102-4a8a-94e4-9158e30641b8 | [E2E] mobile app check mwdp89qb (booked with any available doctor, then cancelled by the check) |
+| 7704d531-cb14-4a54-b0fd-12f3ecb79ce5 | [E2E] mobile app check mwdrqwyl (second run, after the types were regenerated; booked, then cancelled) |
 
 ### user_notifications
 
 | id | note |
 | --- | --- |
-| (not looked up) | Notifications the database sent for the booking and cancellation above (reference_id = the appointment id) |
+| (not looked up) | Notifications the database sent for the two bookings and cancellations above (reference_id = the appointment id) |
 
 ### notification_preferences (1)
 
@@ -438,11 +439,11 @@ Created by `mobile/scripts/live-check.mjs`, signed in as the test patient.
 | --- | --- |
 | (test patient's user_id) | Row created by the check; every value is the default. Safe to leave. |
 
-### patient_share_codes (1)
+### patient_share_codes (2)
 
 | id | note |
 | --- | --- |
-| (not looked up) | One share code for the test patient; it expires by itself after 15 minutes |
+| (not looked up) | Two share codes for the test patient (one per run); each expires by itself after 15 minutes |
 
 ### push_devices (0)
 

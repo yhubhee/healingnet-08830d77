@@ -119,14 +119,13 @@ Profiles in `eas.json`: `development` (dev client, APK), `preview` (APK for test
 - The session and the saved (offline) data are encrypted with AES-256; the keys are in the phone's Keychain / Keystore (`lib/encryptedStorage.ts`).
 - Only the profile, appointments, prescription documents and the home summary are saved for offline use (`lib/cache.ts`).
 - Signing out or deleting the account removes the push registration, the data in memory, the saved data and the session.
-- When the app leaves the foreground the screen is covered with the logo. On Android the window is also marked secure, which blanks the app-switcher preview and blocks screenshots (`ANDROID_SECURE_WINDOW` in `lib/lock.tsx`).
+- When the app leaves the foreground the screen is covered with the logo. On Android the window is also marked secure, which blanks the app-switcher preview and blocks screenshots (`ANDROID_SECURE_WINDOW` in `lib/lock.tsx`). The one exception is the prescription screen: screenshots are allowed while it is open, so a patient can send the QR to family.
 - Nothing is logged: no health data, names, phone numbers, tokens or codes. There is no analytics or crash-reporting SDK in 0.1.
 
 ## Keeping in step with the website
 
 - `npm run sync-types` after the website's Supabase types change.
 - `shared/errors.ts`, `shared/patientProfile.ts`, `shared/pharmacy.ts` and `shared/appointments.ts` are copies of website helpers (each file names its source). If the website's wording changes, change it here too.
-- The columns and functions added by the mobile migration are typed by hand in `shared/database.ts` until the website's types are regenerated.
 
 ## Not in 0.1
 

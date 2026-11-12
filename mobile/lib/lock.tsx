@@ -2,10 +2,12 @@
 // - Privacy cover: when the app leaves the foreground the screen is covered with the
 //   HealingNet logo, so health details don't show in the app switcher. Android takes its
 //   app-switcher picture before the app can redraw, so there the window is also marked
-//   secure (which blanks the preview and blocks screenshots).
+//   secure (which blanks the preview and blocks screenshots). The one exception is the
+//   prescription screen, where screenshots are allowed (useAllowScreenshots).
 // - App lock (off by default): asks for fingerprint, face or the phone's passcode after
 //   5 minutes in the background, and when the app is opened fresh.
 import * as LocalAuthentication from "expo-local-authentication";
+import { useFocusEffect } from "expo-router";
 import * as ScreenCapture from "expo-screen-capture";
 import { Lock } from "lucide-react-native";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -16,9 +18,29 @@ import { DEVICE_KEYS, getFlag, setFlag } from "./storage";
 
 /** Set to false to allow screenshots on Android (the app-switcher preview would then show the last screen). */
 const ANDROID_SECURE_WINDOW = true;
+const SECURE_KEY = "privacy";
 export const LOCK_AFTER_MS = 5 * 60 * 1000;
 
-/** Pure rule, unit tested: does the app need unlocking now? */
+const secureWindow = (on: boolean) => {
+  if (Platform.OS !== "android" || !ANDROID_SECURE_WINDOW) return;
+  (on ? ScreenCapture.preventScreenCaptureAsync(SECURE_KEY) : ScreenCapture.allowScreenCaptureAsync(SECURE_KEY)).catch(() => {});
+};
+
+/**
+ * Allows screenshots while the calling screen is open, and blocks them again when it is
+ * left. Used only on the prescription screen, so a patient can send the QR to family.
+ * While that screen is open, Android's app-switcher preview can show it too.
+ */
+export function useAllowScreenshots() {
+  useFocusEffect(
+    useCallback(() => {
+      secureWindow(false);
+      return () => secureWindow(true);
+    }, []),
+  );
+}
+
+/** Does the app need unlocking now? */
 export function shouldLock(enabled: boolean, backgroundedAt: number | null, now: number, coldStart: boolean): boolean {
   if (!enabled) return false;
   if (coldStart) return true;
@@ -43,7 +65,7 @@ export function LockProvider({ children, active }: { children: ReactNode; active
   const enabledRef = useRef(false);
 
   useEffect(() => {
-    if (Platform.OS === "android" && ANDROID_SECURE_WINDOW) ScreenCapture.preventScreenCaptureAsync("privacy").catch(() => {});
+    secureWindow(true);
     getFlag(DEVICE_KEYS.appLock).then((v) => {
       const on = v === "1";
       enabledRef.current = on;
