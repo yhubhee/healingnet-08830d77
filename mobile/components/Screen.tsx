@@ -1,0 +1,90 @@
+// Page frame: safe areas, an optional header with a back button, the offline bar,
+// scrolling and pull to refresh.
+import { router } from "expo-router";
+import { ArrowLeft, WifiOff } from "lucide-react-native";
+import type { ReactNode } from "react";
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useOnline } from "@/lib/net";
+import { fmtClock } from "@/shared/dates";
+import { fonts, space, useTheme } from "@/theme";
+import { IconButton, Title } from "./ui";
+
+/** "Offline · last updated 10:42", shown above saved data while the phone is offline. */
+export function OfflineBar({ updatedAt }: { updatedAt?: number }) {
+  const { colors } = useTheme();
+  const online = useOnline();
+  if (online) return null;
+  const text = updatedAt ? `Offline · last updated ${fmtClock(updatedAt)}` : "Offline";
+  return (
+    <View accessibilityRole="alert" style={[styles.offline, { backgroundColor: colors.warningBg }]}>
+      <WifiOff size={16} color={colors.warningText} />
+      <Text style={{ fontFamily: fonts.semibold, fontSize: 14, color: colors.warningText }}>{text}</Text>
+    </View>
+  );
+}
+
+export function Screen({
+  title, back, onBack, right, children, onRefresh, refreshing, updatedAt, scroll = true, footer, tab,
+}: {
+  title?: string;
+  /** Show a back button in the header. */
+  back?: boolean;
+  onBack?: () => void;
+  right?: ReactNode;
+  children: ReactNode;
+  onRefresh?: () => void;
+  refreshing?: boolean;
+  /** When the data on this screen was last fetched, for the offline bar. */
+  updatedAt?: number;
+  scroll?: boolean;
+  /** Pinned below the content (e.g. the main button of a form). */
+  footer?: ReactNode;
+  /** Tab screens sit above the tab bar, which handles the bottom safe area itself. */
+  tab?: boolean;
+}) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const goBack = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace("/(tabs)")));
+
+  const header = (title || back || right) ? (
+    <View style={styles.header}>
+      {back ? <IconButton icon={ArrowLeft} label="Back" onPress={goBack} /> : null}
+      <View style={{ flex: 1, paddingLeft: back ? 0 : space.xs }}>
+        {title ? <Title numberOfLines={2}>{title}</Title> : null}
+      </View>
+      {right}
+    </View>
+  ) : null;
+
+  const padBottom = (tab ? 0 : insets.bottom) + space.xl;
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
+      <OfflineBar updatedAt={updatedAt} />
+      {header}
+      {scroll ? (
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: footer ? space.lg : padBottom, gap: space.lg }}
+          refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.primaryText} colors={[colors.primary]} /> : undefined}
+        >
+          {children}
+        </ScrollView>
+      ) : (
+        <View style={{ flex: 1, paddingHorizontal: space.lg, paddingTop: space.sm }}>{children}</View>
+      )}
+      {footer ? (
+        <View style={{ paddingHorizontal: space.lg, paddingTop: space.md, paddingBottom: padBottom, gap: space.sm, borderTopWidth: 1, borderTopColor: colors.divider, backgroundColor: colors.background }}>
+          {footer}
+        </View>
+      ) : null}
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: { flexDirection: "row", alignItems: "center", minHeight: 56, paddingHorizontal: space.md, gap: space.xs },
+  offline: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: space.sm, paddingVertical: space.sm, paddingHorizontal: space.lg },
+});

@@ -1,0 +1,29 @@
+# What EAS uploads when building the mobile app (mobile/). When this file exists, EAS
+# uses it instead of .gitignore, so everything that must stay out is listed here.
+# Only mobile/ is sent. The website, its .env files, e2e logins and Supabase files are not.
+
+/*
+!/mobile/
+
+# Inside mobile/: generated and local-only files stay out.
+/mobile/node_modules/
+/mobile/.expo/
+/mobile/dist/
+/mobile/web-build/
+/mobile/android/
+/mobile/ios/
+/mobile/coverage/
+/mobile/src/
+/mobile/.env.*
+!/mobile/.env.example
+/mobile/*.apk
+/mobile/*.aab
+/mobile/*.jks
+/mobile/*.p8
+/mobile/*.p12
+/mobile/*.key
+/mobile/*.pem
+
+# These two are ignored by git but ARE uploaded: the build needs them and neither is secret.
+#   mobile/.env                  Supabase address and publishable key
+#   mobile/google-services.json  Firebase config for Android push
