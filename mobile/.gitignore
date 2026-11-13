@@ -45,3 +45,7 @@ yarn-error.*
 
 .DS_Store
 *.tsbuildinfo
+
+# Editor and assistant settings (local)
+.claude/
+.vscode/
