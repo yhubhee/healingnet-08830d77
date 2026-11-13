@@ -13,6 +13,7 @@ import { useDoctor } from "@/hooks/useDoctor";
 import { QueryState } from "@/components/common/QueryState";
 import { buildLabReportDocument, downloadReportPdf, printReport } from "@/lib/reports/documents";
 import { friendlyError } from "@/lib/errors";
+import { labSeenText } from "@/lib/labSeen";
 
 export default function DoctorLabOrders() {
   const [tab, setTab] = useState<"pending" | "completed">("pending");
@@ -88,6 +89,7 @@ export default function DoctorLabOrders() {
                 <div>
                   <div className="font-heading font-bold">Lab order #{o.id.slice(0, 8)}</div>
                   <div className="text-xs text-muted-foreground">{o.patients ? `${o.patients.first_name} ${o.patients.last_name}` : "Patient"} • Ordered {new Date(o.created_at).toLocaleDateString()}</div>
+                  {labSeenText(o) && <div className="text-xs text-muted-foreground">{labSeenText(o)}</div>}
                 </div>
               </button>
               <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium capitalize", o.status === "completed" ? "bg-success/15 text-success" : o.status === "cancelled" ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning")}>{o.status}</span>
@@ -112,6 +114,7 @@ export default function DoctorLabOrders() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            {labSeenText(detail) && <div className="text-sm text-muted-foreground">{labSeenText(detail)}</div>}
             {detail?.notes && <div className="text-sm text-muted-foreground border-l-2 border-border pl-3">{detail.notes}</div>}
             {tests.length === 0 ? <div className="text-sm text-muted-foreground">No test items.</div> :
               <div className="space-y-3">{tests.map((t: any) => {

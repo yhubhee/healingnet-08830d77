@@ -8,6 +8,7 @@ import { useLabResults } from "@/hooks/useHospitalData";
 import { OrderLabTestDialog } from "@/components/hospital/dialogs/OrderLabTestDialog";
 import { EnterLabResultDialog } from "@/components/hospital/dialogs/EnterLabResultDialog";
 import { QueryState } from "@/components/common/QueryState";
+import { labSeenText } from "@/lib/labSeen";
 
 const tabs = ["All", "Pending", "Processing", "Completed", "Final"];
 
@@ -91,6 +92,7 @@ export default function HospitalLab() {
                     <p className="text-xs text-muted-foreground">
                       {o.doctors ? `Dr. ${o.doctors.first_name} ${o.doctors.last_name}` : "—"}
                     </p>
+                    {labSeenText(o) && <p className="text-xs text-muted-foreground">{labSeenText(o)}</p>}
                   </div>
                   <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0",
                     o.status === "completed" || o.status === "final" ? "bg-success/15 text-success" :
@@ -149,6 +151,7 @@ export default function HospitalLab() {
                         o.status === "in_progress" || o.status === "processing" ? "bg-info/15 text-info" :
                         "bg-warning/15 text-warning"
                       )}>{(o.status || "pending").replace(/_/g, " ")}</span>
+                      {labSeenText(o) && <p className="text-xs text-muted-foreground mt-1.5">{labSeenText(o)}</p>}
                     </td>
                     <td className="p-4">
                       <Button

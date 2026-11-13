@@ -6,7 +6,6 @@ import type { PersistQueryClientOptions } from "@tanstack/react-query-persist-cl
 import { saveAccountCheck } from "./boot";
 import { clearLocalData, shouldPersistQuery } from "./cache";
 import { APP_VERSION } from "./env";
-import { forgetSeenLabs } from "./seen";
 import { unregisterPush } from "./push";
 import { cancelAllReminders } from "./reminders";
 import { DEVICE_KEYS, encryptedStorage, QUERY_CACHE_KEY, setFlag } from "./storage";
@@ -67,5 +66,4 @@ export async function clearEverything(): Promise<void> {
   await setFlag(DEVICE_KEYS.appLock, null);
   await setFlag(DEVICE_KEYS.pushToken, null);
   await setFlag(DEVICE_KEYS.labsSeen, null);
-  forgetSeenLabs();
 }

@@ -28,6 +28,7 @@ export const DEVICE_KEYS = {
   appLock: "hn.app-lock",
   pushToken: "hn.push-token",
   pushAsked: "hn.push-asked",
+  /** 0.2 kept "seen" lab results on the phone; the database does now. Only cleared at sign-out. */
   labsSeen: "hn.labs-seen",
 } as const;
 

@@ -8,11 +8,10 @@ import { QueryState } from "@/components/QueryState";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, Divider, EmptyState, Heading, Label, Notice, Small, Strong } from "@/components/ui";
-import { sharePdf, useLabResults } from "@/lib/health";
-import { useSeenLabs } from "@/lib/seen";
+import { sharePdf, useLabResults, useMarkLabViewed } from "@/lib/health";
 import { usePatient } from "@/lib/session";
 import { fmtLongDate } from "@/shared/dates";
-import { isOutOfRange, labHtml, labIsReady, labStatusText, labTests, labTitle, rangeLabel, rangeWord, sortedParameters } from "@/shared/labs";
+import { isOutOfRange, labHtml, labIsNew, labIsReady, labStatusText, labTests, labTitle, rangeLabel, rangeWord, sortedParameters } from "@/shared/labs";
 import { space } from "@/theme";
 
 export default function LabResultDetail() {
@@ -20,13 +19,14 @@ export default function LabResultDetail() {
   const toast = useToast();
   const { profile } = usePatient();
   const q = useLabResults();
-  const { seen, markSeen } = useSeenLabs();
+  const markViewed = useMarkLabViewed();
   const [sharing, setSharing] = useState(false);
   const r = (q.data ?? []).find((x) => x.id === id);
   const ready = !!r && labIsReady(r);
 
-  // Opening a finished result clears its "New" label.
-  useEffect(() => { if (ready && seen) markSeen(id); }, [ready, seen, id, markSeen]);
+  // Opening a finished result records that the patient has seen it and clears "New".
+  const isNew = !!r && labIsNew(r);
+  useEffect(() => { if (isNew) markViewed(id); }, [isNew, id, markViewed]);
 
   async function share() {
     if (!r) return;

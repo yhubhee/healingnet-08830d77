@@ -1,6 +1,6 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown, FlaskConical, Download, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,8 +8,12 @@ import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/common/QueryState";
 import { buildLabReportDocument, downloadReportPdf, printReport } from "@/lib/reports/documents";
 
+const isReady = (l: any) => l.status === "completed" || l.status === "final";
+const isNew = (l: any) => isReady(l) && !l.patient_viewed_at;
+
 export default function PatientLabResults() {
   const [open, setOpen] = useState<string | null>(null);
+  const qc = useQueryClient();
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["patient", "labs"],
     queryFn: async () => {
@@ -37,6 +41,16 @@ export default function PatientLabResults() {
       });
     },
   });
+
+  // Opening a finished result records, once, that the patient has seen it.
+  function toggle(l: any) {
+    const opening = open !== l.id;
+    setOpen(opening ? l.id : null);
+    if (!opening || !isNew(l)) return;
+    supabase.rpc("mark_lab_result_viewed", { p_lab_result_id: l.id }).then(({ data: at }) => {
+      if (at) qc.setQueryData(["patient", "labs"], (old: any[] | undefined) => old?.map((r) => (r.id === l.id ? { ...r, patient_viewed_at: at } : r)));
+    });
+  }
 
   const buildDoc = (l: any) =>
     buildLabReportDocument({
@@ -79,7 +93,7 @@ export default function PatientLabResults() {
             const abnormal = l.tests.some((t: any) => t.is_abnormal);
             return (
               <div key={l.id} className="bg-card border border-border rounded-xl overflow-hidden">
-                <button onClick={() => setOpen(expanded ? null : l.id)} className="w-full flex items-center justify-between p-5 hover:bg-muted/20 transition">
+                <button onClick={() => toggle(l)} className="w-full flex items-center justify-between p-5 hover:bg-muted/20 transition">
                   <div className="flex items-center gap-3 text-left">
                     <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center", abnormal ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success")}>
                       <FlaskConical className="w-5 h-5" />
@@ -90,6 +104,7 @@ export default function PatientLabResults() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    {isNew(l) && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/15 text-primary">New</span>}
                     <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", abnormal ? "bg-destructive/15 text-destructive" : "bg-success/15 text-success")}>
                       {l.status === "completed" ? (abnormal ? "Review needed" : "Normal") : l.status}
                     </span>

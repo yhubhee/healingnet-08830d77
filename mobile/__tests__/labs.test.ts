@@ -1,4 +1,4 @@
-import { isOutOfRange, labHtml, labStatusText, parseRange, rangeLabel, rangeWord, type LabResult } from "../shared/labs";
+import { isOutOfRange, labHtml, labIsNew, labStatusText, parseRange, rangeLabel, rangeWord, type LabResult } from "../shared/labs";
 import { ANY_DOCTOR, entryTypeLabel, letterHtml, letterRequestRow, letterStatus, LETTER_TYPES, vitalsList, type Letter } from "../shared/records";
 
 const p = (flag: string | null, value: string | null, range: string | null) => ({ flag, result_value: value, ref_range_snapshot: range });
@@ -54,7 +54,7 @@ describe("the wording for a lab value", () => {
 });
 
 const lab: LabResult = {
-  id: "0123456789abcdef", created_at: "2026-11-02T09:00:00Z", status: "completed", notes: "Fasting <sample>", hospitals: { name: "General & Co" },
+  id: "0123456789abcdef", created_at: "2026-11-02T09:00:00Z", status: "completed", notes: "Fasting <sample>", patient_viewed_at: null, hospitals: { name: "General & Co" },
   lab_result_tests: [{
     id: "t1", test_name: "Full blood count", category_name: "Haematology",
     lab_result_parameters: [
@@ -70,6 +70,14 @@ describe("a lab result", () => {
     expect(labStatusText({ ...lab, lab_result_tests: [] })).toBe("Ready");
     expect(labStatusText({ ...lab, status: "processing" })).toBe("In the lab");
     expect(labStatusText({ ...lab, status: "pending" })).toBe("Waiting for the lab");
+  });
+
+  it("is New until the patient has opened it, and only once it is finished", () => {
+    expect(labIsNew(lab)).toBe(true);
+    expect(labIsNew({ ...lab, status: "final" })).toBe(true);
+    expect(labIsNew({ ...lab, patient_viewed_at: "2026-11-03T08:00:00Z" })).toBe(false);
+    expect(labIsNew({ ...lab, status: "processing" })).toBe(false);
+    expect(labIsNew({ ...lab, status: "pending" })).toBe(false);
   });
 
   it("makes a report page with the wording and escaped text", () => {

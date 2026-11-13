@@ -1,5 +1,5 @@
 // Lab results (src/pages/patient/LabResults.tsx): each order with its tests, hospital and
-// date, and "New" until it has been opened on this phone. Saved for offline.
+// date, and "New" until the patient has opened it (on any device). Saved for offline.
 import { ChevronRight, FlaskConical } from "@/components/icons";
 import { router } from "expo-router";
 import { memo, useCallback } from "react";
@@ -8,16 +8,16 @@ import { loadState } from "@/components/QueryState";
 import { ListScreen } from "@/components/Screen";
 import { Card, Chip, EmptyState, ErrorState, ListSkeleton, Small, Strong } from "@/components/ui";
 import { useLabResults } from "@/lib/health";
-import { useSeenLabs } from "@/lib/seen";
 import { fmtLongDate } from "@/shared/dates";
 import { friendlyError } from "@/shared/errors";
-import { labIsReady, labStatusText, labTitle, type LabResult } from "@/shared/labs";
+import { labIsNew, labIsReady, labStatusText, labTitle, type LabResult } from "@/shared/labs";
 import { space, useTheme } from "@/theme";
 
 const keyOf = (r: LabResult) => r.id;
 
-const LabCard = memo(function LabCard({ r, isNew }: { r: LabResult; isNew: boolean }) {
+const LabCard = memo(function LabCard({ r }: { r: LabResult }) {
   const { colors } = useTheme();
+  const isNew = labIsNew(r);
   const status = labStatusText(r);
   return (
     <Card onPress={() => router.push(`/lab-results/${r.id}`)}
@@ -39,9 +39,7 @@ const LabCard = memo(function LabCard({ r, isNew }: { r: LabResult; isNew: boole
 
 export default function LabResults() {
   const q = useLabResults();
-  const { seen } = useSeenLabs();
-  const renderItem = useCallback<ListRenderItem<LabResult>>(
-    ({ item }) => <LabCard r={item} isNew={!!seen && labIsReady(item) && !seen.has(item.id)} />, [seen]);
+  const renderItem = useCallback<ListRenderItem<LabResult>>(({ item }) => <LabCard r={item} />, []);
 
   const state = loadState(q);
   const empty = state === "loading" ? <ListSkeleton />
@@ -49,7 +47,7 @@ export default function LabResults() {
     : <EmptyState icon={FlaskConical} title="No lab results yet" text="Tests requested by your doctors appear here when the lab has finished them." />;
 
   return (
-    <ListScreen title="Lab results" back data={q.data ?? []} keyExtractor={keyOf} renderItem={renderItem} empty={empty} extraData={seen}
+    <ListScreen title="Lab results" back data={q.data ?? []} keyExtractor={keyOf} renderItem={renderItem} empty={empty}
       header={q.data?.length ? <Small>All tests requested by your doctors. Tap one to see every value.</Small> : null}
       updatedAt={q.dataUpdatedAt || undefined} onRefresh={() => q.refetch()} refreshing={q.isRefetching} />
   );

@@ -23,6 +23,8 @@ export interface LabResult {
   created_at: string;
   status: string | null;
   notes: string | null;
+  /** When the patient first opened the finished result (set once, by the database). */
+  patient_viewed_at: string | null;
   hospitals: { name: string } | null;
   lab_result_tests: LabTest[] | null;
 }
@@ -78,6 +80,8 @@ export const sortedParameters = (t: LabTest): LabParameter[] =>
 export const labTests = (r: LabResult): LabTest[] => r.lab_result_tests ?? [];
 export const labTitle = (r: LabResult): string => labTests(r).map((t) => t.test_name).filter(Boolean).join(", ") || `Lab order #${r.id.slice(0, 8)}`;
 export const labIsReady = (r: LabResult) => r.status === "completed" || r.status === "final";
+/** "New": finished, and the patient has not opened it yet on any device. */
+export const labIsNew = (r: LabResult) => labIsReady(r) && !r.patient_viewed_at;
 
 /** "Ready", "Ready · 2 outside the normal range" or the stage it is at. */
 export function labStatusText(r: LabResult): string {
