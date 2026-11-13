@@ -5,6 +5,7 @@ import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/d
 import { useEffect, useState } from "react";
 import { Platform, ScrollView, View } from "react-native";
 import { askPushPermission, pushPermission } from "@/lib/push";
+import { useActivePerson } from "@/lib/family";
 import { removeReminder, saveReminder } from "@/lib/reminders";
 import { fmt12 } from "@/shared/dates";
 import type { RxItem } from "@/shared/pharmacy";
@@ -26,6 +27,7 @@ export function ReminderSheet({ item, documentId, existing, onClose }: {
 }) {
   const { scheme } = useTheme();
   const toast = useToast();
+  const person = useActivePerson();
   const [times, setTimes] = useState<string[]>([]);
   const [days, setDays] = useState(String(DEFAULT_DAYS));
   const [editing, setEditing] = useState<number | null>(null);
@@ -78,6 +80,8 @@ export function ReminderSheet({ item, documentId, existing, onClose }: {
         id: item.prescription_id, documentId, drug: item.drug_name, dose: item.dosage, times,
         // Changing the times keeps the original first day, so the course still ends when it should.
         startDate: existing?.startDate ?? localDate(new Date()), days: dayCount,
+        // A family member's reminders are kept apart from the patient's own, and labelled.
+        ...(person.isMe ? {} : { patientId: person.patientId, person: person.firstName }),
       });
       toast.success(existing ? "Reminders changed" : "Reminders set");
       onClose();
@@ -96,7 +100,7 @@ export function ReminderSheet({ item, documentId, existing, onClose }: {
   }
 
   return (
-    <Sheet visible={!!item} onClose={onClose} title={`Remind me: ${item?.drug_name ?? ""}`}
+    <Sheet visible={!!item} onClose={onClose} title={`${person.isMe ? "Remind me" : `Reminders for ${person.firstName}`}: ${item?.drug_name ?? ""}`}
       footer={
         <>
           <Button label={existing ? "Save changes" : "Set reminders"} onPress={save} loading={busy} disabled={times.length === 0 || !daysOk}
@@ -126,7 +130,7 @@ export function ReminderSheet({ item, documentId, existing, onClose }: {
         <Field label="For how many days" value={days} onChangeText={setDays} keyboardType="number-pad" maxLength={3}
           error={daysOk ? undefined : `Enter a number from 1 to ${MAX_DAYS}.`}
           hint={parseDurationDays(item?.duration) ? `From the prescription: ${item?.duration}. Reminders stop after the last day.` : "Reminders stop after the last day."} />
-        <Small>Reminders stay on this phone. The lock screen says “Time for your medicine”; it names the medicine only if “Show details on the lock screen” is on in Settings, Notifications.</Small>
+        <Small>Reminders stay on this phone. The lock screen says “Time for your medicine”; it names the medicine{person.isMe ? "" : ` and ${person.firstName}`} only if “Show details on the lock screen” is on in Settings, Notifications.</Small>
       </ScrollView>
     </Sheet>
   );

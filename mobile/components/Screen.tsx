@@ -9,7 +9,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnline } from "@/lib/net";
 import { fmtClock } from "@/shared/dates";
 import { fonts, space, useTheme } from "@/theme";
+import { PersonChip } from "./PersonSwitcher";
 import { IconButton, Title } from "./ui";
+
+/** "switch": the "For: Me ▾" chip. "show": only says who a single record is about. */
+export type PersonMode = "switch" | "show";
+
+function PersonBar({ mode }: { mode?: PersonMode }) {
+  if (!mode) return null;
+  const chip = <PersonChip locked={mode === "show"} />;
+  return <View style={styles.person}>{chip}</View>;
+}
 
 /** "Offline · last updated 10:42", shown above saved data while the phone is offline. */
 export function OfflineBar({ updatedAt }: { updatedAt?: number }) {
@@ -26,8 +36,10 @@ export function OfflineBar({ updatedAt }: { updatedAt?: number }) {
 }
 
 export function Screen({
-  title, back, onBack, right, children, onRefresh, refreshing, updatedAt, scroll = true, footer, tab,
+  title, back, onBack, right, children, onRefresh, refreshing, updatedAt, scroll = true, footer, tab, person,
 }: {
+  /** Patient screens: who the screen is for. Left out on account screens (Messages, Me, sign-in). */
+  person?: PersonMode;
   title?: string;
   /** Show a back button in the header. */
   back?: boolean;
@@ -65,6 +77,7 @@ export function Screen({
       style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
       <OfflineBar updatedAt={updatedAt} />
       {header}
+      <PersonBar mode={person} />
       {scroll ? (
         <ScrollView
           keyboardShouldPersistTaps="handled"
@@ -87,8 +100,9 @@ export function Screen({
 
 /** The page frame around a virtualised list. `header` scrolls with the rows; `empty` shows when there are none. */
 export function ListScreen<T>({
-  title, back, right, tab, updatedAt, onRefresh, refreshing, data, renderItem, keyExtractor, header, empty, footer, extraData,
+  title, back, right, tab, updatedAt, onRefresh, refreshing, data, renderItem, keyExtractor, header, empty, footer, extraData, person,
 }: {
+  person?: PersonMode;
   title?: string;
   back?: boolean;
   right?: ReactNode;
@@ -121,6 +135,7 @@ export function ListScreen<T>({
           {right}
         </View>
       ) : null}
+      <PersonBar mode={person} />
       <FlatList
         data={data}
         extraData={extraData}
@@ -149,5 +164,6 @@ function ListGap() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", minHeight: 56, paddingHorizontal: space.md, gap: space.xs },
+  person: { paddingHorizontal: space.lg, paddingBottom: space.xs },
   offline: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: space.sm, paddingVertical: space.sm, paddingHorizontal: space.lg },
 });

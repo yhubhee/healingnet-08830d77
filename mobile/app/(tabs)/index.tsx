@@ -1,10 +1,11 @@
 // Home (mirrors the data on src/pages/patient/Dashboard.tsx): next appointment, the two
 // main actions, today's medicines (from reminders kept on this phone), active prescriptions
 // and the latest unread updates.
-import { Bell, CalendarPlus, Check, ChevronRight, Pill, Stethoscope } from "@/components/icons";
+import { Bell, CalendarPlus, Check, ChevronRight, Pill, Stethoscope, Users } from "@/components/icons";
 import type { LucideIcon } from "@/components/icons";
 import { router } from "expo-router";
 import { Pressable, View } from "react-native";
+import { PersonChip } from "@/components/PersonSwitcher";
 import { QueryState } from "@/components/QueryState";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
@@ -12,14 +13,17 @@ import { Body, Button, Card, Chip, Heading, IconButton, Label, LinkText, Skeleto
 import { VisitFacts } from "@/components/VisitBits";
 import { addToCalendar } from "@/lib/calendar";
 import { useAppointments, useHomeSummary, useMarkNotificationRead, useRxDocuments, useRxExtras } from "@/lib/data";
+import { activePerson } from "@/lib/activePerson";
+import { useActivePerson, useFamilyNext, useShowPersonFor } from "@/lib/family";
 import { useOnline } from "@/lib/net";
 import { setTaken, useReminders } from "@/lib/reminders";
-import { usePatient } from "@/lib/session";
+import { useSession } from "@/lib/session";
 import { doctorOrPending, sortUpcoming, statusText } from "@/shared/appointments";
-import { fmt12, timeAgo } from "@/shared/dates";
+import { fmt12, fmtDayDate, timeAgo } from "@/shared/dates";
+import { ageText } from "@/shared/family";
 import { notificationTarget } from "@/shared/links";
 import { rxNextAction } from "@/shared/pharmacy";
-import { todaysDoses } from "@/shared/reminders";
+import { remindersFor, todaysDoses } from "@/shared/reminders";
 import { MIN_TOUCH, radius, space, useTheme } from "@/theme";
 
 function greeting() {
@@ -48,19 +52,31 @@ export default function Home() {
   const { colors } = useTheme();
   const toast = useToast();
   const online = useOnline();
-  const { profile } = usePatient();
+  // The greeting is always for the account holder; the chip below says who the page is for.
+  const { profile, patientId: ownId } = useSession();
+  const person = useActivePerson();
+  const showPersonFor = useShowPersonFor();
   const appts = useAppointments();
   const rx = useRxDocuments();
   const extras = useRxExtras();
   const summary = useHomeSummary();
   const markRead = useMarkNotificationRead();
   const { reminders, taken } = useReminders();
-  const doses = todaysDoses(reminders, new Date());
+  // Each person's medicines are kept apart: only the active person's show here.
+  const doses = todaysDoses(remindersFor(reminders, person.isMe ? null : person.patientId), new Date());
+
+  // Family row: everyone except the person on screen, each with their next visit.
+  const others = [
+    ...(person.isMe ? [] : [{ id: null as string | null, patientId: ownId, name: "Me", sub: "" }]),
+    ...person.family.filter((m) => person.isMe || m.patient_id !== person.patientId)
+      .map((m) => ({ id: m.patient_id as string | null, patientId: m.patient_id as string | null, name: m.first_name, sub: ageText(m.age) })),
+  ];
+  const familyNext = useFamilyNext(person.family.length ? others.map((o) => o.patientId).filter((v): v is string => !!v) : []);
 
   const next = sortUpcoming(appts.data ?? [])[0] ?? null;
   const validRx = (rx.data ?? []).filter((d) => d.status === "valid");
   const refreshing = appts.isRefetching || rx.isRefetching || summary.isRefetching;
-  const refresh = () => { appts.refetch(); rx.refetch(); extras.refetch(); summary.refetch(); };
+  const refresh = () => { appts.refetch(); rx.refetch(); extras.refetch(); summary.refetch(); if (person.family.length) familyNext.refetch(); };
   const updatedAt = Math.max(appts.dataUpdatedAt, rx.dataUpdatedAt, summary.dataUpdatedAt) || undefined;
 
   async function calendar() {
@@ -80,12 +96,13 @@ export default function Home() {
         <IconButton icon={Bell} label={summary.data?.unreadCount ? `Notifications, ${summary.data.unreadCount} unread` : "Notifications"}
           badge={summary.data?.unreadCount} onPress={() => router.push("/notifications")} />
       </View>
+      <PersonChip />
 
       {/* Next appointment */}
       <QueryState query={appts} skeleton={<Skeleton height={190} />}>
       {next ? (
         <View style={{ backgroundColor: colors.hero, borderRadius: 24, padding: space.xl, gap: space.md }}>
-          <Label color={colors.onHeroMuted}>Next appointment</Label>
+          <Label color={colors.onHeroMuted}>{person.isMe ? "Next appointment" : `${person.firstName}'s next appointment`}</Label>
           <Chip label={statusText(next)} onHero />
           <Pressable accessibilityRole="button" accessibilityLabel={`${doctorOrPending(next)}. Open visits`} onPress={() => router.navigate("/(tabs)/visits")}
             style={{ minHeight: MIN_TOUCH, justifyContent: "center" }}>
@@ -97,13 +114,39 @@ export default function Home() {
         </View>
       ) : (
         <Card style={{ gap: space.md }}>
-          <Label>Next appointment</Label>
+          <Label>{person.isMe ? "Next appointment" : `${person.firstName}'s next appointment`}</Label>
           <Strong>No upcoming visits</Strong>
           <Small>Book a doctor at a hospital near you. The hospital confirms the time.</Small>
           <Button label="Book a doctor" icon={CalendarPlus} onPress={() => router.push("/book")} />
         </Card>
       )}
       </QueryState>
+
+      {/* Family: each other person's next visit; tap to switch to them. */}
+      {person.family.length > 0 ? (
+        <Card style={{ gap: space.xs }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            <Users size={18} color={colors.textMuted} />
+            <Label style={{ flex: 1 }}>Family</Label>
+            <LinkText label="Manage" onPress={() => router.push("/family")} />
+          </View>
+          {others.map((o) => {
+            const visit = o.patientId ? familyNext.data?.[o.patientId] : undefined;
+            const when = visit ? `Next visit: ${fmtDayDate(visit.date)}${visit.time ? `, ${fmt12(visit.time)}` : ""}` : "No upcoming visit";
+            return (
+              <Pressable key={o.id ?? "me"} accessibilityRole="button" accessibilityLabel={`${o.name}. ${when}. Show ${o.id ? o.name : "my own records"}`}
+                onPress={() => activePerson.set(o.id)}
+                style={({ pressed }) => ({ minHeight: MIN_TOUCH + 4, flexDirection: "row", alignItems: "center", gap: space.md, opacity: pressed ? 0.6 : 1 })}>
+                <View style={{ flex: 1 }}>
+                  <Strong>{o.name}{o.sub ? ` (${o.sub})` : ""}</Strong>
+                  <Small>{when}</Small>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </Pressable>
+            );
+          })}
+        </Card>
+      ) : null}
 
       {/* Main actions */}
       <View style={{ flexDirection: "row", gap: space.md }}>
@@ -148,7 +191,7 @@ export default function Home() {
             </View>
             <View style={{ flex: 1 }}>
               <Strong>{validRx.length === 0 ? "No active prescriptions" : `${validRx.length} active prescription${validRx.length === 1 ? "" : "s"}`}</Strong>
-              <Small>{validRx.length === 0 ? "Prescriptions from your doctor appear here." : rxNextAction(validRx[0], extras.data?.requests ?? [])}</Small>
+              <Small>{validRx.length === 0 ? "Prescriptions from the doctor appear here." : rxNextAction(validRx[0], extras.data?.requests ?? [])}</Small>
             </View>
             <ChevronRight size={20} color={colors.textMuted} />
           </View>
@@ -167,7 +210,12 @@ export default function Home() {
         ) : (
           summary.data!.updates.map((n) => (
             <Card key={n.id} accessibilityLabel={`${n.title}. ${n.message ?? ""}`} style={{ gap: 4 }}
-              onPress={() => { if (online) markRead.mutate(n.id); router.navigate(notificationTarget({ url: n.action_url, type: n.type, referenceId: n.reference_id })); }}>
+              onPress={async () => {
+                if (online) markRead.mutate(n.id);
+                // About someone else in the family: show them first.
+                await showPersonFor({ subjectId: n.subject_patient_id });
+                router.navigate(notificationTarget({ url: n.action_url, type: n.type, referenceId: n.reference_id }));
+              }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
                 <Strong style={{ flex: 1 }}>{n.title}</Strong>
                 <Chip label="New" tone="coral" />

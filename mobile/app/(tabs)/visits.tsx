@@ -114,7 +114,7 @@ export default function Visits() {
 
 
   return (
-    <ListScreen tab title="Visits" data={list} extraData={reviews} keyExtractor={keyOf} renderItem={renderItem} header={header} empty={empty}
+    <ListScreen tab title="Visits" person="switch" data={list} extraData={reviews} keyExtractor={keyOf} renderItem={renderItem} header={header} empty={empty}
       onRefresh={() => q.refetch()} refreshing={q.isRefetching} updatedAt={q.dataUpdatedAt || undefined}
       right={<IconButton icon={CalendarPlus} label="Book a doctor" onPress={() => router.push("/book")} />}
       footer={

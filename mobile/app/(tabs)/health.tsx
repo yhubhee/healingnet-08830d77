@@ -8,7 +8,9 @@ import { View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { Button, Card, Chip, Heading, Label, ListSkeleton, Small, Strong } from "@/components/ui";
 import { useRxDocuments } from "@/lib/data";
+import { useActivePerson } from "@/lib/family";
 import { profileKey, usePatient } from "@/lib/session";
+import { personKeys } from "@/shared/keys";
 import { useQueryClient } from "@tanstack/react-query";
 import { healthNote } from "@/shared/patientProfile";
 import { space, useTheme } from "@/theme";
@@ -41,21 +43,25 @@ function Row({ icon: Icon, title, text, chip, onPress }: { icon: LucideIcon; tit
   );
 }
 
+const PRESCRIPTIONS_TEXT = "Prescriptions and their QR codes.";
+
 export default function Health() {
   const qc = useQueryClient();
-  const { profile: p, userId } = usePatient();
+  const { profile: p, userId, isMe, patientId } = usePatient();
+  const person = useActivePerson();
   const rx = useRxDocuments();
+  const editCard = () => router.push(isMe ? "/complete-profile?edit=1" : { pathname: "/complete-profile", params: { edit: "1", person: patientId ?? "" } });
   const valid = (rx.data ?? []).filter((d) => d.status === "valid").length;
-  const profileState = qc.getQueryState(profileKey(userId));
+  const profileState = qc.getQueryState(isMe ? profileKey(userId) : personKeys.memberProfile(userId, patientId));
 
   return (
-    <Screen tab title="Health" updatedAt={profileState?.dataUpdatedAt || undefined}
+    <Screen tab title="Health" person="switch" updatedAt={profileState?.dataUpdatedAt || undefined}
       onRefresh={() => { qc.invalidateQueries({ queryKey: ["profile"] }); rx.refetch(); }} refreshing={rx.isRefetching}>
       {!p ? <ListSkeleton rows={1} height={180} /> : (
         <Card style={{ gap: space.md }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Label style={{ flex: 1 }}>My health card</Label>
-            <Button small variant="ghost" icon={Pencil} label="Edit" accessibilityLabel="Edit my health card" onPress={() => router.push("/complete-profile?edit=1")} />
+            <Label style={{ flex: 1 }}>{isMe ? "My health card" : `${person.firstName}'s health card`}</Label>
+            <Button small variant="ghost" icon={Pencil} label="Edit" accessibilityLabel={isMe ? "Edit my health card" : `Edit ${person.firstName}'s health card`} onPress={editCard} />
           </View>
           <Heading>{p.first_name} {p.last_name}</Heading>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.md }}>
@@ -78,13 +84,13 @@ export default function Health() {
       )}
 
       <Row icon={Pill} title="Prescriptions" onPress={() => router.push("/prescriptions")}
-        text={rx.data ? (valid > 0 ? `${valid} valid now. Show the code or QR at a pharmacy.` : "Your prescriptions and their QR codes.") : "Your prescriptions and their QR codes."} />
-      <Row icon={ShieldCheck} title="Share my records" text="A one-time code to show at a hospital's front desk." onPress={() => router.push("/share-records")} />
+        text={rx.data ? (valid > 0 ? `${valid} valid now. Show the code or QR at a pharmacy.` : PRESCRIPTIONS_TEXT) : PRESCRIPTIONS_TEXT} />
+      <Row icon={ShieldCheck} title={isMe ? "Share my records" : `Share ${person.firstName}'s records`} text="A one-time code to show at a hospital's front desk." onPress={() => router.push("/share-records")} />
 
       <Heading>More</Heading>
       <Row icon={FlaskConical} title="Lab results" text="Every value, with what is outside the normal range." onPress={() => router.push("/lab-results")} />
-      <Row icon={FileText} title="Medical records" text="Notes, vitals and diagnoses from your visits." onPress={() => router.push("/records")} />
-      <Row icon={Award} title="Letters" text="Sick leave, fit-to-work and other letters from your doctor." onPress={() => router.push("/letters")} />
+      <Row icon={FileText} title="Medical records" text={isMe ? "Notes, vitals and diagnoses from your visits." : `Notes, vitals and diagnoses from ${person.firstName}'s visits.`} onPress={() => router.push("/records")} />
+      <Row icon={Award} title="Letters" text="Sick leave, fit-to-work and other letters from the doctor." onPress={() => router.push("/letters")} />
     </Screen>
   );
 }

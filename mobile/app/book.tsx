@@ -13,13 +13,17 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BackHandler, Pressable, ScrollView, Text, View } from "react-native";
 import { Avatar } from "@/components/Avatar";
 import { DateField, Field } from "@/components/form";
+import { PersonSheet } from "@/components/PersonSwitcher";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, Divider, EmptyState, ErrorState, Heading, LinkText, ListSkeleton, Notice, Small, Strong, Title } from "@/components/ui";
+import { useActivePerson } from "@/lib/family";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
+import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { addDays, DAY_NAMES, dayChip, dayOfWeek, DEFAULT_SLOTS, fmt12, fmtLongDate, halfHours, lagosNowTime, lagosToday } from "@/shared/dates";
 import { dbMessage } from "@/shared/errors";
+import { forPerson, personWithAge } from "@/shared/family";
 import { ratingLabel, ratingSpoken } from "@/shared/reviews";
 import { fonts, MIN_TOUCH, radius, space, useTheme } from "@/theme";
 
@@ -89,6 +93,11 @@ export default function Book() {
   const [reason, setReason] = useState(() => String(params.reason ?? "").slice(0, 500));
   const [booking, setBooking] = useState(false);
   const [done, setDone] = useState(false);
+  // Who the visit is for: the person chosen under "Who is this for?".
+  const person = useActivePerson();
+  const { patientId: ownId } = useSession();
+  const [choosing, setChoosing] = useState(false);
+  const bookingFor = person.isMe ? "Me" : personWithAge(person.firstName ?? "", person.member?.age);
 
   const leave = () => (router.canGoBack() ? router.back() : router.replace("/(tabs)"));
   const back = () => (done || step === 0 ? leave() : setStep(step - 1));
@@ -108,17 +117,19 @@ export default function Book() {
   async function confirm() {
     if (!hospital || !date || !time) return;
     setBooking(true);
-    const { error } = await supabase.rpc("book_appointment", {
+    // p_patient_id is only sent for a family member; for the patient the call is unchanged.
+    const { error } = await supabase.rpc("book_appointment", forPerson({
       p_hospital_id: hospital.id,
       p_doctor_id: (doctor && doctor !== "any" ? doctor.id : null) as string,
       p_date: date,
       p_time: time,
       p_is_telemedicine: visit === "video",
       p_reason: reason.trim().slice(0, 500) || undefined,
-    });
+    }, person.isMe ? null : person.patientId, ownId));
     setBooking(false);
     if (error) return toast.error(`Couldn't book the appointment. ${dbMessage(error)}`);
     qc.invalidateQueries({ queryKey: ["appointments"] });
+    qc.invalidateQueries({ queryKey: ["family-next"] });
     setDone(true);
   }
 
@@ -126,7 +137,7 @@ export default function Book() {
     return (
       <Screen footer={
         <>
-          <Button label="See my visits" onPress={() => router.replace("/(tabs)/visits")} />
+          <Button label={person.isMe ? "See my visits" : `See ${person.firstName}'s visits`} onPress={() => router.replace("/(tabs)/visits")} />
           <Button label="Back to Home" variant="ghost" onPress={() => router.replace("/(tabs)")} />
         </>
       }>
@@ -134,6 +145,7 @@ export default function Book() {
         <Title>Appointment requested</Title>
         <Body>Waiting for the hospital to confirm. We'll notify you.</Body>
         <Card style={{ gap: 6 }}>
+          {!person.isMe ? <Small muted={false}>For {bookingFor}</Small> : null}
           <Strong>{hospital.name}</Strong>
           <Small>{doctorName} · {visit === "video" ? "Video" : "In person"}</Small>
           <Small>{fmtLongDate(date)} at {fmt12(time)}</Small>
@@ -161,6 +173,14 @@ export default function Book() {
           {STEPS.map((s, i) => <View key={s} style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: i <= step ? colors.primary : colors.divider }} />)}
         </View>
       </View>
+
+      {/* Always in view, on every step: who this booking is for. */}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: space.md, borderRadius: radius.card, borderWidth: 1, paddingHorizontal: space.lg, paddingVertical: space.xs,
+        borderColor: person.isMe ? colors.border : colors.primaryText, backgroundColor: person.isMe ? colors.card : colors.primarySoft }}>
+        <Strong style={{ flex: 1 }} accessibilityLabel={`Booking for ${bookingFor}`}>Booking for: {bookingFor}</Strong>
+        <LinkText label="Change" onPress={() => setChoosing(true)} />
+      </View>
+      <PersonSheet visible={choosing} onClose={() => setChoosing(false)} />
 
       {step === 0 ? (
         <HospitalStep specialty={specialty} onClearSpecialty={() => setSpecialty(null)} coords={coords} onCoords={setCoords}
@@ -191,6 +211,8 @@ export default function Book() {
         <>
           <Heading>Check and confirm</Heading>
           <Card style={{ gap: space.md }}>
+            <Summary label="For" value={bookingFor} onChange={() => setChoosing(true)} />
+            <Divider />
             <Summary label="Hospital" value={hospital.name} sub={[hospital.address, hospital.city, hospital.state].filter(Boolean).join(", ")} onChange={() => setStep(0)} />
             <Divider />
             <Summary label="Doctor" value={doctorName} sub={doctor !== "any" ? doctor.specialty ?? undefined : undefined} onChange={() => setStep(1)} />

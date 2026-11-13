@@ -12,6 +12,7 @@ import { Field, Segmented } from "@/components/form";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, Heading, Label, Notice, Small, Strong, Title } from "@/components/ui";
+import { useActivePerson } from "@/lib/family";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { usePatient } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
@@ -22,7 +23,7 @@ import {
 } from "@/shared/triage";
 import { MIN_TOUCH, radius, space, useTheme } from "@/theme";
 
-const STEPS = ["About you", "Symptoms", "Questions", "Result"];
+const stepsFor = (name: string | null) => [name ? `About ${name}` : "About you", "Symptoms", "Questions", "Result"];
 
 /** A big answer to tap. */
 function Answer({ label, hint, onPress, disabled }: { label: string; hint?: string; onPress: () => void; disabled?: boolean }) {
@@ -65,7 +66,11 @@ export default function Triage() {
   const { colors } = useTheme();
   const toast = useToast();
   const online = useOnline();
-  const { profile, patientId } = usePatient();
+  // The person being checked: the patient, or the family member chosen under "Who is this for?".
+  const { profile, patientId, isMe } = usePatient();
+  const person = useActivePerson();
+  const name = isMe ? null : person.firstName;
+  const STEPS = stepsFor(name);
   const [step, setStep] = useState(0);
   const [sex, setSex] = useState<Sex | "">("");
   const [freeText, setFreeText] = useState("");
@@ -76,8 +81,17 @@ export default function Triage() {
   const [result, setResult] = useState<NurseResponse | null>(null);
   const saved = useRef(false);
 
+  // The age and sex sent to the triage service are this person's. A child's age is what
+  // makes the service apply its own stricter rules for children; nothing is decided here.
   const age = ageFromDob(profile?.date_of_birth);
-  useEffect(() => { if (!sex && (profile?.gender === "male" || profile?.gender === "female")) setSex(profile.gender); }, [profile?.gender, sex]);
+  // A different person: their own sex, and nothing carried over from the last one.
+  const sexFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (sexFor.current === patientId && sex) return;
+    if (!profile) return;
+    sexFor.current = patientId;
+    setSex(profile.gender === "male" || profile.gender === "female" ? profile.gender : "");
+  }, [patientId, profile, sex]);
 
   const leave = () => (router.canGoBack() ? router.back() : router.replace("/(tabs)"));
   const back = () => {
@@ -170,7 +184,7 @@ export default function Triage() {
   const kind = question?.type ?? "boolean";
 
   return (
-    <Screen title="Check symptoms" back onBack={back}
+    <Screen title="Check symptoms" back onBack={back} person={step === 0 ? "switch" : "show"}
       footer={
         step === 0 ? <Button label="Continue" onPress={() => setStep(1)} disabled={age === null || !sex} disabledReason="Choose male or female first" />
         : step === 1 ? (
@@ -190,23 +204,23 @@ export default function Triage() {
 
       {step === 0 ? (
         <>
-          <Heading>About you</Heading>
-          <Body muted>Answer a few questions about your symptoms. This is guidance, not a diagnosis.</Body>
+          <Heading>{name ? `About ${name}` : "About you"}</Heading>
+          <Body muted>{name ? `Answer a few questions about ${name}'s symptoms, as ${name} would or from what you can see.` : "Answer a few questions about your symptoms."} This is guidance, not a diagnosis.</Body>
           <Card style={{ gap: space.md }}>
-            <View><Small>Age</Small><Strong>{age === null ? "Add your date of birth in your profile" : `${age} year${age === 1 ? "" : "s"}`}</Strong></View>
+            <View><Small>Age</Small><Strong>{age === null ? (name ? "Date of birth not set" : "Add your date of birth in your profile") : age < 1 ? "Under 1 year" : `${age} year${age === 1 ? "" : "s"}`}</Strong></View>
             <View style={{ gap: space.sm }}>
               <Small>Sex (some questions depend on it)</Small>
               <Segmented<Sex> label="Sex" value={sex as Sex} onChange={setSex} options={[{ value: "female", label: "Female" }, { value: "male", label: "Male" }]} />
             </View>
           </Card>
-          {age === null ? <Button label="Edit my profile" variant="secondary" onPress={() => router.push("/complete-profile?edit=1")} /> : null}
+          {age === null && !name ? <Button label="Edit my profile" variant="secondary" onPress={() => router.push("/complete-profile?edit=1")} /> : null}
           <Notice tone="warning" text={`If this is an emergency (chest pain, trouble breathing, heavy bleeding, fainting), call ${EMERGENCY_NUMBER} or go to the nearest hospital now.`} />
         </>
       ) : null}
 
       {step === 1 ? (
         <>
-          <Heading>Tell us what's wrong</Heading>
+          <Heading>{name ? `Tell us what's wrong with ${name}` : "Tell us what's wrong"}</Heading>
           <Field label="In your own words" value={freeText} onChangeText={setFreeText} multiline maxLength={MAX_COMPLAINT} autoFocus
             placeholder="e.g. For the past 2 days I've had a sharp pain in the lower right side of my belly, with nausea and a low fever"
             hint="Mention what you feel, when it started, and anything that makes it better or worse." style={{ minHeight: 160 }} />
@@ -272,7 +286,7 @@ export default function Triage() {
           {result.differential.length > 0 ? (
             <Card style={{ gap: space.md }}>
               <Label>Possible conditions</Label>
-              <Small>Ranked by how well they match your answers. Not a diagnosis.</Small>
+              <Small>Ranked by how well they match the answers. Not a diagnosis.</Small>
               {result.differential.slice(0, 5).map((c) => {
                 const pct = Math.round(c.probability * 100);
                 return (

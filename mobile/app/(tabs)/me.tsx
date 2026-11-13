@@ -1,5 +1,5 @@
 // Me: profile summary and settings (src/pages/patient/Profile.tsx and Settings.tsx).
-import { Bell, FileText, Lock, LogOut, Shield, Trash2, UserRound } from "@/components/icons";
+import { Bell, FileText, Lock, LogOut, Shield, Trash2, UserRound, Users } from "@/components/icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, View } from "react-native";
@@ -10,15 +10,18 @@ import { useToast } from "@/components/toast";
 import { Button, Card, Divider, Heading, Label, Small } from "@/components/ui";
 import { APP_VERSION } from "@/lib/env";
 import { useAppLock } from "@/lib/lock";
-import { usePatient, useSession } from "@/lib/session";
+import { useFamily } from "@/lib/family";
+import { useSession } from "@/lib/session";
 import { openWeb } from "@/lib/web";
 import { space, useTheme, type ThemeChoice } from "@/theme";
 
 export default function Me() {
   const { choice, setChoice } = useTheme();
   const toast = useToast();
-  const { profile: p } = usePatient();
-  const { signOut } = useSession();
+  // Me is always the account holder, whoever "Who is this for?" is set to.
+  const { profile: p, signOut } = useSession();
+  const family = useFamily();
+  const familyCount = family.data?.length ?? 0;
   const lock = useAppLock();
   const [leaving, setLeaving] = useState(false);
 
@@ -50,6 +53,12 @@ export default function Me() {
           <Button small variant="secondary" label="View profile" style={{ flex: 1 }} onPress={() => router.push("/profile")} />
           <Button small variant="secondary" label="Edit profile" style={{ flex: 1 }} onPress={() => router.push("/complete-profile?edit=1")} />
         </View>
+      </Card>
+
+      <Card style={{ gap: space.xs }}>
+        <Label>Family</Label>
+        <NavRow icon={Users} label="Family" hint="Manage health care for your children and other family members"
+          value={familyCount ? String(familyCount) : undefined} onPress={() => router.push("/family")} />
       </Card>
 
       <Card style={{ gap: space.md }}>

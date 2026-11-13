@@ -21,6 +21,7 @@ import { Body, Button, Title } from "@/components/ui";
 import { boot as bootRead, type Boot } from "@/lib/boot";
 import { usePrefetchTabs } from "@/lib/data";
 import { isConfigured } from "@/lib/env";
+import { useKeepActivePersonValid, useShowPersonFor } from "@/lib/family";
 import { LockProvider } from "@/lib/lock";
 import { useOnline } from "@/lib/net";
 import { listenForNotificationTaps, pushPermission, registerForPush } from "@/lib/push";
@@ -68,12 +69,15 @@ function Gate({ appLock }: { appLock: boolean }) {
   usePrefetchTabs(inApp);
   // Medicine reminders: top the phone's list back up whenever the app opens.
   useReminderSync(inApp);
+  // "Who is this for?": someone removed from the family falls back to Me.
+  useKeepActivePersonValid(inApp);
+  const showPersonFor = useShowPersonFor();
 
   // Push: register on every start and after sign-in; explain before the first permission prompt.
   useEffect(() => {
     if (!inApp) { askedPush.current = false; return; }
     registerForPush();
-    const stop = listenForNotificationTaps();
+    const stop = listenForNotificationTaps(showPersonFor);
     if (!askedPush.current) {
       askedPush.current = true;
       Promise.all([getFlag(DEVICE_KEYS.pushAsked), pushPermission()]).then(([asked, permission]) => {
@@ -81,7 +85,7 @@ function Gate({ appLock }: { appLock: boolean }) {
       });
     }
     return stop;
-  }, [inApp]);
+  }, [inApp, showPersonFor]);
 
   // Only a fresh sign-in waits for its first check; a returning patient never sees this.
   const loadError = waiting ? (kindError ?? profileError) : null;

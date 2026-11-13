@@ -10,6 +10,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { Tables } from "@/shared/database";
 import { missingPatientFields } from "@/shared/patientProfile";
 import type { AccountCheck } from "@/shared/startup";
+import { personKeys } from "@/shared/keys";
+import { useActivePersonId } from "./activePerson";
 import { saveAccountCheck, type Boot } from "./boot";
 import { isConfigured } from "./env";
 import { clearEverything } from "./query";
@@ -143,8 +145,38 @@ export function useSession(): SessionValue {
   return v;
 }
 
-/** The signed-in patient: the profile row, and its id (known from the saved check before the row loads). */
+/** One patient row by id: the signed-in patient's own, or a family member's (row security decides). */
+export async function fetchPatientRow(patientId: string): Promise<PatientProfile | null> {
+  const { data, error } = await supabase.from("patients").select("*").eq("id", patientId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** A family member's profile row. Saved on the phone like the patient's own. */
+export function useMemberProfile(patientId: string | null | undefined) {
+  const { userId } = useSession();
+  return useQuery({
+    queryKey: personKeys.memberProfile(userId, patientId),
+    enabled: !!userId && !!patientId,
+    queryFn: () => fetchPatientRow(patientId!),
+  });
+}
+
+/**
+ * The person the app is showing: "Me" (the signed-in patient) or the family member chosen
+ * under "Who is this for?". `patientId` and `profile` are theirs, so every list that is
+ * read by patient id follows the choice. `ownPatientId` is always the signed-in patient.
+ */
 export function usePatient() {
-  const { profile, patientId, userId } = useSession();
-  return { profile: profile ?? null, patientId, userId };
+  const { profile, patientId: ownPatientId, userId } = useSession();
+  const activeId = useActivePersonId();
+  const isMe = !activeId || activeId === ownPatientId;
+  const member = useMemberProfile(isMe ? null : activeId);
+  return {
+    profile: isMe ? profile ?? null : member.data ?? null,
+    patientId: isMe ? ownPatientId : activeId,
+    ownPatientId,
+    isMe,
+    userId,
+  };
 }

@@ -50,7 +50,7 @@ export default function Records() {
     : state !== "ready" ? <ErrorState offline={state === "offline"} message={friendlyError(q.error)} onRetry={() => q.refetch()} />
     : <EmptyState icon={FileText} title="No medical records yet" text="Notes, vitals and diagnoses from your visits appear here." />;
   return (
-    <ListScreen title="Medical records" back data={q.data ?? []} keyExtractor={keyOf} renderItem={renderItem} empty={empty}
+    <ListScreen title="Medical records" back person="switch" data={q.data ?? []} keyExtractor={keyOf} renderItem={renderItem} empty={empty}
       header={q.data?.length ? <Small>Your clinical history in one timeline. Only your hospitals and doctors can add to it.</Small> : null}
       updatedAt={q.dataUpdatedAt || undefined} onRefresh={() => q.refetch()} refreshing={q.isRefetching} />
   );

@@ -1,12 +1,13 @@
 // Data hooks. Each one mirrors a query or database function the website already uses
 // (same tables, same functions, same filters); the comment on each names its source.
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useId, useRef } from "react";
 import type { Appointment } from "@/shared/appointments";
 import { realtimeFallback } from "@/shared/messages";
 import type { PushPrefs, Tables } from "@/shared/database";
 import type { CheckResult, PatientRequest, RxPayload } from "@/shared/pharmacy";
+import { personKeys } from "@/shared/keys";
 import type { VisitReview } from "@/shared/reviews";
 import { usePatient, useSession } from "./session";
 import { supabase } from "./supabase";
@@ -19,7 +20,10 @@ function afterPaint(work: () => void): () => void {
 }
 
 // ---- Appointments (src/pages/patient/Appointments.tsx) ----------------------------------
-export const appointmentsKey = (patientId: string | null) => ["appointments", patientId] as const;
+// The patient id in every key is the active person's (lib/session.ts usePatient), and no
+// query shows the previous key's rows while it loads: switching person can never show one
+// person's data under another's name. Their saved data shows at once instead.
+export const appointmentsKey = (patientId: string | null) => personKeys.appointments(patientId);
 
 async function fetchAppointments(patientId: string): Promise<Appointment[]> {
   const { data: appts, error } = await supabase
@@ -52,7 +56,6 @@ export function useAppointments() {
     queryKey: appointmentsKey(patientId),
     enabled: !!patientId,
     queryFn: () => fetchAppointments(patientId!),
-    placeholderData: keepPreviousData,
   });
 }
 
@@ -64,7 +67,7 @@ export function useCancelAppointment() {
       const { error } = await supabase.from("patient_appointments").update({ status: "cancelled" }).eq("id", id);
       if (error) throw error;
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["appointments"] }),
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["appointments"] }); qc.invalidateQueries({ queryKey: ["family-next"] }); },
   });
 }
 
@@ -76,7 +79,7 @@ export function useRescheduleAppointment() {
       const { error } = await supabase.from("patient_appointments").update({ requested_date: date, requested_time: time }).eq("id", id);
       if (error) throw error;
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["appointments"] }),
+    onSettled: () => { qc.invalidateQueries({ queryKey: ["appointments"] }); qc.invalidateQueries({ queryKey: ["family-next"] }); },
   });
 }
 
@@ -85,9 +88,8 @@ export function useRescheduleAppointment() {
 export function useVisitReviews() {
   const { patientId } = usePatient();
   return useQuery({
-    queryKey: ["visit-reviews", patientId],
+    queryKey: personKeys.visitReviews(patientId),
     enabled: !!patientId,
-    placeholderData: keepPreviousData,
     queryFn: async (): Promise<Record<string, VisitReview>> => {
       const { data, error } = await supabase.from("appointment_reviews").select("appointment_id, rating, comment").eq("patient_id", patientId!);
       if (error) throw error;
@@ -133,10 +135,9 @@ async function fetchRxDocuments(patientId: string): Promise<RxPayload[]> {
 export function useRxDocuments() {
   const { patientId } = usePatient();
   return useQuery({
-    queryKey: ["rx-documents", patientId],
+    queryKey: personKeys.rxDocuments(patientId),
     enabled: !!patientId,
     queryFn: () => fetchRxDocuments(patientId!),
-    placeholderData: keepPreviousData,
   });
 }
 
@@ -152,7 +153,7 @@ export function usePrefetchTabs(active: boolean) {
     if (!active || !patientId) return;
     return afterPaint(() => {
       qc.prefetchQuery({ queryKey: appointmentsKey(patientId), queryFn: () => fetchAppointments(patientId) });
-      qc.prefetchQuery({ queryKey: ["rx-documents", patientId], queryFn: () => fetchRxDocuments(patientId) });
+      qc.prefetchQuery({ queryKey: personKeys.rxDocuments(patientId), queryFn: () => fetchRxDocuments(patientId) });
     });
   }, [active, patientId, qc]);
 }
@@ -166,7 +167,7 @@ export interface RxExtras {
 export function useRxExtras() {
   const { patientId } = usePatient();
   return useQuery({
-    queryKey: ["rx-requests", patientId],
+    queryKey: personKeys.rxRequests(patientId),
     enabled: !!patientId,
     queryFn: async (): Promise<RxExtras> => {
       const [req, rev, chk] = await Promise.all([
@@ -212,7 +213,7 @@ export function useNotifications() {
 export interface HomeSummary {
   unreadCount: number;
   /** The latest 3 unread notifications. */
-  updates: Pick<UserNotification, "id" | "title" | "message" | "type" | "action_url" | "reference_id" | "created_at">[];
+  updates: Pick<UserNotification, "id" | "title" | "message" | "type" | "action_url" | "reference_id" | "created_at" | "subject_patient_id">[];
 }
 
 /** The Home screen's "Updates" and bell count, from the same notifications table. Saved for offline use. */
@@ -223,7 +224,7 @@ export function useHomeSummary() {
     enabled: !!userId,
     queryFn: async (): Promise<HomeSummary> => {
       const { data, error, count } = await supabase.from("user_notifications")
-        .select("id, title, message, type, action_url, reference_id, created_at", { count: "exact" })
+        .select("id, title, message, type, action_url, reference_id, created_at, subject_patient_id", { count: "exact" })
         .eq("is_read", false).order("created_at", { ascending: false }).limit(3);
       if (error) throw error;
       return { unreadCount: count ?? data?.length ?? 0, updates: data ?? [] };

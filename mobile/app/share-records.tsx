@@ -8,9 +8,13 @@ import { QrCode } from "@/components/QrCode";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { Body, Button, Card, Mono, Notice, Small, Strong } from "@/components/ui";
+import { useActivePerson } from "@/lib/family";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
+import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { fmtRemaining } from "@/shared/dates";
+import { dbMessage } from "@/shared/errors";
+import { forPerson } from "@/shared/family";
 import { QR_BACKGROUND, QR_FOREGROUND, space, useTheme } from "@/theme";
 
 export default function ShareRecords() {
@@ -20,6 +24,12 @@ export default function ShareRecords() {
   const [share, setShare] = useState<{ code: string; expiresAt: number } | null>(null);
   const [now, setNow] = useState(Date.now());
   const [busy, setBusy] = useState(false);
+  const person = useActivePerson();
+  const { patientId: ownId } = useSession();
+  const activeId = person.isMe ? null : person.patientId;
+
+  // A code belongs to one person: changing who this is for clears the one on screen.
+  useEffect(() => { setShare(null); }, [activeId]);
 
   useEffect(() => {
     if (!share) return;
@@ -29,11 +39,12 @@ export default function ShareRecords() {
 
   async function getCode() {
     setBusy(true);
-    const { data, error } = await supabase.rpc("create_patient_share_code");
+    const { data, error } = await supabase.rpc("create_patient_share_code", forPerson({}, activeId, ownId));
     setBusy(false);
     const row = Array.isArray(data) ? data[0] : data;
     if (error || !row?.code) {
-      toast.error(/too many codes/i.test(error?.message ?? "") ? "You've asked for too many codes. Please try again in a little while." : "We couldn't create a code. Please try again.");
+      toast.error(/too many codes/i.test(error?.message ?? "") ? "You've asked for too many codes. Please try again in a little while."
+        : error && !person.isMe ? `We couldn't create a code. ${dbMessage(error)}` : "We couldn't create a code. Please try again.");
       return;
     }
     setNow(Date.now());
@@ -45,7 +56,7 @@ export default function ShareRecords() {
   const live = !!share && !expired;
 
   return (
-    <Screen title="Share my records" back>
+    <Screen title={person.isMe ? "Share my records" : `Share ${person.firstName}'s records`} back person="switch">
       <View style={{ flexDirection: "row", gap: space.md, alignItems: "flex-start" }}>
         <ShieldCheck size={28} color={colors.primaryText} />
         <Body muted style={{ flex: 1 }}>Show this code at the front desk. It works once and expires in 15 minutes.</Body>
@@ -55,7 +66,7 @@ export default function ShareRecords() {
         <Card style={{ alignItems: "center", gap: space.lg }}>
           <Mono accessibilityLabel={`Code: ${share!.code.split("").join(" ")}`} style={{ fontSize: 40, letterSpacing: 8 }}>{share!.code}</Mono>
           <Strong accessibilityLiveRegion="none">Expires in {fmtRemaining(remaining)}</Strong>
-          <View style={{ backgroundColor: QR_BACKGROUND, padding: space.lg, borderRadius: 16 }} accessible accessibilityRole="image" accessibilityLabel="QR code of your share code">
+          <View style={{ backgroundColor: QR_BACKGROUND, padding: space.lg, borderRadius: 16 }} accessible accessibilityRole="image" accessibilityLabel="QR code of the share code">
             <QrCode value={share!.code} size={200} backgroundColor={QR_BACKGROUND} color={QR_FOREGROUND} />
           </View>
           <Small style={{ textAlign: "center" }}>The hospital types the code or scans the QR.</Small>

@@ -47,7 +47,7 @@ export default function Letters() {
     : state !== "ready" ? <ErrorState offline={state === "offline"} message={friendlyError(q.error)} onRetry={() => q.refetch()} />
     : <EmptyState icon={Award} title="No letters or reports yet" text="When your doctor issues one, it will appear here. You can also ask for one." actionLabel="Request a letter" onAction={() => setRequesting(true)} />;
   return (
-    <ListScreen title="Letters" back data={q.data ?? []} keyExtractor={keyOf} renderItem={renderItem} empty={empty}
+    <ListScreen title="Letters" back person="switch" data={q.data ?? []} keyExtractor={keyOf} renderItem={renderItem} empty={empty}
       header={q.data?.length ? <Small>Official medical documents issued to you by your doctor. Tap + to request one; a request shows here until your doctor issues it.</Small> : null}
       right={<IconButton icon={Plus} label="Request a letter" onPress={() => setRequesting(true)} />}
       footer={<RequestLetterSheet visible={requesting} patientId={patientId} onClose={() => setRequesting(false)} />}

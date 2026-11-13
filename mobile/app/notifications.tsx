@@ -9,6 +9,7 @@ import { ListScreen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, EmptyState, ErrorState, ListSkeleton, Small, Strong } from "@/components/ui";
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications, useRealtime, type UserNotification } from "@/lib/data";
+import { useShowPersonFor } from "@/lib/family";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { useSession } from "@/lib/session";
 import { fmtDateTime } from "@/shared/dates";
@@ -45,10 +46,13 @@ export default function Notifications() {
 
   const list = q.data ?? [];
   const unread = list.filter((n) => !n.is_read).length;
-  const open = useCallback((n: UserNotification) => {
+  const showPersonFor = useShowPersonFor();
+  const open = useCallback(async (n: UserNotification) => {
     if (!n.is_read && online) markRead(n.id);
+    // About a family member (or about me while a family member is showing): switch first.
+    await showPersonFor({ subjectId: n.subject_patient_id });
     router.navigate(notificationTarget({ url: n.action_url, type: n.type, referenceId: n.reference_id }));
-  }, [online, markRead]);
+  }, [online, markRead, showPersonFor]);
   const renderItem = useCallback<ListRenderItem<UserNotification>>(({ item }) => <NotificationCard n={item} onOpen={open} />, [open]);
 
   const state = loadState(q);

@@ -36,7 +36,7 @@ export default function LetterDetail() {
   }
 
   return (
-    <Screen title="Letter" back onRefresh={() => q.refetch()} refreshing={q.isRefetching}>
+    <Screen title="Letter" back person="show" onRefresh={() => q.refetch()} refreshing={q.isRefetching}>
       <QueryState query={q}>
         {!l ? (
           <EmptyState icon={Award} title="Letter not found" text="It may have been removed. Pull down to refresh." />

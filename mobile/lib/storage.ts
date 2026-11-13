@@ -30,6 +30,8 @@ export const DEVICE_KEYS = {
   pushAsked: "hn.push-asked",
   /** 0.2 kept "seen" lab results on the phone; the database does now. Only cleared at sign-out. */
   labsSeen: "hn.labs-seen",
+  /** "Who is this for?": the family member the app is showing; absent means "Me". */
+  activePerson: "hn.active-person",
 } as const;
 
 export async function getFlag(key: string): Promise<string | null> {

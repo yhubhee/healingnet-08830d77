@@ -8,6 +8,7 @@ import { Body, Button, Card, Notice, Strong } from "@/components/ui";
 import { deleteMyAccount } from "@/lib/deleteAccount";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { useSession } from "@/lib/session";
+import { DELETE_FAMILY_LINE } from "@/shared/family";
 import { space } from "@/theme";
 
 export const DELETE_EXPLANATION =
@@ -49,6 +50,7 @@ export default function DeleteAccount() {
       <Card style={{ gap: space.md }}>
         <Strong>What happens</Strong>
         <Body>{DELETE_EXPLANATION}</Body>
+        <Body>{DELETE_FAMILY_LINE}</Body>
       </Card>
       <Notice tone="danger" text="This can't be undone." />
       <Field label="Type DELETE to confirm" value={typed} onChangeText={setTyped} autoCapitalize="characters" autoCorrect={false} />

@@ -43,7 +43,7 @@ export default function LabResultDetail() {
   const tests = r ? labTests(r) : [];
 
   return (
-    <Screen title="Lab result" back updatedAt={q.dataUpdatedAt || undefined} onRefresh={() => q.refetch()} refreshing={q.isRefetching}>
+    <Screen title="Lab result" back person="show" updatedAt={q.dataUpdatedAt || undefined} onRefresh={() => q.refetch()} refreshing={q.isRefetching}>
       <QueryState query={q}>
         {!r ? (
           <EmptyState icon={FlaskConical} title="Result not found" text="It may have been removed. Pull down to refresh." />

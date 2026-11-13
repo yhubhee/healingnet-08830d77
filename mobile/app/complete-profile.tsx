@@ -13,13 +13,13 @@ import { useToast } from "@/components/toast";
 import { Body, Button, Card, Heading, ListSkeleton, Notice, Small } from "@/components/ui";
 import { AvatarError, pickPhoto, uploadAvatar } from "@/lib/avatar";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
-import { useSession } from "@/lib/session";
+import { useMemberProfile, useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { lagosToday } from "@/shared/dates";
 import { friendlyError } from "@/shared/errors";
 import {
-  BLOOD_GROUPS, compactPhone, GENOTYPES, HEALTH_NOTE_MAX, missingPatientFields, NIGERIAN_STATES, PATIENT_UPDATE_COLUMNS, pick, validateProfile,
-  type ProfileForm,
+  BLOOD_GROUPS, compactPhone, GENOTYPES, HEALTH_NOTE_MAX, isNigerianPhone, missingPatientFields, NIGERIAN_STATES, PATIENT_UPDATE_COLUMNS, pick, validateProfile,
+  type ProfileErrors, type ProfileForm,
 } from "@/shared/patientProfile";
 import { space, useTheme } from "@/theme";
 
@@ -28,9 +28,15 @@ const NOT_SURE = { value: "", label: "Not sure" };
 
 export default function CompleteProfile() {
   const { colors } = useTheme();
-  const { profile: p, signOut } = useSession();
-  const params = useLocalSearchParams<{ edit?: string }>();
-  const editing = params.edit === "1";
+  const { profile: own, signOut } = useSession();
+  const params = useLocalSearchParams<{ edit?: string; person?: string }>();
+  // ?person=<patient id>: a family member's health card. The guardian edits it through
+  // the same form; only the health card and emergency contact are asked for.
+  const memberId = params.person || null;
+  const member = useMemberProfile(memberId);
+  const p = memberId ? member.data : own;
+  const forMember = !!memberId;
+  const editing = params.edit === "1" || forMember;
   const qc = useQueryClient();
   const toast = useToast();
   const online = useOnline();
@@ -51,13 +57,22 @@ export default function CompleteProfile() {
   }, [p, form]);
 
   if (!p || !form) {
-    return <Screen title="Your profile"><ListSkeleton rows={4} height={120} /></Screen>;
+    return <Screen title={forMember ? "Health card" : "Your profile"} back={forMember}><ListSkeleton rows={4} height={120} /></Screen>;
   }
 
   const today = lagosToday();
-  const errors = tried ? validateProfile(form, today) : {};
+  /** A family member has no phone or address of their own to check: only what the form shows. */
+  const validate = (f: ProfileForm): ProfileErrors => {
+    if (!forMember) return validateProfile(f, today);
+    const e: ProfileErrors = {};
+    if (f.emergency_contact_phone.trim() && !isNigerianPhone(f.emergency_contact_phone)) e.emergency_contact_phone = "Enter a Nigerian number, e.g. 0803 123 4567.";
+    if (f.allergies.trim().length > HEALTH_NOTE_MAX) e.allergies = `Keep this under ${HEALTH_NOTE_MAX} characters.`;
+    if (f.medical_conditions.trim().length > HEALTH_NOTE_MAX) e.medical_conditions = `Keep this under ${HEALTH_NOTE_MAX} characters.`;
+    return e;
+  };
+  const errors = tried ? validate(form) : {};
   const set = (k: keyof ProfileForm) => (v: string) => setForm((f) => (f ? { ...f, [k]: v } : f));
-  const firstTime = !editing && missingPatientFields(p).length > 0;
+  const firstTime = !forMember && !editing && missingPatientFields(p).length > 0;
   const refresh = () => qc.invalidateQueries({ queryKey: ["profile"] });
 
   async function changePhoto(source: "camera" | "gallery") {
@@ -80,10 +95,15 @@ export default function CompleteProfile() {
   async function save() {
     setTried(true);
     if (!form) return;
-    if (Object.keys(validateProfile(form, today)).length) return toast.error("Check the highlighted fields.");
+    if (Object.keys(validate(form)).length) return toast.error("Check the highlighted fields.");
     setSaving(true);
     const opt = (v: string) => v.trim() || null;
-    const patch = {
+    const patch = forMember ? {
+      emergency_contact_name: opt(form.emergency_contact_name),
+      emergency_contact_phone: form.emergency_contact_phone.trim() ? compactPhone(form.emergency_contact_phone) : null,
+      blood_group: opt(form.blood_group), genotype: opt(form.genotype),
+      allergies: opt(form.allergies), medical_conditions: opt(form.medical_conditions),
+    } : {
       phone: compactPhone(form.phone), date_of_birth: form.date_of_birth, gender: form.gender, state: form.state,
       city: form.city.trim(), address: form.address.trim(), emergency_contact_name: form.emergency_contact_name.trim(),
       emergency_contact_phone: compactPhone(form.emergency_contact_phone),
@@ -93,9 +113,9 @@ export default function CompleteProfile() {
     };
     const { error } = await supabase.from("patients").update(pick(patch, PATIENT_UPDATE_COLUMNS) as never).eq("id", p!.id);
     setSaving(false);
-    if (error) return toast.error(`Couldn't save your profile. ${error.message || friendlyError(error)}`);
+    if (error) return toast.error(`Couldn't save ${forMember ? "the health card" : "your profile"}. ${error.message || friendlyError(error)}`);
     await refresh();
-    toast.success(firstTime ? "Profile complete" : "Profile saved");
+    toast.success(firstTime ? "Profile complete" : forMember ? "Health card saved" : "Profile saved");
     if (firstTime || !router.canGoBack()) router.replace("/(tabs)");
     else router.back();
   }
@@ -107,7 +127,7 @@ export default function CompleteProfile() {
 
   return (
     <Screen
-      title={firstTime ? "Complete your profile" : "Edit your profile"}
+      title={firstTime ? "Complete your profile" : forMember ? `${p.first_name}'s health card` : "Edit your profile"}
       back={!firstTime}
       footer={
         <>
@@ -117,9 +137,13 @@ export default function CompleteProfile() {
       }
     >
       <Body muted>
-        {firstTime ? "Hospitals need these details to book and treat you. It takes about 2 minutes." : "Keep your details up to date so hospitals can reach you."}
+        {firstTime ? "Hospitals need these details to book and treat you. It takes about 2 minutes."
+          : forMember ? `Doctors treating ${p.first_name} see this. Keep it up to date.`
+          : "Keep your details up to date so hospitals can reach you."}
       </Body>
 
+      {forMember ? null : (
+      <>
       <Card style={{ gap: space.lg }}>
         <Heading>About you</Heading>
         <View style={{ flexDirection: "row", alignItems: "center", gap: space.lg }}>
@@ -140,15 +164,18 @@ export default function CompleteProfile() {
         <Field label="City / town *" value={form.city} onChangeText={set("city")} error={errors.city} />
         <Field label="Address *" value={form.address} onChangeText={set("address")} autoComplete="street-address" error={errors.address} />
       </Card>
+      </>
+      )}
 
       <Card style={{ gap: space.lg }}>
         <Heading>Emergency contact</Heading>
-        <Field label="Name *" value={form.emergency_contact_name} onChangeText={set("emergency_contact_name")} error={errors.emergency_contact_name} />
-        <Field label="Phone *" value={form.emergency_contact_phone} onChangeText={set("emergency_contact_phone")} keyboardType="phone-pad" error={errors.emergency_contact_phone} />
+        <Field label={forMember ? "Name" : "Name *"} value={form.emergency_contact_name} onChangeText={set("emergency_contact_name")} error={errors.emergency_contact_name}
+          hint={forMember ? "Who to call in an emergency. This can be you." : undefined} />
+        <Field label={forMember ? "Phone" : "Phone *"} value={form.emergency_contact_phone} onChangeText={set("emergency_contact_phone")} keyboardType="phone-pad" error={errors.emergency_contact_phone} />
       </Card>
 
       <Card style={{ gap: space.lg }}>
-        <Heading>Health card (optional)</Heading>
+        <Heading>{forMember ? "Health card" : "Health card (optional)"}</Heading>
         <Field label="Allergies" value={form.allergies} onChangeText={set("allergies")} multiline maxLength={HEALTH_NOTE_MAX} error={errors.allergies}
           placeholder="e.g. Penicillin, peanuts" hint={`${form.allergies.length}/${HEALTH_NOTE_MAX} · Leave empty if none are known.`} />
         <Field label="Long-term conditions" value={form.medical_conditions} onChangeText={set("medical_conditions")} multiline maxLength={HEALTH_NOTE_MAX} error={errors.medical_conditions}
@@ -156,11 +183,15 @@ export default function CompleteProfile() {
       </Card>
 
       <Card style={{ gap: space.lg }}>
-        <Heading>Medical and insurance (optional)</Heading>
+        <Heading>{forMember ? "Blood group and genotype" : "Medical and insurance (optional)"}</Heading>
         <SelectField label="Blood group" value={form.blood_group} options={[NOT_SURE, ...BLOOD_GROUPS.map((b) => ({ value: b, label: b }))]} onChange={set("blood_group")} placeholder="Not sure" />
         <SelectField label="Genotype" value={form.genotype} options={[NOT_SURE, ...GENOTYPES.map((g) => ({ value: g, label: g }))]} onChange={set("genotype")} placeholder="Not sure" />
-        <Field label="Insurance / HMO" value={form.insurance_provider} onChangeText={set("insurance_provider")} placeholder="e.g. NHIA, Hygeia" />
-        <Field label="Policy number" value={form.insurance_policy_number} onChangeText={set("insurance_policy_number")} />
+        {forMember ? null : (
+          <>
+            <Field label="Insurance / HMO" value={form.insurance_provider} onChangeText={set("insurance_provider")} placeholder="e.g. NHIA, Hygeia" />
+            <Field label="Policy number" value={form.insurance_policy_number} onChangeText={set("insurance_policy_number")} />
+          </>
+        )}
       </Card>
 
       <View style={{ flexDirection: "row", gap: space.sm, alignItems: "flex-start" }}>

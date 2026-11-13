@@ -88,24 +88,33 @@ export async function unregisterPush(): Promise<void> {
   await setFlag(DEVICE_KEYS.pushToken, null);
 }
 
+/** Told which notification was tapped, before its screen opens: switches to the family member it is about. */
+export type BeforeOpen = (n: { subjectId?: string | null; notificationId?: string | null }) => Promise<void>;
+
+const asId = (v: unknown) => (typeof v === "string" && /^[0-9a-f-]{36}$/i.test(v) ? v : null);
+
 /** Opens the app screen for a tapped notification (its type and data.url); unknown ones open Home. */
-function openFromNotification(response: Notifications.NotificationResponse | null | undefined) {
+async function openFromNotification(response: Notifications.NotificationResponse | null | undefined, beforeOpen?: BeforeOpen) {
   if (!response) return;
   // A medicine reminder (or its Taken / Snooze button): Home shows "Today's medicines".
   if (handleReminderResponse(response)) { router.navigate("/(tabs)"); return; }
-  const data = (response.notification.request.content.data ?? {}) as { url?: unknown; type?: unknown; reference_id?: unknown };
+  const data = (response.notification.request.content.data ?? {}) as
+    { url?: unknown; type?: unknown; reference_id?: unknown; notification_id?: unknown; subject_patient_id?: unknown };
+  // The push carries the notification's id; who it is about is read from that row.
+  const subject = asId(data.subject_patient_id);
+  try { await beforeOpen?.({ subjectId: subject ?? undefined, notificationId: asId(data.notification_id) }); } catch { /* open the screen anyway */ }
   router.navigate(notificationTarget({ url: data.url, type: data.type, referenceId: data.reference_id }));
 }
 
 let handledInitial = false;
 
 /** Call once the signed-in screens are mounted. Returns a cleanup function. */
-export function listenForNotificationTaps(): () => void {
+export function listenForNotificationTaps(beforeOpen?: BeforeOpen): () => void {
   if (!handledInitial) {
     handledInitial = true;
     // The notification that opened the app from a cold start.
-    try { openFromNotification(Notifications.getLastNotificationResponse()); } catch { /* nothing to open */ }
+    try { openFromNotification(Notifications.getLastNotificationResponse(), beforeOpen).catch(() => {}); } catch { /* nothing to open */ }
   }
-  const sub = Notifications.addNotificationResponseReceivedListener(openFromNotification);
+  const sub = Notifications.addNotificationResponseReceivedListener((r) => { openFromNotification(r, beforeOpen).catch(() => {}); });
   return () => sub.remove();
 }

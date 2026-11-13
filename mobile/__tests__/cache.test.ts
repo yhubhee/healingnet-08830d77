@@ -26,8 +26,8 @@ function makeStorage() {
 const CACHE_KEY = "hn.query-cache";
 
 describe("what is saved for offline use", () => {
-  it("saves only the profile, appointments, prescription documents, the home summary, lab results and records", () => {
-    expect([...PERSISTED_QUERIES].sort()).toEqual(["appointments", "emr", "home-summary", "lab-results", "profile", "role", "rx-documents"]);
+  it("saves only the profile, the family list, appointments, prescription documents, the home summary, lab results and records", () => {
+    expect([...PERSISTED_QUERIES].sort()).toEqual(["appointments", "emr", "family", "home-summary", "lab-results", "profile", "role", "rx-documents"]);
     expect(shouldPersistQuery(["lab-results", "p1"], "success")).toBe(true);
     expect(shouldPersistQuery(["emr", "p1"], "success")).toBe(true);
     expect(shouldPersistQuery(["appointments", "p1"], "success")).toBe(true);

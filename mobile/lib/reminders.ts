@@ -80,7 +80,7 @@ const keyOf = (n: Notifications.NotificationRequest): string | null => {
   return data?.kind === "med" && typeof data.key === "string" ? data.key : null;
 };
 
-async function schedule(dose: Pick<Dose, "key" | "drug" | "dose">, when: number, identifier: string, showDetails: boolean): Promise<void> {
+async function schedule(dose: Pick<Dose, "key" | "drug" | "dose" | "person">, when: number, identifier: string, showDetails: boolean): Promise<void> {
   const { title, body } = reminderText(dose, showDetails);
   await Notifications.scheduleNotificationAsync({
     identifier,
@@ -134,6 +134,14 @@ export async function removeReminder(id: string): Promise<void> {
   await syncReminders();
 }
 
+/** A family member was removed: their reminders go with them. */
+export async function removeRemindersFor(patientId: string): Promise<void> {
+  await load();
+  if (!state.reminders.some((r) => r.patientId === patientId)) return;
+  await save({ ...state, reminders: state.reminders.filter((r) => r.patientId !== patientId) });
+  await syncReminders();
+}
+
 /** Ticks (or unticks) a dose. A ticked dose no longer rings, and a waiting snooze is dropped. */
 export async function setTaken(key: string, taken: boolean): Promise<void> {
   await load();
@@ -151,7 +159,7 @@ async function snooze(key: string): Promise<void> {
   if (!r) return;
   try {
     await prepare();
-    await schedule({ key, drug: r.drug, dose: r.dose }, Date.now() + SNOOZE_MINUTES * 60_000, `${ID_PREFIX}snooze:${key}`, state.showDetails);
+    await schedule({ key, drug: r.drug, dose: r.dose, person: r.person }, Date.now() + SNOOZE_MINUTES * 60_000, `${ID_PREFIX}snooze:${key}`, state.showDetails);
   } catch { /* nothing to do: the dose still shows on Home */ }
 }
 

@@ -21,6 +21,10 @@ export interface Reminder {
   startDate: string;
   /** How many days the reminders run, counting the first. */
   days: number;
+  /** Whose medicine it is: a family member's patient id. Absent means the signed-in patient. */
+  patientId?: string | null;
+  /** The family member's first name, for the label ("Tobi: time for medicine"). Absent for the signed-in patient. */
+  person?: string | null;
 }
 
 export interface Dose {
@@ -33,6 +37,8 @@ export interface Dose {
   time: string;
   /** When it is due, in milliseconds. */
   at: number;
+  /** The family member it is for; absent for the signed-in patient. */
+  person?: string | null;
 }
 
 // ---- Reading the prescription -----------------------------------------------------------
@@ -120,13 +126,21 @@ export function dosesFor(r: Reminder): Dose[] {
   const times = cleanTimes(r.times);
   for (let i = 0; i < Math.min(Math.max(1, r.days), MAX_DAYS); i++) {
     const date = addLocalDays(r.startDate, i);
-    for (const time of times) out.push({ key: `${r.id}|${date}|${time}`, reminderId: r.id, drug: r.drug, dose: r.dose, date, time, at: atLocal(date, time) });
+    for (const time of times) out.push({ key: `${r.id}|${date}|${time}`, reminderId: r.id, drug: r.drug, dose: r.dose, date, time, at: atLocal(date, time), ...(r.person ? { person: r.person } : {}) });
   }
   return out;
 }
 
 /** Reminders whose course has not ended yet (the last day still counts). */
 export const activeReminders = (reminders: Reminder[], now: Date) => reminders.filter((r) => r.times.length > 0 && endDate(r) >= localDate(now));
+
+/**
+ * One person's reminders. `patientId` is who the app is showing (null = the signed-in
+ * patient). Reminders saved before family profiles have no owner and belong to the
+ * signed-in patient.
+ */
+export const remindersFor = (reminders: Reminder[], patientId: string | null) =>
+  reminders.filter((r) => (r.patientId ?? null) === patientId);
 
 /** Today's doses across all reminders, earliest first: Home's "Today's medicines". */
 export function todaysDoses(reminders: Reminder[], now: Date): Dose[] {
@@ -161,6 +175,10 @@ export function pruneTaken(taken: Record<string, number>, now: Date): Record<str
 // ---- Wording ----------------------------------------------------------------------------
 export const REMINDER_TITLE = "Time for your medicine";
 /** The lock screen names the medicine only when the patient has turned "Show details" on. */
-export function reminderText(d: Pick<Dose, "drug" | "dose">, showDetails: boolean): { title: string; body: string } {
-  return { title: REMINDER_TITLE, body: showDetails ? [d.drug, d.dose].filter(Boolean).join(" · ") : "Open HealingNet to see which one." };
+/** A family member is named too ("Tobi: time for medicine"), under the same switch; otherwise the text stays generic. */
+export function reminderText(d: Pick<Dose, "drug" | "dose" | "person">, showDetails: boolean): { title: string; body: string } {
+  return {
+    title: showDetails && d.person ? `${d.person}: time for medicine` : REMINDER_TITLE,
+    body: showDetails ? [d.drug, d.dose].filter(Boolean).join(" · ") : "Open HealingNet to see which one.",
+  };
 }

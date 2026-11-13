@@ -47,7 +47,7 @@ export default function LabResults() {
     : <EmptyState icon={FlaskConical} title="No lab results yet" text="Tests requested by your doctors appear here when the lab has finished them." />;
 
   return (
-    <ListScreen title="Lab results" back data={q.data ?? []} keyExtractor={keyOf} renderItem={renderItem} empty={empty}
+    <ListScreen title="Lab results" back person="switch" data={q.data ?? []} keyExtractor={keyOf} renderItem={renderItem} empty={empty}
       header={q.data?.length ? <Small>All tests requested by your doctors. Tap one to see every value.</Small> : null}
       updatedAt={q.dataUpdatedAt || undefined} onRefresh={() => q.refetch()} refreshing={q.isRefetching} />
   );

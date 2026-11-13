@@ -17,7 +17,7 @@ export default function RecordDetail() {
   const vitals = e ? vitalsList(e.vital_data) : [];
 
   return (
-    <Screen title="Record" back updatedAt={q.dataUpdatedAt || undefined} onRefresh={() => q.refetch()} refreshing={q.isRefetching}>
+    <Screen title="Record" back person="show" updatedAt={q.dataUpdatedAt || undefined} onRefresh={() => q.refetch()} refreshing={q.isRefetching}>
       <QueryState query={q}>
         {!e ? (
           <EmptyState icon={FileText} title="Record not found" text="It may have been removed. Pull down to refresh." />

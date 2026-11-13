@@ -65,7 +65,7 @@ export default function Prescriptions() {
       : <EmptyState icon={Pill} title="No prescriptions yet" text="When a doctor prescribes medicine, it appears here." actionLabel="Book a doctor" onAction={() => router.push("/book")} />;
 
   return (
-    <ListScreen title="Prescriptions" back data={list} keyExtractor={keyOf} renderItem={renderItem} header={header} empty={empty}
+    <ListScreen title="Prescriptions" back person="switch" data={list} keyExtractor={keyOf} renderItem={renderItem} header={header} empty={empty}
       updatedAt={docs.dataUpdatedAt || undefined} onRefresh={() => { docs.refetch(); extras.refetch(); }} refreshing={docs.isRefetching} />
   );
 }

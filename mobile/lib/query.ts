@@ -3,6 +3,7 @@ import NetInfo from "@react-native-community/netinfo";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { onlineManager, QueryClient } from "@tanstack/react-query";
 import type { PersistQueryClientOptions } from "@tanstack/react-query-persist-client";
+import { activePerson } from "./activePerson";
 import { saveAccountCheck } from "./boot";
 import { clearLocalData, shouldPersistQuery } from "./cache";
 import { APP_VERSION } from "./env";
@@ -62,6 +63,8 @@ export async function clearEverything(): Promise<void> {
       if (error) await supabase.auth.signOut({ scope: "local" });
     },
   });
+  // The next person to sign in on this phone starts as "Me".
+  activePerson.reset();
   await saveAccountCheck(null);
   await setFlag(DEVICE_KEYS.appLock, null);
   await setFlag(DEVICE_KEYS.pushToken, null);

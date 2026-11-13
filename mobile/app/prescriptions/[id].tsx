@@ -21,7 +21,7 @@ import { useAllowScreenshots } from "@/lib/lock";
 import { useReminders } from "@/lib/reminders";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { shareRxPdf } from "@/lib/rxPdf";
-import { usePatient } from "@/lib/session";
+import { usePatient, useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { openUrl } from "@/lib/web";
 import { fmt12, fmtDateTime, fmtLongDate } from "@/shared/dates";
@@ -40,6 +40,8 @@ export default function PrescriptionDetail() {
   const toast = useToast();
   const online = useOnline();
   const { profile } = usePatient();
+  // A family member may have no address of their own: start the pharmacy search from the guardian's.
+  const { profile: own } = useSession();
   const docs = useRxDocuments();
   const extras = useRxExtras();
   const refresh = useRefreshRx();
@@ -112,7 +114,7 @@ export default function PrescriptionDetail() {
   }
 
   return (
-    <Screen title="Prescription" back updatedAt={docs.dataUpdatedAt || undefined} onRefresh={refresh} refreshing={docs.isRefetching}>
+    <Screen title="Prescription" back person="show" updatedAt={docs.dataUpdatedAt || undefined} onRefresh={refresh} refreshing={docs.isRefetching}>
       <QueryState query={docs}>
         {!doc ? (
           <EmptyState icon={ShieldCheck} title="Prescription not found" text="It may have been removed. Pull down to refresh." />
@@ -209,7 +211,7 @@ export default function PrescriptionDetail() {
             ) : null}
 
             <PharmacyPickerSheet visible={pick} onClose={() => setPick(false)} documentId={doc.document_id ?? id} code={code}
-              defaultState={profile?.state} defaultCity={profile?.city} onSent={refresh} />
+              defaultState={profile?.state ?? own?.state} defaultCity={profile?.city ?? own?.city} onSent={refresh} />
             <RatePharmacySheet request={rate} onClose={() => setRate(null)} onRated={refresh} />
             <ReminderSheet item={remind} documentId={doc.document_id ?? id} existing={remind ? reminders.find((x) => x.id === remind.prescription_id) ?? null : null}
               onClose={() => setRemind(null)} />
