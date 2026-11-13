@@ -1,4 +1,4 @@
-// Hand-offs to the website (in-app browser) for the parts that arrive in a later version.
+// Pages opened in the in-app browser: the video visit, the privacy policy and the terms.
 import * as WebBrowser from "expo-web-browser";
 import { Linking } from "react-native";
 import { webPage } from "@/shared/links";
@@ -12,5 +12,5 @@ export async function openUrl(url: string): Promise<void> {
   }
 }
 
-/** Opens a page on the HealingNet website, e.g. openWeb("/patient/messages"). */
+/** Opens a page on the HealingNet website, e.g. openWeb("/privacy"). */
 export const openWeb = (path: string) => openUrl(webPage(WEB_URL, path));

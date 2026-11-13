@@ -15,8 +15,19 @@ describe("notification URL → app screen", () => {
     expect(screenForUrl("/patient/prescriptions#rx")).toBe("/prescriptions");
   });
 
+  it("opens the 0.2 screens: lab results, records, letters and messages", () => {
+    expect(screenForUrl("/patient/lab-results")).toBe("/lab-results");
+    expect(screenForUrl("/patient/lab-results/123")).toBe("/lab-results");
+    expect(screenForUrl("/patient/records")).toBe("/records");
+    expect(screenForUrl("/patient/medical-records")).toBe("/records");
+    expect(screenForUrl("/patient/letters")).toBe("/letters");
+    expect(screenForUrl("https://healingnet-08830d77.vercel.app/patient/letters?id=1")).toBe("/letters");
+    expect(screenForUrl("/patient/messages")).toBe("/(tabs)/messages");
+    expect(screenForUrl("/patient/messages/")).toBe("/(tabs)/messages");
+  });
+
   it("opens Home for anything unknown", () => {
-    for (const url of ["/patient/lab-results", "/doctor/appointments", "/patient/appointmentsX", "/", "", "   ", null, undefined, 42, { url: "/patient/appointments" }, "javascript:alert(1)", "https://evil.example/x"]) {
+    for (const url of ["/patient/lab-resultsX", "/patient/triage", "/doctor/messages", "/doctor/appointments", "/patient/appointmentsX", "/", "", "   ", null, undefined, 42, { url: "/patient/appointments" }, "javascript:alert(1)", "https://evil.example/x"]) {
       expect(screenForUrl(url)).toBe("/(tabs)");
     }
   });

@@ -2,7 +2,7 @@
 
 The HealingNet app for patients, for Android and iPhone. It is built with Expo (React Native) and TypeScript and talks to the same Supabase project and the same database functions as the website. All business rules and security live in the database; the app only calls what exists.
 
-This is version 0.1. The folder is separate from the website: the website's build, type check and lint ignore `mobile/`.
+This is version 0.2. The folder is separate from the website: the website's build, type check and lint ignore `mobile/`.
 
 ## Run it
 
@@ -117,16 +117,30 @@ Profiles in `eas.json`: `development` (dev client, APK), `preview` (APK for test
 
 - Only the publishable key is in the app. Every read and write goes through the database's own rules.
 - The session and the saved (offline) data are encrypted with AES-256; the keys are in the phone's Keychain / Keystore (`lib/encryptedStorage.ts`).
-- Only the profile, appointments, prescription documents and the home summary are saved for offline use (`lib/cache.ts`).
-- Signing out or deleting the account removes the push registration, the data in memory, the saved data and the session.
+- Only the profile, appointments, prescription documents, the home summary, lab results and medical records are saved for offline use (`lib/cache.ts`). Medicine reminders are kept in the same encrypted storage.
+- Signing out or deleting the account removes the medicine reminders, the push registration, the data in memory, the saved data and the session.
 - When the app leaves the foreground the screen is covered with the logo. On Android the window is also marked secure, which blanks the app-switcher preview and blocks screenshots (`ANDROID_SECURE_WINDOW` in `lib/lock.tsx`). The one exception is the prescription screen: screenshots are allowed while it is open, so a patient can send the QR to family.
-- Nothing is logged: no health data, names, phone numbers, tokens or codes. There is no analytics or crash-reporting SDK in 0.1.
+- Nothing is logged: no health data, names, phone numbers, tokens or codes. There is no analytics or crash-reporting SDK.
 
 ## Keeping in step with the website
 
 - `npm run sync-types` after the website's Supabase types change.
-- `shared/errors.ts`, `shared/patientProfile.ts`, `shared/pharmacy.ts` and `shared/appointments.ts` are copies of website helpers (each file names its source). If the website's wording changes, change it here too.
+- `shared/errors.ts`, `shared/patientProfile.ts`, `shared/pharmacy.ts`, `shared/appointments.ts` and `shared/triage.ts` are copies of website helpers (each file names its source). If the website's wording changes, change it here too.
 
-## Not in 0.1
+## What 0.2 added
 
-Messages, Lab results, Records, Letters and Check symptoms open the website. Video visits open the website's call page in the in-app browser.
+- Every "open the website" hand-off is now a screen in the app: Messages, Lab results, Medical records, Letters and Check symptoms.
+- Medicine reminders (`shared/reminders.ts`, `lib/reminders.ts`): local notifications only. Nothing about them is sent to the server. At most 60 are scheduled at a time, and the list is topped up whenever the app opens.
+- Allergies and long-term conditions on the health card, and "Rate your visit".
+- Video visits still open the website's call page in the in-app browser. A native video SDK would add tens of MB to the app.
+
+## Start-up and speed
+
+- The first screen is chosen from what is stored on the phone (`lib/boot.ts`, `shared/startup.ts`): a stored session opens the tabs at once, behind the native splash. The token refresh and the role and profile checks run afterwards and only move the person when they find a real problem.
+- Long lists are FlatLists with memoised rows (`ListScreen` in `components/Screen.tsx`). Tabs stay mounted and freeze while hidden. Realtime is subscribed only while a screen is in front.
+- Icons are imported one by one through `components/icons.ts`. Importing from the top of `lucide-react-native` packs all of its icons into the app; add a line to that file to use a new icon.
+
+## App size
+
+- Release builds are minified and resource-shrunk (`app.config.js`, expo-build-properties).
+- The `preview` profile builds an APK for real phones only (arm64-v8a and armeabi-v7a) with its native libraries compressed; `production` builds an app bundle (AAB) for the Play Store, which sends each phone only its own processor's code.

@@ -1,12 +1,24 @@
 // Links between the website and the app: which app screen a website path opens, and the
-// website addresses the app hands off to in 0.1.
+// few website addresses the app still opens (the video visit, privacy policy and terms).
 
 /** App routes a notification can open. */
-export type AppScreen = "/(tabs)" | "/(tabs)/visits" | "/prescriptions";
+export type AppScreen =
+  | "/(tabs)" | "/(tabs)/visits" | "/(tabs)/messages" | "/prescriptions" | "/lab-results" | "/records" | "/letters";
+
+const SCREENS: [string, AppScreen][] = [
+  ["/patient/appointments", "/(tabs)/visits"],
+  ["/patient/prescriptions", "/prescriptions"],
+  ["/patient/lab-results", "/lab-results"],
+  ["/patient/records", "/records"],
+  ["/patient/medical-records", "/records"], // the website's own address for the same page
+  ["/patient/letters", "/letters"],
+  ["/patient/messages", "/(tabs)/messages"],
+];
 
 /**
  * Website path (a notification's action_url or a push's data.url) -> app screen.
- * /patient/appointments -> Visits, /patient/prescriptions -> Prescriptions, anything else -> Home.
+ * Appointments -> Visits, prescriptions -> Prescriptions, lab results, records, letters and
+ * messages -> their own screens, anything else -> Home.
  */
 export function screenForUrl(url: unknown): AppScreen {
   if (typeof url !== "string" || !url.trim()) return "/(tabs)";
@@ -15,8 +27,9 @@ export function screenForUrl(url: unknown): AppScreen {
   const m = /^[a-z][a-z0-9+.-]*:\/\/[^/]*(\/.*)?$/i.exec(path);
   if (m) path = m[1] ?? "/";
   path = path.split(/[?#]/)[0].replace(/\/+$/, "");
-  if (path === "/patient/appointments" || path.startsWith("/patient/appointments/")) return "/(tabs)/visits";
-  if (path === "/patient/prescriptions" || path.startsWith("/patient/prescriptions/")) return "/prescriptions";
+  for (const [prefix, screen] of SCREENS) {
+    if (path === prefix || path.startsWith(`${prefix}/`)) return screen;
+  }
   return "/(tabs)";
 }
 
