@@ -448,3 +448,41 @@ Created by `mobile/scripts/live-check.mjs`, signed in as the test patient.
 ### push_devices (0)
 
 The check registered one device token and unregistered it again; nothing is left.
+
+## Mobile app 0.2 live check (2026-11-13)
+
+**Nothing was created on 13 November.** The run stopped at sign-in: the test patient's login in `.env.test` was refused ("Invalid login credentials"), so no signed-in step ran. Only the two signed-out checks ran (`register_push_device` and `rate_appointment` both refuse a signed-out caller), and they write nothing.
+
+When the login is fixed and `node mobile/scripts/live-check.mjs` is run, each run creates the records below. The script prints the exact ids at the end; add them here.
+
+### patient_appointments (1 per run)
+
+| id | note |
+| --- | --- |
+| (printed by the script) | Booked with reason `[E2E] mobile app check <code>`, then cancelled. Same as the 0.1 check. |
+
+### patient_messages (1 per run)
+
+| id | note |
+| --- | --- |
+| (printed by the script) | One message from the test patient to a doctor they have a visit with. The body is `[E2E] mobile app check <code>`. The doctor sees it in their Messages page. |
+
+### triage_sessions (1 per run)
+
+| id | note |
+| --- | --- |
+| (not looked up) | One session for the test patient whose `symptoms` is `["[E2E] mobile app check <code>"]`. |
+
+### appointment_reviews (0 or 1)
+
+| id | note |
+| --- | --- |
+| (printed by the script) | Only if the test patient has a completed visit with `[E2E]` in the reason from the last 30 days and has not rated it: a 4-star rating with the comment `[E2E] mobile app check <code>`. The doctor's `rating` and `review_count` include it; deleting the row leaves them stale until that doctor is rated again. If the visit was already rated, the script puts the earlier rating back and nothing new is left. |
+
+### patients (0)
+
+The script sets the test patient's `allergies` to `[E2E] Penicillin`, reads it back and restores the original value. Nothing is left.
+
+### user_notifications, notification_preferences, patient_share_codes, push_devices
+
+As in the 0.1 check above.
