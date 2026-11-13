@@ -8,13 +8,12 @@ import { Avatar } from "@/components/Avatar";
 import { loadState } from "@/components/QueryState";
 import { ListScreen } from "@/components/Screen";
 import { Card, Chip, EmptyState, ErrorState, ListSkeleton, Small, Strong } from "@/components/ui";
-import { usePollWhileFocused, useRealtime } from "@/lib/data";
-import { useOnline } from "@/lib/net";
+import { useRealtime } from "@/lib/data";
 import { personFor, useConversations, type Person } from "@/lib/messages";
 import { useSession } from "@/lib/session";
 import { timeAgo } from "@/shared/dates";
 import { friendlyError } from "@/shared/errors";
-import { NO_MESSAGES_TEXT, NO_MESSAGES_TITLE, type Thread } from "@/shared/messages";
+import { MESSAGES_FALLBACK_MS, NO_MESSAGES_TEXT, NO_MESSAGES_TITLE, type Thread } from "@/shared/messages";
 import { space } from "@/theme";
 
 const keyOf = (t: Thread) => t.otherId;
@@ -42,12 +41,10 @@ const ThreadRow = memo(function ThreadRow({ thread, person, mine }: { thread: Th
 
 export default function Messages() {
   const { userId } = useSession();
-  const online = useOnline();
   const q = useConversations();
-  // Live while this tab is in front. patient_messages is not in the Realtime publication
-  // yet, so the list is also checked every 10 seconds, as the website's doctor page does.
-  useRealtime("patient_messages", userId ? `to_user_id=eq.${userId}` : null, [["messages"]]);
-  usePollWhileFocused(["messages"], 10_000, online);
+  // Live while this screen is in front (Realtime). Only if that connection drops is the list
+  // refreshed on a slow timer, until it is back.
+  useRealtime("patient_messages", userId ? `to_user_id=eq.${userId}` : null, [["messages"]], true, MESSAGES_FALLBACK_MS);
 
   const people = q.data?.people;
   const renderItem = useCallback<ListRenderItem<Thread>>(({ item }) => (

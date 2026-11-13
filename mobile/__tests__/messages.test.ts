@@ -1,4 +1,4 @@
-import { groupThreads, unreadIds, type Message } from "../shared/messages";
+import { groupThreads, realtimeFallback, unreadIds, type Message } from "../shared/messages";
 
 const msg = (id: string, from: string, to: string, at: string, read = false): Message =>
   ({ id, from_user_id: from, to_user_id: to, body: `body ${id}`, created_at: at, is_read: read });
@@ -30,5 +30,23 @@ describe("conversations", () => {
 
   it("handles no messages", () => {
     expect(groupThreads([], me)).toEqual([]);
+  });
+});
+
+describe("the slow refresh that covers a lost live connection", () => {
+  it("does not run while Realtime is connected", () => {
+    expect(realtimeFallback("SUBSCRIBED", false)).toBe("keep");
+  });
+  it("starts when the connection is lost, once", () => {
+    for (const status of ["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"]) {
+      expect(realtimeFallback(status, false)).toBe("start");
+      expect(realtimeFallback(status, true)).toBe("keep");
+    }
+  });
+  it("stops as soon as the connection is back", () => {
+    expect(realtimeFallback("SUBSCRIBED", true)).toBe("stop");
+  });
+  it("ignores statuses it does not know", () => {
+    expect(realtimeFallback("SOMETHING", false)).toBe("keep");
   });
 });

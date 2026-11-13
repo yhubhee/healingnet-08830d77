@@ -9,13 +9,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OfflineBar } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { EmptyState, IconButton, Small, Strong } from "@/components/ui";
-import { usePollWhileFocused, useRealtime } from "@/lib/data";
+import { useRealtime } from "@/lib/data";
 import { personFor, useConversations, useMarkMessagesRead, useSendMessage } from "@/lib/messages";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { useSession } from "@/lib/session";
 import { fmtDateTime } from "@/shared/dates";
 import { friendlyError } from "@/shared/errors";
-import { MAX_MESSAGE, unreadIds, type Message } from "@/shared/messages";
+import { MAX_MESSAGE, MESSAGES_FALLBACK_MS, unreadIds, type Message } from "@/shared/messages";
 import { fonts, MIN_TOUCH, radius, space, useTheme } from "@/theme";
 
 const keyOf = (m: Message) => m.id;
@@ -45,9 +45,9 @@ export default function Conversation() {
   const { mutate: markRead } = useMarkMessagesRead();
   const [draft, setDraft] = useState("");
 
-  // Live while the chat is open: Realtime, plus a check every 5 seconds (see the Messages tab).
-  useRealtime("patient_messages", userId ? `to_user_id=eq.${userId}` : null, [["messages"]]);
-  usePollWhileFocused(["messages"], 5_000, online);
+  // Live while this screen is in front (Realtime). Only if that connection drops is the list
+  // refreshed on a slow timer, until it is back.
+  useRealtime("patient_messages", userId ? `to_user_id=eq.${userId}` : null, [["messages"]], true, MESSAGES_FALLBACK_MS);
 
   const thread = q.data?.threads.find((t) => t.otherId === id);
   const person = personFor(q.data?.people, id);

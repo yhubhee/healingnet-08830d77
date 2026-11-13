@@ -4,6 +4,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useId, useRef } from "react";
 import type { Appointment } from "@/shared/appointments";
+import { realtimeFallback } from "@/shared/messages";
 import type { PushPrefs, Tables } from "@/shared/database";
 import type { CheckResult, PatientRequest, RxPayload } from "@/shared/pharmacy";
 import type { VisitReview } from "@/shared/reviews";
@@ -211,7 +212,7 @@ export function useNotifications() {
 export interface HomeSummary {
   unreadCount: number;
   /** The latest 3 unread notifications. */
-  updates: Pick<UserNotification, "id" | "title" | "message" | "type" | "action_url" | "created_at">[];
+  updates: Pick<UserNotification, "id" | "title" | "message" | "type" | "action_url" | "reference_id" | "created_at">[];
 }
 
 /** The Home screen's "Updates" and bell count, from the same notifications table. Saved for offline use. */
@@ -222,7 +223,7 @@ export function useHomeSummary() {
     enabled: !!userId,
     queryFn: async (): Promise<HomeSummary> => {
       const { data, error, count } = await supabase.from("user_notifications")
-        .select("id, title, message, type, action_url, created_at", { count: "exact" })
+        .select("id, title, message, type, action_url, reference_id, created_at", { count: "exact" })
         .eq("is_read", false).order("created_at", { ascending: false }).limit(3);
       if (error) throw error;
       return { unreadCount: count ?? data?.length ?? 0, updates: data ?? [] };
@@ -315,8 +316,14 @@ export function useSavePushPrefs() {
  * Refetches the given queries when a table changes. The subscription is opened after the
  * screen has drawn, and only while the screen is in front: a hidden tab holds no socket
  * subscription. Coming back to the screen refetches once, to catch what was missed.
+ *
+ * `fallbackMs`: while the live connection is down (no signal, a dropped socket), refetch on
+ * this slow timer instead, and stop as soon as the connection is back. Nothing is polled
+ * while Realtime is connected.
  */
-export function useRealtime(table: string, filter: string | null | undefined, queryKeys: readonly (readonly unknown[])[], enabled = true) {
+export function useRealtime(
+  table: string, filter: string | null | undefined, queryKeys: readonly (readonly unknown[])[], enabled = true, fallbackMs?: number,
+) {
   const qc = useQueryClient();
   const instance = useId();
   const keys = JSON.stringify(queryKeys);
@@ -328,33 +335,27 @@ export function useRealtime(table: string, filter: string | null | undefined, qu
       if (seen.current) invalidate();
       seen.current = true;
       let channel: ReturnType<typeof supabase.channel> | null = null;
+      let fallback: ReturnType<typeof setInterval> | null = null;
+      const stopFallback = () => { if (fallback) { clearInterval(fallback); fallback = null; } };
       const cancel = afterPaint(() => {
         channel = supabase
           .channel(`rt-${table}-${instance}`)
           .on("postgres_changes", { event: "*", schema: "public", table, ...(filter ? { filter } : {}) }, invalidate)
-          .subscribe();
+          .subscribe((status) => {
+            const next = realtimeFallback(status, fallback !== null);
+            if (next === "stop") {
+              stopFallback();
+              invalidate(); // catch up on what arrived while disconnected
+            } else if (next === "start" && fallbackMs) {
+              fallback = setInterval(invalidate, fallbackMs);
+            }
+          });
       });
       return () => {
         cancel();
+        stopFallback();
         if (channel) supabase.removeChannel(channel);
       };
-    }, [table, filter, keys, enabled, instance, qc]),
-  );
-}
-
-/**
- * Refetches on a timer while the screen is in front. For tables that are not in the
- * database's Realtime publication (patient_messages): the website's doctor page polls the
- * same way.
- */
-export function usePollWhileFocused(queryKey: readonly unknown[], everyMs: number, enabled = true) {
-  const qc = useQueryClient();
-  const key = JSON.stringify(queryKey);
-  useFocusEffect(
-    useCallback(() => {
-      if (!enabled) return;
-      const timer = setInterval(() => { qc.invalidateQueries({ queryKey: JSON.parse(key) as unknown[] }); }, everyMs);
-      return () => clearInterval(timer);
-    }, [qc, key, everyMs, enabled]),
+    }, [table, filter, keys, enabled, instance, qc, fallbackMs]),
   );
 }

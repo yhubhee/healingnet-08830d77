@@ -41,3 +41,17 @@ export const unreadIds = (thread: Pick<Thread, "messages"> | undefined, me: stri
 export const NO_MESSAGES_TITLE = "No conversations yet";
 export const NO_MESSAGES_TEXT = "Your doctors will message you here. When a doctor you have seen writes to you, the conversation appears and you can reply.";
 export const MAX_MESSAGE = 2000;
+
+/** How often the messages are refreshed while the live connection is down. */
+export const MESSAGES_FALLBACK_MS = 30_000;
+
+/**
+ * What to do with the slow fallback refresh when the Realtime channel's status changes:
+ * start it when the connection is lost, stop it when the connection is (back) up, and
+ * otherwise leave things as they are.
+ */
+export function realtimeFallback(status: string, fallbackRunning: boolean): "start" | "stop" | "keep" {
+  if (status === "SUBSCRIBED") return fallbackRunning ? "stop" : "keep";
+  if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") return fallbackRunning ? "keep" : "start";
+  return "keep";
+}
