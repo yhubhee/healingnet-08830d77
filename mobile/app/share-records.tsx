@@ -1,10 +1,10 @@
 // Share my records with a hospital (src/components/patient/ShareRecordsCard.tsx): a
 // one-time code from create_patient_share_code that expires after 15 minutes, shown
 // large with its countdown and as a QR of the code.
-import { ShieldCheck } from "lucide-react-native";
+import { ShieldCheck } from "@/components/icons";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
-import QRCode from "react-native-qrcode-svg";
+import { QrCode } from "@/components/QrCode";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { Body, Button, Card, Mono, Notice, Small, Strong } from "@/components/ui";
@@ -56,7 +56,7 @@ export default function ShareRecords() {
           <Mono accessibilityLabel={`Code: ${share!.code.split("").join(" ")}`} style={{ fontSize: 40, letterSpacing: 8 }}>{share!.code}</Mono>
           <Strong accessibilityLiveRegion="none">Expires in {fmtRemaining(remaining)}</Strong>
           <View style={{ backgroundColor: QR_BACKGROUND, padding: space.lg, borderRadius: 16 }} accessible accessibilityRole="image" accessibilityLabel="QR code of your share code">
-            <QRCode value={share!.code} size={200} backgroundColor={QR_BACKGROUND} color={QR_FOREGROUND} />
+            <QrCode value={share!.code} size={200} backgroundColor={QR_BACKGROUND} color={QR_FOREGROUND} />
           </View>
           <Small style={{ textAlign: "center" }}>The hospital types the code or scans the QR.</Small>
         </Card>

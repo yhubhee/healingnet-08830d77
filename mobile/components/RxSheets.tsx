@@ -1,7 +1,7 @@
 // "Get it from a pharmacy" and "Rate this pharmacy" (src/components/patient/rx/PharmacyPicker.tsx
 // and RatePharmacy.tsx): pharmacy_directory → choose → rx_send_to_pharmacy, and rx_review_pharmacy.
+import { Check, Star } from "./icons";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Star } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";

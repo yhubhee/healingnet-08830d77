@@ -1,0 +1,45 @@
+// The icons the app uses, each imported from its own file. Importing from the top of
+// "lucide-react-native" would pack all of its ~2,300 icons into the app (several MB).
+// To use a new icon, add a line here.
+export type { LucideIcon } from "lucide-react-native";
+export { default as ArrowLeft } from "lucide-react-native/icons/arrow-left";
+export { default as Award } from "lucide-react-native/icons/award";
+export { default as Bell } from "lucide-react-native/icons/bell";
+export { default as BellRing } from "lucide-react-native/icons/bell-ring";
+export { default as Building2 } from "lucide-react-native/icons/building-2";
+export { default as CalendarCheck } from "lucide-react-native/icons/calendar-check";
+export { default as CalendarDays } from "lucide-react-native/icons/calendar-days";
+export { default as CalendarPlus } from "lucide-react-native/icons/calendar-plus";
+export { default as Camera } from "lucide-react-native/icons/camera";
+export { default as Check } from "lucide-react-native/icons/check";
+export { default as CheckCheck } from "lucide-react-native/icons/check-check";
+export { default as ChevronDown } from "lucide-react-native/icons/chevron-down";
+export { default as ChevronRight } from "lucide-react-native/icons/chevron-right";
+export { default as CircleAlert } from "lucide-react-native/icons/circle-alert";
+export { default as Copy } from "lucide-react-native/icons/copy";
+export { default as FileDown } from "lucide-react-native/icons/file-down";
+export { default as FileText } from "lucide-react-native/icons/file-text";
+export { default as FlaskConical } from "lucide-react-native/icons/flask-conical";
+export { default as HeartPulse } from "lucide-react-native/icons/heart-pulse";
+export { default as House } from "lucide-react-native/icons/house";
+export { default as ImageIcon } from "lucide-react-native/icons/image";
+export { default as Lock } from "lucide-react-native/icons/lock";
+export { default as LogOut } from "lucide-react-native/icons/log-out";
+export { default as MailCheck } from "lucide-react-native/icons/mail-check";
+export { default as MapPin } from "lucide-react-native/icons/map-pin";
+export { default as MessageCircle } from "lucide-react-native/icons/message-circle";
+export { default as Pencil } from "lucide-react-native/icons/pencil";
+export { default as Pill } from "lucide-react-native/icons/pill";
+export { default as RotateCcw } from "lucide-react-native/icons/rotate-ccw";
+export { default as Send } from "lucide-react-native/icons/send";
+export { default as Shield } from "lucide-react-native/icons/shield";
+export { default as ShieldCheck } from "lucide-react-native/icons/shield-check";
+export { default as Star } from "lucide-react-native/icons/star";
+export { default as Stethoscope } from "lucide-react-native/icons/stethoscope";
+export { default as Trash2 } from "lucide-react-native/icons/trash-2";
+export { default as User } from "lucide-react-native/icons/user";
+export { default as UserRound } from "lucide-react-native/icons/user-round";
+export { default as Users } from "lucide-react-native/icons/users";
+export { default as Video } from "lucide-react-native/icons/video";
+export { default as WifiOff } from "lucide-react-native/icons/wifi-off";
+export { default as X } from "lucide-react-native/icons/x";

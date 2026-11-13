@@ -1,6 +1,6 @@
 // One visit in the Visits list. Memoised: a card only redraws when its own visit changes.
+import { CalendarPlus, RotateCcw, Video } from "./icons";
 import { router } from "expo-router";
-import { CalendarPlus, RotateCcw, Video } from "lucide-react-native";
 import { memo } from "react";
 import { View } from "react-native";
 import { OFFLINE_ACTION } from "@/lib/net";

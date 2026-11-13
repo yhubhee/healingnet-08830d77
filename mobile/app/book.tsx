@@ -2,11 +2,11 @@
 // progress bar: hospital → doctor (or any available) → visit type → date and time →
 // reason → confirm. Every read and the booking itself use the website's database functions
 // (bookable_hospitals, bookable_doctors, book_appointment); their messages are shown as written.
+import { Building2, CalendarCheck, Check, ChevronRight, MapPin, Users, Video } from "@/components/icons";
+import type { LucideIcon } from "@/components/icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { router } from "expo-router";
-import { Building2, CalendarCheck, Check, ChevronRight, MapPin, Users, Video } from "lucide-react-native";
-import type { LucideIcon } from "lucide-react-native";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BackHandler, Pressable, ScrollView, Text, View } from "react-native";
 import { Avatar } from "@/components/Avatar";

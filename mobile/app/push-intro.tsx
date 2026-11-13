@@ -1,6 +1,6 @@
 // Shown once after the first sign-in, before the phone's own permission prompt.
+import { BellRing } from "@/components/icons";
 import { router } from "expo-router";
-import { BellRing } from "lucide-react-native";
 import { useState } from "react";
 import { Screen } from "@/components/Screen";
 import { Body, Button, Small, Title } from "@/components/ui";

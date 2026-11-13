@@ -2,8 +2,8 @@
 // status wording, cancel, reschedule, add to calendar and join call.
 // The list is virtualised and its rows are memoised: a patient with a long history mounts
 // only the few cards on screen, and the saved list shows before the network answers.
+import { CalendarDays, CalendarPlus } from "@/components/icons";
 import { router } from "expo-router";
-import { CalendarDays, CalendarPlus } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import { Alert, View, type ListRenderItem } from "react-native";
 import { Segmented } from "@/components/form";

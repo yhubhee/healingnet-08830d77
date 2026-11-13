@@ -2,7 +2,7 @@
   "expo": {
     "name": "HealingNet",
     "slug": "healingnet",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "healingnet",
@@ -81,10 +81,7 @@
     },
     "extra": {
       "router": {
-        "root": "app",
-        "asyncRoutes": {
-          "web": true
-        }
+        "root": "app"
       },
       "eas": {
         "projectId": "7e8c4716-3121-421a-88d7-c0456dbe3c8f"

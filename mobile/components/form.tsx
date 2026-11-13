@@ -1,7 +1,7 @@
 // Form controls: text field, picker, date field, switch row, segmented tabs and sheets.
+import { Check, ChevronDown, ChevronRight, X } from "./icons";
+import type { LucideIcon } from "./icons";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
-import { Check, ChevronDown, ChevronRight, X } from "lucide-react-native";
-import type { LucideIcon } from "lucide-react-native";
 import { useState, type ReactNode } from "react";
 import {
   FlatList, Modal, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View, type TextInputProps,

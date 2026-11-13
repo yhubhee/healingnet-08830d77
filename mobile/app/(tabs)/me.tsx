@@ -1,6 +1,6 @@
 // Me: profile summary and settings (src/pages/patient/Profile.tsx and Settings.tsx).
+import { Bell, FileText, Lock, LogOut, Shield, Trash2, UserRound } from "@/components/icons";
 import { router } from "expo-router";
-import { Bell, FileText, Lock, LogOut, Shield, Trash2, UserRound } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, View } from "react-native";
 import { Avatar } from "@/components/Avatar";

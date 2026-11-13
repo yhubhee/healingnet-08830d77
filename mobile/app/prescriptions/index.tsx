@@ -1,6 +1,6 @@
 // Prescriptions (src/pages/patient/Prescriptions.tsx): grouped by document, with status.
+import { ChevronRight, Pill } from "@/components/icons";
 import { router } from "expo-router";
-import { ChevronRight, Pill } from "lucide-react-native";
 import { memo, useCallback, useMemo, useState } from "react";
 import { View, type ListRenderItem } from "react-native";
 import { Segmented } from "@/components/form";

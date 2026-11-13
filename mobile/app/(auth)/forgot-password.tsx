@@ -1,7 +1,7 @@
 // Step 1 of a password reset (src/pages/ForgotPassword.tsx): email a link that opens the
 // app's reset screen. Whether the email has an account is never revealed.
+import { MailCheck } from "@/components/icons";
 import { router } from "expo-router";
-import { MailCheck } from "lucide-react-native";
 import { useState } from "react";
 import { Field } from "@/components/form";
 import { Screen } from "@/components/Screen";

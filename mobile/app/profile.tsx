@@ -1,6 +1,6 @@
 // My profile, read-only (src/pages/patient/Profile.tsx). Edit opens the profile form.
+import { Pencil, UserRound } from "@/components/icons";
 import { router } from "expo-router";
-import { Pencil } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import { Avatar } from "@/components/Avatar";
@@ -9,7 +9,6 @@ import { Button, Card, EmptyState, Heading, IconButton, Label, ListSkeleton, Sma
 import { useSession } from "@/lib/session";
 import { fmtLongDate } from "@/shared/dates";
 import { space } from "@/theme";
-import { UserRound } from "lucide-react-native";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return <Card style={{ gap: space.md }}><Label>{title}</Label>{children}</Card>;

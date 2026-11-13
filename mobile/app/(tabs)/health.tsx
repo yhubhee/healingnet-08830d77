@@ -1,8 +1,8 @@
 // Health: my health card (the health fields of src/pages/patient/Profile.tsx), prescriptions,
 // share my records, and the sections that arrive in the next update.
+import { Award, ChevronRight, FileText, FlaskConical, Pencil, Pill, ShieldCheck } from "@/components/icons";
+import type { LucideIcon } from "@/components/icons";
 import { router } from "expo-router";
-import { Award, ChevronRight, FileText, FlaskConical, Pencil, Pill, ShieldCheck } from "lucide-react-native";
-import type { LucideIcon } from "lucide-react-native";
 import { View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { Button, Card, Chip, Heading, Label, ListSkeleton, Small, Strong } from "@/components/ui";

@@ -1,5 +1,5 @@
 // Doctors, hospital staff, pharmacies and admins who sign in to the patient app.
-import { Stethoscope } from "lucide-react-native";
+import { Stethoscope } from "@/components/icons";
 import { useState } from "react";
 import { Screen } from "@/components/Screen";
 import { Body, Button, Title } from "@/components/ui";

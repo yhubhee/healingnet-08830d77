@@ -1,14 +1,14 @@
 // One prescription (src/components/patient/rx/*): the QR on white, the code, the
 // medicines, the doctor, pharmacy requests, medicine checks and "Wasn't me?". The
 // document comes from the saved list, so the QR and details also show offline.
+import { Copy, FileDown, Send, ShieldCheck, Star } from "@/components/icons";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams } from "expo-router";
-import { Copy, FileDown, Send, ShieldCheck, Star } from "lucide-react-native";
 import { useState } from "react";
 import { Alert, Pressable, View } from "react-native";
-import QRCode from "react-native-qrcode-svg";
 import { Field } from "@/components/form";
 import { QueryState } from "@/components/QueryState";
+import { QrCode } from "@/components/QrCode";
 import { PharmacyPickerSheet, RatePharmacySheet } from "@/components/RxSheets";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
@@ -120,7 +120,7 @@ export default function PrescriptionDetail() {
               <Small style={{ textAlign: "center" }}>Show this at the pharmacy. The pharmacist scans it to check your prescription. You can screenshot this screen to send to someone collecting for you.</Small>
               {code ? (
                 <View style={{ backgroundColor: QR_BACKGROUND, padding: space.lg, borderRadius: 16 }} accessible accessibilityRole="image" accessibilityLabel={`QR code for prescription ${code}`}>
-                  <QRCode value={verifyUrl(WEB_URL, code)} size={232} backgroundColor={QR_BACKGROUND} color={QR_FOREGROUND} ecl="M" />
+                  <QrCode value={verifyUrl(WEB_URL, code)} size={232} backgroundColor={QR_BACKGROUND} color={QR_FOREGROUND} />
                 </View>
               ) : null}
               <Mono selectable accessibilityLabel={`Code ${code.split("").join(" ")}`} style={{ textAlign: "center" }}>{code}</Mono>

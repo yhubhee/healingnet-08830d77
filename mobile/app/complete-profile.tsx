@@ -1,9 +1,9 @@
 // Complete profile (shown first until the required details are filled in) and Edit
 // profile (?edit=1). Same fields, checks and messages as the website's
 // src/pages/patient/CompleteProfile.tsx.
+import { Camera, ImageIcon, ShieldCheck } from "@/components/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { Camera, ImageIcon, ShieldCheck } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { Avatar } from "@/components/Avatar";

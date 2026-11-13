@@ -1,5 +1,5 @@
 // Messages arrive in a later version; for now this hands off to the website.
-import { MessageCircle } from "lucide-react-native";
+import { MessageCircle } from "@/components/icons";
 import { Screen } from "@/components/Screen";
 import { EmptyState } from "@/components/ui";
 import { openWeb } from "@/lib/web";

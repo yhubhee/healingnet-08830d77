@@ -1,7 +1,7 @@
 // Building blocks of the design system: text, buttons, cards, chips and the loading,
 // empty and error states. Text follows the phone's text size; touch targets are at least 48.
-import type { LucideIcon } from "lucide-react-native";
-import { CircleAlert, WifiOff } from "lucide-react-native";
+import { CircleAlert, WifiOff } from "./icons";
+import type { LucideIcon } from "./icons";
 import type { ReactNode } from "react";
 import {
   ActivityIndicator, Pressable, StyleSheet, Text, View,

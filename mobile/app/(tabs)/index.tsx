@@ -1,8 +1,8 @@
 // Home (mirrors the data on src/pages/patient/Dashboard.tsx): next appointment, the two
 // main actions, active prescriptions and the latest unread updates.
+import { Bell, CalendarPlus, ChevronRight, Pill, Stethoscope } from "@/components/icons";
+import type { LucideIcon } from "@/components/icons";
 import { router } from "expo-router";
-import { Bell, CalendarPlus, ChevronRight, Pill, Stethoscope } from "lucide-react-native";
-import type { LucideIcon } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 import { QueryState } from "@/components/QueryState";
 import { Screen } from "@/components/Screen";

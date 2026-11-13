@@ -6,10 +6,10 @@
 //   prescription screen, where screenshots are allowed (useAllowScreenshots).
 // - App lock (off by default): asks for fingerprint, face or the phone's passcode after
 //   5 minutes in the background, and when the app is opened fresh.
+import { Lock } from "@/components/icons";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useFocusEffect } from "expo-router";
 import * as ScreenCapture from "expo-screen-capture";
-import { Lock } from "lucide-react-native";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppState, Image, Platform, StyleSheet, View } from "react-native";
 import { Button, Body, Title } from "@/components/ui";

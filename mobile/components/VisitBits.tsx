@@ -1,5 +1,5 @@
 // Small pieces shared by the Home card and the Visits list.
-import { CalendarDays, MapPin, Video } from "lucide-react-native";
+import { CalendarDays, MapPin, Video } from "./icons";
 import { View } from "react-native";
 import type { Appointment } from "@/shared/appointments";
 import { fmt12, fmtDayDate } from "@/shared/dates";

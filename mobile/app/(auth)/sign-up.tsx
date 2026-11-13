@@ -1,7 +1,7 @@
 // Patient sign-up: the same fields the website's patient sign-up sends (first name, last
 // name, phone, email, password). A database trigger creates the patient record.
+import { MailCheck } from "@/components/icons";
 import { router } from "expo-router";
-import { MailCheck } from "lucide-react-native";
 import { useState } from "react";
 import { View } from "react-native";
 import { Field } from "@/components/form";

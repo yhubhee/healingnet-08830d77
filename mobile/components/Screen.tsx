@@ -1,8 +1,8 @@
 // Page frame: safe areas, an optional header with a back button, the offline bar,
 // scrolling and pull to refresh. ListScreen is the same frame around a FlatList, for
 // lists that can grow long: only the rows on screen are mounted.
+import { ArrowLeft, WifiOff } from "./icons";
 import { router } from "expo-router";
-import { ArrowLeft, WifiOff } from "lucide-react-native";
 import type { ReactElement, ReactNode } from "react";
 import { FlatList, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, Text, View, type ListRenderItem } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

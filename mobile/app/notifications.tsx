@@ -1,7 +1,7 @@
 // Notifications (src/components/common/UserNotificationsList.tsx): read and unread, tap
 // to open the matching screen, mark all read.
+import { Bell, CheckCheck } from "@/components/icons";
 import { router } from "expo-router";
-import { Bell, CheckCheck } from "lucide-react-native";
 import { memo, useCallback } from "react";
 import { View, type ListRenderItem } from "react-native";
 import { loadState } from "@/components/QueryState";
