@@ -44,11 +44,14 @@ const TWICE = ["08:00", "20:00"];
 const THREE = ["08:00", "14:00", "20:00"];
 const EVERY_8_HOURS = ["06:00", "14:00", "22:00"];
 const AT_NIGHT = ["21:00"];
+const FOUR = ["08:00", "12:00", "16:00", "20:00"];
+const EVERY_6_HOURS = ["00:00", "06:00", "12:00", "18:00"];
 
 /**
  * Suggested reminder times for a prescription's frequency text:
  *   once daily -> 8:00 · twice -> 8:00 and 20:00 · 3 times -> 8:00, 14:00 and 20:00 ·
- *   every 8 hours -> 6:00, 14:00 and 22:00 · "when needed" -> none.
+ *   every 8 hours -> 6:00, 14:00 and 22:00 · 4 times -> 8:00, 12:00, 16:00 and 20:00 ·
+ *   every 6 hours -> 6:00, 12:00, 18:00 and 0:00 · "when needed" -> none.
  * Text the app does not recognise gives no reminders; the patient can still add times.
  */
 export function suggestTimes(frequency: string | null | undefined): Suggestion {
@@ -59,12 +62,16 @@ export function suggestTimes(frequency: string | null | undefined): Suggestion {
   const hourly = /every (\d{1,2}) ?(h|hr|hrs|hour|hours) /.exec(f) ?? / (\d{1,2}) ?-?hourly /.exec(f) ?? / q ?(\d{1,2}) ?h /.exec(f);
   if (hourly) {
     const n = Number(hourly[1]);
+    if (n === 6) return { kind: "scheduled", times: EVERY_6_HOURS };
     if (n === 8) return { kind: "scheduled", times: EVERY_8_HOURS };
     if (n === 12) return { kind: "scheduled", times: TWICE };
     if (n === 24) return { kind: "scheduled", times: ONCE };
     return { kind: "unknown", times: [] };
   }
-  if (/ (4|four) ?(x|times) | qds | qid /.test(f)) return { kind: "unknown", times: [] };
+  // More than four times a day is not guessed at (and must not fall through to "daily").
+  const count = / (\d{1,2}) ?(x|times) /.exec(f);
+  if ((count && Number(count[1]) > 4) || / (five|six|seven|eight) times /.test(f)) return { kind: "unknown", times: [] };
+  if (/ (4|four) ?(x|times) | qds | qid | q d s | q i d | 4 ?x /.test(f)) return { kind: "scheduled", times: FOUR };
   if (/ (3|three) ?(x|times) | thrice | tds | tid | t d s | 3 ?x /.test(f)) return { kind: "scheduled", times: THREE };
   if (/ (2|two) ?(x|times) | twice | bd | bid | b d | 2 ?x /.test(f)) return { kind: "scheduled", times: TWICE };
   if (/ (nocte|at night|at bedtime|bedtime|every night|nightly) /.test(f)) return { kind: "scheduled", times: AT_NIGHT };

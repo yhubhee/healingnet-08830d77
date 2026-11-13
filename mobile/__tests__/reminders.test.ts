@@ -26,13 +26,35 @@ describe("frequency -> reminder times", () => {
       expect(times(f)).toEqual(["06:00", "14:00", "22:00"]);
     }
   });
+  it("4 times a day -> 8:00, 12:00, 16:00 and 20:00", () => {
+    for (const f of ["4 times a day", "four times daily", "QID", "q.i.d.", "QDS", "4x daily", "4 times daily after food"]) {
+      expect(suggestTimes(f)).toEqual({ kind: "scheduled", times: ["08:00", "12:00", "16:00", "20:00"] });
+    }
+  });
+  it("every 6 hours -> 6:00, 12:00, 18:00 and 0:00 (midnight)", () => {
+    for (const f of ["Every 6 hours", "every 6 hrs", "6 hourly", "6-hourly", "q6h"]) {
+      const s = suggestTimes(f);
+      expect(s.kind).toBe("scheduled");
+      expect([...s.times].sort()).toEqual(["00:00", "06:00", "12:00", "18:00"]);
+    }
+  });
+  it("four doses a day make four doses each day, midnight included", () => {
+    const r: Reminder = { id: "rx", documentId: "d", drug: "X", dose: null, times: suggestTimes("every 6 hours").times, startDate: "2026-11-13", days: 2 };
+    const doses = dosesFor(r);
+    expect(doses).toHaveLength(8);
+    expect(doses.map((d) => d.time).slice(0, 4)).toEqual(["00:00", "06:00", "12:00", "18:00"]);
+    expect(todaysDoses([r], new Date(2026, 10, 14, 9, 0))).toHaveLength(4);
+  });
+  it("when needed still wins over a count", () => {
+    expect(suggestTimes("4 times a day when needed").kind).toBe("as_needed");
+  });
   it("when needed -> no reminders", () => {
     for (const f of ["When needed", "as needed", "PRN", "Twice daily when needed", "as required for pain"]) {
       expect(suggestTimes(f)).toEqual({ kind: "as_needed", times: [] });
     }
   });
   it("unknown text -> no reminders", () => {
-    for (const f of ["", null, "see the leaflet", "with food", "4 times daily", "QDS", "every 6 hours", "weekly", "stat"]) {
+    for (const f of ["", null, "see the leaflet", "with food", "5 times daily", "every 4 hours", "every 2 hours", "weekly", "stat"]) {
       expect(suggestTimes(f)).toEqual({ kind: "unknown", times: [] });
     }
   });
