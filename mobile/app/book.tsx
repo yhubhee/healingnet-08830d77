@@ -20,6 +20,7 @@ import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { supabase } from "@/lib/supabase";
 import { addDays, DAY_NAMES, dayChip, dayOfWeek, DEFAULT_SLOTS, fmt12, fmtLongDate, halfHours, lagosNowTime, lagosToday } from "@/shared/dates";
 import { dbMessage } from "@/shared/errors";
+import { ratingLabel, ratingSpoken } from "@/shared/reviews";
 import { fonts, MIN_TOUCH, radius, space, useTheme } from "@/theme";
 
 interface Hospital {
@@ -29,6 +30,8 @@ interface Hospital {
 interface Doctor {
   id: string; first_name: string; last_name: string; specialty: string | null; years_experience: number | null;
   bio: string | null; profile_image_url: string | null; rating: number | null; matches_specialty: boolean;
+  /** Added by the app from doctors.review_count (bookable_doctors does not return it). */
+  review_count?: number;
 }
 interface AvailRow { day_of_week: number; start_time: string; end_time: string; hospital_id: string | null; accepts_in_person: boolean; accepts_virtual: boolean }
 type Visit = "in_person" | "video";
@@ -291,7 +294,12 @@ function DoctorStep({ hospital, specialty, onPick }: { hospital: Hospital; speci
     queryFn: async () => {
       const { data, error } = await supabase.rpc("bookable_doctors", { p_hospital_id: hospital.id, p_specialty: specialty ?? undefined });
       if (error) throw error;
-      return (data ?? []) as Doctor[];
+      const doctors = (data ?? []) as Doctor[];
+      if (doctors.length === 0) return doctors;
+      // How many reviews are behind each rating; without it a doctor simply shows as "New".
+      const counts = await supabase.from("doctors").select("id, review_count").in("id", doctors.map((d) => d.id));
+      const byId = new Map((counts.data ?? []).map((c) => [c.id, c.review_count]));
+      return doctors.map((d) => ({ ...d, review_count: byId.get(d.id) ?? 0 }));
     },
   });
   return (
@@ -307,6 +315,7 @@ function DoctorStep({ hospital, specialty, onPick }: { hospital: Hospital; speci
         <Choice key={d.id} title={`Dr. ${d.first_name} ${d.last_name}`} onPress={() => onPick(d)}
           left={<Avatar url={d.profile_image_url} first={d.first_name} last={d.last_name} size={48} />}
           text={`${d.specialty || "General practice"}${d.years_experience != null ? ` · ${d.years_experience} yrs experience` : ""}`}>
+          <Small muted={false} accessibilityLabel={ratingSpoken(d.rating, d.review_count)}>{ratingLabel(d.rating, d.review_count)}</Small>
           {specialty && d.matches_specialty ? <Chip label={`✓ ${specialty}`} tone="success" /> : null}
           {d.bio ? <Small numberOfLines={2}>{d.bio}</Small> : null}
         </Choice>

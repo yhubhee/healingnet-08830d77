@@ -1,22 +1,26 @@
 // One visit in the Visits list. Memoised: a card only redraws when its own visit changes.
-import { CalendarPlus, RotateCcw, Video } from "./icons";
+import { CalendarPlus, RotateCcw, Star, Video } from "./icons";
 import { router } from "expo-router";
 import { memo } from "react";
 import { View } from "react-native";
 import { OFFLINE_ACTION } from "@/lib/net";
 import { canCancel, canJoinCall, doctorIsInCall, doctorOrPending, isUpcoming, statusText, statusTone, type Appointment } from "@/shared/appointments";
+import { canRateVisit, stars, type VisitReview } from "@/shared/reviews";
 import { space } from "@/theme";
 import { Body, Button, Card, Chip, Heading, Notice, Small } from "./ui";
 import { VisitFacts } from "./VisitBits";
 
-export const VisitCard = memo(function VisitCard({ a, online, cancelling, onCancel, onReschedule, onCalendar, onJoin }: {
+export const VisitCard = memo(function VisitCard({ a, review, online, cancelling, onCancel, onReschedule, onCalendar, onJoin, onRate }: {
   a: Appointment;
+  /** The patient's rating of this visit, if they gave one. */
+  review: VisitReview | null;
   online: boolean;
   cancelling: boolean;
   onCancel: (a: Appointment) => void;
   onReschedule: (a: Appointment) => void;
   onCalendar: (a: Appointment) => void;
   onJoin: (a: Appointment) => void;
+  onRate: (a: Appointment) => void;
 }) {
   const upcoming = isUpcoming(a);
   return (
@@ -35,6 +39,15 @@ export const VisitCard = memo(function VisitCard({ a, online, cancelling, onCanc
           {doctorIsInCall(a) ? <Notice tone="success" text="Your doctor is in the call and waiting for you." /> : null}
           <Button label="Join call" icon={Video} onPress={() => onJoin(a)} disabled={!online} disabledReason={OFFLINE_ACTION} />
         </>
+      ) : null}
+      {review ? (
+        <View style={{ gap: space.sm }}>
+          <Small muted={false} accessibilityLabel={`You rated this visit ${review.rating} out of 5 stars`}>You rated this visit {stars(review.rating)} ({review.rating} of 5)</Small>
+          {review.comment ? <Small style={{ fontStyle: "italic" }}>“{review.comment}”</Small> : null}
+          {canRateVisit(a) ? <Button small label="Change rating" variant="secondary" icon={Star} onPress={() => onRate(a)} disabled={!online} disabledReason={OFFLINE_ACTION} /> : null}
+        </View>
+      ) : canRateVisit(a) ? (
+        <Button label="Rate your visit" icon={Star} variant="secondary" onPress={() => onRate(a)} disabled={!online} disabledReason={OFFLINE_ACTION} />
       ) : null}
       {a.status === "rejected" ? <Button label="Book again" icon={RotateCcw} onPress={() => router.push("/book")} /> : null}
       {upcoming ? (

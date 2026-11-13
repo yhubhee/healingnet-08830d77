@@ -6,6 +6,7 @@ import { useCallback, useEffect, useId, useRef } from "react";
 import type { Appointment } from "@/shared/appointments";
 import type { PushPrefs, Tables } from "@/shared/database";
 import type { CheckResult, PatientRequest, RxPayload } from "@/shared/pharmacy";
+import type { VisitReview } from "@/shared/reviews";
 import { usePatient, useSession } from "./session";
 import { supabase } from "./supabase";
 
@@ -75,6 +76,39 @@ export function useRescheduleAppointment() {
       if (error) throw error;
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ["appointments"] }),
+  });
+}
+
+// ---- Visit ratings (new in 0.2: appointment_reviews, rate_appointment) --------------------
+/** The patient's own ratings, by appointment id. */
+export function useVisitReviews() {
+  const { patientId } = usePatient();
+  return useQuery({
+    queryKey: ["visit-reviews", patientId],
+    enabled: !!patientId,
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<Record<string, VisitReview>> => {
+      const { data, error } = await supabase.from("appointment_reviews").select("appointment_id, rating, comment").eq("patient_id", patientId!);
+      if (error) throw error;
+      const out: Record<string, VisitReview> = {};
+      (data ?? []).forEach((r) => { out[r.appointment_id] = { rating: r.rating, comment: r.comment }; });
+      return out;
+    },
+  });
+}
+
+/** Rates a completed visit, or replaces the rating. The database checks who, what and when. */
+export function useRateVisit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ appointmentId, rating, comment }: { appointmentId: string; rating: number; comment: string }) => {
+      const { error } = await supabase.rpc("rate_appointment", { p_appointment_id: appointmentId, p_rating: rating, p_comment: comment.trim() || undefined });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["visit-reviews"] });
+      qc.invalidateQueries({ queryKey: ["booking", "doctors"] });
+    },
   });
 }
 

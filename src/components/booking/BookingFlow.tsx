@@ -28,6 +28,16 @@ interface Hospital {
 interface Doctor {
   id: string; first_name: string; last_name: string; specialty: string | null; years_experience: number | null;
   bio: string | null; profile_image_url: string | null; rating: number | null; matches_specialty: boolean;
+  /** From doctors.review_count (bookable_doctors does not return it). */
+  review_count?: number;
+}
+
+/** "4.6 ★ (12 reviews)", or "New" when nobody has rated the doctor yet. Same wording as the app. */
+export function ratingLabel(rating: number | string | null | undefined, reviewCount: number | null | undefined): string {
+  const count = Number(reviewCount ?? 0);
+  const value = Number(rating ?? 0);
+  if (!count || count < 1 || !Number.isFinite(value) || value <= 0) return "New";
+  return `${value.toFixed(1)} ★ (${count} review${count === 1 ? "" : "s"})`;
 }
 type Visit = "in_person" | "video";
 
@@ -289,7 +299,11 @@ function DoctorStep({ hospital, specialty, onPick }: { hospital: Hospital; speci
     queryFn: async () => {
       const { data, error } = await supabase.rpc("bookable_doctors", { p_hospital_id: hospital.id, p_specialty: specialty ?? undefined });
       if (error) throw error;
-      return (data ?? []) as Doctor[];
+      const doctors = (data ?? []) as Doctor[];
+      if (doctors.length === 0) return doctors;
+      const counts = await supabase.from("doctors").select("id, review_count").in("id", doctors.map((d) => d.id));
+      const byId = new Map((counts.data ?? []).map((c) => [c.id, c.review_count]));
+      return doctors.map((d) => ({ ...d, review_count: byId.get(d.id) ?? 0 }));
     },
     meta: { inlineError: true },
   });
@@ -321,6 +335,7 @@ function DoctorStep({ hospital, specialty, onPick }: { hospital: Hospital; speci
                   <p className="text-xs text-muted-foreground">
                     {d.specialty || "General practice"}{d.years_experience != null ? ` · ${d.years_experience} yrs experience` : ""}
                   </p>
+                  <p className="text-xs font-medium">{ratingLabel(d.rating, d.review_count)}</p>
                   {d.bio && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{d.bio}</p>}
                   {specialty && d.matches_specialty && <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs text-success"><Check className="w-3 h-3" aria-hidden />{specialty}</span>}
                 </div>
