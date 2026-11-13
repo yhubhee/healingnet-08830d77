@@ -4,10 +4,10 @@ import type { KeyValueStore } from "./encryptedStorage";
 
 /**
  * Only these queries are saved to the device: the profile (and whether this is a patient
- * account), appointments, prescription documents (including the code for the QR) and the
- * home summary. Everything else is fetched fresh.
+ * account), appointments, prescription documents (including the code for the QR), the
+ * home summary, lab results and medical records. Everything else is fetched fresh.
  */
-export const PERSISTED_QUERIES = ["role", "profile", "appointments", "rx-documents", "home-summary"] as const;
+export const PERSISTED_QUERIES = ["role", "profile", "appointments", "rx-documents", "home-summary", "lab-results", "emr"] as const;
 
 export function shouldPersistQuery(queryKey: QueryKey, status: string): boolean {
   return status === "success" && (PERSISTED_QUERIES as readonly string[]).includes(String(queryKey[0]));

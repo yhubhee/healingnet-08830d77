@@ -28,6 +28,7 @@ export const DEVICE_KEYS = {
   appLock: "hn.app-lock",
   pushToken: "hn.push-token",
   pushAsked: "hn.push-asked",
+  labsSeen: "hn.labs-seen",
 } as const;
 
 export async function getFlag(key: string): Promise<string | null> {

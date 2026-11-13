@@ -8,7 +8,6 @@ import { Screen } from "@/components/Screen";
 import { Button, Card, Chip, Heading, Label, ListSkeleton, Small, Strong } from "@/components/ui";
 import { useRxDocuments } from "@/lib/data";
 import { profileKey, usePatient } from "@/lib/session";
-import { openWeb } from "@/lib/web";
 import { useQueryClient } from "@tanstack/react-query";
 import { space, useTheme } from "@/theme";
 
@@ -73,9 +72,9 @@ export default function Health() {
       <Row icon={ShieldCheck} title="Share my records" text="A one-time code to show at a hospital's front desk." onPress={() => router.push("/share-records")} />
 
       <Heading>More</Heading>
-      <Row icon={FlaskConical} title="Lab results" chip="Coming in the next update" text="Opens the website for now." onPress={() => openWeb("/patient/lab-results")} />
-      <Row icon={FileText} title="Records" chip="Coming in the next update" text="Opens the website for now." onPress={() => openWeb("/patient/medical-records")} />
-      <Row icon={Award} title="Letters" chip="Coming in the next update" text="Opens the website for now." onPress={() => openWeb("/patient/letters")} />
+      <Row icon={FlaskConical} title="Lab results" text="Every value, with what is outside the normal range." onPress={() => router.push("/lab-results")} />
+      <Row icon={FileText} title="Medical records" text="Notes, vitals and diagnoses from your visits." onPress={() => router.push("/records")} />
+      <Row icon={Award} title="Letters" text="Sick leave, fit-to-work and other letters from your doctor." onPress={() => router.push("/letters")} />
     </Screen>
   );
 }

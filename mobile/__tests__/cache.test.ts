@@ -26,8 +26,10 @@ function makeStorage() {
 const CACHE_KEY = "hn.query-cache";
 
 describe("what is saved for offline use", () => {
-  it("saves only the profile, appointments, prescription documents and the home summary", () => {
-    expect([...PERSISTED_QUERIES].sort()).toEqual(["appointments", "home-summary", "profile", "role", "rx-documents"]);
+  it("saves only the profile, appointments, prescription documents, the home summary, lab results and records", () => {
+    expect([...PERSISTED_QUERIES].sort()).toEqual(["appointments", "emr", "home-summary", "lab-results", "profile", "role", "rx-documents"]);
+    expect(shouldPersistQuery(["lab-results", "p1"], "success")).toBe(true);
+    expect(shouldPersistQuery(["emr", "p1"], "success")).toBe(true);
     expect(shouldPersistQuery(["appointments", "p1"], "success")).toBe(true);
     expect(shouldPersistQuery(["rx-documents", "p1"], "success")).toBe(true);
     expect(shouldPersistQuery(["profile", "u1"], "success")).toBe(true);
@@ -35,7 +37,7 @@ describe("what is saved for offline use", () => {
   });
 
   it("does not save anything else, or anything that failed", () => {
-    for (const key of ["notifications", "rx-requests", "notification-prefs", "booking", "pharmacy-directory", "reschedule"]) {
+    for (const key of ["notifications", "rx-requests", "notification-prefs", "booking", "pharmacy-directory", "reschedule", "messages", "letters", "visit-reviews"]) {
       expect(shouldPersistQuery([key, "x"], "success")).toBe(false);
     }
     expect(shouldPersistQuery(["appointments", "p1"], "error")).toBe(false);
