@@ -45,6 +45,78 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_reviews: {
+        Row: {
+          appointment_id: string
+          comment: string | null
+          created_at: string
+          doctor_id: string
+          hospital_id: string
+          id: string
+          patient_id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          comment?: string | null
+          created_at?: string
+          doctor_id: string
+          hospital_id: string
+          id?: string
+          patient_id: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          comment?: string | null
+          created_at?: string
+          doctor_id?: string
+          hospital_id?: string
+          id?: string
+          patient_id?: string
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reviews_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "patient_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reviews_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reviews_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "my_doctor_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reviews_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reviews_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultation_addenda: {
         Row: {
           author_id: string
@@ -943,6 +1015,7 @@ export type Database = {
           profile_image_url: string | null
           rating: number | null
           reference_contact: Json | null
+          review_count: number
           signature_data: string | null
           specialty: string | null
           updated_at: string
@@ -971,6 +1044,7 @@ export type Database = {
           profile_image_url?: string | null
           rating?: number | null
           reference_contact?: Json | null
+          review_count?: number
           signature_data?: string | null
           specialty?: string | null
           updated_at?: string
@@ -999,6 +1073,7 @@ export type Database = {
           profile_image_url?: string | null
           rating?: number | null
           reference_contact?: Json | null
+          review_count?: number
           signature_data?: string | null
           specialty?: string | null
           updated_at?: string
@@ -2712,6 +2787,7 @@ export type Database = {
       patients: {
         Row: {
           address: string | null
+          allergies: string | null
           blood_group: string | null
           city: string | null
           created_at: string
@@ -2726,6 +2802,7 @@ export type Database = {
           insurance_policy_number: string | null
           insurance_provider: string | null
           last_name: string
+          medical_conditions: string | null
           phone: string | null
           profile_image_url: string | null
           state: string | null
@@ -2735,6 +2812,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          allergies?: string | null
           blood_group?: string | null
           city?: string | null
           created_at?: string
@@ -2749,6 +2827,7 @@ export type Database = {
           insurance_policy_number?: string | null
           insurance_provider?: string | null
           last_name: string
+          medical_conditions?: string | null
           phone?: string | null
           profile_image_url?: string | null
           state?: string | null
@@ -2758,6 +2837,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          allergies?: string | null
           blood_group?: string | null
           city?: string | null
           created_at?: string
@@ -2772,6 +2852,7 @@ export type Database = {
           insurance_policy_number?: string | null
           insurance_provider?: string | null
           last_name?: string
+          medical_conditions?: string | null
           phone?: string | null
           profile_image_url?: string | null
           state?: string | null
@@ -4485,6 +4566,10 @@ export type Database = {
         Returns: undefined
       }
       queue_appointment_reminders: { Args: never; Returns: number }
+      rate_appointment: {
+        Args: { p_appointment_id: string; p_comment?: string; p_rating: number }
+        Returns: undefined
+      }
       recompute_lab_order_status: {
         Args: { _order_id: string }
         Returns: undefined
