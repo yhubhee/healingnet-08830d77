@@ -29,6 +29,7 @@ export { default as MailCheck } from "lucide-react-native/icons/mail-check";
 export { default as MapPin } from "lucide-react-native/icons/map-pin";
 export { default as MessageCircle } from "lucide-react-native/icons/message-circle";
 export { default as Pencil } from "lucide-react-native/icons/pencil";
+export { default as Phone } from "lucide-react-native/icons/phone";
 export { default as Pill } from "lucide-react-native/icons/pill";
 export { default as RotateCcw } from "lucide-react-native/icons/rotate-ccw";
 export { default as Send } from "lucide-react-native/icons/send";

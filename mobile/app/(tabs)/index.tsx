@@ -13,7 +13,6 @@ import { addToCalendar } from "@/lib/calendar";
 import { useAppointments, useHomeSummary, useMarkNotificationRead, useRxDocuments, useRxExtras } from "@/lib/data";
 import { useOnline } from "@/lib/net";
 import { usePatient } from "@/lib/session";
-import { openWeb } from "@/lib/web";
 import { doctorOrPending, sortUpcoming, statusText } from "@/shared/appointments";
 import { timeAgo } from "@/shared/dates";
 import { screenForUrl } from "@/shared/links";
@@ -103,7 +102,7 @@ export default function Home() {
 
       {/* Main actions */}
       <View style={{ flexDirection: "row", gap: space.md }}>
-        <Tile icon={Stethoscope} title="Check symptoms" text="Answer a few questions. Opens the website." onPress={() => openWeb("/patient/triage")} />
+        <Tile icon={Stethoscope} title="Check symptoms" text="Answer a few questions and see what to do next." onPress={() => router.push("/triage")} />
         <Tile icon={CalendarPlus} title="Book a doctor" text="Choose a hospital, doctor and time." onPress={() => router.push("/book")} />
       </View>
 

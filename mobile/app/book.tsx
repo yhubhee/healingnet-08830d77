@@ -2,18 +2,20 @@
 // progress bar: hospital → doctor (or any available) → visit type → date and time →
 // reason → confirm. Every read and the booking itself use the website's database functions
 // (bookable_hospitals, bookable_doctors, book_appointment); their messages are shown as written.
+// After Check symptoms it opens with the suggested specialty and the reason filled in
+// (?specialty=&reason=), as the website's triage page does.
 import { Building2, CalendarCheck, Check, ChevronRight, MapPin, Users, Video } from "@/components/icons";
 import type { LucideIcon } from "@/components/icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BackHandler, Pressable, ScrollView, Text, View } from "react-native";
 import { Avatar } from "@/components/Avatar";
 import { DateField, Field } from "@/components/form";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
-import { Body, Button, Card, Divider, EmptyState, ErrorState, Heading, LinkText, ListSkeleton, Notice, Small, Strong, Title } from "@/components/ui";
+import { Body, Button, Card, Chip, Divider, EmptyState, ErrorState, Heading, LinkText, ListSkeleton, Notice, Small, Strong, Title } from "@/components/ui";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { supabase } from "@/lib/supabase";
 import { addDays, DAY_NAMES, dayChip, dayOfWeek, DEFAULT_SLOTS, fmt12, fmtLongDate, halfHours, lagosNowTime, lagosToday } from "@/shared/dates";
@@ -72,6 +74,8 @@ export default function Book() {
   const qc = useQueryClient();
   const toast = useToast();
   const online = useOnline();
+  const params = useLocalSearchParams<{ specialty?: string; reason?: string }>();
+  const [specialty, setSpecialty] = useState<string | null>(() => String(params.specialty ?? "").trim().slice(0, 80) || null);
   const [step, setStep] = useState(0);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [hospital, setHospital] = useState<Hospital | null>(null);
@@ -79,7 +83,7 @@ export default function Book() {
   const [visit, setVisit] = useState<Visit>("in_person");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState(() => String(params.reason ?? "").slice(0, 500));
   const [booking, setBooking] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -156,10 +160,10 @@ export default function Book() {
       </View>
 
       {step === 0 ? (
-        <HospitalStep coords={coords} onCoords={setCoords}
+        <HospitalStep specialty={specialty} onClearSpecialty={() => setSpecialty(null)} coords={coords} onCoords={setCoords}
           onPick={(h) => { setHospital(h); setDoctor(null); setVisit("in_person"); setTime(""); setStep(1); }} />
       ) : null}
-      {step === 1 && hospital ? <DoctorStep hospital={hospital} onPick={(d) => { setDoctor(d); setTime(""); setStep(2); }} /> : null}
+      {step === 1 && hospital ? <DoctorStep hospital={hospital} specialty={specialty} onPick={(d) => { setDoctor(d); setTime(""); setStep(2); }} /> : null}
       {step === 2 && hospital ? (
         <>
           <Heading>How would you like to be seen?</Heading>
@@ -215,15 +219,17 @@ function Summary({ label, value, sub, onChange }: { label: string; value: string
 }
 
 // ---- 1. Hospital ------------------------------------------------------------------------
-function HospitalStep({ coords, onCoords, onPick }: { coords: Coords | null; onCoords: (c: Coords) => void; onPick: (h: Hospital) => void }) {
+function HospitalStep({ specialty, onClearSpecialty, coords, onCoords, onPick }: {
+  specialty: string | null; onClearSpecialty: () => void; coords: Coords | null; onCoords: (c: Coords) => void; onPick: (h: Hospital) => void;
+}) {
   const toast = useToast();
   const [text, setText] = useState("");
   const [locating, setLocating] = useState(false);
   const search = useDebounced(text.trim());
   const q = useQuery({
-    queryKey: ["booking", "hospitals", coords?.lat ?? null, coords?.lng ?? null, search],
+    queryKey: ["booking", "hospitals", specialty, coords?.lat ?? null, coords?.lng ?? null, search],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("bookable_hospitals", { p_lat: coords?.lat, p_lng: coords?.lng, p_search: search || undefined });
+      const { data, error } = await supabase.rpc("bookable_hospitals", { p_specialty: specialty ?? undefined, p_lat: coords?.lat, p_lng: coords?.lng, p_search: search || undefined });
       if (error) throw error;
       return (data ?? []) as Hospital[];
     },
@@ -248,6 +254,13 @@ function HospitalStep({ coords, onCoords, onPick }: { coords: Coords | null; onC
   return (
     <>
       <Heading>Choose a hospital</Heading>
+      {specialty ? (
+        <View style={{ gap: 4 }}>
+          <Chip label={specialty} tone="primary" />
+          <Small>Hospitals with {specialty} doctors are shown first.</Small>
+          <LinkText label="Show all hospitals" onPress={onClearSpecialty} />
+        </View>
+      ) : null}
       <Field label="Search hospitals" value={text} onChangeText={setText} placeholder="Name, city or state" returnKeyType="search" autoCorrect={false} />
       {!coords ? <Button small variant="secondary" icon={MapPin} label="Show how far each one is" onPress={locate} loading={locating} /> : null}
       {q.data === undefined ? (q.isError || q.fetchStatus === "paused"
@@ -259,7 +272,12 @@ function HospitalStep({ coords, onCoords, onPick }: { coords: Coords | null; onC
       ) : q.data.map((h) => (
         <Choice key={h.id} icon={Building2} title={h.name} onPress={() => onPick(h)}
           text={`${[h.city, h.state].filter(Boolean).join(", ") || "Location not set"}${h.distance_km != null ? ` · ${Number(h.distance_km).toFixed(1)} km away` : ""}`}>
-          <Small>{h.doctors_total} doctor{h.doctors_total === 1 ? "" : "s"}{h.offers_telemedicine ? " · Video visits available" : ""}</Small>
+          <Small>
+            {specialty
+              ? h.doctors_in_specialty > 0 ? `${h.doctors_in_specialty} ${specialty} doctor${h.doctors_in_specialty === 1 ? "" : "s"}` : "General doctors"
+              : `${h.doctors_total} doctor${h.doctors_total === 1 ? "" : "s"}`}
+            {h.offers_telemedicine ? " · Video visits available" : ""}
+          </Small>
         </Choice>
       ))}
     </>
@@ -267,11 +285,11 @@ function HospitalStep({ coords, onCoords, onPick }: { coords: Coords | null; onC
 }
 
 // ---- 2. Doctor --------------------------------------------------------------------------
-function DoctorStep({ hospital, onPick }: { hospital: Hospital; onPick: (d: Doctor | "any") => void }) {
+function DoctorStep({ hospital, specialty, onPick }: { hospital: Hospital; specialty: string | null; onPick: (d: Doctor | "any") => void }) {
   const q = useQuery({
-    queryKey: ["booking", "doctors", hospital.id],
+    queryKey: ["booking", "doctors", hospital.id, specialty],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("bookable_doctors", { p_hospital_id: hospital.id });
+      const { data, error } = await supabase.rpc("bookable_doctors", { p_hospital_id: hospital.id, p_specialty: specialty ?? undefined });
       if (error) throw error;
       return (data ?? []) as Doctor[];
     },
@@ -279,7 +297,7 @@ function DoctorStep({ hospital, onPick }: { hospital: Hospital; onPick: (d: Doct
   return (
     <>
       <Heading>Choose a doctor</Heading>
-      <Choice icon={Users} title="Any available doctor" text={`${hospital.name} assigns the first available doctor.`} onPress={() => onPick("any")} />
+      <Choice icon={Users} title="Any available doctor" text={`${hospital.name} assigns the first available doctor${specialty ? `, a ${specialty} doctor where possible` : ""}.`} onPress={() => onPick("any")} />
       {q.data === undefined ? (q.isError || q.fetchStatus === "paused"
         ? <ErrorState offline={q.fetchStatus === "paused"} message={dbMessage(q.error)} onRetry={() => q.refetch()} />
         : <ListSkeleton />
@@ -289,6 +307,7 @@ function DoctorStep({ hospital, onPick }: { hospital: Hospital; onPick: (d: Doct
         <Choice key={d.id} title={`Dr. ${d.first_name} ${d.last_name}`} onPress={() => onPick(d)}
           left={<Avatar url={d.profile_image_url} first={d.first_name} last={d.last_name} size={48} />}
           text={`${d.specialty || "General practice"}${d.years_experience != null ? ` · ${d.years_experience} yrs experience` : ""}`}>
+          {specialty && d.matches_specialty ? <Chip label={`✓ ${specialty}`} tone="success" /> : null}
           {d.bio ? <Small numberOfLines={2}>{d.bio}</Small> : null}
         </Choice>
       ))}
