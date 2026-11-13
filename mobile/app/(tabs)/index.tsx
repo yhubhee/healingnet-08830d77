@@ -17,7 +17,7 @@ import { setTaken, useReminders } from "@/lib/reminders";
 import { usePatient } from "@/lib/session";
 import { doctorOrPending, sortUpcoming, statusText } from "@/shared/appointments";
 import { fmt12, timeAgo } from "@/shared/dates";
-import { screenForUrl } from "@/shared/links";
+import { notificationTarget } from "@/shared/links";
 import { rxNextAction } from "@/shared/pharmacy";
 import { todaysDoses } from "@/shared/reminders";
 import { MIN_TOUCH, radius, space, useTheme } from "@/theme";
@@ -167,7 +167,7 @@ export default function Home() {
         ) : (
           summary.data!.updates.map((n) => (
             <Card key={n.id} accessibilityLabel={`${n.title}. ${n.message ?? ""}`} style={{ gap: 4 }}
-              onPress={() => { if (online) markRead.mutate(n.id); router.navigate(screenForUrl(n.action_url)); }}>
+              onPress={() => { if (online) markRead.mutate(n.id); router.navigate(notificationTarget({ url: n.action_url, type: n.type, referenceId: n.reference_id })); }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
                 <Strong style={{ flex: 1 }}>{n.title}</Strong>
                 <Chip label="New" tone="coral" />

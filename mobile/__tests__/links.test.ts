@@ -1,5 +1,5 @@
 import { parseAuthLink } from "../shared/authLinks";
-import { consultUrl, screenForUrl, verifyUrl, webPage } from "../shared/links";
+import { consultUrl, notificationTarget, screenForUrl, verifyUrl, webPage } from "../shared/links";
 
 describe("notification URL → app screen", () => {
   it("opens Visits for appointment links", () => {
@@ -30,6 +30,26 @@ describe("notification URL → app screen", () => {
     for (const url of ["/patient/lab-resultsX", "/patient/triage", "/doctor/messages", "/doctor/appointments", "/patient/appointmentsX", "/", "", "   ", null, undefined, 42, { url: "/patient/appointments" }, "javascript:alert(1)", "https://evil.example/x"]) {
       expect(screenForUrl(url)).toBe("/(tabs)");
     }
+  });
+});
+
+describe("tapping a notification", () => {
+  const visit = "3f2b1c9e-8a47-4d1e-9b6a-0c1d2e3f4a5b";
+  it("'call_in' opens Visits with the Join call sheet ready for that visit", () => {
+    expect(notificationTarget({ type: "call_in", url: "/patient/appointments", referenceId: visit })).toEqual({ pathname: "/(tabs)/visits", params: { join: visit } });
+  });
+  it("a 'call_in' push names no visit, so the one the doctor is waiting in is used", () => {
+    expect(notificationTarget({ type: "call_in", url: "/patient/appointments" })).toEqual({ pathname: "/(tabs)/visits", params: { join: "ready" } });
+    expect(notificationTarget({ type: "call_in", referenceId: "not-an-id" }).params).toEqual({ join: "ready" });
+  });
+  it("'message' opens Messages", () => {
+    expect(notificationTarget({ type: "message", url: "/patient/messages" })).toEqual({ pathname: "/(tabs)/messages" });
+    expect(notificationTarget({ type: "message" })).toEqual({ pathname: "/(tabs)/messages" });
+  });
+  it("everything else follows its link", () => {
+    expect(notificationTarget({ type: "appointment", url: "/patient/appointments" })).toEqual({ pathname: "/(tabs)/visits" });
+    expect(notificationTarget({ type: "lab", url: "/patient/lab-results" })).toEqual({ pathname: "/lab-results" });
+    expect(notificationTarget({})).toEqual({ pathname: "/(tabs)" });
   });
 });
 

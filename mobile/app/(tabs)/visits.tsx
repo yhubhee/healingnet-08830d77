@@ -5,8 +5,8 @@
 // The list is virtualised and its rows are memoised: a patient with a long history mounts
 // only the few cards on screen, and the saved list shows before the network answers.
 import { CalendarDays, CalendarPlus } from "@/components/icons";
-import { router } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, View, type ListRenderItem } from "react-native";
 import { Segmented } from "@/components/form";
 import { JoinCallSheet } from "@/components/JoinCallSheet";
@@ -22,7 +22,7 @@ import { addToCalendar } from "@/lib/calendar";
 import { appointmentsKey, useAppointments, useCancelAppointment, useRealtime, useVisitReviews } from "@/lib/data";
 import { useOnline } from "@/lib/net";
 import { usePatient } from "@/lib/session";
-import { doctorOrPending, isUpcoming, sortUpcoming, type Appointment } from "@/shared/appointments";
+import { doctorOrPending, isUpcoming, pickCallToJoin, sortUpcoming, type Appointment } from "@/shared/appointments";
 import { dbMessage, friendlyError } from "@/shared/errors";
 import { space } from "@/theme";
 
@@ -49,6 +49,23 @@ export default function Visits() {
     const rows = all ?? [];
     return tab === "upcoming" ? sortUpcoming(rows) : rows.filter((a) => !isUpcoming(a));
   }, [all, tab]);
+
+  // Opened from a "Your doctor is ready" notification (?join=<visit id>, or "ready"): fetch
+  // the latest visits, then open the Join call sheet for that visit.
+  const { join } = useLocalSearchParams<{ join?: string }>();
+  const { refetch, isFetching } = q;
+  useEffect(() => { if (join) refetch(); }, [join, refetch]);
+  useEffect(() => {
+    if (!join || !all) return;
+    const target = pickCallToJoin(all, join);
+    if (target) {
+      setTab("upcoming");
+      setCalling(target);
+      router.setParams({ join: undefined });
+    } else if (!isFetching) {
+      router.setParams({ join: undefined }); // the call is over or the visit is gone: just show Visits
+    }
+  }, [join, all, isFetching]);
 
   const confirmCancel = useCallback((a: Appointment) => {
     Alert.alert(

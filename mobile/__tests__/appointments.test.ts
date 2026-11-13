@@ -57,3 +57,21 @@ describe("appointment rules", () => {
     expect(sortUpcoming(list).map((x) => `${x.requested_date} ${x.requested_time}`)).toEqual(["2026-11-30 08:00", "2026-11-30 14:30", "2026-12-02 09:00"]);
   });
 });
+
+describe("the visit a 'Your doctor is ready' notification opens", () => {
+  const { pickCallToJoin } = require("../shared/appointments");
+  const video = (id: string, over: Record<string, unknown> = {}) => ({ id, status: "accepted", is_telemedicine: true, call_started_at: null, call_ended_at: null, ...over });
+  const list = [video("a"), video("b", { call_started_at: "2026-11-13T10:00:00Z" }), video("c", { status: "completed", call_started_at: "x", call_ended_at: "y" })];
+  it("is the one the notification names", () => {
+    expect(pickCallToJoin(list, "a").id).toBe("a");
+  });
+  it("is the one whose doctor is waiting when a push names none", () => {
+    expect(pickCallToJoin(list, "ready").id).toBe("b");
+  });
+  it("is none when the call is over, the visit is not a video visit, or it is unknown", () => {
+    expect(pickCallToJoin(list, "c")).toBeNull();
+    expect(pickCallToJoin([video("d", { is_telemedicine: false })], "d")).toBeNull();
+    expect(pickCallToJoin(list, "zzz")).toBeNull();
+    expect(pickCallToJoin([video("a")], "ready")).toBeNull();
+  });
+});

@@ -5,7 +5,7 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import { Platform } from "react-native";
-import { screenForUrl } from "@/shared/links";
+import { notificationTarget } from "@/shared/links";
 import { APP_VERSION } from "./env";
 import { handleReminderResponse } from "./reminders";
 import { DEVICE_KEYS, getFlag, setFlag } from "./storage";
@@ -88,13 +88,13 @@ export async function unregisterPush(): Promise<void> {
   await setFlag(DEVICE_KEYS.pushToken, null);
 }
 
-/** Opens the app screen for a tapped notification's data.url; unknown paths open Home. */
+/** Opens the app screen for a tapped notification (its type and data.url); unknown ones open Home. */
 function openFromNotification(response: Notifications.NotificationResponse | null | undefined) {
   if (!response) return;
   // A medicine reminder (or its Taken / Snooze button): Home shows "Today's medicines".
   if (handleReminderResponse(response)) { router.navigate("/(tabs)"); return; }
-  const url = (response.notification.request.content.data as { url?: unknown } | undefined)?.url;
-  router.navigate(screenForUrl(url));
+  const data = (response.notification.request.content.data ?? {}) as { url?: unknown; type?: unknown; reference_id?: unknown };
+  router.navigate(notificationTarget({ url: data.url, type: data.type, referenceId: data.reference_id }));
 }
 
 let handledInitial = false;

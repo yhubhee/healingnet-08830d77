@@ -65,6 +65,14 @@ export const canJoinCall = (a: Pick<Appointment, "status" | "is_telemedicine">) 
 export const doctorIsInCall = (a: Pick<Appointment, "status" | "is_telemedicine" | "call_started_at" | "call_ended_at">) =>
   canJoinCall(a) && !!a.call_started_at && !a.call_ended_at;
 
+/**
+ * The visit a "Your doctor is ready" notification is about: the one it names, if it can
+ * still be joined; otherwise (a push names none) the visit whose doctor is in the call now.
+ */
+export function pickCallToJoin<T extends Pick<Appointment, "id" | "status" | "is_telemedicine" | "call_started_at" | "call_ended_at">>(list: T[], join: string): T | null {
+  return list.find((a) => a.id === join && canJoinCall(a) && !a.call_ended_at) ?? (join === "ready" ? list.find(doctorIsInCall) ?? null : null);
+}
+
 /** Upcoming visits, soonest first: the first one is the Home card's "next appointment". */
 export function sortUpcoming<T extends Pick<Appointment, "requested_date" | "requested_time" | "status">>(list: T[]): T[] {
   const key = (a: T) => `${a.requested_date}T${a.requested_time ?? "00:00"}`;

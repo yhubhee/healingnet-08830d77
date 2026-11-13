@@ -13,7 +13,7 @@ import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { useSession } from "@/lib/session";
 import { fmtDateTime } from "@/shared/dates";
 import { friendlyError } from "@/shared/errors";
-import { screenForUrl } from "@/shared/links";
+import { notificationTarget } from "@/shared/links";
 import { space, useTheme } from "@/theme";
 
 const keyOf = (n: UserNotification) => n.id;
@@ -47,7 +47,7 @@ export default function Notifications() {
   const unread = list.filter((n) => !n.is_read).length;
   const open = useCallback((n: UserNotification) => {
     if (!n.is_read && online) markRead(n.id);
-    router.navigate(screenForUrl(n.action_url));
+    router.navigate(notificationTarget({ url: n.action_url, type: n.type, referenceId: n.reference_id }));
   }, [online, markRead]);
   const renderItem = useCallback<ListRenderItem<UserNotification>>(({ item }) => <NotificationCard n={item} onOpen={open} />, [open]);
 

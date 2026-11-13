@@ -33,6 +33,28 @@ export function screenForUrl(url: unknown): AppScreen {
   return "/(tabs)";
 }
 
+export interface NotificationTarget {
+  pathname: AppScreen;
+  /** `join`: open Visits with the Join call sheet ready for this visit ("ready" = whichever visit the doctor is waiting in). */
+  params?: { join: string };
+}
+
+/**
+ * Where a tapped notification leads, from its type as well as its link:
+ *   'call_in' ("Your doctor is ready") -> Visits, with the Join call sheet open for that visit
+ *   'message'                          -> Messages
+ *   anything else                      -> the screen for its link (screenForUrl)
+ * `referenceId` is the appointment for a call; a push does not carry it, so "ready" is used.
+ */
+export function notificationTarget(n: { url?: unknown; type?: unknown; referenceId?: unknown }): NotificationTarget {
+  if (n.type === "call_in") {
+    const id = typeof n.referenceId === "string" && /^[0-9a-f-]{36}$/i.test(n.referenceId) ? n.referenceId : "ready";
+    return { pathname: "/(tabs)/visits", params: { join: id } };
+  }
+  if (n.type === "message") return { pathname: "/(tabs)/messages" };
+  return { pathname: screenForUrl(n.url) };
+}
+
 const trimSlash = (s: string) => s.replace(/\/+$/, "");
 
 /** What the prescription QR holds: the website's public verify page for this code. */
