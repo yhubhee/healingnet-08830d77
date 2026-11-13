@@ -451,39 +451,46 @@ The check registered one device token and unregistered it again; nothing is left
 
 ## Mobile app 0.2 live check (2026-11-13)
 
-**Nothing was created on 13 November** (two runs). The run stopped at sign-in: the test patient's login in `.env.test` was refused ("Invalid login credentials"), so no signed-in step ran. Only the two signed-out checks ran (`register_push_device` and `rate_appointment` both refuse a signed-out caller), and they write nothing.
+The first two runs on 13 November stopped at sign-in and created nothing. After the test patient's password was updated in `.env.test`, the check ran in full twice that day. Each run creates the records below; the script prints the exact ids at the end.
 
-When the login is fixed and `node mobile/scripts/live-check.mjs` is run, each run creates the records below. The script prints the exact ids at the end; add them here.
-
-### patient_appointments (1 per run)
+### patient_appointments (2)
 
 | id | note |
 | --- | --- |
-| (printed by the script) | Booked with reason `[E2E] mobile app check <code>`, then cancelled. Same as the 0.1 check. |
+| c447dfa6-a49e-44c5-a1fb-5b97ddb171a2 | [E2E] mobile app check mwf1bev6 (booked with any available doctor, then cancelled by the check) |
+| 971c36c5-8f5d-46a4-b2e8-6bf0ab62f93b | [E2E] mobile app check mwf1iue6 (second run; booked, then cancelled) |
 
-### patient_messages (1 per run)
-
-| id | note |
-| --- | --- |
-| (printed by the script) | One message from the test patient to a doctor they have a visit with. The body is `[E2E] mobile app check <code>`. The doctor sees it in their Messages page. |
-
-### triage_sessions (1 per run)
+### patient_messages (2)
 
 | id | note |
 | --- | --- |
-| (not looked up) | One session for the test patient whose `symptoms` is `["[E2E] mobile app check <code>"]`. |
+| c00cb2ea-ff0b-4a98-832f-fcf8e4889bb4 | [E2E] mobile app check mwf1bgwo. From the test patient to a doctor they have a visit with; the doctor sees it in their Messages page. |
+| 5aceb5ce-fa96-4e67-976a-f9b26e718726 | [E2E] mobile app check mwf1ix18 (second run) |
 
-### patient_letters (1 per run)
+### triage_sessions (2)
 
 | id | note |
 | --- | --- |
-| (printed by the script) | A pending letter request for the test patient with no doctor chosen; title `Request: Sick Leave Letter`, body `[E2E] mobile app check <code>`. |
+| (not looked up) | Two sessions for the test patient whose `symptoms` are `["[E2E] mobile app check mwf1bgwo"]` and `["[E2E] mobile app check mwf1ix18"]`. |
 
-### appointment_reviews (0 or 1)
+### patient_letters (2)
+
+| id | note |
+| --- | --- |
+| ab8eb2a6-5f9b-4ff2-89c7-6da261e71409 | A pending letter request with no doctor chosen; title `Request: Sick Leave Letter`, body `[E2E] mobile app check mwf1bgwo`. |
+| bbfb626f-15e3-439b-a23a-3d1b6f170d57 | The same, second run; body `[E2E] mobile app check mwf1ix18`. |
+
+### appointment_reviews (0)
+
+None was created: the test patient had no completed `[E2E]` visit from the last 30 days. On a later run:
 
 | id | note |
 | --- | --- |
 | (printed by the script) | Only if the test patient has a completed visit with `[E2E]` in the reason from the last 30 days and has not rated it: a 4-star rating with the comment `[E2E] mobile app check <code>`. The doctor's `rating` and `review_count` include it; deleting the row leaves them stale until that doctor is rated again. If the visit was already rated, the script puts the earlier rating back and nothing new is left. |
+
+### lab_results (0)
+
+The "seen by the patient" step writes nothing: it never marks an unseen finished result.
 
 ### patients (0)
 
@@ -491,4 +498,4 @@ The script sets the test patient's `allergies` to `[E2E] Penicillin`, reads it b
 
 ### user_notifications, notification_preferences, patient_share_codes, push_devices
 
-As in the 0.1 check above.
+As in the 0.1 check above (two share codes, one per run). The database may also have sent the doctor a "New message" notification for each of the two messages.

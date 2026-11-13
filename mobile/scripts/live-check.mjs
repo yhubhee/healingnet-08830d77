@@ -137,6 +137,7 @@ await step("prescriptions load with a code for the QR", async () => {
 // ---- Version 0.2 ------------------------------------------------------------------------
 const E2E_NOTE = `[E2E] mobile app check ${Date.now().toString(36)}`;
 let visits = [];
+let labs = [];
 
 await step("Visits loads with the 0.2 columns, the patient's ratings and doctors' review counts", async () => {
   visits = must(await supabase.from("patient_appointments")
@@ -150,10 +151,38 @@ await step("Visits loads with the 0.2 columns, the patient's ratings and doctors
 
 await step("lab results load (tests and parameters)", async () => {
   const rows = must(await supabase.from("lab_results")
-    .select("id, created_at, status, notes, hospitals(name), lab_result_tests(id, test_name, category_name, lab_result_parameters(id, parameter_name, result_value, unit_snapshot, ref_range_snapshot, flag, sort_order))")
+    .select("id, created_at, status, notes, patient_viewed_at, hospitals(name), lab_result_tests(id, test_name, category_name, lab_result_parameters(id, parameter_name, result_value, unit_snapshot, ref_range_snapshot, flag, sort_order))")
     .eq("patient_id", patient.id).order("created_at", { ascending: false }));
   const params = rows.flatMap((r) => (r.lab_result_tests ?? []).flatMap((t) => t.lab_result_parameters ?? []));
+  labs = rows;
   return `${rows.length} results, ${params.length} values, ${params.filter((x) => ["low", "high", "abnormal"].includes(x.flag)).length} flagged outside the range`;
+});
+
+// Writes nothing: an unseen finished result is left alone, so "New" can still be tested on a phone.
+await step('lab results: "seen by the patient" is kept by the database', async () => {
+  const ready = (r) => r.status === "completed" || r.status === "final";
+  const unknown = await supabase.rpc("mark_lab_result_viewed", { p_lab_result_id: "00000000-0000-0000-0000-000000000000" });
+  if (!unknown.error || !/not found/i.test(unknown.error.message)) throw new Error("a result that is not the patient's was not refused");
+  const notes = [`${labs.filter((r) => ready(r) && !r.patient_viewed_at).length} finished and new, ${labs.filter((r) => r.patient_viewed_at).length} seen`];
+  const waiting = labs.find((r) => !ready(r));
+  if (waiting) {
+    if (must(await supabase.rpc("mark_lab_result_viewed", { p_lab_result_id: waiting.id })) !== null) throw new Error("a result that is not finished was marked as seen");
+    notes.push("one that is not finished stays unseen");
+  }
+  const seen = labs.find((r) => ready(r) && r.patient_viewed_at);
+  if (seen) {
+    const again = must(await supabase.rpc("mark_lab_result_viewed", { p_lab_result_id: seen.id }));
+    if (new Date(again).getTime() !== new Date(seen.patient_viewed_at).getTime()) throw new Error("the first-seen time changed on a second look");
+    notes.push("a second look keeps the first time");
+  }
+  const direct = waiting ?? labs[0];
+  if (direct) {
+    await supabase.from("lab_results").update({ patient_viewed_at: "2020-01-01T00:00:00Z" }).eq("id", direct.id);
+    const after = must(await supabase.from("lab_results").select("patient_viewed_at").eq("id", direct.id).single());
+    if (after.patient_viewed_at !== direct.patient_viewed_at) throw new Error("the patient could set the seen time directly");
+    notes.push("setting it directly changes nothing");
+  }
+  return notes.join("; ");
 });
 
 await step("medical records load", async () => {

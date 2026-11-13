@@ -8,11 +8,11 @@ Run on 13 November 2026, on Windows, against the live Supabase project. The note
 | --- | --- |
 | `npx tsc --noEmit` in `mobile/` | Pass, 0 errors |
 | `npx expo-doctor` | Pass, 20 of 20 checks |
-| Unit tests (`npm test`) | Pass, 154 tests in 12 files (61 in 0.1) |
+| Unit tests (`npm test`) | Pass, 155 tests in 12 files (61 in 0.1) |
 | Android JavaScript bundle (`npx expo export --platform android`) | Pass, every import resolves; 4.5 MB |
 | Website `npx tsc --noEmit -p tsconfig.app.json` | Pass, 0 errors |
 | Website `npm run build` | Pass |
-| Live data check (`node scripts/live-check.mjs`) | **Not run past sign-in**: the test patient's login in `.env.test` is refused (see below) |
+| Live data check (`node scripts/live-check.mjs`) | Pass, 24 of 24 steps, in the third round (see below). Two things in it had nothing to run on: rating a visit, and marking a lab result as seen |
 | Preview APK built on EAS | Pass: build `394dd68b`, 24.1 MB (0.1 was 109 MB) |
 | The app on a phone | **Not run** by me: this computer has no phone, emulator or `adb`. Use the checklist below |
 | Cold-start and tab-switch times on a phone | **Not measured**, for the same reason (see "Speed") |
@@ -26,7 +26,32 @@ Two things asked for in that round were **not** done, because of what the live p
 - **The live data check still stops at sign-in.** `.env.test` in this folder was last changed on 4 November, so it still holds the old password. The new password has not reached this file.
 - **"Seen by patient" on lab results is not built.** `lab-result-viewed-db.patch` is in the folder but has not been applied to the database: `mark_lab_result_viewed` and `lab_results.patient_viewed_at` do not exist there, and the migration list ends at `20261113110000`. Building against a column that is not there would break the Lab results screen, so "New" still uses the per-phone memory. Apply the patch (`git am`, then `npx supabase db push`) and ask again.
 
+## Third round, later on 13 November
+
+`.env.test` now has the test patient's new password and the lab database patch is applied, so the two things left over from the second round are done. No new build was made.
+
+**The live data check ran in full: every step passed** (twice: 23 steps, then 24 with the new lab step). What it found and did not find:
+
+- Signed in, every 0.2 query is allowed and well formed: 162 visits, 11 lab orders, 12 letters, 36 prescription documents, messages, the health card, triage, notification switches, push device, share code.
+- **Rate your visit did not run.** The test patient has no completed `[E2E]` visit from the last 30 days. Only the refusal was checked (a visit that has not taken place cannot be rated). A doctor needs to complete one `[E2E]` visit for the rest.
+- **None of the test patient's 11 lab orders is finished**, and none has values. So nothing could be marked as seen. See the next point.
+
+**"Seen by patient" on lab results is built**, in the app and on the website.
+
+- App: "New" on Lab results now comes from the database (`lab_results.patient_viewed_at`), so it is the same on every device. Opening a finished result calls `mark_lab_result_viewed`. The per-phone memory is gone. A result that was opened in the 0.2 APK shows "New" once more after updating, until it is opened again.
+- Website, patient: Lab Results shows "New" on a finished result and records the first time it is expanded.
+- Website, doctor (Lab Orders) and hospital (Laboratory Management): a finished order says "Seen by patient on <date>" or "Not yet seen by patient".
+- Offline: the app clears "New" at once; if the call could not reach the server, "New" comes back at the next refresh and opening the result tries again.
+
+What was checked against the live database: a result that is not the patient's is refused; a result that is not finished stays unseen; the patient cannot set the time directly. **Not checked: a finished result actually being marked**, the first-seen time staying the same on a second look, and the doctor's and hospital's wording with a real date, because the test patient has no finished result. The check also deliberately never marks one, so "New" can still be tried by hand. To try it: have the hospital enter results for one of the test patient's lab orders, open it in the app, then look at the doctor's Lab Orders page.
+
+The current APK (`8ea2f97c`) does not have this: it still uses the per-phone memory. It needs the next build.
+
+Also in this round: the files left by `create-expo-app` in `mobile/` (`src/`, `assets/images/`, `assets/expo.icon/`, `LICENSE`, `scripts/reset-project.js`) were deleted. Nothing in the app used them. `mobile/.claude/` and `mobile/.vscode/` are now ignored by git.
+
 ## What could not be run, and why
+
+*(This section describes the first round. The live check has since run; see "Third round" above. The phone points still stand.)*
 
 **The live data check stopped at sign-in.** `.env.test` still holds the test patient's email and password, but Supabase answers "Invalid login credentials". The password was changed or the account was removed after the 0.1 run on 12 November (0.1 testing included password reset and account deletion, either of which would do it). Until the login is fixed, none of the signed-in steps can run, old or new. What was checked instead:
 
@@ -95,12 +120,13 @@ On the phone the app takes more room than its download, because Android unpacks 
 
 ## Live check
 
-`scripts/live-check.mjs` now also does the following, signed in as the test patient. None of these ran on 13 November (see above).
+`scripts/live-check.mjs` now also does the following, signed in as the test patient. They first ran in the third round on 13 November.
 
 | Step | What it does |
 | --- | --- |
 | Visits with the 0.2 columns | Reads appointments with the call and date columns, the patient's ratings, and doctors' review counts |
 | Lab results, medical records, letters | Runs each screen's query and counts the rows |
+| Lab results: seen by the patient | Checks `mark_lab_result_viewed` refuses a result that is not the patient's, leaves an unfinished one unseen, keeps the first time on a second look, and that the patient cannot set the time directly. Writes nothing |
 | Messages | Reads the conversations and sends one `[E2E]` message to a doctor the patient has a visit with |
 | Health card | Saves allergies, reads it back, restores the original; checks 501 characters is refused |
 | Check symptoms | Calls `triage-nurse`, saves one `[E2E]` session, and reports the level for a chest-pain description |
@@ -125,7 +151,7 @@ Install the preview APK over 0.1 (or uninstall 0.1 first). Sign in as a patient 
 ### New screens
 
 8. **Messages.** With no conversations: the empty screen says your doctors will message you here. After a doctor writes from the website: the conversation shows the doctor's name, the last message and "● 1 new". Open it: the message is marked read (the doctor's side shows it). Type a reply with the keyboard open: the text box stays above the keyboard. The reply appears on the doctor's page; the doctor's next message appears in the chat within a second or two without pulling to refresh (Realtime). Put the app in the background and have the doctor write again: a "New message" push arrives without the message text, and tapping it opens Messages.
-9. **Lab results.** The list shows the tests, hospital, date and "New". Open one: every parameter has its value, unit and reference range, and anything outside the range says "▲ High", "▼ Low" or "Outside the normal range" in words. Go back: "New" is gone. Share as PDF: the PDF opens in the share sheet and reads correctly.
+9. **Lab results.** The list shows the tests, hospital, date and "New". Open one: every parameter has its value, unit and reference range, and anything outside the range says "▲ High", "▼ Low" or "Outside the normal range" in words. Go back: "New" is gone. (From the build after `8ea2f97c`: it is also gone on the website and on a second phone, and the doctor's Lab Orders page and the hospital's Laboratory page say "Seen by patient on" with today's date.) Share as PDF: the PDF opens in the share sheet and reads correctly.
 10. **Airplane mode on Lab results.** Open Lab results once online. Turn on airplane mode, force-stop the app, open it, go to Health → Lab results and open a result: it all shows, with the "Offline · last updated" bar. Same for Medical records.
 11. **Medical records.** A timeline with date, doctor, hospital and type; tapping an entry shows the notes or the vitals. Nothing can be edited.
 12. **Letters.** List with Issued / Requested / Expired in words; open one; Share as PDF. Tap + (Request a letter): choose a type and a doctor, write the reason, submit. The request appears in the list as "Requested: waiting for your doctor", and the doctor sees it on the website. Submitting with no reason is refused with a message.
@@ -152,4 +178,4 @@ Install the preview APK over 0.1 (or uninstall 0.1 first). Sign in as a patient 
 
 ## Records created in the live project
 
-None on 13 November (the check stopped at sign-in). What a successful run creates is listed in `e2e/cleanup.md` under "Mobile app 0.2 live check".
+Two runs of the live check on 13 November (third round) created 2 cancelled appointments, 2 pending letter requests, 2 messages, 2 triage sessions and 2 share codes. The ids are in `e2e/cleanup.md` under "Mobile app 0.2 live check".
