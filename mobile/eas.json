@@ -9,6 +9,10 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "HN_ANDROID_ARCHS": "arm64-v8a,armeabi-v7a",
+        "HN_COMPRESS_NATIVE_LIBS": "1"
       }
     },
     "preview": {
