@@ -22,7 +22,7 @@ export const appointmentsKey = (patientId: string | null) => ["appointments", pa
 async function fetchAppointments(patientId: string): Promise<Appointment[]> {
   const { data: appts, error } = await supabase
     .from("patient_appointments")
-    .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, decline_reason")
+    .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, decline_reason, created_at, updated_at, call_started_at, call_ended_at")
     .eq("patient_id", patientId)
     .order("requested_date", { ascending: false });
   if (error) throw error;

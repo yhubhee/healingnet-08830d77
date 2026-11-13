@@ -4,9 +4,9 @@ import { router } from "expo-router";
 import { memo } from "react";
 import { View } from "react-native";
 import { OFFLINE_ACTION } from "@/lib/net";
-import { canCancel, canJoinCall, doctorOrPending, isUpcoming, statusText, statusTone, type Appointment } from "@/shared/appointments";
+import { canCancel, canJoinCall, doctorIsInCall, doctorOrPending, isUpcoming, statusText, statusTone, type Appointment } from "@/shared/appointments";
 import { space } from "@/theme";
-import { Body, Button, Card, Chip, Heading, Small } from "./ui";
+import { Body, Button, Card, Chip, Heading, Notice, Small } from "./ui";
 import { VisitFacts } from "./VisitBits";
 
 export const VisitCard = memo(function VisitCard({ a, online, cancelling, onCancel, onReschedule, onCalendar, onJoin }: {
@@ -31,7 +31,10 @@ export const VisitCard = memo(function VisitCard({ a, online, cancelling, onCanc
       {upcoming ? <Small>We'll remind you 24 hours and 1 hour before.</Small> : null}
 
       {canJoinCall(a) ? (
-        <Button label="Join call" icon={Video} onPress={() => onJoin(a)} disabled={!online} disabledReason={OFFLINE_ACTION} />
+        <>
+          {doctorIsInCall(a) ? <Notice tone="success" text="Your doctor is in the call and waiting for you." /> : null}
+          <Button label="Join call" icon={Video} onPress={() => onJoin(a)} disabled={!online} disabledReason={OFFLINE_ACTION} />
+        </>
       ) : null}
       {a.status === "rejected" ? <Button label="Book again" icon={RotateCcw} onPress={() => router.push("/book")} /> : null}
       {upcoming ? (

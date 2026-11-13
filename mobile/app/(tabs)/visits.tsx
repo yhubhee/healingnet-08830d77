@@ -1,5 +1,6 @@
 // Visits (src/pages/patient/Appointments.tsx): Upcoming and Past, with the website's exact
-// status wording, cancel, reschedule, add to calendar and join call.
+// status wording, cancel, reschedule, add to calendar and join call (the video visit opens in
+// the in-app browser; see components/JoinCallSheet.tsx).
 // The list is virtualised and its rows are memoised: a patient with a long history mounts
 // only the few cards on screen, and the saved list shows before the network answers.
 import { CalendarDays, CalendarPlus } from "@/components/icons";
@@ -7,6 +8,7 @@ import { router } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Alert, View, type ListRenderItem } from "react-native";
 import { Segmented } from "@/components/form";
+import { JoinCallSheet } from "@/components/JoinCallSheet";
 import { loadState } from "@/components/QueryState";
 import { RescheduleSheet } from "@/components/RescheduleSheet";
 import { ListScreen } from "@/components/Screen";
@@ -16,13 +18,10 @@ import { VisitCard } from "@/components/VisitCard";
 import { visitWhen } from "@/components/VisitBits";
 import { addToCalendar } from "@/lib/calendar";
 import { appointmentsKey, useAppointments, useCancelAppointment, useRealtime } from "@/lib/data";
-import { WEB_URL } from "@/lib/env";
 import { useOnline } from "@/lib/net";
 import { usePatient } from "@/lib/session";
-import { openUrl } from "@/lib/web";
 import { doctorOrPending, isUpcoming, sortUpcoming, type Appointment } from "@/shared/appointments";
 import { dbMessage, friendlyError } from "@/shared/errors";
-import { consultUrl } from "@/shared/links";
 import { space } from "@/theme";
 
 type Tab = "upcoming" | "past";
@@ -36,6 +35,7 @@ export default function Visits() {
   const { mutateAsync: cancelVisit, isPending: cancelling } = useCancelAppointment();
   const [tab, setTab] = useState<Tab>("upcoming");
   const [moving, setMoving] = useState<Appointment | null>(null);
+  const [calling, setCalling] = useState<Appointment | null>(null);
 
   // Live updates while this screen is in front (the hospital confirming, declining or assigning a doctor).
   useRealtime("patient_appointments", patientId ? `patient_id=eq.${patientId}` : null, [appointmentsKey(patientId)]);
@@ -73,11 +73,10 @@ export default function Visits() {
     else if (result === "failed") toast.error("We couldn't open your calendar.");
   }, [toast]);
 
-  const join = useCallback((a: Appointment) => { openUrl(consultUrl(WEB_URL, a.id)); }, []);
 
   const renderItem = useCallback<ListRenderItem<Appointment>>(({ item }) => (
-    <VisitCard a={item} online={online} cancelling={cancelling} onCancel={confirmCancel} onReschedule={setMoving} onCalendar={calendar} onJoin={join} />
-  ), [online, cancelling, confirmCancel, calendar, join]);
+    <VisitCard a={item} online={online} cancelling={cancelling} onCancel={confirmCancel} onReschedule={setMoving} onCalendar={calendar} onJoin={setCalling} />
+  ), [online, cancelling, confirmCancel, calendar]);
 
   const state = loadState(q);
   const header = (
@@ -96,6 +95,11 @@ export default function Visits() {
     <ListScreen tab title="Visits" data={list} keyExtractor={keyOf} renderItem={renderItem} header={header} empty={empty}
       onRefresh={() => q.refetch()} refreshing={q.isRefetching} updatedAt={q.dataUpdatedAt || undefined}
       right={<IconButton icon={CalendarPlus} label="Book a doctor" onPress={() => router.push("/book")} />}
-      footer={<RescheduleSheet appointment={moving} onClose={() => setMoving(null)} />} />
+      footer={
+        <>
+          <RescheduleSheet appointment={moving} onClose={() => setMoving(null)} />
+          <JoinCallSheet appointment={calling} onClose={() => setCalling(null)} onReturned={() => q.refetch()} />
+        </>
+      } />
   );
 }

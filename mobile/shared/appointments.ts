@@ -12,6 +12,11 @@ export interface Appointment {
   reason: string | null;
   is_telemedicine: boolean | null;
   decline_reason: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  /** Set when the doctor joins the video call, and when the call ends. */
+  call_started_at?: string | null;
+  call_ended_at?: string | null;
   doctors: { id?: string; first_name: string; last_name: string; specialty: string | null } | null;
   hospitals: { id?: string; name: string } | null;
 }
@@ -55,6 +60,10 @@ export const isUpcoming = (a: Pick<Appointment, "status">) => UPCOMING_STATUSES.
 export const canCancel = (a: Pick<Appointment, "status">) => a.status === "pending" || a.status === "accepted";
 export const canJoinCall = (a: Pick<Appointment, "status" | "is_telemedicine">) =>
   a.is_telemedicine === true && (a.status === "accepted" || a.status === "confirmed");
+
+/** The doctor has joined the video call and it has not ended. */
+export const doctorIsInCall = (a: Pick<Appointment, "status" | "is_telemedicine" | "call_started_at" | "call_ended_at">) =>
+  canJoinCall(a) && !!a.call_started_at && !a.call_ended_at;
 
 /** Upcoming visits, soonest first: the first one is the Home card's "next appointment". */
 export function sortUpcoming<T extends Pick<Appointment, "requested_date" | "requested_time" | "status">>(list: T[]): T[] {

@@ -32,7 +32,7 @@ export function webPage(webUrl: string, path: string): string {
   return `${trimSlash(webUrl)}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/** The video-visit page for an appointment (opened in the in-app browser in 0.1). */
+/** The video-visit page for an appointment (opened in the in-app browser). */
 export function consultUrl(webUrl: string, appointmentId: string): string {
   return `${trimSlash(webUrl)}/consult/${encodeURIComponent(appointmentId)}?mode=appointment`;
 }
