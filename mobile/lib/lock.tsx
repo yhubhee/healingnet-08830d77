@@ -14,7 +14,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState, Image, Platform, StyleSheet, View } from "react-native";
 import { Button, Body, Title } from "@/components/ui";
 import { useTheme } from "@/theme";
-import { DEVICE_KEYS, getFlag, setFlag } from "./storage";
+import { DEVICE_KEYS, setFlag } from "./storage";
 
 /** Set to false to allow screenshots on Android (the app-switcher preview would then show the last screen). */
 const ANDROID_SECURE_WINDOW = true;
@@ -55,24 +55,17 @@ interface LockValue {
 const LockContext = createContext<LockValue>({ enabled: false, setEnabled: async () => null });
 export const useAppLock = () => useContext(LockContext);
 
-export function LockProvider({ children, active }: { children: ReactNode; active: boolean }) {
+/** `initialEnabled` comes from the start-up read, so a locked app is covered from its very first frame. */
+export function LockProvider({ children, active, initialEnabled = false }: { children: ReactNode; active: boolean; initialEnabled?: boolean }) {
   const { colors } = useTheme();
-  const [enabled, setEnabledState] = useState(false);
-  const [locked, setLocked] = useState(false);
+  const [enabled, setEnabledState] = useState(initialEnabled);
+  const [locked, setLocked] = useState(() => shouldLock(initialEnabled, null, Date.now(), true));
   const [covered, setCovered] = useState(false);
   const [busy, setBusy] = useState(false);
   const backgroundedAt = useRef<number | null>(null);
-  const enabledRef = useRef(false);
+  const enabledRef = useRef(initialEnabled);
 
-  useEffect(() => {
-    secureWindow(true);
-    getFlag(DEVICE_KEYS.appLock).then((v) => {
-      const on = v === "1";
-      enabledRef.current = on;
-      setEnabledState(on);
-      if (shouldLock(on, null, Date.now(), true)) setLocked(true);
-    });
-  }, []);
+  useEffect(() => { secureWindow(true); }, []);
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (state) => {

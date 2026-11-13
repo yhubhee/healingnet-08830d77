@@ -4,6 +4,7 @@ import "react-native-get-random-values";
 import { createClient } from "@supabase/supabase-js";
 import { AppState } from "react-native";
 import type { Database } from "@/shared/database";
+import { AUTH_STORAGE_KEY } from "./boot";
 import { isConfigured, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./env";
 import { encryptedStorage } from "./storage";
 
@@ -13,6 +14,7 @@ export const supabase = createClient<Database>(
   {
     auth: {
       storage: encryptedStorage,
+      storageKey: AUTH_STORAGE_KEY,
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: false,
