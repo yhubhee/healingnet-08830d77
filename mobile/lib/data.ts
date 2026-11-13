@@ -307,3 +307,20 @@ export function useRealtime(table: string, filter: string | null | undefined, qu
     }, [table, filter, keys, enabled, instance, qc]),
   );
 }
+
+/**
+ * Refetches on a timer while the screen is in front. For tables that are not in the
+ * database's Realtime publication (patient_messages): the website's doctor page polls the
+ * same way.
+ */
+export function usePollWhileFocused(queryKey: readonly unknown[], everyMs: number, enabled = true) {
+  const qc = useQueryClient();
+  const key = JSON.stringify(queryKey);
+  useFocusEffect(
+    useCallback(() => {
+      if (!enabled) return;
+      const timer = setInterval(() => { qc.invalidateQueries({ queryKey: JSON.parse(key) as unknown[] }); }, everyMs);
+      return () => clearInterval(timer);
+    }, [qc, key, everyMs, enabled]),
+  );
+}
