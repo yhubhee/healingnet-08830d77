@@ -19,6 +19,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ToastProvider } from "@/components/toast";
 import { Body, Button, Title } from "@/components/ui";
 import { boot as bootRead, type Boot } from "@/lib/boot";
+import { usePrefetchTabs } from "@/lib/data";
 import { isConfigured } from "@/lib/env";
 import { LockProvider } from "@/lib/lock";
 import { useOnline } from "@/lib/net";
@@ -61,6 +62,9 @@ function Gate({ appLock }: { appLock: boolean }) {
   const settled = !target && !(signedIn && restoring);
   useEffect(() => { if (settled) hideSplash(); }, [settled]);
   useEffect(() => { const t = setTimeout(hideSplash, 4000); return () => clearTimeout(t); }, []);
+
+  // Warm the Visits and Prescriptions lists while Home is on screen.
+  usePrefetchTabs(inApp);
 
   // Push: register on every start and after sign-in; explain before the first permission prompt.
   useEffect(() => {

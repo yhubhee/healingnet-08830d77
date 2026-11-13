@@ -1,9 +1,10 @@
 // Page frame: safe areas, an optional header with a back button, the offline bar,
-// scrolling and pull to refresh.
+// scrolling and pull to refresh. ListScreen is the same frame around a FlatList, for
+// lists that can grow long: only the rows on screen are mounted.
 import { router } from "expo-router";
 import { ArrowLeft, WifiOff } from "lucide-react-native";
-import type { ReactNode } from "react";
-import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import type { ReactElement, ReactNode } from "react";
+import { FlatList, KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, Text, View, type ListRenderItem } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnline } from "@/lib/net";
 import { fmtClock } from "@/shared/dates";
@@ -82,6 +83,68 @@ export function Screen({
       ) : null}
     </KeyboardAvoidingView>
   );
+}
+
+/** The page frame around a virtualised list. `header` scrolls with the rows; `empty` shows when there are none. */
+export function ListScreen<T>({
+  title, back, right, tab, updatedAt, onRefresh, refreshing, data, renderItem, keyExtractor, header, empty, footer, extraData,
+}: {
+  title?: string;
+  back?: boolean;
+  right?: ReactNode;
+  tab?: boolean;
+  updatedAt?: number;
+  onRefresh?: () => void;
+  refreshing?: boolean;
+  data: readonly T[];
+  renderItem: ListRenderItem<T>;
+  keyExtractor: (item: T) => string;
+  header?: ReactElement | null;
+  empty?: ReactElement | null;
+  /** Below the list, outside the scroll (sheets and dialogs). */
+  footer?: ReactNode;
+  /** Anything outside `data` that the rows draw from; a change redraws them. */
+  extraData?: unknown;
+}) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace("/(tabs)"));
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
+      <OfflineBar updatedAt={updatedAt} />
+      {(title || back || right) ? (
+        <View style={styles.header}>
+          {back ? <IconButton icon={ArrowLeft} label="Back" onPress={goBack} /> : null}
+          <View style={{ flex: 1, paddingLeft: back ? 0 : space.xs }}>
+            {title ? <Title numberOfLines={2}>{title}</Title> : null}
+          </View>
+          {right}
+        </View>
+      ) : null}
+      <FlatList
+        data={data}
+        extraData={extraData}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={header ?? undefined}
+        ListHeaderComponentStyle={header ? { marginBottom: space.lg } : undefined}
+        ListEmptyComponent={empty ?? undefined}
+        ItemSeparatorComponent={ListGap}
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
+        windowSize={7}
+        removeClippedSubviews={Platform.OS === "android"}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: (tab ? 0 : insets.bottom) + space.xl }}
+        refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.primaryText} colors={[colors.primary]} /> : undefined}
+      />
+      {footer}
+    </View>
+  );
+}
+
+function ListGap() {
+  return <View style={{ height: space.lg }} />;
 }
 
 const styles = StyleSheet.create({

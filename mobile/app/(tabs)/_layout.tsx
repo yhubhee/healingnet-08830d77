@@ -1,4 +1,6 @@
 // Bottom tabs: Home · Visits · Health · Messages · Me.
+// A tab is built the first time it is opened and then stays mounted, so coming back to it
+// is instant; freezeOnBlur stops the hidden tabs from re-rendering in the background.
 import { Tabs } from "expo-router/js-tabs";
 import { CalendarDays, HeartPulse, House, MessageCircle, User } from "lucide-react-native";
 import { fonts, useTheme } from "@/theme";
@@ -9,6 +11,8 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        lazy: true,
+        freezeOnBlur: true,
         tabBarActiveTintColor: colors.primaryText,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: { backgroundColor: colors.tabBar, borderTopColor: colors.border, minHeight: 64 },

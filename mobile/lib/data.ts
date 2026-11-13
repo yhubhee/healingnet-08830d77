@@ -1,44 +1,56 @@
 // Data hooks. Each one mirrors a query or database function the website already uses
 // (same tables, same functions, same filters); the comment on each names its source.
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useId } from "react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useId, useRef } from "react";
 import type { Appointment } from "@/shared/appointments";
 import type { PushPrefs, Tables } from "@/shared/database";
 import type { CheckResult, PatientRequest, RxPayload } from "@/shared/pharmacy";
 import { usePatient, useSession } from "./session";
 import { supabase } from "./supabase";
 
+/** Runs work once the current screen has been drawn (two frames on). Returns a cancel function. */
+function afterPaint(work: () => void): () => void {
+  let second = 0;
+  const first = requestAnimationFrame(() => { second = requestAnimationFrame(work); });
+  return () => { cancelAnimationFrame(first); cancelAnimationFrame(second); };
+}
+
 // ---- Appointments (src/pages/patient/Appointments.tsx) ----------------------------------
 export const appointmentsKey = (patientId: string | null) => ["appointments", patientId] as const;
 
+async function fetchAppointments(patientId: string): Promise<Appointment[]> {
+  const { data: appts, error } = await supabase
+    .from("patient_appointments")
+    .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, decline_reason")
+    .eq("patient_id", patientId)
+    .order("requested_date", { ascending: false });
+  if (error) throw error;
+  if (!appts || appts.length === 0) return [];
+
+  const doctorIds = [...new Set(appts.map((a) => a.doctor_id).filter((v): v is string => !!v))];
+  const hospitalIds = [...new Set(appts.map((a) => a.hospital_id).filter((v): v is string => !!v))];
+  const [doctors, hospitals] = await Promise.all([
+    doctorIds.length ? supabase.from("doctors").select("id, first_name, last_name, specialty").in("id", doctorIds) : Promise.resolve({ data: [], error: null }),
+    hospitalIds.length ? supabase.from("hospitals").select("id, name").in("id", hospitalIds) : Promise.resolve({ data: [], error: null }),
+  ]);
+  const doctorMap = new Map((doctors.data ?? []).map((d) => [d.id, d]));
+  const hospitalMap = new Map((hospitals.data ?? []).map((h) => [h.id, h]));
+  return appts.map((a) => ({
+    ...a,
+    doctors: (a.doctor_id && doctorMap.get(a.doctor_id)) || null,
+    hospitals: (a.hospital_id && hospitalMap.get(a.hospital_id)) || null,
+  })) as Appointment[];
+}
+
+/** Upcoming and past visits. Saved on the phone, so the list shows at once and refreshes behind. */
 export function useAppointments() {
   const { patientId } = usePatient();
   return useQuery({
     queryKey: appointmentsKey(patientId),
     enabled: !!patientId,
-    queryFn: async (): Promise<Appointment[]> => {
-      const { data: appts, error } = await supabase
-        .from("patient_appointments")
-        .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, decline_reason")
-        .eq("patient_id", patientId!)
-        .order("requested_date", { ascending: false });
-      if (error) throw error;
-      if (!appts || appts.length === 0) return [];
-
-      const doctorIds = [...new Set(appts.map((a) => a.doctor_id).filter((v): v is string => !!v))];
-      const hospitalIds = [...new Set(appts.map((a) => a.hospital_id).filter((v): v is string => !!v))];
-      const [doctors, hospitals] = await Promise.all([
-        doctorIds.length ? supabase.from("doctors").select("id, first_name, last_name, specialty").in("id", doctorIds) : Promise.resolve({ data: [], error: null }),
-        hospitalIds.length ? supabase.from("hospitals").select("id, name").in("id", hospitalIds) : Promise.resolve({ data: [], error: null }),
-      ]);
-      const doctorMap = new Map((doctors.data ?? []).map((d) => [d.id, d]));
-      const hospitalMap = new Map((hospitals.data ?? []).map((h) => [h.id, h]));
-      return appts.map((a) => ({
-        ...a,
-        doctors: (a.doctor_id && doctorMap.get(a.doctor_id)) || null,
-        hospitals: (a.hospital_id && hospitalMap.get(a.hospital_id)) || null,
-      })) as Appointment[];
-    },
+    queryFn: () => fetchAppointments(patientId!),
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -69,25 +81,45 @@ export function useRescheduleAppointment() {
 // ---- Prescriptions (src/pages/patient/Prescriptions.tsx) --------------------------------
 const MAX_DOCS = 40;
 
+async function fetchRxDocuments(patientId: string): Promise<RxPayload[]> {
+  const { data, error } = await supabase.from("prescriptions").select("rx_document_id, created_at")
+    .eq("patient_id", patientId).not("rx_document_id", "is", null).order("created_at", { ascending: false }).limit(500);
+  if (error) throw error;
+  const ids = [...new Set((data ?? []).map((r) => r.rx_document_id as string))].slice(0, MAX_DOCS);
+  const out = await Promise.all(ids.map(async (id) => {
+    const res = await supabase.rpc("rx_document", { p_document_id: id });
+    if (res.error) throw res.error;
+    return res.data as unknown as RxPayload;
+  }));
+  return out.filter((d) => d && d.status !== "not_found")
+    .sort((a, b) => +new Date(b.issued_at ?? 0) - +new Date(a.issued_at ?? 0));
+}
+
 export function useRxDocuments() {
   const { patientId } = usePatient();
   return useQuery({
     queryKey: ["rx-documents", patientId],
     enabled: !!patientId,
-    queryFn: async (): Promise<RxPayload[]> => {
-      const { data, error } = await supabase.from("prescriptions").select("rx_document_id, created_at")
-        .eq("patient_id", patientId!).not("rx_document_id", "is", null).order("created_at", { ascending: false }).limit(500);
-      if (error) throw error;
-      const ids = [...new Set((data ?? []).map((r) => r.rx_document_id as string))].slice(0, MAX_DOCS);
-      const out = await Promise.all(ids.map(async (id) => {
-        const res = await supabase.rpc("rx_document", { p_document_id: id });
-        if (res.error) throw res.error;
-        return res.data as unknown as RxPayload;
-      }));
-      return out.filter((d) => d && d.status !== "not_found")
-        .sort((a, b) => +new Date(b.issued_at ?? 0) - +new Date(a.issued_at ?? 0));
-    },
+    queryFn: () => fetchRxDocuments(patientId!),
+    placeholderData: keepPreviousData,
   });
+}
+
+/**
+ * Warms the lists behind the tabs as soon as the app opens (Visits and Prescriptions), so
+ * the first tap on a tab finds its data already there. Saved data that is still fresh is
+ * left alone; anything older is refreshed in the background.
+ */
+export function usePrefetchTabs(active: boolean) {
+  const qc = useQueryClient();
+  const { patientId } = usePatient();
+  useEffect(() => {
+    if (!active || !patientId) return;
+    return afterPaint(() => {
+      qc.prefetchQuery({ queryKey: appointmentsKey(patientId), queryFn: () => fetchAppointments(patientId) });
+      qc.prefetchQuery({ queryKey: ["rx-documents", patientId], queryFn: () => fetchRxDocuments(patientId) });
+    });
+  }, [active, patientId, qc]);
 }
 
 export interface RxExtras {
@@ -245,19 +277,33 @@ export function useSavePushPrefs() {
 }
 
 // ---- Realtime ---------------------------------------------------------------------------
-/** Refetches the given queries when a table changes, while the screen is open. */
+/**
+ * Refetches the given queries when a table changes. The subscription is opened after the
+ * screen has drawn, and only while the screen is in front: a hidden tab holds no socket
+ * subscription. Coming back to the screen refetches once, to catch what was missed.
+ */
 export function useRealtime(table: string, filter: string | null | undefined, queryKeys: readonly (readonly unknown[])[], enabled = true) {
   const qc = useQueryClient();
   const instance = useId();
   const keys = JSON.stringify(queryKeys);
-  useEffect(() => {
-    if (!enabled || filter === null) return;
-    const channel = supabase
-      .channel(`rt-${table}-${instance}`)
-      .on("postgres_changes", { event: "*", schema: "public", table, ...(filter ? { filter } : {}) }, () => {
-        (JSON.parse(keys) as unknown[][]).forEach((queryKey) => qc.invalidateQueries({ queryKey }));
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [table, filter, keys, enabled, instance, qc]);
+  const seen = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!enabled || filter === null) return;
+      const invalidate = () => (JSON.parse(keys) as unknown[][]).forEach((queryKey) => qc.invalidateQueries({ queryKey }));
+      if (seen.current) invalidate();
+      seen.current = true;
+      let channel: ReturnType<typeof supabase.channel> | null = null;
+      const cancel = afterPaint(() => {
+        channel = supabase
+          .channel(`rt-${table}-${instance}`)
+          .on("postgres_changes", { event: "*", schema: "public", table, ...(filter ? { filter } : {}) }, invalidate)
+          .subscribe();
+      });
+      return () => {
+        cancel();
+        if (channel) supabase.removeChannel(channel);
+      };
+    }, [table, filter, keys, enabled, instance, qc]),
+  );
 }
