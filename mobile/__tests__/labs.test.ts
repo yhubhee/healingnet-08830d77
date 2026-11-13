@@ -1,5 +1,5 @@
 import { isOutOfRange, labHtml, labStatusText, parseRange, rangeLabel, rangeWord, type LabResult } from "../shared/labs";
-import { entryTypeLabel, letterHtml, letterStatus, vitalsList, type Letter } from "../shared/records";
+import { ANY_DOCTOR, entryTypeLabel, letterHtml, letterRequestRow, letterStatus, LETTER_TYPES, vitalsList, type Letter } from "../shared/records";
 
 const p = (flag: string | null, value: string | null, range: string | null) => ({ flag, result_value: value, ref_range_snapshot: range });
 
@@ -114,5 +114,25 @@ describe("records and letters", () => {
       expect(html).toContain(part);
     }
     expect(html).toContain("&lt;b&gt;No work&lt;/b&gt;");
+  });
+});
+
+describe("requesting a letter", () => {
+  const now = new Date("2026-11-13T15:30:00Z");
+  it("builds the same row the website inserts", () => {
+    expect(letterRequestRow({ patientId: "p1", doctorId: "d1", hospitalId: "h1", letterType: "sick_leave", notes: "Flu, 3 days off work", now })).toEqual({
+      patient_id: "p1", doctor_id: "d1", hospital_id: "h1", letter_type: "sick_leave", title: "Request: Sick Leave Letter",
+      body: "Flu, 3 days off work", status: "pending", issued_at: "2026-11-13",
+    });
+  });
+  it("any available doctor means no doctor and no hospital", () => {
+    const row = letterRequestRow({ patientId: "p1", doctorId: ANY_DOCTOR, hospitalId: "h1", letterType: "fit_to_work", notes: "x", now });
+    expect(row.doctor_id).toBeNull();
+    expect(row.hospital_id).toBeNull();
+    expect(row.title).toBe("Request: Fit-to-Work / Fit-to-Travel Letter");
+  });
+  it("offers the website's five letter types, and a request shows as waiting", () => {
+    expect(LETTER_TYPES.map((t) => t.value)).toEqual(["fit_to_work", "pregnancy_maternity", "sick_leave", "excuse_of_duty", "vaccination_record"]);
+    expect(letterStatus({ status: "pending", valid_until: null })).toBe("pending");
   });
 });

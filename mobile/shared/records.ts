@@ -73,6 +73,34 @@ export function letterStatus(l: Pick<Letter, "status" | "valid_until">, now: Dat
 }
 export const LETTER_STATUS_TEXT: Record<LetterStatus, string> = { issued: "Issued", pending: "Requested: waiting for your doctor", expired: "Expired" };
 
+// ---- Requesting a letter (src/components/patient/RequestLetterDialog.tsx) ----------------
+/** The letters a patient can ask for (the website's LETTER_TYPES; a lab report is not requested this way). */
+export const LETTER_TYPES = [
+  { value: "fit_to_work", label: "Fit-to-Work / Fit-to-Travel Letter" },
+  { value: "pregnancy_maternity", label: "Pregnancy & Maternity Letter" },
+  { value: "sick_leave", label: "Sick Leave Letter" },
+  { value: "excuse_of_duty", label: "Excuse of Duty Letter" },
+  { value: "vaccination_record", label: "Vaccination Record" },
+] as const;
+export const ANY_DOCTOR = "any";
+export const LETTER_REQUEST_NEEDS_REASON = "Please describe what you need the letter for";
+export const LETTER_REQUEST_SENT = "Request submitted — your doctor will review it";
+
+/** The patient_letters row for a request: exactly what the website inserts. */
+export function letterRequestRow(input: { patientId: string; doctorId: string; hospitalId: string | null; letterType: string; notes: string; now: Date }) {
+  const def = LETTER_TYPES.find((l) => l.value === input.letterType) ?? LETTER_TYPES[0];
+  return {
+    patient_id: input.patientId,
+    doctor_id: input.doctorId === ANY_DOCTOR ? null : input.doctorId,
+    hospital_id: input.doctorId === ANY_DOCTOR ? null : input.hospitalId,
+    letter_type: def.value,
+    title: `Request: ${def.label}`,
+    body: input.notes,
+    status: "pending",
+    issued_at: input.now.toISOString().slice(0, 10),
+  };
+}
+
 const esc = (v: unknown) =>
   String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 

@@ -48,13 +48,16 @@ export default function LetterDetail() {
               {l.title && l.title !== letterLabel(l) ? <Small>{letterLabel(l)}</Small> : null}
             </View>
             <Card style={{ gap: space.md }}>
-              <View><Small>Issued</Small><Strong>{fmtLongDate(l.issued_at)}</Strong></View>
+              <View><Small>{status === "pending" ? "Requested" : "Issued"}</Small><Strong>{fmtLongDate(l.issued_at)}</Strong></View>
               {l.valid_until ? <View><Small>Valid until</Small><Strong>{fmtLongDate(l.valid_until)}</Strong></View> : null}
               <View><Small>Doctor</Small><Strong>{letterDoctor(l) ?? "—"}</Strong>{l.doctors?.specialty ? <Small>{l.doctors.specialty}</Small> : null}</View>
               <View><Small>Hospital</Small><Strong>{l.hospitals?.name ?? "—"}</Strong>{l.hospitals?.address ? <Small>{l.hospitals.address}</Small> : null}</View>
             </Card>
             {status === "pending" ? (
-              <Notice tone="warning" text="Your doctor hasn't issued this letter yet. We'll notify you when it is ready." />
+              <>
+                <Notice tone="warning" text="Your doctor hasn't issued this letter yet. We'll notify you when it is ready." />
+                <Card style={{ gap: 4 }}><Small>What you asked for</Small><Body selectable>{l.body}</Body></Card>
+              </>
             ) : (
               <>
                 {status === "expired" ? <Notice text="This letter is past its valid-until date. Ask your doctor for a new one if you still need it." /> : null}
