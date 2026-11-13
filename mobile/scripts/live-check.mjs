@@ -5,7 +5,9 @@
 //
 //   cd mobile && node scripts/live-check.mjs
 //
-// It books one "[E2E]" appointment and cancels it; the id is printed for e2e/cleanup.md.
+// It books one "[E2E]" appointment and cancels it, sends one "[E2E]" message, saves one
+// "[E2E]" triage session and (when a completed "[E2E]" visit exists) rates it; what it
+// created is printed for e2e/cleanup.md. The allergies field is changed and put back.
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -52,6 +54,11 @@ let userId, patient, appointmentId;
 
 await step("register_push_device refuses a signed-out caller", async () => {
   const { error } = await supabase.rpc("register_push_device", { p_token: "ExponentPushToken[check]", p_platform: "android", p_app_version: "0.1.0" });
+  if (!error || !/permission denied/i.test(error.message)) throw new Error("expected permission denied");
+});
+
+await step("rate_appointment refuses a signed-out caller", async () => {
+  const { error } = await supabase.rpc("rate_appointment", { p_appointment_id: "00000000-0000-0000-0000-000000000000", p_rating: 5 });
   if (!error || !/permission denied/i.test(error.message)) throw new Error("expected permission denied");
 });
 
@@ -127,6 +134,132 @@ await step("prescriptions load with a code for the QR", async () => {
   return `${ids.length} documents; first is "${doc.status}" with ${doc.items?.length ?? 0} medicines`;
 });
 
+// ---- Version 0.2 ------------------------------------------------------------------------
+const E2E_NOTE = `[E2E] mobile app check ${Date.now().toString(36)}`;
+let visits = [];
+
+await step("Visits loads with the 0.2 columns, the patient's ratings and doctors' review counts", async () => {
+  visits = must(await supabase.from("patient_appointments")
+    .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, decline_reason, created_at, updated_at, call_started_at, call_ended_at")
+    .eq("patient_id", patient.id).order("requested_date", { ascending: false }));
+  const reviews = must(await supabase.from("appointment_reviews").select("appointment_id, rating, comment").eq("patient_id", patient.id));
+  const doctorIds = [...new Set(visits.map((a) => a.doctor_id).filter(Boolean))].slice(0, 50);
+  const counts = doctorIds.length ? must(await supabase.from("doctors").select("id, review_count").in("id", doctorIds)) : [];
+  return `${visits.length} visits, ${reviews.length} ratings, review counts for ${counts.length} doctors`;
+});
+
+await step("lab results load (tests and parameters)", async () => {
+  const rows = must(await supabase.from("lab_results")
+    .select("id, created_at, status, notes, hospitals(name), lab_result_tests(id, test_name, category_name, lab_result_parameters(id, parameter_name, result_value, unit_snapshot, ref_range_snapshot, flag, sort_order))")
+    .eq("patient_id", patient.id).order("created_at", { ascending: false }));
+  const params = rows.flatMap((r) => (r.lab_result_tests ?? []).flatMap((t) => t.lab_result_parameters ?? []));
+  return `${rows.length} results, ${params.length} values, ${params.filter((x) => ["low", "high", "abnormal"].includes(x.flag)).length} flagged outside the range`;
+});
+
+await step("medical records load", async () => {
+  const rows = must(await supabase.from("emr_entries")
+    .select("id, entry_type, title, content, created_at, vital_data, doctors(first_name, last_name), hospitals(name)")
+    .eq("patient_id", patient.id).order("created_at", { ascending: false }));
+  return `${rows.length} entries`;
+});
+
+await step("letters load", async () => {
+  const rows = must(await supabase.from("patient_letters")
+    .select("id, letter_type, title, body, status, issued_at, valid_until, pdf_url, doctors(first_name, last_name, specialty), hospitals(name, address)")
+    .eq("patient_id", patient.id).order("issued_at", { ascending: false }));
+  return `${rows.length} letters`;
+});
+
+await step("messages load, and an [E2E] message can be sent", async () => {
+  const cols = "id, from_user_id, to_user_id, body, created_at, is_read";
+  const rows = must(await supabase.from("patient_messages").select(cols).or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`).order("created_at", { ascending: false }).limit(500));
+  const others = [...new Set(rows.map((m) => (m.from_user_id === userId ? m.to_user_id : m.from_user_id)))];
+  // The database lets a patient write to a doctor they have a visit with. Prefer someone
+  // already in a conversation; otherwise a doctor from the patient's visits.
+  let to = others[0];
+  if (!to) {
+    const doctorIds = [...new Set(visits.map((a) => a.doctor_id).filter(Boolean))].slice(0, 20);
+    const doctors = doctorIds.length ? must(await supabase.from("doctors").select("id, user_id").in("id", doctorIds)) : [];
+    to = doctors.find((d) => d.user_id)?.user_id;
+  }
+  if (!to) return `${rows.length} messages in ${others.length} conversations; NOT SENT: the test patient has no doctor to write to`;
+  must(await supabase.from("patient_messages").insert({ from_user_id: userId, to_user_id: to, body: E2E_NOTE }));
+  const sent = must(await supabase.from("patient_messages").select("id").eq("from_user_id", userId).eq("body", E2E_NOTE).maybeSingle());
+  if (!sent) throw new Error("the message was not found afterwards");
+  created.push(`patient_messages ${sent.id} (${E2E_NOTE})`);
+  // Mark-as-read is the recipient's update; check it runs without error on messages sent to the patient.
+  const unread = rows.filter((m) => m.to_user_id === userId && !m.is_read).slice(0, 1).map((m) => m.id);
+  if (unread.length) {
+    must(await supabase.from("patient_messages").update({ is_read: true }).in("id", unread));
+    must(await supabase.from("patient_messages").update({ is_read: false }).in("id", unread)); // put back; may be refused silently by the column grant
+  }
+  return `${rows.length} messages in ${others.length} conversations; one [E2E] message sent`;
+});
+
+await step("health card: allergies save, then the original value is restored", async () => {
+  const before = must(await supabase.from("patients").select("allergies, medical_conditions").eq("id", patient.id).single());
+  const probe = "[E2E] Penicillin";
+  must(await supabase.from("patients").update({ allergies: probe }).eq("id", patient.id));
+  const during = must(await supabase.from("patients").select("allergies").eq("id", patient.id).single());
+  must(await supabase.from("patients").update({ allergies: before.allergies }).eq("id", patient.id));
+  const after = must(await supabase.from("patients").select("allergies, medical_conditions").eq("id", patient.id).single());
+  if (during.allergies !== probe) throw new Error("the value did not save");
+  if (after.allergies !== before.allergies || after.medical_conditions !== before.medical_conditions) throw new Error("the original value was not restored");
+  return "saved, read back, restored";
+});
+
+await step("health card: more than 500 characters is refused by the database", async () => {
+  const { error } = await supabase.from("patients").update({ allergies: "x".repeat(501) }).eq("id", patient.id);
+  if (!error) {
+    await supabase.from("patients").update({ allergies: patient.allergies ?? null }).eq("id", patient.id);
+    throw new Error("a 501-character value was accepted");
+  }
+});
+
+await step("Check symptoms: the triage function answers, and an [E2E] session saves", async () => {
+  const { data, error } = await supabase.functions.invoke("triage-nurse", { body: { stage: "parse", age: 30, sex: "male", free_text: "headache and a mild fever since yesterday" } });
+  if (error || !data || data.error) throw new Error("triage-nurse did not answer");
+  if (typeof data.triage_level !== "string" || typeof data.recommended_specialty !== "string") throw new Error("the answer has no triage level or specialty");
+  const map = { self_care: "routine", consultation: "soon", consultation_24: "soon", emergency_ambulance: "emergency", emergency: "emergency" };
+  must(await supabase.from("triage_sessions").insert({
+    patient_id: patient.id, symptoms: [E2E_NOTE], severity_self: null,
+    severity_score: data.severity_score || Math.round((data.differential?.[0]?.probability || 0.3) * 10),
+    recommended_specialty: data.recommended_specialty, urgency: map[data.triage_level] || "soon", recommended_hospitals: data, lat: null, lng: null,
+  }));
+  created.push(`triage_sessions: one row for the test patient whose symptoms are ["${E2E_NOTE}"]`);
+  const danger = await supabase.functions.invoke("triage-nurse", { body: { stage: "parse", age: 58, sex: "male", free_text: "crushing chest pain spreading to my left arm, sweating and short of breath" } });
+  const level = danger.data?.triage_level ?? "no answer";
+  return `first question ${data.next_question ? `is a "${data.next_question.type ?? "boolean"}" one` : "not needed"}; a chest-pain description gives "${level}"`;
+});
+
+await step("Rate your visit: rate a completed [E2E] visit", async () => {
+  const cutoff = Date.now() - 30 * 86_400_000;
+  const mine = must(await supabase.from("appointment_reviews").select("appointment_id, rating, comment").eq("patient_id", patient.id));
+  const target = visits.find((a) => a.status === "completed" && a.doctor_id && String(a.reason ?? "").includes("[E2E]") && +new Date(a.updated_at ?? a.created_at) > cutoff);
+  if (!target) {
+    // Still prove the rule: a visit that is not completed is refused with the database's own words.
+    const other = visits.find((a) => a.status !== "completed");
+    if (other) {
+      const { error } = await supabase.rpc("rate_appointment", { p_appointment_id: other.id, p_rating: 5 });
+      if (!error) throw new Error("a visit that is not completed was rated");
+      return `NOT RUN: no completed [E2E] visit from the last 30 days. A ${other.status} visit is refused: "${error.message}"`;
+    }
+    return "NOT RUN: no completed [E2E] visit from the last 30 days";
+  }
+  const old = mine.find((r) => r.appointment_id === target.id);
+  must(await supabase.rpc("rate_appointment", { p_appointment_id: target.id, p_rating: 4, p_comment: E2E_NOTE }));
+  const saved = must(await supabase.from("appointment_reviews").select("rating, comment").eq("appointment_id", target.id).single());
+  if (saved.rating !== 4) throw new Error("the rating did not save");
+  const { error: bad } = await supabase.rpc("rate_appointment", { p_appointment_id: target.id, p_rating: 6 });
+  if (!bad) throw new Error("6 stars was accepted");
+  if (old) {
+    must(await supabase.rpc("rate_appointment", { p_appointment_id: target.id, p_rating: old.rating, p_comment: old.comment ?? undefined }));
+    return "rated 4 stars, read back, then the earlier rating was put back; 6 stars is refused";
+  }
+  created.push(`appointment_reviews: a 4-star rating on appointment ${target.id} (${E2E_NOTE}); the doctor's rating and review_count include it`);
+  return "rated 4 stars and read back; 6 stars is refused";
+});
+
 await step("Settings notification switches save", async () => {
   const cols = "push_enabled, push_appointments, push_prescriptions, push_lab_results, push_other, push_show_details";
   const before = must(await supabase.from("notification_preferences").select(cols).eq("user_id", userId).maybeSingle());
@@ -141,7 +274,7 @@ await step("Settings notification switches save", async () => {
 
 await step("push device: register and unregister", async () => {
   const token = `ExponentPushToken[e2e-check-${Date.now().toString(36)}]`;
-  must(await supabase.rpc("register_push_device", { p_token: token, p_platform: "android", p_app_version: "0.1.0" }));
+  must(await supabase.rpc("register_push_device", { p_token: token, p_platform: "android", p_app_version: "0.2.0" }));
   const mine = must(await supabase.from("push_devices").select("id"));
   must(await supabase.rpc("unregister_push_device", { p_token: token }));
   const left = must(await supabase.from("push_devices").select("id"));
