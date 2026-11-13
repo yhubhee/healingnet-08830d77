@@ -451,7 +451,7 @@ The check registered one device token and unregistered it again; nothing is left
 
 ## Mobile app 0.2 live check (2026-11-13)
 
-**Nothing was created on 13 November.** The run stopped at sign-in: the test patient's login in `.env.test` was refused ("Invalid login credentials"), so no signed-in step ran. Only the two signed-out checks ran (`register_push_device` and `rate_appointment` both refuse a signed-out caller), and they write nothing.
+**Nothing was created on 13 November** (two runs). The run stopped at sign-in: the test patient's login in `.env.test` was refused ("Invalid login credentials"), so no signed-in step ran. Only the two signed-out checks ran (`register_push_device` and `rate_appointment` both refuse a signed-out caller), and they write nothing.
 
 When the login is fixed and `node mobile/scripts/live-check.mjs` is run, each run creates the records below. The script prints the exact ids at the end; add them here.
 
@@ -472,6 +472,12 @@ When the login is fixed and `node mobile/scripts/live-check.mjs` is run, each ru
 | id | note |
 | --- | --- |
 | (not looked up) | One session for the test patient whose `symptoms` is `["[E2E] mobile app check <code>"]`. |
+
+### patient_letters (1 per run)
+
+| id | note |
+| --- | --- |
+| (printed by the script) | A pending letter request for the test patient with no doctor chosen; title `Request: Sick Leave Letter`, body `[E2E] mobile app check <code>`. |
 
 ### appointment_reviews (0 or 1)
 

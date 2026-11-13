@@ -8,7 +8,7 @@ Run on 13 November 2026, on Windows, against the live Supabase project. The note
 | --- | --- |
 | `npx tsc --noEmit` in `mobile/` | Pass, 0 errors |
 | `npx expo-doctor` | Pass, 20 of 20 checks |
-| Unit tests (`npm test`) | Pass, 136 tests in 12 files (61 in 0.1) |
+| Unit tests (`npm test`) | Pass, 154 tests in 12 files (61 in 0.1) |
 | Android JavaScript bundle (`npx expo export --platform android`) | Pass, every import resolves; 4.5 MB |
 | Website `npx tsc --noEmit -p tsconfig.app.json` | Pass, 0 errors |
 | Website `npm run build` | Pass |
@@ -16,6 +16,15 @@ Run on 13 November 2026, on Windows, against the live Supabase project. The note
 | Preview APK built on EAS | Pass: build `394dd68b`, 24.1 MB (0.1 was 109 MB) |
 | The app on a phone | **Not run** by me: this computer has no phone, emulator or `adb`. Use the checklist below |
 | Cold-start and tab-switch times on a phone | **Not measured**, for the same reason (see "Speed") |
+
+## Second round, later on 13 November
+
+After the first APK, these were added: Messages live through Realtime (no polling), the "Your doctor is ready" and "New message" notifications opening the right place, reminder times for 4 times a day and every 6 hours, and Request a letter. Second preview build: `8ea2f97c`.
+
+Two things asked for in that round were **not** done, because of what the live project answered:
+
+- **The live data check still stops at sign-in.** `.env.test` in this folder was last changed on 4 November, so it still holds the old password. The new password has not reached this file.
+- **"Seen by patient" on lab results is not built.** `lab-result-viewed-db.patch` is in the folder but has not been applied to the database: `mark_lab_result_viewed` and `lab_results.patient_viewed_at` do not exist there, and the migration list ends at `20261113110000`. Building against a column that is not there would break the Lab results screen, so "New" still uses the per-phone memory. Apply the patch (`git am`, then `npx supabase db push`) and ask again.
 
 ## What could not be run, and why
 
@@ -115,20 +124,20 @@ Install the preview APK over 0.1 (or uninstall 0.1 first). Sign in as a patient 
 
 ### New screens
 
-8. **Messages.** With no conversations: the empty screen says your doctors will message you here. After a doctor writes from the website: the conversation shows the doctor's name, the last message and "● 1 new". Open it: the message is marked read (the doctor's side shows it). Type a reply with the keyboard open: the text box stays above the keyboard. The reply appears on the doctor's page; the doctor's next message appears in the chat within 5 seconds without pulling to refresh.
+8. **Messages.** With no conversations: the empty screen says your doctors will message you here. After a doctor writes from the website: the conversation shows the doctor's name, the last message and "● 1 new". Open it: the message is marked read (the doctor's side shows it). Type a reply with the keyboard open: the text box stays above the keyboard. The reply appears on the doctor's page; the doctor's next message appears in the chat within a second or two without pulling to refresh (Realtime). Put the app in the background and have the doctor write again: a "New message" push arrives without the message text, and tapping it opens Messages.
 9. **Lab results.** The list shows the tests, hospital, date and "New". Open one: every parameter has its value, unit and reference range, and anything outside the range says "▲ High", "▼ Low" or "Outside the normal range" in words. Go back: "New" is gone. Share as PDF: the PDF opens in the share sheet and reads correctly.
 10. **Airplane mode on Lab results.** Open Lab results once online. Turn on airplane mode, force-stop the app, open it, go to Health → Lab results and open a result: it all shows, with the "Offline · last updated" bar. Same for Medical records.
 11. **Medical records.** A timeline with date, doctor, hospital and type; tapping an entry shows the notes or the vitals. Nothing can be edited.
-12. **Letters.** List with Issued / Requested / Expired in words; open one; Share as PDF.
+12. **Letters.** List with Issued / Requested / Expired in words; open one; Share as PDF. Tap + (Request a letter): choose a type and a doctor, write the reason, submit. The request appears in the list as "Requested: waiting for your doctor", and the doctor sees it on the website. Submitting with no reason is refused with a message.
 13. **Check symptoms.** Home → Check symptoms. About you shows your age; pick a sex; describe a mild problem; answer the questions (one per screen, big buttons). The result says how urgent it is in words and suggests a kind of doctor. Tap Book a doctor: booking opens with that specialty as a chip and the reason filled in. The doctor sees the triage in their panel on the website.
 14. **Emergency card.** Start again and describe crushing chest pain going to the left arm with sweating. The red emergency card shows at once, with Call 112 (opens the dialler; do not press call) and Find the nearest hospital (opens Maps).
-15. **A video call through the browser.** Book a video visit and have the doctor accept it. In Visits tap Join call: a sheet explains the camera and microphone and shows Join now. Tap it: "Joining…", then the call page opens in the in-app browser, the browser asks for camera and microphone, and the call works both ways. When the doctor joins first, the card says "Your doctor is in the call and waiting for you". Close the browser: you are back in Visits and the visit has refreshed.
+15. **A video call through the browser.** Book a video visit and have the doctor accept it. In Visits tap Join call: a sheet explains the camera and microphone and shows Join now. Tap it: "Joining…", then the call page opens in the in-app browser, the browser asks for camera and microphone, and the call works both ways. When the doctor joins first, the card says "Your doctor is in the call and waiting for you". Close the browser: you are back in Visits and the visit has refreshed. Then repeat with the app closed: when the doctor joins, a "Your doctor is ready" push arrives; tapping it opens Visits with the Join call sheet already open for that visit.
 16. **Health card.** Health shows Allergies and Long-term conditions as "None known". Edit, type an allergy, save: it shows on the card and on the website's Profile page. Clear it: "None known" again.
 17. **Rating a visit.** Have a doctor complete a visit. In Visits → Past it shows Rate your visit. Tap it, pick 4 stars, add a comment, submit: the card shows "★★★★☆ (4 of 5)" and Change rating. Change it to 5. In booking, that doctor now shows "5.0 ★ (1 review)"; a doctor nobody has rated shows "New". The website's booking flow shows the same. A completed visit older than 30 days shows no Rate button.
 
 ### Medicine reminders
 
-18. Open a valid prescription, tap **Remind me** on a medicine. The times match how often it is taken (for example "Twice daily" → 8:00 am and 8:00 pm). Change one time to two minutes from now. Save. Allow notifications if asked.
+18. Open a valid prescription, tap **Remind me** on a medicine. The times match how often it is taken (for example "Twice daily" → 8:00 am and 8:00 pm; "4 times a day" → 8:00 am, 12:00 pm, 4:00 pm, 8:00 pm; "every 6 hours" → 12:00 am, 6:00 am, 12:00 pm, 6:00 pm). Change one time to two minutes from now. Save. Allow notifications if asked.
 19. **A reminder firing with the app closed.** Force-stop the app and lock the phone. At the time, the lock screen shows "Time for your medicine" and does **not** name the medicine. (Android may be a minute or two late; see Decisions in the hand-over note.)
 20. **Taken.** Tap Taken on the notification. The app opens on Home, and Today's medicines shows that dose ticked, "1 of 2 taken".
 21. **Snooze.** Set another time two minutes away, tap Snooze 15 min when it fires. It fires again 15 minutes later. Tick it on Home before then instead: the snoozed one does not fire.
