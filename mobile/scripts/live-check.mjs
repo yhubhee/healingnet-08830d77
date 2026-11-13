@@ -6,7 +6,7 @@
 //   cd mobile && node scripts/live-check.mjs
 //
 // It books one "[E2E]" appointment and cancels it, sends one "[E2E]" message, saves one
-// "[E2E]" triage session and (when a completed "[E2E]" visit exists) rates it; what it
+// "[E2E]" triage session, makes one "[E2E]" letter request and (when a completed "[E2E]" visit exists) rates it; what it
 // created is printed for e2e/cleanup.md. The allergies field is changed and put back.
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
@@ -170,6 +170,18 @@ await step("letters load", async () => {
   return `${rows.length} letters`;
 });
 
+await step("letters: an [E2E] request can be made and shows as pending", async () => {
+  must(await supabase.from("patient_letters").insert({
+    patient_id: patient.id, doctor_id: null, hospital_id: null, letter_type: "sick_leave", title: "Request: Sick Leave Letter",
+    body: E2E_NOTE, status: "pending", issued_at: new Date().toISOString().slice(0, 10),
+  }));
+  const row = must(await supabase.from("patient_letters").select("id, status").eq("patient_id", patient.id).eq("body", E2E_NOTE).maybeSingle());
+  if (!row) throw new Error("the request was not found afterwards");
+  if (row.status !== "pending") throw new Error(`status is ${row.status}, expected pending`);
+  created.push(`patient_letters ${row.id} (a pending request; body is "${E2E_NOTE}")`);
+  return "shows in Letters as waiting for the doctor";
+});
+
 await step("messages load, and an [E2E] message can be sent", async () => {
   const cols = "id, from_user_id, to_user_id, body, created_at, is_read";
   const rows = must(await supabase.from("patient_messages").select(cols).or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`).order("created_at", { ascending: false }).limit(500));
@@ -193,7 +205,8 @@ await step("messages load, and an [E2E] message can be sent", async () => {
     must(await supabase.from("patient_messages").update({ is_read: true }).in("id", unread));
     must(await supabase.from("patient_messages").update({ is_read: false }).in("id", unread)); // put back; may be refused silently by the column grant
   }
-  return `${rows.length} messages in ${others.length} conversations; one [E2E] message sent`;
+  const alert = must(await supabase.from("user_notifications").select("id, type, action_url").eq("type", "message").order("created_at", { ascending: false }).limit(1));
+  return `${rows.length} messages in ${others.length} conversations; one [E2E] message sent; the patient has ${alert.length ? "a" : "no"} "New message" notification of their own`;
 });
 
 await step("health card: allergies save, then the original value is restored", async () => {
