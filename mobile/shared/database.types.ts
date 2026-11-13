@@ -2638,6 +2638,41 @@ export type Database = {
           },
         ]
       }
+      patient_guardians: {
+        Row: {
+          consent_confirmed_at: string | null
+          created_at: string
+          guardian_user_id: string
+          id: string
+          patient_id: string
+          relationship: string
+        }
+        Insert: {
+          consent_confirmed_at?: string | null
+          created_at?: string
+          guardian_user_id: string
+          id?: string
+          patient_id: string
+          relationship: string
+        }
+        Update: {
+          consent_confirmed_at?: string | null
+          created_at?: string
+          guardian_user_id?: string
+          id?: string
+          patient_id?: string
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_guardians_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: true
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patient_letters: {
         Row: {
           body: string
@@ -4108,6 +4143,7 @@ export type Database = {
           message: string | null
           reference_id: string | null
           reference_type: string | null
+          subject_patient_id: string | null
           title: string
           type: string
           user_id: string
@@ -4121,6 +4157,7 @@ export type Database = {
           message?: string | null
           reference_id?: string | null
           reference_type?: string | null
+          subject_patient_id?: string | null
           title: string
           type: string
           user_id: string
@@ -4134,11 +4171,20 @@ export type Database = {
           message?: string | null
           reference_id?: string | null
           reference_type?: string | null
+          subject_patient_id?: string | null
           title?: string
           type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_subject_patient_id_fkey"
+            columns: ["subject_patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -4226,6 +4272,17 @@ export type Database = {
     }
     Functions: {
       accept_my_staff_invites: { Args: never; Returns: string[] }
+      add_family_member: {
+        Args: {
+          p_consent_confirmed?: boolean
+          p_date_of_birth: string
+          p_first_name: string
+          p_gender: string
+          p_last_name: string
+          p_relationship: string
+        }
+        Returns: string
+      }
       adjust_stock: {
         Args: { p_delta: number; p_drug_id: string }
         Returns: number
@@ -4371,6 +4428,7 @@ export type Database = {
           p_doctor_id: string
           p_hospital_id: string
           p_is_telemedicine?: boolean
+          p_patient_id?: string
           p_reason?: string
           p_time: string
         }
@@ -4417,7 +4475,7 @@ export type Database = {
         Returns: string
       }
       create_patient_share_code: {
-        Args: never
+        Args: { p_patient_id?: string }
         Returns: {
           code: string
           expires_at: string
@@ -4528,6 +4586,21 @@ export type Database = {
         Returns: string
       }
       my_doctor_id: { Args: never; Returns: string }
+      my_family: {
+        Args: never
+        Returns: {
+          added_at: string
+          age: number
+          date_of_birth: string
+          first_name: string
+          gender: string
+          is_adult: boolean
+          last_name: string
+          linked_hospitals: number
+          patient_id: string
+          relationship: string
+        }[]
+      }
       my_hospital_ids: {
         Args: never
         Returns: {
@@ -4599,6 +4672,7 @@ export type Database = {
         Args: { p_app_version?: string; p_platform: string; p_token: string }
         Returns: undefined
       }
+      remove_family_member: { Args: { p_patient_id: string }; Returns: Json }
       respond_to_invitation: {
         Args: { p_accept: boolean; p_link_id: string }
         Returns: undefined
