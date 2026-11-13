@@ -15,7 +15,7 @@ export const ALLOWED = {
   hospitalStaffInsert: ["department", "email", "first_name", "hospital_id", "is_active", "last_name", "phone", "profile_image_url", "role", "user_id"],
   doctorUpdate: ["bio", "first_name", "is_available", "last_name", "phone", "profile_image_url", "specialty", "years_experience"],
   hospitalUpdate: ["address", "city", "email", "lat", "license_number", "lng", "logo_url", "name", "phone", "state"],
-  patientUpdate: ["first_name", "last_name", "phone", "email", "date_of_birth", "gender", "blood_group", "genotype", "address", "city", "state", "emergency_contact_name", "emergency_contact_phone", "insurance_provider", "insurance_policy_number", "profile_image_url", "status"],
+  patientUpdate: ["first_name", "last_name", "phone", "email", "date_of_birth", "gender", "blood_group", "genotype", "address", "city", "state", "emergency_contact_name", "emergency_contact_phone", "insurance_provider", "insurance_policy_number", "profile_image_url", "status", "allergies", "medical_conditions"],
   letterUpdate: ["title", "body", "issued_at", "valid_until", "status", "pdf_url", "letter_type"],
   patientRegister: ["first_name", "last_name", "phone", "email", "date_of_birth", "gender", "blood_group", "genotype", "address", "city", "state", "emergency_contact_name", "emergency_contact_phone", "insurance_provider", "insurance_policy_number"],
 } as const;

@@ -1,5 +1,5 @@
 import { dbMessage, friendlyError } from "../shared/errors";
-import { compactPhone, isNigerianPhone, missingPatientFields, validateProfile, type ProfileForm } from "../shared/patientProfile";
+import { compactPhone, healthNote, isNigerianPhone, missingPatientFields, PATIENT_UPDATE_COLUMNS, validateProfile, type ProfileForm } from "../shared/patientProfile";
 import { formatKobo, rxNextAction, rxStatusLabel, type PatientRequest, type RxPayload } from "../shared/pharmacy";
 import { qrSvg, rxHtml } from "../shared/rxHtml";
 
@@ -40,14 +40,21 @@ describe("patient profile checks (same as the website)", () => {
     const form: ProfileForm = {
       phone: "12345", date_of_birth: "2999-01-01", gender: "", state: "", city: "", address: "", emergency_contact_name: "", emergency_contact_phone: "",
       blood_group: "", genotype: "", insurance_provider: "", insurance_policy_number: "",
+      allergies: "x".repeat(501), medical_conditions: "Asthma",
     };
     const e = validateProfile(form, "2026-11-12");
     expect(e.phone).toBe("Enter a Nigerian number, e.g. 0803 123 4567 or +234 803 123 4567.");
     expect(e.date_of_birth).toBe("Your date of birth can't be in the future.");
     expect(e.gender).toBe("Choose your gender.");
+    expect(e.allergies).toBe("Keep this under 500 characters.");
+    expect(e.medical_conditions).toBeUndefined();
+    expect(healthNote("  ")).toBe("None known");
+    expect(healthNote(null)).toBe("None known");
+    expect(healthNote("Penicillin")).toBe("Penicillin");
+    expect(PATIENT_UPDATE_COLUMNS).toEqual(expect.arrayContaining(["allergies", "medical_conditions"]));
     expect(e.emergency_contact_phone).toBe("Enter a phone number.");
     expect(e.blood_group).toBeUndefined();
-    const ok = validateProfile({ ...form, phone: "08031234567", date_of_birth: "1990-05-01", gender: "male", state: "Lagos", city: "Ikeja", address: "1 Road", emergency_contact_name: "Bisi", emergency_contact_phone: "+2348031234567" }, "2026-11-12");
+    const ok = validateProfile({ ...form, phone: "08031234567", date_of_birth: "1990-05-01", gender: "male", state: "Lagos", city: "Ikeja", address: "1 Road", emergency_contact_name: "Bisi", emergency_contact_phone: "+2348031234567", allergies: "Penicillin" }, "2026-11-12");
     expect(ok).toEqual({});
   });
 });

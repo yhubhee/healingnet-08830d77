@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AvatarUpload } from "@/components/common/AvatarUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePatientProfile } from "@/hooks/usePatientData";
@@ -25,7 +26,9 @@ interface Form {
   phone: string; date_of_birth: string; gender: string; state: string; city: string; address: string;
   emergency_contact_name: string; emergency_contact_phone: string;
   blood_group: string; genotype: string; insurance_provider: string; insurance_policy_number: string;
+  allergies: string; medical_conditions: string;
 }
+const HEALTH_NOTE_MAX = 500;
 type Errors = Partial<Record<keyof Form, string>>;
 
 function validate(f: Form): Errors {
@@ -64,6 +67,7 @@ export default function CompleteProfile() {
       phone: s(p.phone), date_of_birth: s(p.date_of_birth), gender: s(p.gender), state: s(p.state), city: s(p.city),
       address: s(p.address), emergency_contact_name: s(p.emergency_contact_name), emergency_contact_phone: s(p.emergency_contact_phone),
       blood_group: s(p.blood_group), genotype: s(p.genotype), insurance_provider: s(p.insurance_provider), insurance_policy_number: s(p.insurance_policy_number),
+      allergies: s(p.allergies), medical_conditions: s(p.medical_conditions),
     });
   }, [p, form]);
 
@@ -92,6 +96,7 @@ export default function CompleteProfile() {
       emergency_contact_phone: compactPhone(form.emergency_contact_phone),
       blood_group: opt(form.blood_group), genotype: opt(form.genotype),
       insurance_provider: opt(form.insurance_provider), insurance_policy_number: opt(form.insurance_policy_number),
+      allergies: opt(form.allergies), medical_conditions: opt(form.medical_conditions),
     };
     const { error } = await supabase.from("patients").update(pick(patch, ALLOWED.patientUpdate) as never).eq("id", p.id);
     setSaving(false);
@@ -176,6 +181,8 @@ export default function CompleteProfile() {
                 </select>
               ))}
             </div>
+            {field("allergies", "Allergies", <Textarea rows={2} maxLength={HEALTH_NOTE_MAX} placeholder="e.g. Penicillin, peanuts. Leave empty if none are known." value={form.allergies} onChange={(e) => set("allergies")(e.target.value)} {...aria("allergies")} />)}
+            {field("medical_conditions", "Long-term conditions", <Textarea rows={2} maxLength={HEALTH_NOTE_MAX} placeholder="e.g. Asthma, high blood pressure, sickle cell. Leave empty if none are known." value={form.medical_conditions} onChange={(e) => set("medical_conditions")(e.target.value)} {...aria("medical_conditions")} />)}
             <div className="grid gap-4 sm:grid-cols-2">
               {field("insurance_provider", "Insurance / HMO", <Input placeholder="e.g. NHIA, Hygeia" value={form.insurance_provider} onChange={(e) => set("insurance_provider")(e.target.value)} {...aria("insurance_provider")} />)}
               {field("insurance_policy_number", "Policy number", <Input value={form.insurance_policy_number} onChange={(e) => set("insurance_policy_number")(e.target.value)} {...aria("insurance_policy_number")} />)}

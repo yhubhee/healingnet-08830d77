@@ -66,6 +66,8 @@ export default function PatientProfile() {
         <Section title="Medical Information" icon={Heart}>
           <Field label="Blood group" value={p.blood_group} />
           <Field label="Genotype" value={p.genotype} />
+          <Field label="Allergies" value={(p.allergies ?? "").trim() || "None known"} />
+          <Field label="Long-term conditions" value={(p.medical_conditions ?? "").trim() || "None known"} />
         </Section>
         <Section title="Emergency Contact" icon={Phone}>
           <Field label="Name" value={p.emergency_contact_name} />

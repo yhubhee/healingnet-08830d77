@@ -1,5 +1,6 @@
-// Health: my health card (the health fields of src/pages/patient/Profile.tsx), prescriptions,
-// share my records, and the sections that arrive in the next update.
+// Health: my health card (allergies, long-term conditions, blood group, genotype and
+// emergency contact, from src/pages/patient/Profile.tsx), prescriptions, share my records,
+// lab results, medical records and letters.
 import { Award, ChevronRight, FileText, FlaskConical, Pencil, Pill, ShieldCheck } from "@/components/icons";
 import type { LucideIcon } from "@/components/icons";
 import { router } from "expo-router";
@@ -9,6 +10,7 @@ import { Button, Card, Chip, Heading, Label, ListSkeleton, Small, Strong } from 
 import { useRxDocuments } from "@/lib/data";
 import { profileKey, usePatient } from "@/lib/session";
 import { useQueryClient } from "@tanstack/react-query";
+import { healthNote } from "@/shared/patientProfile";
 import { space, useTheme } from "@/theme";
 
 function Fact({ label, value }: { label: string; value?: string | null }) {
@@ -59,6 +61,14 @@ export default function Health() {
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.md }}>
             <Fact label="Blood group" value={p.blood_group} />
             <Fact label="Genotype" value={p.genotype} />
+          </View>
+          <View>
+            <Small>Allergies</Small>
+            <Strong>{healthNote(p.allergies)}</Strong>
+          </View>
+          <View>
+            <Small>Long-term conditions</Small>
+            <Strong>{healthNote(p.medical_conditions)}</Strong>
           </View>
           <View>
             <Small>Emergency contact</Small>

@@ -18,7 +18,7 @@ import { supabase } from "@/lib/supabase";
 import { lagosToday } from "@/shared/dates";
 import { friendlyError } from "@/shared/errors";
 import {
-  BLOOD_GROUPS, compactPhone, GENOTYPES, missingPatientFields, NIGERIAN_STATES, PATIENT_UPDATE_COLUMNS, pick, validateProfile,
+  BLOOD_GROUPS, compactPhone, GENOTYPES, HEALTH_NOTE_MAX, missingPatientFields, NIGERIAN_STATES, PATIENT_UPDATE_COLUMNS, pick, validateProfile,
   type ProfileForm,
 } from "@/shared/patientProfile";
 import { space, useTheme } from "@/theme";
@@ -46,6 +46,7 @@ export default function CompleteProfile() {
       phone: s(p.phone), date_of_birth: s(p.date_of_birth), gender: s(p.gender), state: s(p.state), city: s(p.city),
       address: s(p.address), emergency_contact_name: s(p.emergency_contact_name), emergency_contact_phone: s(p.emergency_contact_phone),
       blood_group: s(p.blood_group), genotype: s(p.genotype), insurance_provider: s(p.insurance_provider), insurance_policy_number: s(p.insurance_policy_number),
+      allergies: s(p.allergies), medical_conditions: s(p.medical_conditions),
     });
   }, [p, form]);
 
@@ -88,6 +89,7 @@ export default function CompleteProfile() {
       emergency_contact_phone: compactPhone(form.emergency_contact_phone),
       blood_group: opt(form.blood_group), genotype: opt(form.genotype),
       insurance_provider: opt(form.insurance_provider), insurance_policy_number: opt(form.insurance_policy_number),
+      allergies: opt(form.allergies), medical_conditions: opt(form.medical_conditions),
     };
     const { error } = await supabase.from("patients").update(pick(patch, PATIENT_UPDATE_COLUMNS) as never).eq("id", p!.id);
     setSaving(false);
@@ -143,6 +145,14 @@ export default function CompleteProfile() {
         <Heading>Emergency contact</Heading>
         <Field label="Name *" value={form.emergency_contact_name} onChangeText={set("emergency_contact_name")} error={errors.emergency_contact_name} />
         <Field label="Phone *" value={form.emergency_contact_phone} onChangeText={set("emergency_contact_phone")} keyboardType="phone-pad" error={errors.emergency_contact_phone} />
+      </Card>
+
+      <Card style={{ gap: space.lg }}>
+        <Heading>Health card (optional)</Heading>
+        <Field label="Allergies" value={form.allergies} onChangeText={set("allergies")} multiline maxLength={HEALTH_NOTE_MAX} error={errors.allergies}
+          placeholder="e.g. Penicillin, peanuts" hint={`${form.allergies.length}/${HEALTH_NOTE_MAX} · Leave empty if none are known.`} />
+        <Field label="Long-term conditions" value={form.medical_conditions} onChangeText={set("medical_conditions")} multiline maxLength={HEALTH_NOTE_MAX} error={errors.medical_conditions}
+          placeholder="e.g. Asthma, high blood pressure, sickle cell" hint={`${form.medical_conditions.length}/${HEALTH_NOTE_MAX} · Leave empty if none are known.`} />
       </Card>
 
       <Card style={{ gap: space.lg }}>

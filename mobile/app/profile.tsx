@@ -8,6 +8,7 @@ import { Screen } from "@/components/Screen";
 import { Button, Card, EmptyState, Heading, IconButton, Label, ListSkeleton, Small, Strong } from "@/components/ui";
 import { useSession } from "@/lib/session";
 import { fmtLongDate } from "@/shared/dates";
+import { healthNote } from "@/shared/patientProfile";
 import { space } from "@/theme";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -43,6 +44,8 @@ export default function Profile() {
           <Section title="Medical information">
             <Item label="Blood group" value={p.blood_group} />
             <Item label="Genotype" value={p.genotype} />
+            <Item label="Allergies" value={healthNote(p.allergies)} />
+            <Item label="Long-term conditions" value={healthNote(p.medical_conditions)} />
           </Section>
           <Section title="Emergency contact">
             <Item label="Name" value={p.emergency_contact_name} />
