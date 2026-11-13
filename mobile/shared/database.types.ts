@@ -2139,6 +2139,7 @@ export type Database = {
           notes: string | null
           ordered_by: string | null
           patient_id: string
+          patient_viewed_at: string | null
           priority: string | null
           status: string | null
           updated_at: string
@@ -2154,6 +2155,7 @@ export type Database = {
           notes?: string | null
           ordered_by?: string | null
           patient_id: string
+          patient_viewed_at?: string | null
           priority?: string | null
           status?: string | null
           updated_at?: string
@@ -2169,6 +2171,7 @@ export type Database = {
           notes?: string | null
           ordered_by?: string | null
           patient_id?: string
+          patient_viewed_at?: string | null
           priority?: string | null
           status?: string | null
           updated_at?: string
@@ -4518,6 +4521,10 @@ export type Database = {
       }
       link_patient_by_code: {
         Args: { p_code: string; p_hospital_id: string }
+        Returns: string
+      }
+      mark_lab_result_viewed: {
+        Args: { p_lab_result_id: string }
         Returns: string
       }
       my_doctor_id: { Args: never; Returns: string }
