@@ -32,6 +32,7 @@ export { default as Mic } from "lucide-react-native/icons/mic";
 export { default as Pencil } from "lucide-react-native/icons/pencil";
 export { default as Phone } from "lucide-react-native/icons/phone";
 export { default as Pill } from "lucide-react-native/icons/pill";
+export { default as Plus } from "lucide-react-native/icons/plus";
 export { default as RotateCcw } from "lucide-react-native/icons/rotate-ccw";
 export { default as Send } from "lucide-react-native/icons/send";
 export { default as Shield } from "lucide-react-native/icons/shield";

@@ -1,7 +1,8 @@
 // One prescription (src/components/patient/rx/*): the QR on white, the code, the
-// medicines, the doctor, pharmacy requests, medicine checks and "Wasn't me?". The
+// medicines (each with "Remind me"), the doctor, pharmacy requests, medicine checks and
+// "Wasn't me?". The
 // document comes from the saved list, so the QR and details also show offline.
-import { Copy, FileDown, Send, ShieldCheck, Star } from "@/components/icons";
+import { Bell, BellRing, Copy, FileDown, Send, ShieldCheck, Star } from "@/components/icons";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -9,6 +10,7 @@ import { Alert, Pressable, View } from "react-native";
 import { Field } from "@/components/form";
 import { QueryState } from "@/components/QueryState";
 import { QrCode } from "@/components/QrCode";
+import { ReminderSheet } from "@/components/ReminderSheet";
 import { PharmacyPickerSheet, RatePharmacySheet } from "@/components/RxSheets";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
@@ -16,14 +18,16 @@ import { Body, Button, Card, Chip, Divider, EmptyState, Heading, Label, LinkText
 import { useRefreshRx, useRxDocuments, useRxExtras } from "@/lib/data";
 import { WEB_URL } from "@/lib/env";
 import { useAllowScreenshots } from "@/lib/lock";
+import { useReminders } from "@/lib/reminders";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { shareRxPdf } from "@/lib/rxPdf";
 import { usePatient } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { openUrl } from "@/lib/web";
-import { fmtDateTime, fmtLongDate } from "@/shared/dates";
+import { fmt12, fmtDateTime, fmtLongDate } from "@/shared/dates";
 import { friendlyError } from "@/shared/errors";
 import { verifyUrl } from "@/shared/links";
+import { endDate } from "@/shared/reminders";
 import {
   CHECK_LABEL, FAKE_THANKS, formatKobo, NAFDAC_GREENBOOK, NOT_VALID_TEXT, OPEN_REQUEST, prescriberName, REQUEST_LABEL, REQUEST_TONE,
   RX_TONE, rxStatusLabel, type CheckResult, type PatientRequest, type RxItem,
@@ -42,6 +46,8 @@ export default function PrescriptionDetail() {
   const [pick, setPick] = useState(false);
   const [rate, setRate] = useState<PatientRequest | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [remind, setRemind] = useState<RxItem | null>(null);
+  const { reminders } = useReminders();
   // The only screen where screenshots are allowed, so the QR can be sent to family.
   useAllowScreenshots();
 
@@ -152,6 +158,17 @@ export default function PrescriptionDetail() {
                       <LinkText label="Wasn't me?" color={colors.danger} onPress={() => notMe(it.prescription_id)} />
                     </View>
                   ))}
+                  {(() => {
+                    const r = reminders.find((x) => x.id === it.prescription_id);
+                    if (!r && (it.status === "cancelled" || doc.status !== "valid")) return null;
+                    return (
+                      <View style={{ gap: 4 }}>
+                        {r ? <Small muted={false}>Reminders on: {r.times.map((t) => fmt12(t)).join(", ")} until {fmtLongDate(endDate(r))}</Small> : null}
+                        <Button small variant="secondary" icon={r ? BellRing : Bell} label={r ? "Change reminders" : "Remind me"}
+                          accessibilityLabel={r ? `Change reminders for ${it.drug_name}` : `Remind me to take ${it.drug_name}`} onPress={() => setRemind(it)} />
+                      </View>
+                    );
+                  })()}
                   <MedicineCheck item={it} last={checks[it.prescription_id] ?? null} onRecorded={refresh} />
                 </View>
               ))}
@@ -194,6 +211,8 @@ export default function PrescriptionDetail() {
             <PharmacyPickerSheet visible={pick} onClose={() => setPick(false)} documentId={doc.document_id ?? id} code={code}
               defaultState={profile?.state} defaultCity={profile?.city} onSent={refresh} />
             <RatePharmacySheet request={rate} onClose={() => setRate(null)} onRated={refresh} />
+            <ReminderSheet item={remind} documentId={doc.document_id ?? id} existing={remind ? reminders.find((x) => x.id === remind.prescription_id) ?? null : null}
+              onClose={() => setRemind(null)} />
           </>
         )}
       </QueryState>

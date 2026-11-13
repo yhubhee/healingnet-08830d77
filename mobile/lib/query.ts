@@ -8,6 +8,7 @@ import { clearLocalData, shouldPersistQuery } from "./cache";
 import { APP_VERSION } from "./env";
 import { forgetSeenLabs } from "./seen";
 import { unregisterPush } from "./push";
+import { cancelAllReminders } from "./reminders";
 import { DEVICE_KEYS, encryptedStorage, QUERY_CACHE_KEY, setFlag } from "./storage";
 import { supabase } from "./supabase";
 
@@ -45,13 +46,17 @@ export const persistOptions: Omit<PersistQueryClientOptions, "queryClient"> = {
   },
 };
 
-/** Sign-out and account deletion: clears the data, the saved data, the push registration and the session. */
+/** Sign-out and account deletion: clears the data, the saved data, the medicine reminders, the push registration and the session. */
 export async function clearEverything(): Promise<void> {
   await clearLocalData({
     queryClient,
     storage: encryptedStorage,
     cacheKey: QUERY_CACHE_KEY,
-    unregisterPush,
+    unregisterPush: async () => {
+      // Medicine reminders first: they must never ring for the next person to use this phone.
+      await cancelAllReminders();
+      await unregisterPush();
+    },
     endSession: async () => {
       // "local" also works offline; the server-side session ends when its token expires.
       const { error } = await supabase.auth.signOut();

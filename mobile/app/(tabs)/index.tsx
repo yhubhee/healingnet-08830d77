@@ -1,6 +1,7 @@
 // Home (mirrors the data on src/pages/patient/Dashboard.tsx): next appointment, the two
-// main actions, active prescriptions and the latest unread updates.
-import { Bell, CalendarPlus, ChevronRight, Pill, Stethoscope } from "@/components/icons";
+// main actions, today's medicines (from reminders kept on this phone), active prescriptions
+// and the latest unread updates.
+import { Bell, CalendarPlus, Check, ChevronRight, Pill, Stethoscope } from "@/components/icons";
 import type { LucideIcon } from "@/components/icons";
 import { router } from "expo-router";
 import { Pressable, View } from "react-native";
@@ -12,11 +13,13 @@ import { VisitFacts } from "@/components/VisitBits";
 import { addToCalendar } from "@/lib/calendar";
 import { useAppointments, useHomeSummary, useMarkNotificationRead, useRxDocuments, useRxExtras } from "@/lib/data";
 import { useOnline } from "@/lib/net";
+import { setTaken, useReminders } from "@/lib/reminders";
 import { usePatient } from "@/lib/session";
 import { doctorOrPending, sortUpcoming, statusText } from "@/shared/appointments";
-import { timeAgo } from "@/shared/dates";
+import { fmt12, timeAgo } from "@/shared/dates";
 import { screenForUrl } from "@/shared/links";
 import { rxNextAction } from "@/shared/pharmacy";
+import { todaysDoses } from "@/shared/reminders";
 import { MIN_TOUCH, radius, space, useTheme } from "@/theme";
 
 function greeting() {
@@ -51,6 +54,8 @@ export default function Home() {
   const extras = useRxExtras();
   const summary = useHomeSummary();
   const markRead = useMarkNotificationRead();
+  const { reminders, taken } = useReminders();
+  const doses = todaysDoses(reminders, new Date());
 
   const next = sortUpcoming(appts.data ?? [])[0] ?? null;
   const validRx = (rx.data ?? []).filter((d) => d.status === "valid");
@@ -105,6 +110,34 @@ export default function Home() {
         <Tile icon={Stethoscope} title="Check symptoms" text="Answer a few questions and see what to do next." onPress={() => router.push("/triage")} />
         <Tile icon={CalendarPlus} title="Book a doctor" text="Choose a hospital, doctor and time." onPress={() => router.push("/book")} />
       </View>
+
+      {/* Today's medicines: the day's reminder doses, each with a Taken tick. Kept on this phone. */}
+      {doses.length > 0 ? (
+        <Card style={{ gap: space.sm }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Label style={{ flex: 1 }}>Today's medicines</Label>
+            <Small>{doses.filter((d) => taken[d.key]).length} of {doses.length} taken</Small>
+          </View>
+          {doses.map((d) => {
+            const done = !!taken[d.key];
+            return (
+              <Pressable key={d.key} accessibilityRole="checkbox" accessibilityState={{ checked: done }}
+                accessibilityLabel={`${fmt12(d.time)}, ${d.drug}${d.dose ? `, ${d.dose}` : ""}. ${done ? "Taken" : "Not taken yet"}`}
+                onPress={() => setTaken(d.key, !done)}
+                style={{ minHeight: MIN_TOUCH + 4, flexDirection: "row", alignItems: "center", gap: space.md }}>
+                <View style={{ width: 30, height: 30, borderRadius: 15, borderWidth: 2, alignItems: "center", justifyContent: "center",
+                  borderColor: done ? colors.primary : colors.border, backgroundColor: done ? colors.primary : "transparent" }}>
+                  {done ? <Check size={18} color={colors.onPrimary} /> : null}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Strong style={done ? { textDecorationLine: "line-through" } : undefined}>{d.drug}</Strong>
+                  <Small>{fmt12(d.time)}{d.dose ? ` · ${d.dose}` : ""}{done ? " · Taken" : ""}</Small>
+                </View>
+              </Pressable>
+            );
+          })}
+        </Card>
+      ) : null}
 
       {/* Active prescriptions */}
       <QueryState query={rx} skeleton={<Skeleton height={110} />}>

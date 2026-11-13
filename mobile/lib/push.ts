@@ -7,6 +7,7 @@ import { router } from "expo-router";
 import { Platform } from "react-native";
 import { screenForUrl } from "@/shared/links";
 import { APP_VERSION } from "./env";
+import { handleReminderResponse } from "./reminders";
 import { DEVICE_KEYS, getFlag, setFlag } from "./storage";
 import { supabase } from "./supabase";
 
@@ -90,6 +91,8 @@ export async function unregisterPush(): Promise<void> {
 /** Opens the app screen for a tapped notification's data.url; unknown paths open Home. */
 function openFromNotification(response: Notifications.NotificationResponse | null | undefined) {
   if (!response) return;
+  // A medicine reminder (or its Taken / Snooze button): Home shows "Today's medicines".
+  if (handleReminderResponse(response)) { router.navigate("/(tabs)"); return; }
   const url = (response.notification.request.content.data as { url?: unknown } | undefined)?.url;
   router.navigate(screenForUrl(url));
 }

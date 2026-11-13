@@ -25,6 +25,7 @@ import { LockProvider } from "@/lib/lock";
 import { useOnline } from "@/lib/net";
 import { listenForNotificationTaps, pushPermission, registerForPush } from "@/lib/push";
 import { persistOptions, queryClient } from "@/lib/query";
+import { useReminderSync } from "@/lib/reminderSync";
 import { SessionProvider, useSession } from "@/lib/session";
 import { DEVICE_KEYS, getFlag } from "@/lib/storage";
 import { friendlyError } from "@/shared/errors";
@@ -65,6 +66,8 @@ function Gate({ appLock }: { appLock: boolean }) {
 
   // Warm the Visits and Prescriptions lists while Home is on screen.
   usePrefetchTabs(inApp);
+  // Medicine reminders: top the phone's list back up whenever the app opens.
+  useReminderSync(inApp);
 
   // Push: register on every start and after sign-in; explain before the first permission prompt.
   useEffect(() => {
