@@ -39,7 +39,9 @@ export function useMarkLabViewed() {
     const now = new Date().toISOString();
     qc.setQueryData<LabResult[]>(personKeys.labResults(patientId), (old) =>
       old?.map((r) => (r.id === id && !r.patient_viewed_at ? { ...r, patient_viewed_at: now } : r)));
-    supabase.rpc("mark_lab_result_viewed", { p_lab_result_id: id }).then(() => {}, () => {});
+    // The Home card's "new result" count follows once the database has recorded it.
+    supabase.rpc("mark_lab_result_viewed", { p_lab_result_id: id })
+      .then(() => { qc.invalidateQueries({ queryKey: ["health-overview"] }); }, () => {});
   }, [patientId, qc]);
 }
 

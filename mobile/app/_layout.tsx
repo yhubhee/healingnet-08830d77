@@ -18,7 +18,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ToastProvider } from "@/components/toast";
 import { Body, Button, Title } from "@/components/ui";
 import { boot as bootRead, type Boot } from "@/lib/boot";
-import { usePrefetchTabs } from "@/lib/data";
+import { useNotificationArrivals, usePrefetchTabs } from "@/lib/data";
 import { isConfigured } from "@/lib/env";
 import { useKeepActivePersonValid, useShowPersonFor } from "@/lib/family";
 import { LockProvider } from "@/lib/lock";
@@ -73,6 +73,8 @@ function Gate({ appLock }: { appLock: boolean }) {
 
   // Warm the Visits and Prescriptions lists while Home is on screen.
   usePrefetchTabs(inApp);
+  // A notification arriving refreshes the bell, the Home cards and the family list.
+  useNotificationArrivals(inApp);
   // Medicine reminders: top the phone's list back up whenever the app opens.
   useReminderSync(inApp);
   // "Who is this for?": someone removed from the family falls back to Me.

@@ -9,6 +9,7 @@ export const personKeys = {
   appointments: (patientId: Id) => ["appointments", id(patientId)] as const,
   rxDocuments: (patientId: Id) => ["rx-documents", id(patientId)] as const,
   rxRequests: (patientId: Id) => ["rx-requests", id(patientId)] as const,
+  healthOverview: (patientId: Id) => ["health-overview", id(patientId)] as const,
   labResults: (patientId: Id) => ["lab-results", id(patientId)] as const,
   emr: (patientId: Id) => ["emr", id(patientId)] as const,
   letters: (patientId: Id) => ["letters", id(patientId)] as const,

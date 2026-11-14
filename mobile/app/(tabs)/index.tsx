@@ -1,7 +1,8 @@
-// Home (mirrors the data on src/pages/patient/Dashboard.tsx): next appointment, the two
-// main actions, today's medicines (from reminders kept on this phone), active prescriptions
-// and the latest unread updates.
-import { Bell, CalendarPlus, Check, ChevronRight, Pill, Stethoscope, Users } from "@/components/icons";
+// Home (mirrors the data on src/pages/patient/Dashboard.tsx): next appointment, "Your
+// health" (prescriptions, lab results, records and letters at a glance), the two main
+// actions, today's medicines (from reminders kept on this phone), the latest unread updates
+// and the family row. Each section draws from its own saved data: none waits for another.
+import { Award, Bell, CalendarPlus, Check, ChevronRight, FileText, FlaskConical, Pill, Stethoscope, Users } from "@/components/icons";
 import type { LucideIcon } from "@/components/icons";
 import { router } from "expo-router";
 import { Pressable, View } from "react-native";
@@ -12,7 +13,7 @@ import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, Heading, IconButton, Label, LinkText, Skeleton, Small, Strong, Title } from "@/components/ui";
 import { VisitFacts } from "@/components/VisitBits";
 import { addToCalendar } from "@/lib/calendar";
-import { useVisits, useHomeSummary, useMarkNotificationRead, useRxDocuments, useRxExtras } from "@/lib/data";
+import { useHealthOverview, useHomeSummary, useMarkNotificationRead, useVisits } from "@/lib/data";
 import { activePerson } from "@/lib/activePerson";
 import { useActivePerson, useFamilyNext, useShowPersonFor } from "@/lib/family";
 import { useOnline } from "@/lib/net";
@@ -23,7 +24,7 @@ import { doctorOrPending, sortUpcoming, statusText } from "@/shared/appointments
 import { fmt12, fmtDayDate, timeAgo } from "@/shared/dates";
 import { ageText } from "@/shared/family";
 import { notificationTarget } from "@/shared/links";
-import { rxNextAction } from "@/shared/pharmacy";
+import { cardSpoken, overviewCards, type OverviewCard, type OverviewCardId } from "@/shared/overview";
 import { remindersFor, todaysDoses } from "@/shared/reminders";
 import { MIN_TOUCH, radius, space, useTheme } from "@/theme";
 
@@ -49,6 +50,35 @@ function Tile({ icon: Icon, title, text, onPress }: { icon: LucideIcon; title: s
   );
 }
 
+const CARD_ICON: Record<OverviewCardId, LucideIcon> = { prescriptions: Pill, labs: FlaskConical, records: FileText, letters: Award };
+const CARD_SCREEN: Record<OverviewCardId, "/prescriptions" | "/lab-results" | "/records" | "/letters"> = {
+  prescriptions: "/prescriptions", labs: "/lab-results", records: "/records", letters: "/letters",
+};
+
+/** One "Your health" card: icon, title, one line of status and a count, and it opens its screen. */
+function HealthCard({ card }: { card: OverviewCard }) {
+  const { colors } = useTheme();
+  const Icon = CARD_ICON[card.id];
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={`${cardSpoken(card)}. Open ${card.title.toLowerCase()}`}
+      onPress={() => router.push(CARD_SCREEN[card.id])}
+      style={({ pressed }) => ({
+        flexBasis: "47%", flexGrow: 1, minHeight: 124, borderRadius: radius.card, borderWidth: 1, borderColor: colors.border,
+        backgroundColor: colors.card, padding: space.md, gap: space.xs, opacity: pressed ? 0.85 : 1,
+      })}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+        <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
+          <Icon size={22} color={colors.primaryText} />
+        </View>
+        <View style={{ flex: 1 }} />
+        {card.count !== null ? <Chip label={card.highlight ? `${card.count} new` : String(card.count)} tone={card.highlight ? "coral" : "neutral"} /> : null}
+      </View>
+      <Strong numberOfLines={1}>{card.title}</Strong>
+      <Small numberOfLines={2}>{card.status}</Small>
+    </Pressable>
+  );
+}
+
 export default function Home() {
   const { colors } = useTheme();
   const toast = useToast();
@@ -58,8 +88,7 @@ export default function Home() {
   const person = useActivePerson();
   const showPersonFor = useShowPersonFor();
   const appts = useVisits();
-  const rx = useRxDocuments();
-  const extras = useRxExtras();
+  const overview = useHealthOverview();
   const summary = useHomeSummary();
   const markRead = useMarkNotificationRead();
   const { reminders, taken } = useReminders();
@@ -75,10 +104,9 @@ export default function Home() {
   const familyNext = useFamilyNext(person.family.length ? others.map((o) => o.patientId).filter((v): v is string => !!v) : []);
 
   const next = sortUpcoming(appts.data?.upcoming ?? [])[0] ?? null;
-  const validRx = (rx.data ?? []).filter((d) => d.status === "valid");
-  const refreshing = appts.isRefetching || rx.isRefetching || summary.isRefetching;
-  const refresh = () => { appts.refetch(); rx.refetch(); extras.refetch(); summary.refetch(); if (person.family.length) familyNext.refetch(); };
-  const updatedAt = Math.max(appts.dataUpdatedAt, rx.dataUpdatedAt, summary.dataUpdatedAt) || undefined;
+  const refreshing = appts.isRefetching || overview.isRefetching || summary.isRefetching;
+  const refresh = () => { appts.refetch(); overview.refetch(); summary.refetch(); if (person.family.length) familyNext.refetch(); };
+  const updatedAt = Math.max(appts.dataUpdatedAt, overview.dataUpdatedAt, summary.dataUpdatedAt) || undefined;
 
   useScreenReady("/(tabs)/index", appts.data !== undefined || appts.isError || appts.fetchStatus === "paused");
 
@@ -125,31 +153,24 @@ export default function Home() {
       )}
       </QueryState>
 
-      {/* Family: each other person's next visit; tap to switch to them. */}
-      {person.family.length > 0 ? (
-        <Card style={{ gap: space.xs }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
-            <Users size={18} color={colors.textMuted} />
-            <Label style={{ flex: 1 }}>Family</Label>
-            <LinkText label="Manage" onPress={() => router.push("/family")} />
+      {/* Your health: a skeleton only when nothing is saved; an error never hides the rest of Home. */}
+      <View style={{ gap: space.sm }}>
+        <Heading>{person.isMe ? "Your health" : `${person.firstName}'s health`}</Heading>
+        {overview.data ? (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.md }}>
+            {overviewCards(overview.data).map((card) => <HealthCard key={card.id} card={card} />)}
           </View>
-          {others.map((o) => {
-            const visit = o.patientId ? familyNext.data?.[o.patientId] : undefined;
-            const when = visit ? `Next visit: ${fmtDayDate(visit.date)}${visit.time ? `, ${fmt12(visit.time)}` : ""}` : "No upcoming visit";
-            return (
-              <Pressable key={o.id ?? "me"} accessibilityRole="button" accessibilityLabel={`${o.name}. ${when}. Show ${o.id ? o.name : "my own records"}`}
-                onPress={() => activePerson.set(o.id)}
-                style={({ pressed }) => ({ minHeight: MIN_TOUCH + 4, flexDirection: "row", alignItems: "center", gap: space.md, opacity: pressed ? 0.6 : 1 })}>
-                <View style={{ flex: 1 }}>
-                  <Strong>{o.name}{o.sub ? ` (${o.sub})` : ""}</Strong>
-                  <Small>{when}</Small>
-                </View>
-                <ChevronRight size={20} color={colors.textMuted} />
-              </Pressable>
-            );
-          })}
-        </Card>
-      ) : null}
+        ) : overview.isError || overview.fetchStatus === "paused" ? (
+          <Card style={{ gap: space.sm }}>
+            <Small>{overview.fetchStatus === "paused" ? "You're offline. Your health summary appears when you reconnect." : "We couldn't load your health summary."}</Small>
+            <LinkText label="Open Health" onPress={() => router.navigate("/(tabs)/health")} />
+          </Card>
+        ) : (
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.md }}>
+            {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={124} style={{ flexBasis: "47%", flexGrow: 1 }} />)}
+          </View>
+        )}
+      </View>
 
       {/* Main actions */}
       <View style={{ flexDirection: "row", gap: space.md }}>
@@ -185,22 +206,6 @@ export default function Home() {
         </Card>
       ) : null}
 
-      {/* Active prescriptions */}
-      <QueryState query={rx} skeleton={<Skeleton height={110} />}>
-        <Card onPress={() => router.push("/prescriptions")} accessibilityLabel={`Active prescriptions: ${validRx.length}. Open prescriptions`} style={{ gap: space.sm }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
-            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" }}>
-              <Pill size={24} color={colors.primaryText} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Strong>{validRx.length === 0 ? "No active prescriptions" : `${validRx.length} active prescription${validRx.length === 1 ? "" : "s"}`}</Strong>
-              <Small>{validRx.length === 0 ? "Prescriptions from the doctor appear here." : rxNextAction(validRx[0], extras.data?.requests ?? [])}</Small>
-            </View>
-            <ChevronRight size={20} color={colors.textMuted} />
-          </View>
-        </Card>
-      </QueryState>
-
       {/* Updates */}
       <View style={{ gap: space.sm }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
@@ -230,6 +235,33 @@ export default function Home() {
         )}
         </QueryState>
       </View>
+
+      {/* Family: each other person's next visit; tap to switch to them. */}
+      {person.family.length > 0 ? (
+        <Card style={{ gap: space.xs }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: space.sm }}>
+            <Users size={18} color={colors.textMuted} />
+            <Label style={{ flex: 1 }}>Family</Label>
+            <LinkText label="Manage" onPress={() => router.push("/family")} />
+          </View>
+          {others.map((o) => {
+            const visit = o.patientId ? familyNext.data?.[o.patientId] : undefined;
+            const when = visit ? `Next visit: ${fmtDayDate(visit.date)}${visit.time ? `, ${fmt12(visit.time)}` : ""}` : "No upcoming visit";
+            return (
+              <Pressable key={o.id ?? "me"} accessibilityRole="button" accessibilityLabel={`${o.name}. ${when}. Show ${o.id ? o.name : "my own records"}`}
+                onPress={() => activePerson.set(o.id)}
+                style={({ pressed }) => ({ minHeight: MIN_TOUCH + 4, flexDirection: "row", alignItems: "center", gap: space.md, opacity: pressed ? 0.6 : 1 })}>
+                <View style={{ flex: 1 }}>
+                  <Strong>{o.name}{o.sub ? ` (${o.sub})` : ""}</Strong>
+                  <Small>{when}</Small>
+                </View>
+                <ChevronRight size={20} color={colors.textMuted} />
+              </Pressable>
+            );
+          })}
+        </Card>
+      ) : null}
+
     </Screen>
   );
 }

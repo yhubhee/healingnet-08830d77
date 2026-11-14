@@ -130,6 +130,7 @@ export default function Book() {
     if (error) return toast.error(`Couldn't book the appointment. ${dbMessage(error)}`);
     qc.invalidateQueries({ queryKey: ["appointments"] });
     qc.invalidateQueries({ queryKey: ["family-next"] });
+    qc.invalidateQueries({ queryKey: ["health-overview"] });
     setDone(true);
   }
 

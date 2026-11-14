@@ -7,6 +7,7 @@ import { realtimeFallback } from "@/shared/messages";
 import type { PushPrefs, Tables } from "@/shared/database";
 import type { CheckResult, PatientRequest, RxPayload } from "@/shared/pharmacy";
 import { personKeys } from "@/shared/keys";
+import { overviewIsDue, parseOverview, type HealthOverview } from "@/shared/overview";
 import { parseVisits, type VisitsData } from "@/shared/visits";
 import { usePatient, useSession } from "./session";
 import { supabase } from "./supabase";
@@ -126,6 +127,32 @@ export function useRxDocuments() {
   });
 }
 
+// ---- Home "Your health" (patient_health_overview) ----------------------------------------
+/**
+ * Prescriptions, lab results, records and letters at a glance, for the person on screen.
+ * Saved for offline. Refreshed when the screen comes into view, at most every 30 seconds.
+ */
+export function useHealthOverview() {
+  const { patientId } = usePatient();
+  const q = useQuery({
+    queryKey: personKeys.healthOverview(patientId),
+    enabled: !!patientId,
+    queryFn: async (): Promise<HealthOverview> => {
+      const { data, error } = await supabase.rpc("patient_health_overview", { p_patient_id: patientId! });
+      if (error) throw error;
+      return parseOverview(data);
+    },
+  });
+  const { refetch, dataUpdatedAt, isFetching } = q;
+  const latest = useRef({ dataUpdatedAt, isFetching });
+  latest.current = { dataUpdatedAt, isFetching };
+  useFocusEffect(useCallback(() => {
+    const { dataUpdatedAt: at, isFetching: busy } = latest.current;
+    if (patientId && at > 0 && !busy && overviewIsDue(at, Date.now())) refetch();
+  }, [patientId, refetch]));
+  return q;
+}
+
 /**
  * Warms the lists behind the tabs as soon as the app opens (Visits and Prescriptions), so
  * the first tap on a tab finds its data already there. Saved data that is still fresh is
@@ -223,6 +250,31 @@ function useInvalidateNotifications() {
     qc.invalidateQueries({ queryKey: ["notifications"] });
     qc.invalidateQueries({ queryKey: ["home-summary"] });
   };
+}
+
+/**
+ * Mounted once for a signed-in patient: when a notification arrives (a new lab result, a
+ * prescription, a family document decision), the bell, the Home cards and the family
+ * list are refreshed. Opened after the first screen has drawn.
+ */
+export function useNotificationArrivals(active: boolean) {
+  const qc = useQueryClient();
+  const { userId } = useSession();
+  useEffect(() => {
+    if (!active || !userId) return;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const cancel = afterPaint(() => {
+      channel = supabase.channel(`rt-arrivals-${userId}`)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "user_notifications", filter: `user_id=eq.${userId}` }, (change) => {
+          qc.invalidateQueries({ queryKey: ["notifications"] });
+          qc.invalidateQueries({ queryKey: ["home-summary"] });
+          qc.invalidateQueries({ queryKey: ["health-overview"] });
+          if ((change.new as { type?: unknown } | null)?.type === "family") qc.invalidateQueries({ queryKey: ["family"] });
+        })
+        .subscribe();
+    });
+    return () => { cancel(); if (channel) supabase.removeChannel(channel); };
+  }, [active, userId, qc]);
 }
 
 export function useMarkNotificationRead() {
