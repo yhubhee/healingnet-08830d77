@@ -24,6 +24,7 @@ import { doctorOrPending, sortUpcoming, statusText } from "@/shared/appointments
 import { fmt12, fmtDayDate, timeAgo } from "@/shared/dates";
 import { ageText } from "@/shared/family";
 import { notificationTarget } from "@/shared/links";
+import { verifyBanner } from "@/shared/verification";
 import { cardSpoken, overviewCards, type OverviewCard, type OverviewCardId } from "@/shared/overview";
 import { remindersFor, todaysDoses } from "@/shared/reminders";
 import { MIN_TOUCH, radius, space, useTheme } from "@/theme";
@@ -103,6 +104,7 @@ export default function Home() {
   ];
   const familyNext = useFamilyNext(person.family.length ? others.map((o) => o.patientId).filter((v): v is string => !!v) : []);
 
+  const banner = verifyBanner(person.family);
   const next = sortUpcoming(appts.data?.upcoming ?? [])[0] ?? null;
   const refreshing = appts.isRefetching || overview.isRefetching || summary.isRefetching;
   const refresh = () => { appts.refetch(); overview.refetch(); summary.refetch(); if (person.family.length) familyNext.refetch(); };
@@ -128,6 +130,15 @@ export default function Home() {
           badge={summary.data?.unreadCount} onPress={() => router.push("/notifications")} />
       </View>
       <PersonChip />
+
+      {/* Family verification: shown while anyone still needs a document. */}
+      {banner ? (
+        <View accessibilityRole="alert" style={{ backgroundColor: banner.locked ? colors.dangerSoft : colors.warningBg, borderRadius: radius.card, padding: space.md, gap: space.sm }}>
+          <Strong color={banner.locked ? colors.danger : colors.warningText}>{banner.text}</Strong>
+          <Button small label="Verify" variant="secondary" accessibilityLabel={banner.text + " Verify"}
+            onPress={() => router.push({ pathname: "/family/verify", params: { id: banner.patientId } })} />
+        </View>
+      ) : null}
 
       {/* Next appointment */}
       <QueryState query={appts} skeleton={<Skeleton height={190} />}>
@@ -249,7 +260,11 @@ export default function Home() {
             const when = visit ? `Next visit: ${fmtDayDate(visit.date)}${visit.time ? `, ${fmt12(visit.time)}` : ""}` : "No upcoming visit";
             return (
               <Pressable key={o.id ?? "me"} accessibilityRole="button" accessibilityLabel={`${o.name}. ${when}. Show ${o.id ? o.name : "my own records"}`}
-                onPress={() => activePerson.set(o.id)}
+                onPress={() => {
+                  const member = person.family.find((m) => m.patient_id === o.id);
+                  if (member && member.access_ok === false) router.push({ pathname: "/family/verify", params: { id: member.patient_id } });
+                  else activePerson.set(o.id);
+                }}
                 style={({ pressed }) => ({ minHeight: MIN_TOUCH + 4, flexDirection: "row", alignItems: "center", gap: space.md, opacity: pressed ? 0.6 : 1 })}>
                 <View style={{ flex: 1 }}>
                   <Strong>{o.name}{o.sub ? ` (${o.sub})` : ""}</Strong>

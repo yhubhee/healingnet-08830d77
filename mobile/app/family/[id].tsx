@@ -7,6 +7,8 @@ import { Pencil, Trash2, UserRound } from "@/components/icons";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { Button, Card, EmptyState, Heading, Label, ListSkeleton, Notice, Small, Strong } from "@/components/ui";
+import { VerifyBadge } from "@/components/VerifyBadge";
+import { verifyState } from "@/shared/verification";
 import { activePerson } from "@/lib/activePerson";
 import { useActivePerson, useFamily, useRemoveFamilyMember } from "@/lib/family";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
@@ -53,6 +55,8 @@ export default function FamilyMemberScreen() {
   }
 
   const note = turning18Note(m, lagosToday());
+  const verify = verifyState(m);
+  const openVerify = () => router.push({ pathname: "/family/verify", params: { id: m.patient_id } });
   const edit = () => router.push({ pathname: "/complete-profile", params: { edit: "1", person: m.patient_id } });
 
   function confirmRemove() {
@@ -84,8 +88,14 @@ export default function FamilyMemberScreen() {
 
       {note ? <Notice text={note} /> : null}
 
-      <Button label={showing ? `Showing ${m.first_name} now` : `Show ${m.first_name}'s visits and records`} variant={showing ? "secondary" : "primary"} disabled={showing}
-        disabledReason={`The app is already showing ${m.first_name}`}
+      <Section title="Verification">
+        <VerifyBadge member={m} lines={4} />
+        {verify.locked ? <Small>{m.first_name}'s visits and records can't be opened until a document is accepted.</Small> : null}
+        {verify.action ? <Button small label={verify.action} variant={verify.canUpload ? "primary" : "secondary"} onPress={openVerify} /> : null}
+      </Section>
+
+      <Button label={showing ? `Showing ${m.first_name} now` : `Show ${m.first_name}'s visits and records`} variant={showing ? "secondary" : "primary"} disabled={showing || verify.locked}
+        disabledReason={verify.locked ? `${m.first_name} is locked until a document is accepted` : `The app is already showing ${m.first_name}`}
         onPress={() => { activePerson.set(m.patient_id); toast.info(`Showing ${m.first_name}`); router.replace("/(tabs)"); }} />
 
       <Section title="About">
@@ -95,7 +105,7 @@ export default function FamilyMemberScreen() {
       </Section>
 
       <Section title="Health card" action={<Button small variant="ghost" icon={Pencil} label="Edit" accessibilityLabel={`Edit ${m.first_name}'s health card`} onPress={edit} />}>
-        {p === undefined ? <ListSkeleton rows={1} height={120} /> : p === null ? <Small>We couldn't load the health card. Pull down to try again.</Small> : (
+        {verify.locked ? <Small>Locked until a document is accepted.</Small> : p === undefined ? <ListSkeleton rows={1} height={120} /> : p === null ? <Small>We couldn't load the health card. Pull down to try again.</Small> : (
           <>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.md }}>
               <View style={{ flex: 1, minWidth: "45%" }}><Item label="Blood group" value={p.blood_group} /></View>

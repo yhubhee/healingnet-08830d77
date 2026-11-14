@@ -1,6 +1,6 @@
 // Add a family member: name, date of birth, sex and relationship. Someone 18 or over needs
 // the tick box saying the guardian has their permission. The database makes the same checks
-// and its own messages are shown as written.
+// and its own messages are shown as written. After adding, the next screen is "Verify".
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -39,9 +39,10 @@ export default function AddFamilyMember() {
     try {
       const id = await add.mutateAsync(form);
       toast.success(`${form.first_name.trim()} added`);
-      // Straight to the new person, so the next thing done is for them.
+      // The app shows the new person, and the next step is proving the relationship
+      // ("Later" skips it; it can be done from the Family screen within 3 days).
       activePerson.set(id);
-      if (router.canGoBack()) router.back(); else router.replace("/(tabs)");
+      router.replace({ pathname: "/family/verify", params: { id, added: "1" } });
     } catch (e) {
       toast.error(dbMessage(e));
     }

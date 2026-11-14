@@ -57,8 +57,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "HealingNet uses your photos only to set your profile picture.",
-          "cameraPermission": "HealingNet uses the camera only to take your profile picture.",
+          "photosPermission": "HealingNet uses your photos only to set your profile picture and to send a document that proves a family relationship.",
+          "cameraPermission": "HealingNet uses the camera only to take your profile picture and to photograph a document that proves a family relationship.",
           "microphonePermission": false
         }
       ],

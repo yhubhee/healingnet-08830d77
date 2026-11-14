@@ -3,6 +3,10 @@
 // To use a new icon, add a line here.
 export type { LucideIcon } from "lucide-react-native";
 export { default as ArrowLeft } from "lucide-react-native/icons/arrow-left";
+export { default as BadgeCheck } from "lucide-react-native/icons/badge-check";
+export { default as Clock } from "lucide-react-native/icons/clock";
+export { default as FileUp } from "lucide-react-native/icons/file-up";
+export { default as Hourglass } from "lucide-react-native/icons/hourglass";
 export { default as Award } from "lucide-react-native/icons/award";
 export { default as Bell } from "lucide-react-native/icons/bell";
 export { default as BellRing } from "lucide-react-native/icons/bell-ring";

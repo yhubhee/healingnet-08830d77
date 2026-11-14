@@ -5,6 +5,9 @@ import { ChevronRight, Plus, Users } from "@/components/icons";
 import { QueryState } from "@/components/QueryState";
 import { Screen } from "@/components/Screen";
 import { Body, Button, Card, Chip, EmptyState, ListSkeleton, Small, Strong } from "@/components/ui";
+import { VerifyBadge } from "@/components/VerifyBadge";
+import { useScreenReady } from "@/lib/perf";
+import { verifyState } from "@/shared/verification";
 import { useActivePerson, useFamily } from "@/lib/family";
 import { ageText, MAX_FAMILY, relationshipLabel } from "@/shared/family";
 import { space, useTheme } from "@/theme";
@@ -15,6 +18,7 @@ export default function Family() {
   const person = useActivePerson();
   const list = q.data ?? [];
   const full = list.length >= MAX_FAMILY;
+  useScreenReady("/family", q.data !== undefined);
 
   return (
     <Screen title="Family" back onRefresh={() => q.refetch()} refreshing={q.isRefetching} updatedAt={q.dataUpdatedAt || undefined}
@@ -26,17 +30,24 @@ export default function Family() {
         ) : list.map((m) => {
           const showing = !person.isMe && person.patientId === m.patient_id;
           const sub = [ageText(m.age), relationshipLabel(m.relationship)].filter(Boolean).join(" · ");
+          const state = verifyState(m);
           return (
             <Card key={m.patient_id} onPress={() => router.push({ pathname: "/family/[id]", params: { id: m.patient_id } })}
-              accessibilityLabel={`${m.first_name} ${m.last_name}, ${sub}${showing ? ". Showing now" : ""}. Open`}>
+              accessibilityLabel={`${m.first_name} ${m.last_name}, ${sub}. ${state.label}${showing ? ". Showing now" : ""}. Open`}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: space.md }}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Strong>{m.first_name} {m.last_name}</Strong>
                   <Small>{sub}</Small>
+                  <VerifyBadge member={m} />
                   {showing ? <Chip label="Showing now" tone="primary" /> : null}
                 </View>
                 <ChevronRight size={20} color={colors.textMuted} />
               </View>
+              {state.canUpload ? (
+                <Button small label={state.action ?? "Verify"} variant={state.locked ? "primary" : "secondary"} style={{ marginTop: space.md }}
+                  accessibilityLabel={`${state.action ?? "Verify"}: ${m.first_name}`}
+                  onPress={() => router.push({ pathname: "/family/verify", params: { id: m.patient_id } })} />
+              ) : null}
             </Card>
           );
         })}

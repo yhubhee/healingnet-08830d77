@@ -16,6 +16,11 @@ export interface FamilyMember {
   added_at: string;
   /** From patient_guardians.consent_confirmed_at; undefined when it could not be read. */
   has_permission?: boolean;
+  /** Family verification (shared/verification.ts). */
+  verification_status?: string | null;
+  verification_due_at?: string | null;
+  access_ok?: boolean | null;
+  last_reject_reason?: string | null;
 }
 
 export const MAX_FAMILY = 10;

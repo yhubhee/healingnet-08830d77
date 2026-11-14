@@ -10,7 +10,9 @@ import { lagosToday } from "@/shared/dates";
 import { addFamilyArgs, personForNotification, resolveActive, type FamilyForm, type FamilyMember } from "@/shared/family";
 import { familyKey, familyNextKey } from "@/shared/keys";
 import { activePerson, useActivePersonId } from "./activePerson";
+import { unlockedActive, lockedToast } from "@/shared/verification";
 import { removeRemindersFor } from "./reminders";
+import { removeMemberDocuments } from "./verification";
 import { useSession } from "./session";
 import { supabase } from "./supabase";
 
@@ -54,15 +56,26 @@ export function useActivePerson() {
   };
 }
 
-/** Mounted once for a signed-in patient: someone removed from the family (here or on another device) falls back to Me. */
+/**
+ * Mounted once for a signed-in patient: someone removed from the family (here or on another
+ * device) falls back to Me, and so does someone who has become locked (no document sent in
+ * time, or the document was not accepted), with a message saying why.
+ */
 export function useKeepActivePersonValid(active: boolean) {
   const activeId = useActivePersonId();
   const family = useFamily();
+  const toast = useToast();
   useEffect(() => {
     if (!active || !family.isSuccess) return;
-    const next = resolveActive(activeId, family.data);
-    if (next !== activeId) activePerson.set(next);
-  }, [active, activeId, family.isSuccess, family.data]);
+    const present = resolveActive(activeId, family.data);
+    const next = unlockedActive(present, family.data);
+    if (next === activeId) return;
+    if (present && next === null) {
+      const name = family.data.find((m) => m.patient_id === present)?.first_name;
+      toast.info(lockedToast(name ?? "This family member"));
+    }
+    activePerson.set(next);
+  }, [active, activeId, family.isSuccess, family.data, toast]);
 }
 
 export function useAddFamilyMember() {
@@ -79,6 +92,7 @@ export function useAddFamilyMember() {
 
 export function useRemoveFamilyMember() {
   const qc = useQueryClient();
+  const { userId } = useSession();
   return useMutation({
     mutationFn: async (patientId: string): Promise<{ held_by_hospitals: boolean }> => {
       const { data, error } = await supabase.rpc("remove_family_member", { p_patient_id: patientId });
@@ -89,6 +103,8 @@ export function useRemoveFamilyMember() {
       if (activePerson.get() === patientId) activePerson.set(null);
       // Nothing of theirs stays on the phone: their medicine reminders and their saved lists.
       await removeRemindersFor(patientId);
+      // Their verification documents go too (not awaited; ones under review are kept by the database).
+      removeMemberDocuments(userId, patientId);
       qc.removeQueries({ predicate: (q) => q.queryKey.includes(patientId) });
       qc.invalidateQueries({ queryKey: ["family"] });
       qc.invalidateQueries({ queryKey: ["family-next"] });
@@ -145,7 +161,9 @@ export function useShowPersonFor() {
       if (subject !== own && !family?.some((m) => m.patient_id === subject)) {
         family = await qc.fetchQuery({ queryKey: familyKey(uid), queryFn: fetchFamily });
       }
-      const next = personForNotification(subject, activePerson.get(), own, (family ?? []).map((m) => m.patient_id));
+      // A locked member's records cannot be opened: stay with the person on screen.
+      const open = (family ?? []).filter((m) => m.access_ok !== false).map((m) => m.patient_id);
+      const next = personForNotification(subject, activePerson.get(), own, open);
       if (next === undefined) return;
       activePerson.set(next);
       const name = next === null ? null : family?.find((m) => m.patient_id === next)?.first_name;

@@ -3,7 +3,7 @@
 
 /** App routes a notification can open. */
 export type AppScreen =
-  | "/(tabs)" | "/(tabs)/visits" | "/(tabs)/messages" | "/prescriptions" | "/lab-results" | "/records" | "/letters";
+  | "/(tabs)" | "/(tabs)/visits" | "/(tabs)/messages" | "/prescriptions" | "/lab-results" | "/records" | "/letters" | "/family";
 
 const SCREENS: [string, AppScreen][] = [
   ["/patient/appointments", "/(tabs)/visits"],
@@ -13,6 +13,7 @@ const SCREENS: [string, AppScreen][] = [
   ["/patient/medical-records", "/records"], // the website's own address for the same page
   ["/patient/letters", "/letters"],
   ["/patient/messages", "/(tabs)/messages"],
+  ["/patient/settings/family", "/family"], // a family document was approved or not accepted
 ];
 
 /**
@@ -43,6 +44,7 @@ export interface NotificationTarget {
  * Where a tapped notification leads, from its type as well as its link:
  *   'call_in' ("Your doctor is ready") -> Visits, with the Join call sheet open for that visit
  *   'message'                          -> Messages
+ *   'family' (a document decision)     -> Family
  *   anything else                      -> the screen for its link (screenForUrl)
  * `referenceId` is the appointment for a call; a push does not carry it, so "ready" is used.
  */
@@ -52,6 +54,7 @@ export function notificationTarget(n: { url?: unknown; type?: unknown; reference
     return { pathname: "/(tabs)/visits", params: { join: id } };
   }
   if (n.type === "message") return { pathname: "/(tabs)/messages" };
+  if (n.type === "family") return { pathname: "/family" };
   return { pathname: screenForUrl(n.url) };
 }
 

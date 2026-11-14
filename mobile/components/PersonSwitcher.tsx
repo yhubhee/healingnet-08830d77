@@ -6,19 +6,24 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { activePerson } from "@/lib/activePerson";
 import { useActivePerson } from "@/lib/family";
 import { ageText, MAX_FAMILY, relationshipLabel } from "@/shared/family";
+import { verifyState, type Verifiable } from "@/shared/verification";
 import { fonts, MIN_TOUCH, radius, space, useTheme } from "@/theme";
 import { Sheet } from "./form";
 import { Check, ChevronDown, Plus } from "./icons";
 import { Divider, Small, Strong } from "./ui";
+import { VerifyBadge } from "./VerifyBadge";
 
-function Row({ title, sub, selected, onPress }: { title: string; sub?: string; selected: boolean; onPress: () => void }) {
+function Row({ title, sub, selected, onPress, member }: { title: string; sub?: string; selected: boolean; onPress: () => void; member?: Verifiable }) {
   const { colors } = useTheme();
+  const state = member ? verifyState(member) : null;
+  const spoken = [title, sub, state?.label, state?.locked ? "Opens Verify" : ""].filter(Boolean).join(", ");
   return (
-    <Pressable accessibilityRole="radio" accessibilityState={{ checked: selected }} accessibilityLabel={sub ? `${title}, ${sub}` : title} onPress={onPress}
+    <Pressable accessibilityRole="radio" accessibilityState={{ checked: selected }} accessibilityLabel={spoken} onPress={onPress}
       style={({ pressed }) => ({ minHeight: MIN_TOUCH + 12, flexDirection: "row", alignItems: "center", gap: space.md, paddingVertical: space.sm, opacity: pressed ? 0.6 : 1 })}>
       <View style={{ flex: 1 }}>
         <Strong>{title}</Strong>
         {sub ? <Small>{sub}</Small> : null}
+        {member ? <VerifyBadge member={member} /> : null}
       </View>
       {selected ? <Check size={22} color={colors.primaryText} /> : null}
     </Pressable>
@@ -37,8 +42,13 @@ export function PersonSheet({ visible, onClose }: { visible: boolean; onClose: (
         {person.family.map((m) => (
           <View key={m.patient_id}>
             <Divider />
-            <Row title={m.first_name} sub={[ageText(m.age), relationshipLabel(m.relationship)].filter(Boolean).join(" · ")}
-              selected={!person.isMe && person.patientId === m.patient_id} onPress={() => choose(m.patient_id)} />
+            {/* A locked member opens the Verify screen instead of being switched to. */}
+            <Row title={m.first_name} sub={[ageText(m.age), relationshipLabel(m.relationship)].filter(Boolean).join(" · ")} member={m}
+              selected={!person.isMe && person.patientId === m.patient_id}
+              onPress={() => {
+                if (verifyState(m).locked) { onClose(); router.push({ pathname: "/family/verify", params: { id: m.patient_id } }); }
+                else choose(m.patient_id);
+              }} />
           </View>
         ))}
         <Divider />
