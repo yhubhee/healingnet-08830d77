@@ -1,4 +1,4 @@
-# Testing: HealingNet patient app 0.2
+# Testing: HealingNet patient app 0.3 (and 0.2)
 
 Run on 13 November 2026, on Windows, against the live Supabase project. The notes for 0.1 are in git history (`git show 9e1525f:mobile/TESTING.md`).
 
@@ -48,6 +48,99 @@ What was checked against the live database: a result that is not the patient's i
 The current APK (`8ea2f97c`) does not have this: it still uses the per-phone memory. It needs the next build.
 
 Also in this round: the files left by `create-expo-app` in `mobile/` (`src/`, `assets/images/`, `assets/expo.icon/`, `LICENSE`, `scripts/reset-project.js`) were deleted. Nothing in the app used them. `mobile/.claude/` and `mobile/.vscode/` are now ignored by git.
+
+## Fourth round: family (0.3), 13 November
+
+Version 0.3 adds family profiles to the app and the website, and prepares the Play Store listing. The database change (`20261114100000_family_profiles.sql`) was already applied; `my_family()` answers "permission denied" to a signed-out caller, as expected.
+
+| Check | Result |
+| --- | --- |
+| `npx tsc --noEmit` in `mobile/` | Pass, 0 errors |
+| `npx expo-doctor` | Pass, 20 of 20 checks |
+| Unit tests (`npm test`) | Pass, 199 tests in 13 files (155 before; 44 new in `__tests__/family.test.ts`) |
+| Android JavaScript bundle (`npx expo export --platform android`) | Pass |
+| Website `npx tsc --noEmit -p tsconfig.app.json` | Pass, 0 errors |
+| Website `npm run build` | Pass |
+| Live data check (`node scripts/live-check.mjs`) | Pass, 32 of 32 steps (8 new family steps) |
+| Development build | Finished: `82b0bf52` (made before the version changed to 0.3.0, which does not matter: it loads the code from the PC) |
+| Preview APK | Started: `be29653b` (see the hand-over note for whether it finished) |
+| The app and the website's family pages on a phone or in a browser | **Not run** by me: no phone, emulator or browser session with a patient signed in. Use the checklist below |
+
+New unit tests cover: the active person (starts as Me, saved, reset at sign-out, restored at start-up, falls back to Me when the person leaves the family); a notification's `subject_patient_id` switching person; every per-person query key carrying the patient id; age by the calendar (17 years 364 days is 17, the birthday is 18, 29 February); the permission tick in the add form; the turning-18 note (91 days no, 90 days yes, adult without permission yes, adult with permission no); `p_patient_id` sent only for a family member; and reminders kept apart per person.
+
+New live-check steps, all against the real database as the test patient: `my_family` refuses a signed-out caller; an adult without the permission tick is refused with the database's own message; an `[E2E]` child is added and appears in `my_family` aged 6; a visit is booked for the child with `p_patient_id` (it is saved under the child only) and cancelled; the guardian got 2 notifications about the child, both starting with the child's name; a share code for the child works and one for a stranger is refused; the child's allergies and blood group save; the child is removed and can no longer be read.
+
+**Found by the live check, for Bhee to look at:** removing the child answered `held_by_hospitals: true`, although the only thing the hospital had was one booking that was cancelled a second later. So a family member who has ever had a booking at a hospital is kept by that hospital after removal, even if no visit took place. That is the database's rule, not the app's, and the app's wording ("If a hospital has treated Tobi, that hospital keeps its records") is slightly narrower than what happens. See Decisions in the hand-over note.
+
+**Not built exactly as written, and why:**
+
+- *"HealingNet (dev)" as a separate app.* The development build keeps the package `com.healingnet.app` and replaces the preview app. A second package name needs its own Firebase entry and signing key; see the README.
+- *Under-5 danger signs in the symptom check.* The app sends the family member's real age and sex to the triage service and adds nothing of its own. The service's child rules that exist today key on under 13 (children's likelihoods, paediatrics) and under 1 (fever in a baby); it has no separate under-5 set, and none was invented.
+- *A push names the family member only when "Show details on the lock screen" is on.* With details off the database sends its generic text, so "Tobi:" is not on the lock screen. Inside the app the title always starts with the name. Tapping a push still switches to the right person, by reading who the notification is about.
+- *Website: a family member's health card is edited in a dialog* (Settings → Family, or Profile), not the Complete profile page, because that page requires a phone number and address a child does not have. The app uses its profile form with only the health-card fields.
+
+## Combined checklist for 0.2 and 0.3 (about an hour)
+
+One pass over both versions, grouped by screen. Install the **preview** APK for this (not the development build: speed and offline behaviour only count on a preview build). Sign in as a patient with a visit, a prescription and a lab result. Have the website open on a PC as the same patient, and as a doctor if you can. The longer 0.2 checklist below has more detail on any step.
+
+**Start-up (5 min)**
+
+1. Force-stop, tap the icon: splash, then Home with your data. No Welcome or sign-in flash.
+2. Airplane mode, force-stop, open: Home with saved data and the "Offline" bar. Turn airplane mode off.
+3. Tap Visits, Health, Messages, Me in turn: each shows at once.
+
+**Family: add and switch (10 min)**
+
+4. Me → Family → Add family member. Add a child ("Tobi", born 6 years ago, Child). No tick box shows. After saving, Home says **For: Tobi**.
+5. Add a second person born over 18 years ago: the tick box "I have (name)'s permission…" appears and saving without it is refused. Change the date to make them 17: the box goes away.
+6. Tap the **For:** chip on Home: the sheet lists Me, Tobi (6 · Child) and the adult, and "+ Add family member". Choose Me, then Tobi: Home changes each time and never shows one person's visits under the other's name.
+7. On the website (Settings → Family) the same two people show. The header says "For: Me ▾"; switch to Tobi there and open Appointments: it is empty for Tobi.
+
+**Home (5 min)**
+
+8. As Me: the Family row lists Tobi with "No upcoming visit". Tap it: the app switches to Tobi.
+9. As Tobi: the next-appointment card says "Tobi's next appointment"; the Family row now lists Me.
+
+**Book a doctor (8 min)**
+
+10. As Tobi, Home → Book a doctor. Every step shows **Booking for: Tobi (6)** with Change. Book an in-person visit. The last step lists "For: Tobi (6)".
+11. Visits (For: Tobi) shows the new visit as waiting. Switch to Me: it is not in your visits. Home's Family row shows Tobi's next visit date.
+12. On the website as the hospital, accept it. The phone gets a push; tap it while showing **Me**: a "Showing Tobi" message appears and Visits opens on Tobi's visit. In Notifications the title starts "Tobi:".
+13. As Me, book and cancel a visit of your own, and reschedule one (0.2).
+
+**Check symptoms (6 min)**
+
+14. As Tobi: the first step is "About Tobi" with age 6 and his sex. Describe a mild fever and answer the questions. The result suggests a children's doctor. Book a doctor from it: still "Booking for: Tobi".
+15. As Me: describe crushing chest pain to the left arm with sweating. The red emergency card shows at once, with Call 112 (do not press call).
+
+**Health: card, prescriptions, results, records, letters (10 min)**
+
+16. As Tobi: Health shows "Tobi's health card". Edit: only blood group, genotype, allergies, conditions and emergency contact are asked. Save an allergy: it shows on the card, and on the website under Profile (For: Tobi).
+17. As Me: open a prescription: code and QR show. Lab results: open one, values and ranges show, "New" goes after opening. Medical records and Letters open. Request a letter (0.2).
+18. Airplane mode, force-stop, open, Health → Lab results → open one: it shows, with the offline bar. Switch to Tobi while offline: Tobi's saved (empty) lists show, not yours. Airplane mode off.
+19. Share my records as Tobi: the title says "Share Tobi's records" and a code with a countdown shows. Switch to Me: the code clears.
+
+**Medicine reminders (6 min)**
+
+20. As Me, on a valid prescription tap Remind me, set a time two minutes away, save. Lock the phone: "Time for your medicine" arrives without naming the medicine. Tap Taken: Home's Today's medicines shows it ticked.
+21. Switch to Tobi: Today's medicines does not show your medicine. (If Tobi has a prescription: set a reminder for him; with "Show details on the lock screen" on it says "Tobi: time for medicine".)
+
+**Messages and video (5 min)**
+
+22. Have the doctor write from the website: it appears in Messages within a second or two; reply. Messages is the same whoever "For:" is set to.
+23. If a video visit is accepted: Visits → Join call opens the call in the in-app browser.
+
+**Me, removing, signing out (6 min)**
+
+24. Me → Family → Tobi: his details and health card show. Remove: the message says he will be removed, open appointments are cancelled, and a hospital that has treated him keeps its records. Confirm: the list no longer has him, and if the app was showing Tobi it is back to **For: Me**.
+25. Me → Delete my account (do not confirm): it says your family members will be removed too.
+26. Switch to the adult family member, then sign out. Sign in again: the app starts as **For: Me**.
+27. Rate a completed visit if you have one (0.2).
+
+**Website only (5 min)**
+
+28. As Tobi (add him again or use the adult): Book an appointment shows "Booking for:" with Change; Prescriptions, Lab results, Medical records and Letters follow the switcher; Triage says "About (name)".
+29. `/privacy` reads correctly and links to `/delete-account`.
 
 ## What could not be run, and why
 
@@ -177,5 +270,7 @@ Install the preview APK over 0.1 (or uninstall 0.1 first). Sign in as a patient 
 26. Book, cancel and reschedule a visit; open a prescription offline and show the QR (it is now drawn by the app's own code, so check a pharmacist's scanner or the phone camera still reads it); share a prescription PDF; change the profile photo; the app switcher still shows the cover; push notifications still arrive and open the right screen, including the lab results one.
 
 ## Records created in the live project
+
+The fourth-round live check on 13 November (family) created 2 cancelled appointments (one for the test patient, one for the `[E2E]` child), 1 pending letter request, 1 message, 1 triage session, 2 share codes, 2 notifications, and one `[E2E]` child patient row that the hospital keeps after removal. The ids are in `e2e/cleanup.md` under "Mobile app 0.3 live check".
 
 Two runs of the live check on 13 November (third round) created 2 cancelled appointments, 2 pending letter requests, 2 messages, 2 triage sessions and 2 share codes. The ids are in `e2e/cleanup.md` under "Mobile app 0.2 live check".

@@ -8,6 +8,8 @@
 // It books one "[E2E]" appointment and cancels it, sends one "[E2E]" message, saves one
 // "[E2E]" triage session, makes one "[E2E]" letter request and (when a completed "[E2E]" visit exists) rates it; what it
 // created is printed for e2e/cleanup.md. The allergies field is changed and put back.
+// Version 0.3 (family): it adds one "[E2E]" child, books and cancels a visit for the child,
+// makes a share code for the child, changes the child's allergies, then removes the child.
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -59,6 +61,11 @@ await step("register_push_device refuses a signed-out caller", async () => {
 
 await step("rate_appointment refuses a signed-out caller", async () => {
   const { error } = await supabase.rpc("rate_appointment", { p_appointment_id: "00000000-0000-0000-0000-000000000000", p_rating: 5 });
+  if (!error || !/permission denied/i.test(error.message)) throw new Error("expected permission denied");
+});
+
+await step("my_family refuses a signed-out caller", async () => {
+  const { error } = await supabase.rpc("my_family");
   if (!error || !/permission denied/i.test(error.message)) throw new Error("expected permission denied");
 });
 
@@ -329,6 +336,103 @@ await step("share code can be created", async () => {
   if (!row?.code) throw new Error("no code returned");
   created.push("patient_share_codes: one code (expires by itself after 15 minutes)");
 });
+
+// ---- Version 0.3: family profiles ---------------------------------------------------------
+const CHILD_LAST = `[E2E] ${Date.now().toString(36)}`;
+const yearsAgo = (n) => { const d = new Date(Date.now() + 3600_000); d.setUTCFullYear(d.getUTCFullYear() - n); return d.toISOString().slice(0, 10); };
+let childId, childAppointmentId, childRemoved = false;
+
+await step("family: an adult cannot be added without their permission", async () => {
+  const { data, error } = await supabase.rpc("add_family_member", {
+    p_first_name: "E2E-Adult", p_last_name: CHILD_LAST, p_date_of_birth: yearsAgo(40), p_gender: "female", p_relationship: "parent",
+  });
+  if (!error) {
+    if (data) { created.push(`patients ${data} (an [E2E] adult family member that should have been refused)`); await supabase.rpc("remove_family_member", { p_patient_id: data }); }
+    throw new Error("an adult was added without the permission tick");
+  }
+  return `refused: "${error.message}"`;
+});
+
+await step("family: add an [E2E] child", async () => {
+  childId = must(await supabase.rpc("add_family_member", {
+    p_first_name: "E2E-Child", p_last_name: CHILD_LAST, p_date_of_birth: yearsAgo(6), p_gender: "male", p_relationship: "child",
+  }));
+  if (!childId) throw new Error("no patient id returned");
+  created.push(`patients ${childId} (family member "E2E-Child ${CHILD_LAST}", with its patient_guardians row; removed again by the script unless a later step failed)`);
+});
+
+await step("family: the child appears in my_family", async () => {
+  if (!childId) throw new Error("no child was added");
+  const family = must(await supabase.rpc("my_family"));
+  const row = (family ?? []).find((m) => m.patient_id === childId);
+  if (!row) throw new Error("the child is not in my_family");
+  if (row.age !== 6 || row.is_adult !== false || row.relationship !== "child") throw new Error(`age ${row.age}, adult ${row.is_adult}, relationship ${row.relationship}`);
+  const profile = must(await supabase.from("patients").select("id, user_id, date_of_birth").eq("id", childId).maybeSingle());
+  if (!profile) throw new Error("the guardian cannot read the child's profile");
+  const link = must(await supabase.from("patient_guardians").select("patient_id, consent_confirmed_at").eq("patient_id", childId).maybeSingle());
+  if (!link) throw new Error("the guardian cannot read the family link");
+  return `${family.length} family member(s); age 6, not an adult, no account of their own: ${profile.user_id === null}`;
+});
+
+await step("family: book for the child with p_patient_id, then cancel", async () => {
+  if (!childId || !hospital) throw new Error("no child or no hospital");
+  const reason = `[E2E] mobile app check, family ${Date.now().toString(36)}`;
+  must(await supabase.rpc("book_appointment", {
+    p_hospital_id: hospital.id, p_doctor_id: null, p_date: lagosDate(4), p_time: "11:00", p_is_telemedicine: false, p_reason: reason, p_patient_id: childId,
+  }));
+  const row = must(await supabase.from("patient_appointments").select("id, status, patient_id").eq("patient_id", childId).eq("reason", reason).maybeSingle());
+  if (!row) throw new Error("the booking was not found under the child");
+  childAppointmentId = row.id;
+  created.push(`patient_appointments ${row.id} (for the [E2E] child; ${reason})`);
+  const own = must(await supabase.from("patient_appointments").select("id").eq("patient_id", patient.id).eq("reason", reason));
+  if (own.length) throw new Error("the booking was also saved under the guardian");
+  must(await supabase.from("patient_appointments").update({ status: "cancelled" }).eq("id", row.id));
+  const after = must(await supabase.from("patient_appointments").select("status").eq("id", row.id).single());
+  if (after.status !== "cancelled") throw new Error(`status is ${after.status}`);
+  // Notifications about the child come to the guardian, naming the child.
+  const notes = must(await supabase.from("user_notifications").select("id, title").eq("subject_patient_id", childId));
+  const named = notes.filter((n) => String(n.title).startsWith("E2E-Child: ")).length;
+  if (notes.length) created.push(`user_notifications: ${notes.length} for the guardian about the [E2E] child`);
+  return `booked as pending under the child only, then cancelled; ${notes.length} notification(s) about the child, ${named} with the name in front`;
+});
+
+await step("family: a share code for the child", async () => {
+  if (!childId) throw new Error("no child was added");
+  const data = must(await supabase.rpc("create_patient_share_code", { p_patient_id: childId }));
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row?.code) throw new Error("no code returned");
+  created.push("patient_share_codes: one code for the [E2E] child (expires by itself after 15 minutes; cancelled when the child is removed)");
+  const stranger = await supabase.rpc("create_patient_share_code", { p_patient_id: "00000000-0000-0000-0000-000000000000" });
+  if (!stranger.error) throw new Error("a code was created for someone who is not in the family");
+  return "created; a patient who is not in the family is refused";
+});
+
+await step("family: update the child's allergies", async () => {
+  if (!childId) throw new Error("no child was added");
+  const probe = "[E2E] Peanuts";
+  must(await supabase.from("patients").update({ allergies: probe, blood_group: "O+" }).eq("id", childId));
+  const after = must(await supabase.from("patients").select("allergies, blood_group").eq("id", childId).single());
+  if (after.allergies !== probe || after.blood_group !== "O+") throw new Error("the health card did not save");
+  return "saved and read back";
+});
+
+await step("family: remove the child", async () => {
+  if (!childId) throw new Error("no child was added");
+  const result = must(await supabase.rpc("remove_family_member", { p_patient_id: childId }));
+  childRemoved = true;
+  const family = must(await supabase.rpc("my_family"));
+  if ((family ?? []).some((m) => m.patient_id === childId)) throw new Error("the child is still in my_family");
+  const row = must(await supabase.from("patients").select("id").eq("id", childId).maybeSingle());
+  if (row) throw new Error("the guardian can still read the child's profile");
+  const again = await supabase.rpc("remove_family_member", { p_patient_id: childId });
+  if (!again.error) throw new Error("removing twice was accepted");
+  if (result?.held_by_hospitals) created.push(`patients ${childId}: KEPT for a hospital after removal (held_by_hospitals = true), no longer linked to the account`);
+  return result?.held_by_hospitals
+    ? "removed from the account; a hospital holds the record, so the row stays with that hospital"
+    : "removed and deleted; no longer readable; a second removal is refused";
+});
+
+if (childId && !childRemoved) console.log(`NOTE  the [E2E] child ${childId} was NOT removed: remove it in the app (Me, Family) or add it to e2e/cleanup.md`);
 
 await step("sign out", async () => {
   const { error } = await supabase.auth.signOut();

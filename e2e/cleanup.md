@@ -499,3 +499,45 @@ The script sets the test patient's `allergies` to `[E2E] Penicillin`, reads it b
 ### user_notifications, notification_preferences, patient_share_codes, push_devices
 
 As in the 0.1 check above (two share codes, one per run). The database may also have sent the doctor a "New message" notification for each of the two messages.
+
+## Mobile app 0.3 live check (2026-11-13)
+
+One run of `mobile/scripts/live-check.mjs` as the test patient, with the family steps.
+
+### patients (1)
+
+| id | note |
+| --- | --- |
+| c8303da2-ec70-47d0-bcfe-e6d20cd16d70 | Family member `E2E-Child [E2E] mwfue1yw`, added with `add_family_member` and removed with `remove_family_member`. Removal answered `held_by_hospitals: true` (the child had one cancelled booking), so the row is kept for the hospital and is no longer linked to the test patient; its `patient_guardians` row is gone. Its `allergies` are `[E2E] Peanuts` and blood group `O+`. |
+
+### patient_appointments (2)
+
+| id | note |
+| --- | --- |
+| d8562676-90e8-4503-9d6e-7383d708cf6c | Test patient's own, cancelled; reason `[E2E] mobile app check mwfudqbs`. |
+| 4bbe0cc0-250d-4cd3-947d-e9e47e1efbdb | For the `[E2E]` child (patient c8303da2…), booked with `p_patient_id`, cancelled; reason `[E2E] mobile app check, family mwfue3b1`. |
+
+### patient_letters (1)
+
+| id | note |
+| --- | --- |
+| bb4f9fc8-206a-41e0-addb-6790b7d4ab94 | A pending letter request; body `[E2E] mobile app check mwfudsrj`. |
+
+### patient_messages (1)
+
+| id | note |
+| --- | --- |
+| 6c118622-eb1d-4031-9df7-411f6d6f6022 | Body `[E2E] mobile app check mwfudsrj`. |
+
+### triage_sessions (1)
+
+One session for the test patient whose `symptoms` are `["[E2E] mobile app check mwfudsrj"]`.
+
+### user_notifications (2 or more)
+
+Two for the test patient about the `[E2E]` child (`subject_patient_id` was c8303da2…; it is set to null if the patient row is deleted), titles starting `E2E-Child: `. The hospital may also have notifications for the two bookings.
+
+### patient_share_codes (2)
+
+One for the test patient and one for the `[E2E]` child; both expire by themselves after 15 minutes.
+

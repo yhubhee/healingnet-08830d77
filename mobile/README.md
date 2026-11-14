@@ -2,7 +2,7 @@
 
 The HealingNet app for patients, for Android and iPhone. It is built with Expo (React Native) and TypeScript and talks to the same Supabase project and the same database functions as the website. All business rules and security live in the database; the app only calls what exists.
 
-This is version 0.2. The folder is separate from the website: the website's build, type check and lint ignore `mobile/`.
+This is version 0.3. The folder is separate from the website: the website's build, type check and lint ignore `mobile/`.
 
 ## Run it
 
@@ -17,6 +17,40 @@ The publishable key is the same one as the website's `VITE_SUPABASE_PUBLISHABLE_
 
 The app needs a **development build**, not Expo Go, because push notifications don't work in Expo Go on Android. Make one with `npx eas-cli build --profile development --platform android`, install it on a phone, then run `npm start`.
 
+## Daily workflow (development build)
+
+With a development build on the phone, code changes show on the phone in seconds. No new
+APK is needed for ordinary changes.
+
+**Once: install the development build.** Open the build link on the phone and install the
+APK. It uses the same package name as the preview app (`com.healingnet.app`), so it
+**replaces the preview app** on that phone; the two cannot be installed side by side. A
+separate "HealingNet (dev)" app was not set up, because a second package name would need
+its own entry in Firebase (or push stops working) and its own signing key. To go back to
+the preview app, install the preview APK over it.
+
+**Every day:**
+
+1. On the PC: `cd mobile`, then `npx expo start --dev-client`.
+2. Phone and PC on the **same Wi-Fi**. Open the HealingNet development app and scan the QR
+   code shown in the terminal. If the network blocks it (the app cannot find the PC), stop
+   and run `npx expo start --dev-client --tunnel` instead, then scan again.
+3. Change code and save: the phone updates in seconds. Press `r` in the terminal to reload
+   the app fully.
+
+**When a new development build is needed:** only when a native library is added or
+changed (a new `expo-*` or `react-native-*` package, or a change to `plugins`, permissions,
+the icon or the package name in `app.json` / `app.config.js`). Changes to screens, wording,
+logic and data calls never need one. Make one with
+`npx eas-cli build --profile development --platform android --non-interactive`.
+
+**Memory:** this PC is short on memory. Close Chrome and other heavy apps while Metro (the
+dev server) runs. If Metro stops with an out-of-memory error, close more apps and start it
+again with `npx expo start --dev-client --clear`.
+
+The development build does not show how fast the real app is: it is slower to start and
+loads code from the PC. Judge speed and size on a preview build.
+
 ## Commands
 
 | Command | What it does |
@@ -27,6 +61,7 @@ The app needs a **development build**, not Expo Go, because push notifications d
 | `npm run sync-types` | Copies the website's Supabase types to `shared/database.types.ts` |
 | `npx expo-doctor` | Checks dependencies and config |
 | `node scripts/live-check.mjs` | Runs the app's data calls against the live project as the test patient |
+| `node scripts/store-assets.mjs` | Rebuilds the Play Store feature graphic and 512 px icon in `store/` |
 
 ## Folders
 
@@ -111,7 +146,7 @@ This makes an APK you can install directly. Free EAS builds can wait in a queue.
 
 EAS uploads the files listed by the repo's root `.easignore`. That file sends only `mobile/`, and it includes `mobile/.env` and `mobile/google-services.json` (which git ignores) so the build has the Supabase address, the publishable key and the Firebase config. Neither file holds a secret.
 
-Profiles in `eas.json`: `development` (dev client, APK), `preview` (APK for testers), `production` (store build).
+Profiles in `eas.json`: `development` (dev client, APK), `preview` (APK for testers), `production` (an AAB for the Play Store; see `store/PLAY_STORE_GUIDE.md` and do not build it until the package name is final).
 
 ## How the app keeps data safe
 
@@ -133,6 +168,14 @@ Profiles in `eas.json`: `development` (dev client, APK), `preview` (APK for test
 - Medicine reminders (`shared/reminders.ts`, `lib/reminders.ts`): local notifications only. Nothing about them is sent to the server. At most 60 are scheduled at a time, and the list is topped up whenever the app opens.
 - Allergies and long-term conditions on the health card, and "Rate your visit".
 - Video visits still open the website's call page in the in-app browser. A native video SDK would add tens of MB to the app.
+
+## What 0.3 added
+
+- **Family profiles.** One active person, "Me" or a family member (`lib/activePerson.ts`, `shared/activePerson.ts`), chosen from the "For: Me ▾" chip (`components/PersonSwitcher.tsx`). `usePatient()` in `lib/session.tsx` returns the active person, so every list read by patient id follows the choice, and every per-person query key carries that id (`shared/keys.ts`). Booking and share codes send `p_patient_id` only for a family member (`forPerson` in `shared/family.ts`).
+- **Me → Family** (`app/family/`): list, add (with the permission tick for adults), a member's health card, and remove.
+- Medicine reminders belong to a person; notifications about a family member switch to them before opening.
+- The same on the website: `src/hooks/useFamily.ts`, `src/components/patient/PersonSwitcher.tsx` and `FamilySection.tsx`.
+- Play Store preparation in `store/`.
 
 ## Start-up and speed
 
