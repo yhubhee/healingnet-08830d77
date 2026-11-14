@@ -1,5 +1,5 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionsHttpError } from "@supabase/supabase-js";
@@ -12,6 +12,7 @@ import { TriageStep3InterviewStep } from "@/components/triage/TriageStep3Intervi
 import { TriageStep4ResultsStep } from "@/components/triage/TriageStep4ResultsStep";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { SkipTriageModal } from "@/components/triage/SkipTriageModal";
+import { useActivePatient } from "@/hooks/useFamily";
 import { friendlyError } from "@/lib/errors";
 
 type Sex = "male" | "female";
@@ -69,25 +70,27 @@ export default function PatientTriage() {
 
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [skipped, setSkipped] = useState(false);
-  // Load patient + demographics gate
+  // The person being checked: the patient, or the family member chosen under "Who is this
+  // for?". Their age and sex go to the triage service, which applies its own stricter rules
+  // for children from the age; nothing about that is decided here.
+  const person = useActivePatient();
+  const name = person.isMe ? null : person.firstName;
+  const loadedFor = useRef<string | null>(null);
   useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: p } = await supabase.from("patients").select("*").eq("user_id", user.id).maybeSingle();
-      setPatient(p);
-      if (p) {
-        if (p.date_of_birth) {
-          const yrs = Math.floor((Date.now() - new Date(p.date_of_birth).getTime()) / (365.25 * 864e5));
-          setAge(yrs);
-        }
-        if (p.gender === "male" || p.gender === "female") setSex(p.gender);
-        if (p.date_of_birth && (p.gender === "male" || p.gender === "female")) {
-          setStep(2);
-        }
-      }
-    })();
-  }, []);
+    const p: any = person.patient;
+    if (!p || loadedFor.current === p.id) return;
+    const switched = loadedFor.current !== null;
+    loadedFor.current = p.id;
+    setPatient(p);
+    const known = p.gender === "male" || p.gender === "female";
+    setAge(p.date_of_birth ? Math.floor((Date.now() - new Date(p.date_of_birth).getTime()) / (365.25 * 864e5)) : "");
+    setSex(known ? p.gender : "");
+    if (switched) {
+      // A different person: nothing from the last check is carried over.
+      setEvidence([]); setAskedIds([]); setCurrentQ(null); setLatestResp(null); setSkipped(false);
+    }
+    setStep(p.date_of_birth && known ? 2 : 1);
+  }, [person.patient]);
 
   async function saveDemographics() {
     if (!patient || age === "" || !sex) return;
@@ -254,7 +257,7 @@ export default function PatientTriage() {
           <h1 className="text-2xl font-heading font-bold flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-primary" /> Triage assistant
           </h1>
-          <p className="text-muted-foreground text-sm">Answer a few questions about your symptoms. This is guidance, not a diagnosis.</p>
+          <p className="text-muted-foreground text-sm">{name ? `Answer a few questions about ${name}'s symptoms, as ${name} would or from what you can see.` : "Answer a few questions about your symptoms."} This is guidance, not a diagnosis.</p>
         </div>
 
         {/* Stepper */}
@@ -273,6 +276,7 @@ export default function PatientTriage() {
             onSexChange={setSex}
             onContinue={saveDemographics}
             loading={savingDemo}
+            name={name}
           />
         )}
 

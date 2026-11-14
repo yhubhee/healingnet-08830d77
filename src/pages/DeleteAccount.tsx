@@ -1,6 +1,7 @@
 // /delete-account: public page that explains account deletion (Google Play asks for a web
 // link). Signed-in patients can delete their account here; the mobile app has the same flow.
 import { useState } from "react";
+import { DELETE_FAMILY_LINE } from "@/lib/family";
 import { Link } from "react-router-dom";
 import { CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +78,7 @@ export default function DeleteAccount() {
               <p>
                 Your login, contact details, devices and notifications are deleted. Appointments that are still open are cancelled. If you have been a patient at a hospital on HealingNet, that hospital keeps its medical records about you, as the law requires; they are no longer linked to an account.
               </p>
+              <p>{DELETE_FAMILY_LINE}</p>
               <p>This can't be undone. You can also delete your account in the HealingNet app: Me, then Delete my account.</p>
               <p>
                 Doctor, hospital, pharmacy and admin accounts are closed through HealingNet support:{" "}

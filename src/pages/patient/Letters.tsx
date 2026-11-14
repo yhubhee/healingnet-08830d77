@@ -1,7 +1,7 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { usePatientProfile } from "@/hooks/usePatientData";
+import { useActivePatientId } from "@/hooks/usePatientData";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,16 +28,17 @@ const STATUS_VARIANT: Record<string, string> = {
 };
 
 export default function PatientLetters() {
-  const { data: profile } = usePatientProfile();
+  // The person chosen under "Who is this for?".
+  const pid = useActivePatientId();
 
   const { data: letters = [], isLoading, isError, error, refetch } = useQuery({
-    enabled: !!profile?.id,
-    queryKey: ["patient-letters", profile?.id],
+    enabled: !!pid,
+    queryKey: ["patient-letters", pid],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("patient_letters" as any)
         .select("*, doctors(first_name, last_name, specialty), hospitals(name, address)")
-        .eq("patient_id", profile!.id)
+        .eq("patient_id", pid!)
         .order("issued_at", { ascending: false });
       if (error) throw error;
       return (data || []) as any[];
@@ -84,8 +85,8 @@ export default function PatientLetters() {
             <h1 className="text-2xl font-heading font-bold flex items-center gap-2"><FileText className="w-6 h-6 text-primary" />My Letters & Reports</h1>
             <p className="text-sm text-muted-foreground">Official medical documents issued to you by your doctor.</p>
           </div>
-          {profile?.id && (
-            <RequestLetterDialog patientId={profile.id} trigger={
+          {pid && (
+            <RequestLetterDialog patientId={pid} trigger={
               <Button size="sm"><Plus className="w-4 h-4" />Request a letter</Button>
             } />
           )}

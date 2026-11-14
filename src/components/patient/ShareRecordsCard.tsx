@@ -3,6 +3,9 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useActivePatient } from "@/hooks/useFamily";
+import { dbMessage } from "@/lib/errors";
+import { forPerson } from "@/lib/family";
 
 interface ShareCode {
   code: string;
@@ -21,6 +24,11 @@ export function ShareRecordsCard() {
   const [share, setShare] = useState<ShareCode | null>(null);
   const [now, setNow] = useState(Date.now());
   const [busy, setBusy] = useState(false);
+  const person = useActivePatient();
+  const activeId = person.isMe ? null : person.patientId;
+
+  // A code belongs to one person: changing who this is for clears the one on screen.
+  useEffect(() => { setShare(null); }, [activeId]);
 
   useEffect(() => {
     if (!share) return;
@@ -30,11 +38,12 @@ export function ShareRecordsCard() {
 
   async function getCode() {
     setBusy(true);
-    const { data, error } = await supabase.rpc("create_patient_share_code");
+    const { data, error } = await supabase.rpc("create_patient_share_code", forPerson({}, activeId, person.ownPatientId));
     setBusy(false);
     const row = Array.isArray(data) ? data[0] : data;
     if (error || !row?.code) {
-      toast.error(/too many codes/i.test(error?.message ?? "") ? "You've asked for too many codes. Please try again in a little while." : "We couldn't create a code. Please try again.");
+      toast.error(/too many codes/i.test(error?.message ?? "") ? "You've asked for too many codes. Please try again in a little while."
+        : error && !person.isMe ? `We couldn't create a code. ${dbMessage(error)}` : "We couldn't create a code. Please try again.");
       return;
     }
     setNow(Date.now());
@@ -49,7 +58,7 @@ export function ShareRecordsCard() {
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0"><ShieldCheck className="w-5 h-5" /></div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-heading font-bold">Share my records with a hospital</h3>
+          <h3 className="font-heading font-bold">{person.isMe ? "Share my records with a hospital" : `Share ${person.firstName}'s records with a hospital`}</h3>
           <p className="text-sm text-muted-foreground mb-3">Show this code at the front desk. It works once and expires in 15 minutes.</p>
 
           {share && !expired ? (

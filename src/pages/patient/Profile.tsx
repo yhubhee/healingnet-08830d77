@@ -1,27 +1,23 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation } from "react-router-dom";
 import { User, Phone, Mail, Heart, Shield, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ShareRecordsCard } from "@/components/patient/ShareRecordsCard";
 import { QueryState } from "@/components/common/QueryState";
-import { friendlyError } from "@/lib/errors";
+import { EditHealthCardDialog } from "@/components/patient/FamilySection";
+import { useActivePatient } from "@/hooks/useFamily";
+import { lagosToday } from "@/lib/dates";
+import { relationshipLabel, turning18Note } from "@/lib/family";
 
 export default function PatientProfile() {
-  const [p, setP] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<Error | null>(null);
-  const load = async () => {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
-    const { data, error } = await supabase.from("patients").select("*").eq("user_id", user.id).maybeSingle();
-    if (error) setLoadError(new Error(friendlyError(error)));
-    else { setLoadError(null); setP(data); }
-    setLoading(false);
-  };
-  useEffect(() => { load(); }, []);
+  // The person chosen under "Who is this for?": the patient's own profile, or a family member's.
+  const person = useActivePatient();
+  const p: any = person.patient;
+  const loading = person.isLoading;
+  const loadError: Error | null = null;
+  const load = () => person.refetchPatient();
+  const [editingCard, setEditingCard] = useState(false);
   const { hash } = useLocation();
   // "Share my records" in the account menu links to #share.
   useEffect(() => {
@@ -31,15 +27,21 @@ export default function PatientProfile() {
   if (loading || loadError) return <PatientLayout><QueryState isLoading={loading} isError={!!loadError} error={loadError} onRetry={() => load()}>{null}</QueryState></PatientLayout>;
   if (!p) return <PatientLayout><p className="text-muted-foreground text-sm">Profile not found.</p></PatientLayout>;
 
+  const note = person.member ? turning18Note(person.member, lagosToday()) : null;
+
   return (
     <PatientLayout>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-heading font-bold">My Profile</h1>
-          <p className="text-muted-foreground text-sm">Personal and medical information</p>
+          <h1 className="text-2xl font-heading font-bold">{person.isMe ? "My Profile" : `${person.firstName}'s Profile`}</h1>
+          <p className="text-muted-foreground text-sm">{person.isMe ? "Personal and medical information" : `${relationshipLabel(person.member?.relationship)} · managed from your account`}</p>
         </div>
-        <Button asChild variant="outline"><Link to="/patient/complete-profile?edit=1"><Pencil className="w-4 h-4 mr-1.5" />Edit profile</Link></Button>
+        {person.isMe
+          ? <Button asChild variant="outline"><Link to="/patient/complete-profile?edit=1"><Pencil className="w-4 h-4 mr-1.5" />Edit profile</Link></Button>
+          : <Button variant="outline" onClick={() => setEditingCard(true)}><Pencil className="w-4 h-4 mr-1.5" />Edit health card</Button>}
       </div>
+      {note && <p className="mb-5 rounded-lg bg-muted px-4 py-3 text-sm">{note}</p>}
+      {!person.isMe && <EditHealthCardDialog patientId={person.patientId} firstName={person.firstName ?? ""} open={editingCard} onOpenChange={setEditingCard} />}
 
       <div className="bg-gradient-to-r from-primary/15 to-info/15 border border-primary/20 rounded-xl p-6 mb-6 flex items-center gap-5 flex-wrap">
         <div className="w-20 h-20 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-primary to-info text-primary-foreground flex items-center justify-center text-2xl font-bold">

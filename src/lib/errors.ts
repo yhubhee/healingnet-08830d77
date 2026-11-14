@@ -54,3 +54,13 @@ export function friendlyError(e: unknown, fallback = "Something went wrong. Plea
   for (const [re, text] of KNOWN) if (re.test(msg) || re.test(code)) return text;
   return fallback;
 }
+
+/**
+ * For database functions that raise plain-English messages (family members, booking):
+ * the database's own message, except for network failures.
+ */
+export function dbMessage(e: unknown): string {
+  const msg = (e as { message?: unknown } | null | undefined)?.message;
+  if (typeof msg === "string" && msg && !/failed to fetch|network/i.test(msg)) return msg;
+  return friendlyError(e);
+}

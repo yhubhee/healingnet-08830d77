@@ -1,5 +1,6 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useQuery } from "@tanstack/react-query";
+import { useActivePatientId } from "@/hooks/usePatientData";
 import { supabase } from "@/integrations/supabase/client";
 import { Stethoscope, FileText, Activity, Pill, Syringe } from "lucide-react";
 import { QueryState } from "@/components/common/QueryState";
@@ -20,14 +21,14 @@ const colorFor: Record<string, string> = {
 };
 
 export default function PatientMedicalRecords() {
+  // The person chosen under "Who is this for?".
+  const pid = useActivePatientId();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["patient", "emr"],
+    queryKey: ["patient", "emr", pid],
+    enabled: !!pid,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data: p, error: pError } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
-      if (pError) throw pError;
-      if (!p) return [];
+      if (!pid) return [];
+      const p = { id: pid };
       const { data, error } = await supabase.from("emr_entries").select("*, doctors(first_name,last_name), vital_data").eq("patient_id", p.id).order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];

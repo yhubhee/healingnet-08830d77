@@ -16,7 +16,9 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { addDays, dayOfWeek, fmtLongDate, lagosNowTime, lagosToday } from "@/lib/dates";
+import { activePerson, useActivePatient } from "@/hooks/useFamily";
 import { friendlyError } from "@/lib/errors";
+import { ageText, forPerson, personWithAge, relationshipLabel } from "@/lib/family";
 import { cn } from "@/lib/utils";
 
 export interface Coords { lat: number; lng: number }
@@ -90,6 +92,10 @@ export function BookingFlow({
   const [time, setTime] = useState<string>("");
   const [reason, setReason] = useState(initialReason);
   const [booking, setBooking] = useState(false);
+  // Who the visit is for: the person chosen under "Who is this for?".
+  const person = useActivePatient();
+  const [choosing, setChoosing] = useState(false);
+  const bookingFor = person.isMe ? "Me" : personWithAge(person.firstName ?? "", person.member?.age);
 
   // Ask for the location once; everything works without it.
   useEffect(() => {
@@ -108,18 +114,20 @@ export function BookingFlow({
   const confirm = async () => {
     if (!hospital || !date || !time) return;
     setBooking(true);
-    const { error } = await supabase.rpc("book_appointment", {
+    // p_patient_id is only sent for a family member; for the patient the call is unchanged.
+    const { error } = await supabase.rpc("book_appointment", forPerson({
       p_hospital_id: hospital.id,
       p_doctor_id: (doctor && doctor !== "any" ? doctor.id : null) as string,
       p_date: date,
       p_time: time,
       p_is_telemedicine: visit === "video",
       p_reason: reason.trim().slice(0, 500) || undefined,
-    });
+    }, person.isMe ? null : person.patientId, person.ownPatientId));
     setBooking(false);
     if (error) { toast.error("Couldn't book the appointment", { description: dbMessage(error) }); return; }
     qc.invalidateQueries({ queryKey: ["patient-appointments"] });
-    toast.success("Appointment requested", { description: `${hospital.name} will confirm your ${fmtLongDate(date)} ${fmt12(time)} visit. We'll notify you.` });
+    qc.invalidateQueries({ queryKey: ["patient", "appointments"] });
+    toast.success("Appointment requested", { description: `${hospital.name} will confirm ${person.isMe ? "your" : `${person.firstName}'s`} ${fmtLongDate(date)} ${fmt12(time)} visit. We'll notify you.` });
     navigate("/patient/appointments");
   };
 
@@ -138,6 +146,30 @@ export function BookingFlow({
         <div className="mt-2 flex gap-1.5" aria-hidden>
           {STEP_TITLES.map((_, i) => <div key={i} className={cn("h-1.5 flex-1 rounded-full", i <= step ? "bg-primary" : "bg-muted")} />)}
         </div>
+      </div>
+
+      {/* Always in view, on every step: who this booking is for. */}
+      <div className={cn("mb-4 rounded-lg border px-3 py-2 text-sm", person.isMe ? "border-border bg-card" : "border-primary/40 bg-primary/10")}>
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-medium">Booking for: {bookingFor}</p>
+          <button type="button" className="text-primary underline underline-offset-2" aria-expanded={choosing} onClick={() => setChoosing((v) => !v)}>Change</button>
+        </div>
+        {choosing && (
+          <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Who is this booking for?">
+            {[{ id: null as string | null, label: "Me", sub: "" }, ...person.family.map((m) => ({ id: m.patient_id as string | null, label: m.first_name, sub: [ageText(m.age), relationshipLabel(m.relationship)].filter(Boolean).join(" · ") }))].map((o) => {
+              const selected = o.id === (person.isMe ? null : person.patientId);
+              return (
+                <button key={o.id ?? "me"} type="button" role="radio" aria-checked={selected}
+                  onClick={() => { activePerson.set(o.id); setChoosing(false); }}
+                  className={cn("rounded-lg border px-3 py-1.5 text-left", selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-muted")}>
+                  <span className="block font-medium">{o.label}</span>
+                  {o.sub ? <span className={cn("block text-xs", selected ? "text-primary-foreground/80" : "text-muted-foreground")}>{o.sub}</span> : null}
+                </button>
+              );
+            })}
+            {person.family.length === 0 && <p className="w-full text-xs text-muted-foreground">Add family members in Settings, under Family, to book for them.</p>}
+          </div>
+        )}
       </div>
 
       {/* Choices so far */}
@@ -168,6 +200,7 @@ export function BookingFlow({
         <section className="bg-card border border-border rounded-xl p-4 sm:p-6 space-y-4">
           <h2 className="font-heading font-bold text-lg">Check and confirm</h2>
           <dl className="divide-y divide-border text-sm">
+            <Summary label="For">{bookingFor}</Summary>
             <Summary label="Hospital">{hospital.name}<span className="block text-xs text-muted-foreground">{[hospital.address, hospital.city, hospital.state].filter(Boolean).join(", ")}</span></Summary>
             <Summary label="Doctor">{doctorName}{doctor !== "any" && doctor.specialty ? <span className="block text-xs text-muted-foreground">{doctor.specialty}</span> : null}</Summary>
             <Summary label="Visit">{visit === "video" ? "Video visit" : "In person"}</Summary>

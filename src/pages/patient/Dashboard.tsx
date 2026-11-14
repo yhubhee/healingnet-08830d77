@@ -4,9 +4,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Calendar, Pill, FlaskConical, FileText, ArrowRight, Stethoscope, Loader2, Clock, AlertCircle, Plus, CalendarPlus } from "lucide-react";
-import { usePatientProfile, usePatientAppointments, usePatientPrescriptions, usePatientLabResults, usePatientEmr } from "@/hooks/usePatientData";
+import { useActivePatientId, usePatientProfile, usePatientAppointments, usePatientPrescriptions, usePatientLabResults, usePatientEmr } from "@/hooks/usePatientData";
 import { Button } from "@/components/ui/button";
 import { ShareRecordsCard } from "@/components/patient/ShareRecordsCard";
+import { useActivePatient } from "@/hooks/useFamily";
 import { QueryState } from "@/components/common/QueryState";
 
 export default function PatientDashboard() {
@@ -17,36 +18,39 @@ export default function PatientDashboard() {
   const { data: labs = [], isLoading: labsLoading, isError: labsError, error: labsErr, refetch: refetchLabs } = usePatientLabResults();
   const { data: emr = [], isLoading: emrLoading, isError: emrError, error: emrErr, refetch: refetchEmr } = usePatientEmr();
 
+  // Live updates and cache keys follow the person chosen under "Who is this for?".
+  const pid = useActivePatientId();
+  const person = useActivePatient();
   useEffect(() => {
-    if (!profile?.id) return;
+    if (!pid) return;
     const channels = [
       supabase
-        .channel(`realtime-appts-${profile.id}`)
+        .channel(`realtime-appts-${pid}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "patient_appointments" }, () => {
-          qc.invalidateQueries({ queryKey: ["patient-appointments", profile.id] });
+          qc.invalidateQueries({ queryKey: ["patient-appointments", pid] });
         })
         .subscribe(),
       supabase
-        .channel(`realtime-rx-${profile.id}`)
+        .channel(`realtime-rx-${pid}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "prescriptions" }, () => {
-          qc.invalidateQueries({ queryKey: ["patient-prescriptions", profile.id] });
+          qc.invalidateQueries({ queryKey: ["patient-prescriptions", pid] });
         })
         .subscribe(),
       supabase
-        .channel(`realtime-labs-${profile.id}`)
+        .channel(`realtime-labs-${pid}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "lab_results" }, () => {
-          qc.invalidateQueries({ queryKey: ["patient-lab-results", profile.id] });
+          qc.invalidateQueries({ queryKey: ["patient-lab-results", pid] });
         })
         .subscribe(),
       supabase
-        .channel(`realtime-emr-${profile.id}`)
+        .channel(`realtime-emr-${pid}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "emr_entries" }, () => {
-          qc.invalidateQueries({ queryKey: ["patient-emr", profile.id] });
+          qc.invalidateQueries({ queryKey: ["patient-emr", pid] });
         })
         .subscribe(),
     ];
     return () => { channels.forEach(ch => supabase.removeChannel(ch)); };
-  }, [profile?.id, qc]);
+  }, [pid, qc]);
 
   const loading = profileLoading || apptsLoading || rxLoading || labsLoading || emrLoading;
   const upcomingAppts = appts.filter(a => ["pending", "accepted", "confirmed"].includes(a.status));
@@ -64,7 +68,7 @@ export default function PatientDashboard() {
     <PatientLayout>
       <div className="mb-6 animate-fade-in">
         <h1 className="text-2xl font-heading font-bold mb-1">Welcome back{profile?.first_name ? `, ${profile.first_name}` : ""}</h1>
-        <p className="text-muted-foreground">Here's a quick overview of your health journey</p>
+        <p className="text-muted-foreground">{person.isMe ? "Here's a quick overview of your health journey" : `Showing ${person.firstName}'s visits, prescriptions, results and records`}</p>
       </div>
 
       <div className="bg-gradient-to-r from-primary/15 to-info/15 border border-primary/20 rounded-xl p-5 mb-6 flex items-center justify-between flex-wrap gap-3 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "50ms" }}>

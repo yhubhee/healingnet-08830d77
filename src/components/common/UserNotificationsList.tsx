@@ -11,6 +11,7 @@ import {
   useDeleteUserNotification,
   NOTIFICATION_ICONS,
 } from "@/hooks/useUserNotifications";
+import { useShowPersonFor } from "@/hooks/useFamily";
 
 /** The signed-in user's notifications (optionally one audience), with mark-read and delete. */
 export function UserNotificationsList({ audience }: { audience?: string }) {
@@ -20,6 +21,8 @@ export function UserNotificationsList({ audience }: { audience?: string }) {
   const markRead = useMarkUserNotificationRead();
   const markAll = useMarkAllUserNotificationsRead(audience);
   const remove = useDeleteUserNotification();
+  // Patients only: a notification about a family member switches "Who is this for?" to them.
+  const showPersonFor = useShowPersonFor();
 
   const unread = notifications.filter((n) => !n.is_read).length;
 
@@ -49,8 +52,9 @@ export function UserNotificationsList({ audience }: { audience?: string }) {
           {notifications.map((n) => (
             <div
               key={n.id}
-              onClick={() => {
+              onClick={async () => {
                 if (!n.is_read) markRead.mutate(n.id);
+                if (n.audience === "patient") await showPersonFor(n.subject_patient_id);
                 if (n.action_url) navigate(n.action_url);
               }}
               className={cn(

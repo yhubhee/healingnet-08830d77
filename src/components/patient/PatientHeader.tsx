@@ -16,7 +16,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useShowPersonFor } from "@/hooks/useFamily";
 import { PatientAccountMenu } from "./PatientAccountMenu";
+import { PersonSwitcher } from "./PersonSwitcher";
 
 export function PatientHeader() {
   const { data: profile } = usePatientProfile();
@@ -24,6 +26,7 @@ export function PatientHeader() {
   useRealtimeUserNotifications();
   const { data: notifications = [] } = useUserNotifications();
   const markRead = useMarkUserNotificationRead();
+  const showPersonFor = useShowPersonFor();
 
   const unread = notifications.filter((n) => !n.is_read);
   const recent = notifications.slice(0, 4);
@@ -35,7 +38,8 @@ export function PatientHeader() {
           <p className="text-sm text-muted-foreground">Welcome back,</p>
           <p className="font-heading font-bold truncate">{profile ? `${profile.first_name} ${profile.last_name}` : "Patient"}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <PersonSwitcher />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="relative w-10 h-10 rounded-lg hover:bg-card transition-colors flex items-center justify-center" aria-label={unread.length ? `Notifications, ${unread.length} unread` : "Notifications"}>
@@ -60,8 +64,10 @@ export function PatientHeader() {
                   <DropdownMenuItem
                     key={n.id}
                     className={cn("notification-item flex flex-col items-start gap-1 py-3 cursor-pointer", !n.is_read && "bg-primary/5")}
-                    onClick={() => {
+                    onClick={async () => {
                       if (!n.is_read) markRead.mutate(n.id);
+                      // About a family member (or about me while a family member is showing): switch first.
+                      await showPersonFor(n.subject_patient_id);
                       if (n.action_url) navigate(n.action_url);
                     }}
                   >

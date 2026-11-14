@@ -1,6 +1,7 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useActivePatientId } from "@/hooks/usePatientData";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Video, CalendarPlus, RotateCcw } from "lucide-react";
@@ -45,14 +46,15 @@ export default function PatientAppointments() {
     }
   }
 
+  const pid = useActivePatientId();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["patient", "appointments"],
+    // The id of the person chosen under "Who is this for?" is in the key: each person's list is cached apart.
+    queryKey: ["patient", "appointments", pid],
+    enabled: !!pid,
     queryFn: async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return [];
-        const { data: p } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
-        if (!p) return [];
+        if (!pid) return [];
+        const p = { id: pid };
 
         // Fetch appointments without complex joins
         const { data: appts, error: fetchError } = await supabase

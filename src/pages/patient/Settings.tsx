@@ -5,6 +5,7 @@ import { Bell, Lock, Globe, Shield, Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNotificationPrefs, useSaveNotificationPrefs } from "@/hooks/useUserNotifications";
 import { QueryState } from "@/components/common/QueryState";
+import { FamilySection } from "@/components/patient/FamilySection";
 import { friendlyError } from "@/lib/errors";
 
 export default function PatientSettings() {
@@ -54,6 +55,8 @@ export default function PatientSettings() {
       </div>
 
       <div className="space-y-5 max-w-3xl">
+        <FamilySection />
+
         <Card title="Email notifications" icon={Bell}>
           <QueryState isLoading={isLoading} isError={isError} error={error} onRetry={() => refetch()}>
             <>

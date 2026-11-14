@@ -11,6 +11,8 @@ interface Props {
   onContinue: () => void;
   onBack?: () => void;
   loading?: boolean;
+  /** A family member's first name: "About Tobi" instead of "about you". */
+  name?: string | null;
 }
 
 export function TriageStep1DemographicsStep({
@@ -21,12 +23,13 @@ export function TriageStep1DemographicsStep({
   onContinue,
   onBack,
   loading = false,
+  name,
 }: Props) {
   const isComplete = age !== "" && sex;
 
   return (
     <div className="bg-card border border-border rounded-xl p-6">
-      <h2 className="font-heading font-bold mb-1">Step 1 of 8 — A bit about you</h2>
+      <h2 className="font-heading font-bold mb-1">Step 1 of 8 — {name ? `About ${name}` : "A bit about you"}</h2>
       <p className="text-sm text-muted-foreground mb-4">We use this to personalise the triage.</p>
       <div className="grid sm:grid-cols-2 gap-4 mb-4">
         <label className="text-sm">

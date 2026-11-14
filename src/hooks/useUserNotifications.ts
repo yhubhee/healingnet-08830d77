@@ -14,6 +14,8 @@ export type UserNotification = {
   action_url: string | null;
   is_read: boolean;
   created_at: string;
+  /** The patient a notification is about; set for family members as well as the account holder. */
+  subject_patient_id?: string | null;
 };
 
 export const NOTIFICATION_ICONS: Record<string, string> = {

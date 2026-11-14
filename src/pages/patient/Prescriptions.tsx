@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { QueryState } from "@/components/common/QueryState";
-import { usePatientProfile } from "@/hooks/usePatientData";
+import { useActivePatientId, usePatientProfile } from "@/hooks/usePatientData";
+import { useActivePatient } from "@/hooks/useFamily";
 import { cn } from "@/lib/utils";
 import type { RxPayload } from "@/lib/pharmacy";
 import { RxCard, type PatientRequest } from "@/components/patient/rx/RxCard";
@@ -14,8 +15,12 @@ const MAX_DOCS = 40;
 
 export default function PatientPrescriptions() {
   const qc = useQueryClient();
-  const { data: profile } = usePatientProfile();
-  const pid = profile?.id as string | undefined;
+  // The person chosen under "Who is this for?": their prescriptions, QR codes and pharmacy requests.
+  const pid = useActivePatientId();
+  const person = useActivePatient();
+  const { data: own } = usePatientProfile();
+  // A family member may have no address of their own: the pharmacy search starts from the guardian's.
+  const profile = person.patient ? { ...person.patient, state: person.patient.state ?? own?.state ?? null, city: person.patient.city ?? own?.city ?? null } : null;
   const [tab, setTab] = useState<"current" | "all">("all");
 
   // Each prescription row belongs to a document; load each document's full view (status, items, dispenses).

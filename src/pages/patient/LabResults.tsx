@@ -1,6 +1,7 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useActivePatientId } from "@/hooks/usePatientData";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown, FlaskConical, Download, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,14 +15,14 @@ const isNew = (l: any) => isReady(l) && !l.patient_viewed_at;
 export default function PatientLabResults() {
   const [open, setOpen] = useState<string | null>(null);
   const qc = useQueryClient();
+  // The person chosen under "Who is this for?".
+  const pid = useActivePatientId();
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["patient", "labs"],
+    queryKey: ["patient", "labs", pid],
+    enabled: !!pid,
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data: p, error: pError } = await supabase.from("patients").select("id").eq("user_id", user.id).maybeSingle();
-      if (pError) throw pError;
-      if (!p) return [];
+      if (!pid) return [];
+      const p = { id: pid };
       const { data: results, error: resultsError } = await supabase.from("lab_results").select("*, hospitals(name), lab_result_tests(*, lab_result_parameters(*))").eq("patient_id", p.id).order("created_at", { ascending: false });
       if (resultsError) throw resultsError;
       return (results || []).map((r: any) => {

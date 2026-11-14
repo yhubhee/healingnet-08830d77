@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useActivePersonId } from "./useActivePerson";
 import { useAuth } from "./useAuth";
 
 export function usePatientProfile() {
@@ -16,76 +17,87 @@ export function usePatientProfile() {
   });
 }
 
-export function usePatientAppointments() {
+/**
+ * The patient id the patient pages read by: the family member chosen under "Who is this
+ * for?", or the signed-in patient's own. It is part of every per-person query key, so two
+ * people's data never share a cache entry.
+ */
+export function useActivePatientId(): string | undefined {
   const { data: profile } = usePatientProfile();
+  const activeId = useActivePersonId();
+  return profile?.id ? (activeId ?? profile.id) : undefined;
+}
+
+export function usePatientAppointments() {
+  const pid = useActivePatientId();
   return useQuery({
-    queryKey: ["patient-appointments", profile?.id],
+    queryKey: ["patient-appointments", pid],
     queryFn: async () => {
-      if (!profile) return [];
+      if (!pid) return [];
       const { data, error } = await supabase
         .from("patient_appointments" as any)
         .select("*, hospitals(name), doctors(first_name, last_name, specialty)")
-        .eq("patient_id", profile.id)
+        .eq("patient_id", pid)
         .order("requested_date", { ascending: false });
       if (error) throw error;
       return (data || []) as any[];
     },
-    enabled: !!profile,
+    enabled: !!pid,
   });
 }
 
 export function usePatientPrescriptions() {
-  const { data: profile } = usePatientProfile();
+  const pid = useActivePatientId();
   return useQuery({
-    queryKey: ["patient-prescriptions", profile?.id],
+    queryKey: ["patient-prescriptions", pid],
     queryFn: async () => {
-      if (!profile) return [];
+      if (!pid) return [];
       const { data, error } = await supabase
         .from("prescriptions" as any)
         .select("*, hospitals(name), doctors(first_name, last_name)")
-        .eq("patient_id", profile.id)
+        .eq("patient_id", pid)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as any[];
     },
-    enabled: !!profile,
+    enabled: !!pid,
   });
 }
 
 export function usePatientLabResults() {
-  const { data: profile } = usePatientProfile();
+  const pid = useActivePatientId();
   return useQuery({
-    queryKey: ["patient-lab-results", profile?.id],
+    queryKey: ["patient-lab-results", pid],
     queryFn: async () => {
-      if (!profile) return [];
+      if (!pid) return [];
       const { data, error } = await supabase
         .from("lab_results")
         .select("*, hospitals(name), lab_result_tests(*)")
-        .eq("patient_id", profile.id)
+        .eq("patient_id", pid)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!profile,
+    enabled: !!pid,
   });
 }
 
 export function usePatientEmr() {
-  const { data: profile } = usePatientProfile();
+  const pid = useActivePatientId();
   return useQuery({
-    queryKey: ["patient-emr", profile?.id],
+    queryKey: ["patient-emr", pid],
     queryFn: async () => {
-      if (!profile) return [];
+      if (!pid) return [];
       const { data, error } = await supabase
         .from("emr_entries")
         .select("*, hospitals(name), doctors:doctor_id(first_name, last_name)")
-        .eq("patient_id", profile.id)
+        .eq("patient_id", pid)
         .eq("is_confidential", false)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!profile,
+    enabled: !!pid,
   });
 }
 
