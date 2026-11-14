@@ -1,6 +1,6 @@
 {
   "name": "healingnet-mobile",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/fraunces": "^0.4.1",

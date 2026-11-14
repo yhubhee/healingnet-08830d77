@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <!-- Play Store feature graphic, 1024 x 500. Brand colours from theme/tokens.ts:
+       teal #186E6A, coral #EE6C4D, cream #FBFAF7. No photos, no other brands.
+       Rebuild the PNG with: node scripts/store-assets.mjs -->
+  <rect width="1024" height="500" fill="#186E6A"/>
+  <!-- soft shapes on the right -->
+  <circle cx="900" cy="80" r="210" fill="#1F7F7A"/>
+  <circle cx="980" cy="430" r="170" fill="#145C59"/>
+  <!-- a phone outline with a health cross and a family of three dots -->
+  <g transform="translate(720 96)">
+    <rect x="0" y="0" width="188" height="308" rx="30" fill="#FBFAF7"/>
+    <rect x="16" y="34" width="156" height="240" rx="12" fill="#E3F1EF"/>
+    <rect x="70" y="14" width="48" height="8" rx="4" fill="#D5ECEA"/>
+    <!-- cross -->
+    <rect x="80" y="70" width="28" height="84" rx="8" fill="#186E6A"/>
+    <rect x="52" y="98" width="84" height="28" rx="8" fill="#186E6A"/>
+    <!-- three people: one larger, two smaller -->
+    <circle cx="58" cy="206" r="13" fill="#EE6C4D"/>
+    <rect x="40" y="224" width="36" height="26" rx="13" fill="#EE6C4D"/>
+    <circle cx="96" cy="200" r="16" fill="#186E6A"/>
+    <rect x="74" y="221" width="44" height="29" rx="14" fill="#186E6A"/>
+    <circle cx="134" cy="210" r="10" fill="#EE6C4D"/>
+    <rect x="120" y="224" width="28" height="26" rx="13" fill="#EE6C4D"/>
+  </g>
+  <!-- words -->
+  <text x="72" y="214" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="88" fill="#FFFFFF">HealingNet</text>
+  <rect x="74" y="244" width="96" height="8" rx="4" fill="#EE6C4D"/>
+  <text x="72" y="318" font-family="'Segoe UI', Arial, Helvetica, sans-serif" font-weight="600" font-size="34" fill="#FFFFFF">Book a doctor and keep your</text>
+  <text x="72" y="364" font-family="'Segoe UI', Arial, Helvetica, sans-serif" font-weight="600" font-size="34" fill="#FFFFFF">family's health records in one place.</text>
+</svg>

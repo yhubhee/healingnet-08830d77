@@ -29,6 +29,9 @@
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "HN_ANDROID_ARCHS": "arm64-v8a,armeabi-v7a"
       }
     }
   },
