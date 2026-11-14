@@ -5,7 +5,7 @@
 // The list is virtualised and its rows are memoised: a patient with a long history mounts
 // only the few cards on screen, and the saved list shows before the network answers.
 // One request (my_visits) brings the open visits and the latest 30 past ones; "Show older
-// visits" loads 30 more at a time.
+// visits" loads 30 more at a time. A sheet is only mounted while it is open.
 import { CalendarDays, CalendarPlus } from "@/components/icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -145,9 +145,9 @@ export default function Visits() {
       right={<IconButton icon={CalendarPlus} label="Book a doctor" onPress={() => router.push("/book")} />}
       footer={
         <>
-          <RescheduleSheet appointment={moving} onClose={() => setMoving(null)} />
-          <RateVisitSheet appointment={rating} review={rating?.review ?? null} onClose={() => setRating(null)} />
-          <JoinCallSheet appointment={calling} onClose={() => setCalling(null)} onReturned={() => q.refetch()} />
+          {moving ? <RescheduleSheet appointment={moving} onClose={() => setMoving(null)} /> : null}
+          {rating ? <RateVisitSheet appointment={rating} review={rating.review ?? null} onClose={() => setRating(null)} /> : null}
+          {calling ? <JoinCallSheet appointment={calling} onClose={() => setCalling(null)} onReturned={() => q.refetch()} /> : null}
         </>
       } />
   );
