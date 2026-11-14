@@ -8,6 +8,7 @@ import { loadState } from "@/components/QueryState";
 import { ListScreen } from "@/components/Screen";
 import { Body, Card, Chip, EmptyState, ErrorState, ListSkeleton, Mono, Small, Strong } from "@/components/ui";
 import { useRealtime, useRxDocuments, useRxExtras } from "@/lib/data";
+import { useScreenReady } from "@/lib/perf";
 import { usePatient } from "@/lib/session";
 import { fmtLongDate } from "@/shared/dates";
 import { friendlyError } from "@/shared/errors";
@@ -52,6 +53,7 @@ export default function Prescriptions() {
   const renderItem = useCallback<ListRenderItem<RxPayload>>(({ item }) => <RxCard d={item} requests={requests} />, [requests]);
 
   const state = loadState(docs);
+  useScreenReady("/prescriptions", state !== "loading");
   const header = (
     <View style={{ gap: space.lg }}>
       <Body muted>Show the code or QR at any HealingNet pharmacy, or send it to one near you. You pay at the counter.</Body>

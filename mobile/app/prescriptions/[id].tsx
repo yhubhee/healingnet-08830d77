@@ -1,7 +1,7 @@
 // One prescription (src/components/patient/rx/*): the QR on white, the code, the
 // medicines (each with "Remind me"), the doctor, pharmacy requests, medicine checks and
-// "Wasn't me?". The
-// document comes from the saved list, so the QR and details also show offline.
+// "Wasn't me?". The document comes from the saved list, so the QR and details also show
+// offline; the doctor's signature (for the PDF) is fetched when this screen opens.
 import { Bell, BellRing, Copy, FileDown, Send, ShieldCheck, Star } from "@/components/icons";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams } from "expo-router";
@@ -15,7 +15,8 @@ import { PharmacyPickerSheet, RatePharmacySheet } from "@/components/RxSheets";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, Divider, EmptyState, Heading, Label, LinkText, Mono, Notice, Small, Strong } from "@/components/ui";
-import { useRefreshRx, useRxDocuments, useRxExtras } from "@/lib/data";
+import { useRefreshRx, useRxDocuments, useRxExtras, useRxSignature } from "@/lib/data";
+import { useScreenReady } from "@/lib/perf";
 import { WEB_URL } from "@/lib/env";
 import { useAllowScreenshots } from "@/lib/lock";
 import { useReminders } from "@/lib/reminders";
@@ -54,6 +55,9 @@ export default function PrescriptionDetail() {
   useAllowScreenshots();
 
   const doc = (docs.data ?? []).find((d) => d.document_id === id);
+  // Only the PDF shows the doctor's signature; it is fetched now that this screen is open.
+  const signature = useRxSignature(doc ? id : null);
+  useScreenReady("/prescriptions/[id]", docs.data !== undefined);
   const code = doc?.code ?? "";
   const items = doc?.items ?? [];
   const dispenses = doc?.dispenses ?? [];
@@ -74,7 +78,9 @@ export default function PrescriptionDetail() {
     if (!doc) return;
     setSharing(true);
     try {
-      if ((await shareRxPdf(doc)) === "unavailable") toast.error("Sharing isn't available on this phone.");
+      // Offline, or still loading: the PDF is made without the signature image.
+      const signed = { ...doc, signature_data: signature.data ?? (online ? (await signature.refetch()).data ?? null : null) };
+      if ((await shareRxPdf(signed)) === "unavailable") toast.error("Sharing isn't available on this phone.");
     } catch {
       toast.error("We couldn't make the PDF. Please try again.");
     }

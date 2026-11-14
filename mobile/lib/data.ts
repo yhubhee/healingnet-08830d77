@@ -87,20 +87,34 @@ export function useRateVisit() {
 }
 
 // ---- Prescriptions (src/pages/patient/Prescriptions.tsx) --------------------------------
-const MAX_DOCS = 40;
-
+/**
+ * One call (my_rx_documents) for every prescription document, newest first. Up to 0.3 this
+ * was one request per document (up to 40) on every refresh, each carrying the doctor's
+ * signature image. The list has no signature; the prescription screen fetches it when opened.
+ */
 async function fetchRxDocuments(patientId: string): Promise<RxPayload[]> {
-  const { data, error } = await supabase.from("prescriptions").select("rx_document_id, created_at")
-    .eq("patient_id", patientId).not("rx_document_id", "is", null).order("created_at", { ascending: false }).limit(500);
+  const { data, error } = await supabase.rpc("my_rx_documents", { p_patient_id: patientId });
   if (error) throw error;
-  const ids = [...new Set((data ?? []).map((r) => r.rx_document_id as string))].slice(0, MAX_DOCS);
-  const out = await Promise.all(ids.map(async (id) => {
-    const res = await supabase.rpc("rx_document", { p_document_id: id });
-    if (res.error) throw res.error;
-    return res.data as unknown as RxPayload;
-  }));
-  return out.filter((d) => d && d.status !== "not_found")
-    .sort((a, b) => +new Date(b.issued_at ?? 0) - +new Date(a.issued_at ?? 0));
+  const docs = (Array.isArray(data) ? data : []) as unknown as RxPayload[];
+  return docs.filter((d) => d && d.status !== "not_found");
+}
+
+/**
+ * The doctor's signature image for one prescription, for its PDF. Fetched only when the
+ * prescription screen is open, kept in memory for a few minutes and never saved to the phone.
+ */
+export function useRxSignature(documentId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["rx-document", documentId ?? "none"],
+    enabled: !!documentId,
+    staleTime: 10 * 60_000,
+    gcTime: 10 * 60_000,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.rpc("rx_document", { p_document_id: documentId! });
+      if (error) throw error;
+      return (data as unknown as RxPayload | null)?.signature_data ?? null;
+    },
+  });
 }
 
 export function useRxDocuments() {
