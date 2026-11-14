@@ -7,8 +7,7 @@ import { PlusJakartaSans_400Regular } from "@expo-google-fonts/plus-jakarta-sans
 import { PlusJakartaSans_500Medium } from "@expo-google-fonts/plus-jakarta-sans/500Medium";
 import { PlusJakartaSans_600SemiBold } from "@expo-google-fonts/plus-jakarta-sans/600SemiBold";
 import { PlusJakartaSans_700Bold } from "@expo-google-fonts/plus-jakarta-sans/700Bold";
-import { useIsRestoring } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { router, Stack, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -26,7 +25,7 @@ import { LockProvider } from "@/lib/lock";
 import { useOnline } from "@/lib/net";
 import { markStartup, noteTouch, startPerf } from "@/lib/perf";
 import { listenForNotificationTaps, pushPermission, registerForPush } from "@/lib/push";
-import { persistOptions, queryClient } from "@/lib/query";
+import { cacheReady, queryClient } from "@/lib/query";
 import { useReminderSync } from "@/lib/reminderSync";
 import { SessionProvider, useSession } from "@/lib/session";
 import { DEVICE_KEYS, getFlag } from "@/lib/storage";
@@ -48,7 +47,6 @@ function Gate({ appLock }: { appLock: boolean }) {
   const { session, returning, kind, kindError, profileComplete, profileError, retry, signOut } = useSession();
   const segments = useSegments() as string[];
   const online = useOnline();
-  const restoring = useIsRestoring();
   const first = segments[0] ?? "";
   const askedPush = useRef(false);
 
@@ -60,9 +58,9 @@ function Gate({ appLock }: { appLock: boolean }) {
 
   useEffect(() => { if (target) router.replace(target); }, [target]);
 
-  // The native splash stays up until the right first screen is in place and the saved data
-  // has been read back, so a signed-in patient goes from the icon straight to Home.
-  const settled = !target && !(signedIn && restoring);
+  // The native splash stays up until the right first screen is in place (the saved data is
+  // already in the cache by now), so a signed-in patient goes from the icon straight to Home.
+  const settled = !target;
   useEffect(() => {
     if (!settled) return;
     hideSplash();
@@ -143,13 +141,13 @@ function Shell({ boot }: { boot: Boot }) {
     <>
       <StatusBar style={scheme === "dark" ? "light" : "dark"} />
       {isConfigured ? (
-        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+        <QueryClientProvider client={queryClient}>
           <SessionProvider boot={boot}>
             <ToastProvider>
               <Gate appLock={boot.appLock} />
             </ToastProvider>
           </SessionProvider>
-        </PersistQueryClientProvider>
+        </QueryClientProvider>
       ) : <SetupNeeded />}
     </>
   );
@@ -159,10 +157,10 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({
     PlusJakartaSans_400Regular, PlusJakartaSans_500Medium, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, Fraunces_600SemiBold,
   });
-  // The stored session, the saved account check and the app-lock switch: read from the
-  // phone while the fonts load. Nothing here touches the network.
+  // The stored session, the saved account check, the app-lock switch and the saved lists:
+  // read from the phone while the fonts load. Nothing here touches the network.
   const [boot, setBoot] = useState<Boot | null>(null);
-  useEffect(() => { bootRead.then(setBoot); }, []);
+  useEffect(() => { Promise.all([bootRead, cacheReady]).then(([b]) => setBoot(b)); }, []);
   if (!(loaded || error) || !boot) return null;
 
   return (

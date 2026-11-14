@@ -110,6 +110,9 @@ export function noteTouch(event: GestureResponderEvent): void {
   lastTouchAt = lag >= 0 && lag < 30_000 ? now - lag : now;
 }
 
+/** How long ago the last tap was; saving to disk waits for a quiet moment. */
+export const msSinceTouch = () => (lastTouchAt ? Date.now() - lastTouchAt : Number.POSITIVE_INFINITY);
+
 /**
  * Times a screen from the tap that opened it to its first draw with content. `pattern` is
  * the route pattern ("/(tabs)/visits", "/lab-results/[id]"), never a real id. `ready` is

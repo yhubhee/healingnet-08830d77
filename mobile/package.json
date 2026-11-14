@@ -21,6 +21,7 @@
     "expo-crypto": "~58.0.8",
     "expo-dev-client": "~58.0.20",
     "expo-device": "~58.0.5",
+    "expo-document-picker": "~58.0.5",
     "expo-font": "~58.0.12",
     "expo-image": "~58.0.18",
     "expo-image-manipulator": "~58.0.16",
@@ -43,6 +44,8 @@
     "react": "19.3.0",
     "react-native": "0.88.1",
     "react-native-get-random-values": "^2.1.0",
+    "react-native-mmkv": "^4.3.2",
+    "react-native-nitro-modules": "^0.37.2",
     "react-native-safe-area-context": "~5.11.1",
     "react-native-screens": "~4.30.1",
     "react-native-svg": "15.16.0"
