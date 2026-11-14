@@ -114,7 +114,7 @@ describe("a notification switches to the person it is about", () => {
 
 describe("query keys include the person", () => {
   const builders = [
-    personKeys.appointments, personKeys.visitReviews, personKeys.rxDocuments, personKeys.rxRequests,
+    personKeys.appointments, personKeys.rxDocuments, personKeys.rxRequests,
     personKeys.labResults, personKeys.emr, personKeys.letters, personKeys.letterDoctors,
   ];
 

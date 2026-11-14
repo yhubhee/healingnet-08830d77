@@ -3,12 +3,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useId, useRef } from "react";
-import type { Appointment } from "@/shared/appointments";
 import { realtimeFallback } from "@/shared/messages";
 import type { PushPrefs, Tables } from "@/shared/database";
 import type { CheckResult, PatientRequest, RxPayload } from "@/shared/pharmacy";
 import { personKeys } from "@/shared/keys";
-import type { VisitReview } from "@/shared/reviews";
+import { parseVisits, type VisitsData } from "@/shared/visits";
 import { usePatient, useSession } from "./session";
 import { supabase } from "./supabase";
 
@@ -25,37 +24,24 @@ function afterPaint(work: () => void): () => void {
 // person's data under another's name. Their saved data shows at once instead.
 export const appointmentsKey = (patientId: string | null) => personKeys.appointments(patientId);
 
-async function fetchAppointments(patientId: string): Promise<Appointment[]> {
-  const { data: appts, error } = await supabase
-    .from("patient_appointments")
-    .select("id, patient_id, doctor_id, hospital_id, requested_date, requested_time, status, reason, is_telemedicine, decline_reason, created_at, updated_at, call_started_at, call_ended_at")
-    .eq("patient_id", patientId)
-    .order("requested_date", { ascending: false });
+/**
+ * One call (my_visits): every open visit and the latest 30 past ones, each with its doctor,
+ * hospital and the patient's rating. `pastOffset` loads an older page of past visits.
+ * Up to 0.3 this was every visit ever, then doctors and hospitals, then ratings: four requests.
+ */
+export async function fetchVisits(patientId: string, pastOffset = 0): Promise<VisitsData> {
+  const { data, error } = await supabase.rpc("my_visits", { p_patient_id: patientId, p_past_offset: pastOffset });
   if (error) throw error;
-  if (!appts || appts.length === 0) return [];
-
-  const doctorIds = [...new Set(appts.map((a) => a.doctor_id).filter((v): v is string => !!v))];
-  const hospitalIds = [...new Set(appts.map((a) => a.hospital_id).filter((v): v is string => !!v))];
-  const [doctors, hospitals] = await Promise.all([
-    doctorIds.length ? supabase.from("doctors").select("id, first_name, last_name, specialty").in("id", doctorIds) : Promise.resolve({ data: [], error: null }),
-    hospitalIds.length ? supabase.from("hospitals").select("id, name").in("id", hospitalIds) : Promise.resolve({ data: [], error: null }),
-  ]);
-  const doctorMap = new Map((doctors.data ?? []).map((d) => [d.id, d]));
-  const hospitalMap = new Map((hospitals.data ?? []).map((h) => [h.id, h]));
-  return appts.map((a) => ({
-    ...a,
-    doctors: (a.doctor_id && doctorMap.get(a.doctor_id)) || null,
-    hospitals: (a.hospital_id && hospitalMap.get(a.hospital_id)) || null,
-  })) as Appointment[];
+  return parseVisits(data);
 }
 
 /** Upcoming and past visits. Saved on the phone, so the list shows at once and refreshes behind. */
-export function useAppointments() {
+export function useVisits() {
   const { patientId } = usePatient();
   return useQuery({
     queryKey: appointmentsKey(patientId),
     enabled: !!patientId,
-    queryFn: () => fetchAppointments(patientId!),
+    queryFn: () => fetchVisits(patientId!),
   });
 }
 
@@ -83,22 +69,7 @@ export function useRescheduleAppointment() {
   });
 }
 
-// ---- Visit ratings (new in 0.2: appointment_reviews, rate_appointment) --------------------
-/** The patient's own ratings, by appointment id. */
-export function useVisitReviews() {
-  const { patientId } = usePatient();
-  return useQuery({
-    queryKey: personKeys.visitReviews(patientId),
-    enabled: !!patientId,
-    queryFn: async (): Promise<Record<string, VisitReview>> => {
-      const { data, error } = await supabase.from("appointment_reviews").select("appointment_id, rating, comment").eq("patient_id", patientId!);
-      if (error) throw error;
-      const out: Record<string, VisitReview> = {};
-      (data ?? []).forEach((r) => { out[r.appointment_id] = { rating: r.rating, comment: r.comment }; });
-      return out;
-    },
-  });
-}
+// ---- Visit ratings (rate_appointment). Each visit carries its own rating (my_visits). ------
 
 /** Rates a completed visit, or replaces the rating. The database checks who, what and when. */
 export function useRateVisit() {
@@ -109,7 +80,7 @@ export function useRateVisit() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["visit-reviews"] });
+      qc.invalidateQueries({ queryKey: ["appointments"] });
       qc.invalidateQueries({ queryKey: ["booking", "doctors"] });
     },
   });
@@ -152,7 +123,7 @@ export function usePrefetchTabs(active: boolean) {
   useEffect(() => {
     if (!active || !patientId) return;
     return afterPaint(() => {
-      qc.prefetchQuery({ queryKey: appointmentsKey(patientId), queryFn: () => fetchAppointments(patientId) });
+      qc.prefetchQuery({ queryKey: appointmentsKey(patientId), queryFn: () => fetchVisits(patientId) });
       qc.prefetchQuery({ queryKey: personKeys.rxDocuments(patientId), queryFn: () => fetchRxDocuments(patientId) });
     });
   }, [active, patientId, qc]);

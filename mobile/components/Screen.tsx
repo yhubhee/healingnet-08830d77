@@ -100,8 +100,10 @@ export function Screen({
 
 /** The page frame around a virtualised list. `header` scrolls with the rows; `empty` shows when there are none. */
 export function ListScreen<T>({
-  title, back, right, tab, updatedAt, onRefresh, refreshing, data, renderItem, keyExtractor, header, empty, footer, extraData, person,
+  title, back, right, tab, updatedAt, onRefresh, refreshing, data, renderItem, keyExtractor, header, empty, footer, extraData, person, listFooter,
 }: {
+  /** After the last row, inside the scroll (e.g. "Show older visits"). */
+  listFooter?: ReactElement | null;
   person?: PersonMode;
   title?: string;
   back?: boolean;
@@ -144,6 +146,8 @@ export function ListScreen<T>({
         ListHeaderComponent={header ?? undefined}
         ListHeaderComponentStyle={header ? { marginBottom: space.lg } : undefined}
         ListEmptyComponent={empty ?? undefined}
+        ListFooterComponent={listFooter ?? undefined}
+        ListFooterComponentStyle={listFooter ? { marginTop: space.lg } : undefined}
         ItemSeparatorComponent={ListGap}
         initialNumToRender={6}
         maxToRenderPerBatch={6}

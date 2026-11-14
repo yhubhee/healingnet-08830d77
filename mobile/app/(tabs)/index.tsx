@@ -12,7 +12,7 @@ import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, Heading, IconButton, Label, LinkText, Skeleton, Small, Strong, Title } from "@/components/ui";
 import { VisitFacts } from "@/components/VisitBits";
 import { addToCalendar } from "@/lib/calendar";
-import { useAppointments, useHomeSummary, useMarkNotificationRead, useRxDocuments, useRxExtras } from "@/lib/data";
+import { useVisits, useHomeSummary, useMarkNotificationRead, useRxDocuments, useRxExtras } from "@/lib/data";
 import { activePerson } from "@/lib/activePerson";
 import { useActivePerson, useFamilyNext, useShowPersonFor } from "@/lib/family";
 import { useOnline } from "@/lib/net";
@@ -57,7 +57,7 @@ export default function Home() {
   const { profile, patientId: ownId } = useSession();
   const person = useActivePerson();
   const showPersonFor = useShowPersonFor();
-  const appts = useAppointments();
+  const appts = useVisits();
   const rx = useRxDocuments();
   const extras = useRxExtras();
   const summary = useHomeSummary();
@@ -74,7 +74,7 @@ export default function Home() {
   ];
   const familyNext = useFamilyNext(person.family.length ? others.map((o) => o.patientId).filter((v): v is string => !!v) : []);
 
-  const next = sortUpcoming(appts.data ?? [])[0] ?? null;
+  const next = sortUpcoming(appts.data?.upcoming ?? [])[0] ?? null;
   const validRx = (rx.data ?? []).filter((d) => d.status === "valid");
   const refreshing = appts.isRefetching || rx.isRefetching || summary.isRefetching;
   const refresh = () => { appts.refetch(); rx.refetch(); extras.refetch(); summary.refetch(); if (person.family.length) familyNext.refetch(); };

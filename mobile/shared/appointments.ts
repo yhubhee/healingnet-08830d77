@@ -19,6 +19,8 @@ export interface Appointment {
   call_ended_at?: string | null;
   doctors: { id?: string; first_name: string; last_name: string; specialty: string | null } | null;
   hospitals: { id?: string; name: string } | null;
+  /** The patient's own rating of this visit (from my_visits); null when not rated. */
+  review?: { rating: number; comment: string | null } | null;
 }
 
 type StatusInput = Pick<Appointment, "status" | "decline_reason"> & { doctors?: Appointment["doctors"] };

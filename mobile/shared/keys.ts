@@ -7,7 +7,6 @@ const id = (patientId: Id) => patientId ?? null;
 
 export const personKeys = {
   appointments: (patientId: Id) => ["appointments", id(patientId)] as const,
-  visitReviews: (patientId: Id) => ["visit-reviews", id(patientId)] as const,
   rxDocuments: (patientId: Id) => ["rx-documents", id(patientId)] as const,
   rxRequests: (patientId: Id) => ["rx-requests", id(patientId)] as const,
   labResults: (patientId: Id) => ["lab-results", id(patientId)] as const,
