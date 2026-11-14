@@ -1215,6 +1215,56 @@ export type Database = {
           },
         ]
       }
+      family_documents: {
+        Row: {
+          document_type: string
+          guardian_user_id: string
+          id: string
+          patient_id: string
+          reject_reason: string | null
+          relationship: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          storage_path: string
+          submitted_at: string
+        }
+        Insert: {
+          document_type: string
+          guardian_user_id: string
+          id?: string
+          patient_id: string
+          reject_reason?: string | null
+          relationship: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          storage_path: string
+          submitted_at?: string
+        }
+        Update: {
+          document_type?: string
+          guardian_user_id?: string
+          id?: string
+          patient_id?: string
+          reject_reason?: string | null
+          relationship?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          storage_path?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       function_calls: {
         Row: {
           created_at: string
@@ -2645,7 +2695,11 @@ export type Database = {
           guardian_user_id: string
           id: string
           patient_id: string
+          rejection_count: number
           relationship: string
+          verification_due_at: string
+          verification_status: string
+          verified_at: string | null
         }
         Insert: {
           consent_confirmed_at?: string | null
@@ -2653,7 +2707,11 @@ export type Database = {
           guardian_user_id: string
           id?: string
           patient_id: string
+          rejection_count?: number
           relationship: string
+          verification_due_at?: string
+          verification_status?: string
+          verified_at?: string | null
         }
         Update: {
           consent_confirmed_at?: string | null
@@ -2661,7 +2719,11 @@ export type Database = {
           guardian_user_id?: string
           id?: string
           patient_id?: string
+          rejection_count?: number
           relationship?: string
+          verification_due_at?: string
+          verification_status?: string
+          verified_at?: string | null
         }
         Relationships: [
           {
@@ -2997,6 +3059,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      perf_events: {
+        Row: {
+          app_version: string | null
+          duration_ms: number
+          http_status: number | null
+          id: number
+          kind: string
+          name: string
+          network: string | null
+          occurred_at: string
+          ok: boolean
+          platform: string
+          received_at: string
+        }
+        Insert: {
+          app_version?: string | null
+          duration_ms: number
+          http_status?: number | null
+          id?: never
+          kind: string
+          name: string
+          network?: string | null
+          occurred_at: string
+          ok?: boolean
+          platform: string
+          received_at?: string
+        }
+        Update: {
+          app_version?: string | null
+          duration_ms?: number
+          http_status?: number | null
+          id?: never
+          kind?: string
+          name?: string
+          network?: string | null
+          occurred_at?: string
+          ok?: boolean
+          platform?: string
+          received_at?: string
+        }
+        Relationships: []
       }
       pharmacies: {
         Row: {
@@ -4293,6 +4397,31 @@ export type Database = {
         Args: { p_days: number; p_hospital_id: string; p_reason?: string }
         Returns: string
       }
+      admin_family_documents: {
+        Args: { p_limit?: number; p_offset?: number; p_status?: string }
+        Returns: {
+          document_type: string
+          guardian_email: string
+          guardian_first_name: string
+          guardian_last_name: string
+          guardian_phone: string
+          guardian_user_id: string
+          id: string
+          member_date_of_birth: string
+          member_first_name: string
+          member_gender: string
+          member_last_name: string
+          patient_id: string
+          previous_rejections: number
+          reject_reason: string
+          relationship: string
+          reviewed_at: string
+          status: string
+          storage_path: string
+          submitted_at: string
+          total_count: number
+        }[]
+      }
       admin_hospital_detail: { Args: { p_hospital_id: string }; Returns: Json }
       admin_list_audit: {
         Args: { p_limit?: number; p_offset?: number }
@@ -4350,6 +4479,38 @@ export type Database = {
         Returns: undefined
       }
       admin_overview: { Args: never; Returns: Json }
+      admin_perf_summary: {
+        Args: {
+          p_days?: number
+          p_kind?: string
+          p_min_samples?: number
+          p_platform?: string
+        }
+        Returns: {
+          error_share: number
+          kind: string
+          last_seen: string
+          max_ms: number
+          name: string
+          p50_ms: number
+          p90_ms: number
+          samples: number
+          slow_ms: number
+          slow_share: number
+          versions: string[]
+        }[]
+      }
+      admin_perf_trend: {
+        Args: { p_days?: number; p_kind: string; p_name: string }
+        Returns: {
+          app_version: string
+          day: string
+          p50_ms: number
+          p90_ms: number
+          platform: string
+          samples: number
+        }[]
+      }
       admin_pharmacy_fee_settings: {
         Args: { p_billing_enabled?: boolean; p_fee_kobo?: number }
         Returns: Json
@@ -4365,6 +4526,10 @@ export type Database = {
       }
       admin_review_doctor: {
         Args: { p_approve: boolean; p_doctor_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      admin_review_family_document: {
+        Args: { p_approve: boolean; p_document_id: string; p_reason?: string }
         Returns: undefined
       }
       admin_review_hospital: {
@@ -4581,6 +4746,7 @@ export type Database = {
         Args: { p_code: string; p_hospital_id: string }
         Returns: string
       }
+      log_perf_events: { Args: { p_events: Json }; Returns: number }
       mark_lab_result_viewed: {
         Args: { p_lab_result_id: string }
         Returns: string
@@ -4589,6 +4755,7 @@ export type Database = {
       my_family: {
         Args: never
         Returns: {
+          access_ok: boolean
           added_at: string
           age: number
           date_of_birth: string
@@ -4596,9 +4763,12 @@ export type Database = {
           gender: string
           is_adult: boolean
           last_name: string
+          last_reject_reason: string
           linked_hospitals: number
           patient_id: string
           relationship: string
+          verification_due_at: string
+          verification_status: string
         }[]
       }
       my_hospital_ids: {
@@ -4611,7 +4781,24 @@ export type Database = {
       }
       my_pharmacy: { Args: never; Returns: Json }
       my_prescriber_details: { Args: never; Returns: Json }
+      my_profile_status: { Args: never; Returns: Json }
+      my_rx_documents: {
+        Args: { p_limit?: number; p_patient_id?: string }
+        Returns: Json
+      }
+      my_visits: {
+        Args: {
+          p_past_limit?: number
+          p_past_offset?: number
+          p_patient_id?: string
+        }
+        Returns: Json
+      }
       patient_display_name: { Args: { _patient_id: string }; Returns: string }
+      patient_health_overview: {
+        Args: { p_patient_id?: string }
+        Returns: Json
+      }
       patient_user_id: { Args: { _patient_id: string }; Returns: string }
       pharmacy_directory: {
         Args: { p_city?: string; p_state?: string }
@@ -4725,6 +4912,14 @@ export type Database = {
         Returns: Json
       }
       submit_doctor_verification: { Args: { p_data: Json }; Returns: undefined }
+      submit_family_document: {
+        Args: {
+          p_document_type: string
+          p_patient_id: string
+          p_storage_path: string
+        }
+        Returns: string
+      }
       unregister_push_device: { Args: { p_token: string }; Returns: undefined }
       update_my_pharmacist_details: {
         Args: {
