@@ -1,5 +1,5 @@
 // Me: profile summary and settings (src/pages/patient/Profile.tsx and Settings.tsx).
-import { Bell, FileText, Lock, LogOut, Shield, Trash2, UserRound, Users } from "@/components/icons";
+import { Bell, FileText, Gauge, Lock, LogOut, Shield, Trash2, UserRound, Users } from "@/components/icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, View } from "react-native";
@@ -10,6 +10,7 @@ import { useToast } from "@/components/toast";
 import { Button, Card, Divider, Heading, Label, Small } from "@/components/ui";
 import { APP_VERSION } from "@/lib/env";
 import { useAppLock } from "@/lib/lock";
+import { setSpeedDataEnabled, useScreenReady, useSpeedDataEnabled } from "@/lib/perf";
 import { useFamily } from "@/lib/family";
 import { useSession } from "@/lib/session";
 import { openWeb } from "@/lib/web";
@@ -24,6 +25,8 @@ export default function Me() {
   const familyCount = family.data?.length ?? 0;
   const lock = useAppLock();
   const [leaving, setLeaving] = useState(false);
+  const speedData = useSpeedDataEnabled();
+  useScreenReady("/(tabs)/me", true);
 
   function confirmSignOut() {
     Alert.alert("Sign out?", "Your saved data is removed from this phone. You can sign in again any time.", [
@@ -72,6 +75,9 @@ export default function Me() {
         <NavRow icon={Bell} label="Notifications" hint="Choose which alerts reach this phone" onPress={() => router.push("/settings/notifications")} />
         <Divider />
         <ToggleRow icon={Lock} label="App lock" hint="Ask for fingerprint, face or passcode after 5 minutes away" value={lock.enabled} onChange={toggleLock} />
+        <Divider />
+        <ToggleRow icon={Gauge} label="Share speed data" hint="Helps us find slow screens. No health or personal information is sent."
+          value={speedData} onChange={setSpeedDataEnabled} />
       </Card>
 
       <Card style={{ gap: space.xs }}>

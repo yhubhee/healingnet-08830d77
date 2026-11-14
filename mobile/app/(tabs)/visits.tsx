@@ -21,6 +21,7 @@ import { visitWhen } from "@/components/VisitBits";
 import { addToCalendar } from "@/lib/calendar";
 import { appointmentsKey, useAppointments, useCancelAppointment, useRealtime, useVisitReviews } from "@/lib/data";
 import { useOnline } from "@/lib/net";
+import { useScreenReady } from "@/lib/perf";
 import { usePatient } from "@/lib/session";
 import { doctorOrPending, isUpcoming, pickCallToJoin, sortUpcoming, type Appointment } from "@/shared/appointments";
 import { dbMessage, friendlyError } from "@/shared/errors";
@@ -100,6 +101,7 @@ export default function Visits() {
   ), [reviews, online, cancelling, confirmCancel, calendar]);
 
   const state = loadState(q);
+  useScreenReady("/(tabs)/visits", state !== "loading");
   const header = (
     <View style={{ gap: space.lg }}>
       <Segmented label="Visits" value={tab} onChange={setTab} options={[{ value: "upcoming", label: "Upcoming" }, { value: "past", label: "Past" }]} />

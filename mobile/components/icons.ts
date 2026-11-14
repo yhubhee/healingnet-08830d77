@@ -20,6 +20,7 @@ export { default as Copy } from "lucide-react-native/icons/copy";
 export { default as FileDown } from "lucide-react-native/icons/file-down";
 export { default as FileText } from "lucide-react-native/icons/file-text";
 export { default as FlaskConical } from "lucide-react-native/icons/flask-conical";
+export { default as Gauge } from "lucide-react-native/icons/gauge";
 export { default as HeartPulse } from "lucide-react-native/icons/heart-pulse";
 export { default as House } from "lucide-react-native/icons/house";
 export { default as ImageIcon } from "lucide-react-native/icons/image";

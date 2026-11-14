@@ -16,6 +16,7 @@ import { useAppointments, useHomeSummary, useMarkNotificationRead, useRxDocument
 import { activePerson } from "@/lib/activePerson";
 import { useActivePerson, useFamilyNext, useShowPersonFor } from "@/lib/family";
 import { useOnline } from "@/lib/net";
+import { useScreenReady } from "@/lib/perf";
 import { setTaken, useReminders } from "@/lib/reminders";
 import { useSession } from "@/lib/session";
 import { doctorOrPending, sortUpcoming, statusText } from "@/shared/appointments";
@@ -78,6 +79,8 @@ export default function Home() {
   const refreshing = appts.isRefetching || rx.isRefetching || summary.isRefetching;
   const refresh = () => { appts.refetch(); rx.refetch(); extras.refetch(); summary.refetch(); if (person.family.length) familyNext.refetch(); };
   const updatedAt = Math.max(appts.dataUpdatedAt, rx.dataUpdatedAt, summary.dataUpdatedAt) || undefined;
+
+  useScreenReady("/(tabs)/index", appts.data !== undefined || appts.isError || appts.fetchStatus === "paused");
 
   async function calendar() {
     if (!next) return;

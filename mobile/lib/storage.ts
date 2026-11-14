@@ -32,6 +32,8 @@ export const DEVICE_KEYS = {
   labsSeen: "hn.labs-seen",
   /** "Who is this for?": the family member the app is showing; absent means "Me". */
   activePerson: "hn.active-person",
+  /** "Share speed data": absent means on; "off" when the person turned it off. */
+  speedData: "hn.speed-data",
 } as const;
 
 export async function getFlag(key: string): Promise<string | null> {

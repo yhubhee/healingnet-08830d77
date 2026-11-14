@@ -9,6 +9,7 @@ import { Screen } from "@/components/Screen";
 import { Button, Card, Chip, Heading, Label, ListSkeleton, Small, Strong } from "@/components/ui";
 import { useRxDocuments } from "@/lib/data";
 import { useActivePerson } from "@/lib/family";
+import { useScreenReady } from "@/lib/perf";
 import { profileKey, usePatient } from "@/lib/session";
 import { personKeys } from "@/shared/keys";
 import { useQueryClient } from "@tanstack/react-query";
@@ -52,6 +53,7 @@ export default function Health() {
   const rx = useRxDocuments();
   const editCard = () => router.push(isMe ? "/complete-profile?edit=1" : { pathname: "/complete-profile", params: { edit: "1", person: patientId ?? "" } });
   const valid = (rx.data ?? []).filter((d) => d.status === "valid").length;
+  useScreenReady("/(tabs)/health", !!p);
   const profileState = qc.getQueryState(isMe ? profileKey(userId) : personKeys.memberProfile(userId, patientId));
 
   return (

@@ -9,6 +9,7 @@ import { loadState } from "@/components/QueryState";
 import { ListScreen } from "@/components/Screen";
 import { Card, Chip, EmptyState, ErrorState, ListSkeleton, Small, Strong } from "@/components/ui";
 import { useRealtime } from "@/lib/data";
+import { useScreenReady } from "@/lib/perf";
 import { personFor, useConversations, type Person } from "@/lib/messages";
 import { useSession } from "@/lib/session";
 import { timeAgo } from "@/shared/dates";
@@ -52,6 +53,7 @@ export default function Messages() {
   ), [people, userId]);
 
   const state = loadState(q);
+  useScreenReady("/(tabs)/messages", state !== "loading");
   const empty = state === "loading" ? <ListSkeleton />
     : state !== "ready" ? <ErrorState offline={state === "offline"} message={friendlyError(q.error)} onRetry={() => q.refetch()} />
     : <EmptyState icon={MessageCircle} title={NO_MESSAGES_TITLE} text={NO_MESSAGES_TEXT} actionLabel="Book a doctor" onAction={() => router.push("/book")} />;

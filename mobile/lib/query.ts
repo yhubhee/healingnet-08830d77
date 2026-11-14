@@ -7,6 +7,7 @@ import { activePerson } from "./activePerson";
 import { saveAccountCheck } from "./boot";
 import { clearLocalData, shouldPersistQuery } from "./cache";
 import { APP_VERSION } from "./env";
+import { clearPerf, devTiming } from "./perf";
 import { unregisterPush } from "./push";
 import { cancelAllReminders } from "./reminders";
 import { DEVICE_KEYS, encryptedStorage, QUERY_CACHE_KEY, setFlag } from "./storage";
@@ -31,8 +32,18 @@ onlineManager.setEventListener((setOnline) =>
   NetInfo.addEventListener((state) => setOnline(state.isConnected !== false && state.isInternetReachable !== false)),
 );
 
+// Development: print how long each save of the whole cache holds up the app.
+const timedStorage = {
+  ...encryptedStorage,
+  setItem: async (key: string, value: string) => {
+    const started = Date.now();
+    await encryptedStorage.setItem(key, value);
+    devTiming(`cache save, ${Math.round(value.length / 1024)} KB, took`, Date.now() - started);
+  },
+};
+
 const persister = createAsyncStoragePersister({
-  storage: encryptedStorage,
+  storage: timedStorage,
   key: QUERY_CACHE_KEY,
   throttleTime: 2000,
 });
@@ -64,6 +75,7 @@ export async function clearEverything(): Promise<void> {
     },
   });
   // The next person to sign in on this phone starts as "Me".
+  clearPerf();
   activePerson.reset();
   await saveAccountCheck(null);
   await setFlag(DEVICE_KEYS.appLock, null);

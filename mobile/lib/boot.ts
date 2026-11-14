@@ -5,6 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import { parseAccountCheck, storedUserId, type AccountCheck } from "@/shared/startup";
 import { activePerson } from "./activePerson";
 import { isConfigured, SUPABASE_URL } from "./env";
+import { initSpeedData } from "./perf";
 import { DEVICE_KEYS, encryptedStorage, getFlag } from "./storage";
 
 /** Where supabase-js keeps the session (its own default name, spelled out so the app can read it too). */
@@ -21,12 +22,14 @@ async function readBoot(): Promise<Boot> {
   const empty: Boot = { session: null, check: null, appLock: false };
   if (!isConfigured) return empty;
   try {
-    const [rawSession, rawCheck, lock, person] = await Promise.all([
+    const [rawSession, rawCheck, lock, person, speed] = await Promise.all([
       encryptedStorage.getItem(AUTH_STORAGE_KEY).catch(() => null),
       encryptedStorage.getItem(ACCOUNT_CHECK_KEY).catch(() => null),
       getFlag(DEVICE_KEYS.appLock),
       getFlag(DEVICE_KEYS.activePerson),
+      getFlag(DEVICE_KEYS.speedData),
     ]);
+    initSpeedData(speed);
     const userId = storedUserId(rawSession);
     // "Who is this for?" is in place before the first screen, so the right person's saved data shows at once.
     activePerson.init(userId ? person : null);

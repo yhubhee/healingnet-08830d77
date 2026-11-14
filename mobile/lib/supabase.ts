@@ -6,6 +6,7 @@ import { AppState } from "react-native";
 import type { Database } from "@/shared/database";
 import { AUTH_STORAGE_KEY } from "./boot";
 import { isConfigured, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./env";
+import { setPerfSender, setPerfSignedIn, timedFetch } from "./perf";
 import { encryptedStorage } from "./storage";
 
 export const supabase = createClient<Database>(
@@ -20,8 +21,17 @@ export const supabase = createClient<Database>(
       detectSessionInUrl: false,
       flowType: "pkce",
     },
+    // Times each request by type and target (lib/perf.ts); the request itself is untouched.
+    global: { fetch: timedFetch },
   },
 );
+
+// Speed data is only sent for a signed-in person (the database function requires it).
+setPerfSender(async (events) => {
+  const { error } = await supabase.rpc("log_perf_events", { p_events: events as unknown as never });
+  return !error;
+});
+supabase.auth.onAuthStateChange((_event, session) => setPerfSignedIn(!!session));
 
 // Tokens are refreshed while the app is in the foreground, and again when it returns.
 let watching = false;

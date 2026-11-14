@@ -24,6 +24,7 @@ import { isConfigured } from "@/lib/env";
 import { useKeepActivePersonValid, useShowPersonFor } from "@/lib/family";
 import { LockProvider } from "@/lib/lock";
 import { useOnline } from "@/lib/net";
+import { markStartup, noteTouch, startPerf } from "@/lib/perf";
 import { listenForNotificationTaps, pushPermission, registerForPush } from "@/lib/push";
 import { persistOptions, queryClient } from "@/lib/query";
 import { useReminderSync } from "@/lib/reminderSync";
@@ -62,7 +63,14 @@ function Gate({ appLock }: { appLock: boolean }) {
   // The native splash stays up until the right first screen is in place and the saved data
   // has been read back, so a signed-in patient goes from the icon straight to Home.
   const settled = !target && !(signedIn && restoring);
-  useEffect(() => { if (settled) hideSplash(); }, [settled]);
+  useEffect(() => {
+    if (!settled) return;
+    hideSplash();
+    // Start-up time: the process start to the first screen (Home, or Welcome when signed out).
+    if (first === "(tabs)") markStartup("home");
+    else if (first === "(auth)") markStartup("welcome");
+  }, [settled, first]);
+  useEffect(startPerf, []);
   useEffect(() => { const t = setTimeout(hideSplash, 4000); return () => clearTimeout(t); }, []);
 
   // Warm the Visits and Prescriptions lists while Home is on screen.
@@ -159,9 +167,12 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <Shell boot={boot} />
-      </ThemeProvider>
+      {/* Every tap is noted (the time only), so a screen can be timed from the tap that opened it. */}
+      <View style={{ flex: 1 }} onTouchStart={noteTouch}>
+        <ThemeProvider>
+          <Shell boot={boot} />
+        </ThemeProvider>
+      </View>
     </SafeAreaProvider>
   );
 }
