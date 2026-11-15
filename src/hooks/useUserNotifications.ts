@@ -58,7 +58,13 @@ export function useRealtimeUserNotifications() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "user_notifications" },
-        () => qc.invalidateQueries({ queryKey: ["user-notifications"] })
+        (change) => {
+          qc.invalidateQueries({ queryKey: ["user-notifications"] });
+          // A new result, prescription or letter: the dashboard's Your health cards follow.
+          qc.invalidateQueries({ queryKey: ["patient-health-overview"] });
+          // A family document was approved or not accepted.
+          if ((change.new as { type?: unknown } | null)?.type === "family") qc.invalidateQueries({ queryKey: ["patient-family"] });
+        }
       )
       .subscribe();
     return () => {

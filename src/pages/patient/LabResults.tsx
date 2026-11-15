@@ -50,6 +50,8 @@ export default function PatientLabResults() {
     if (!opening || !isNew(l)) return;
     supabase.rpc("mark_lab_result_viewed", { p_lab_result_id: l.id }).then(({ data: at }) => {
       if (at) qc.setQueryData(["patient", "labs"], (old: any[] | undefined) => old?.map((r) => (r.id === l.id ? { ...r, patient_viewed_at: at } : r)));
+      // The dashboard's "new result" count follows.
+      qc.invalidateQueries({ queryKey: ["patient-health-overview"] });
     });
   }
 

@@ -3,12 +3,20 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Calendar, Pill, FlaskConical, FileText, ArrowRight, Stethoscope, Loader2, Clock, AlertCircle, Plus, CalendarPlus } from "lucide-react";
-import { useActivePatientId, usePatientProfile, usePatientAppointments, usePatientPrescriptions, usePatientLabResults, usePatientEmr } from "@/hooks/usePatientData";
+import { Calendar, Pill, FlaskConical, FileText, ArrowRight, Stethoscope, Loader2, Clock, AlertCircle, Plus, CalendarPlus, Award, ShieldAlert } from "lucide-react";
+import { useActivePatientId, useHealthOverview, usePatientProfile, usePatientAppointments, usePatientPrescriptions, usePatientLabResults, usePatientEmr } from "@/hooks/usePatientData";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cardSpoken, overviewCards, type OverviewCardId } from "@/lib/overview";
+import { verifyBanner } from "@/lib/verification";
 import { Button } from "@/components/ui/button";
 import { ShareRecordsCard } from "@/components/patient/ShareRecordsCard";
 import { useActivePatient } from "@/hooks/useFamily";
 import { QueryState } from "@/components/common/QueryState";
+
+const CARD_ICON: Record<OverviewCardId, typeof Pill> = { prescriptions: Pill, labs: FlaskConical, records: FileText, letters: Award };
+const CARD_LINK: Record<OverviewCardId, string> = {
+  prescriptions: "/patient/prescriptions", labs: "/patient/lab-results", records: "/patient/medical-records", letters: "/patient/letters",
+};
 
 export default function PatientDashboard() {
   const qc = useQueryClient();
@@ -21,6 +29,8 @@ export default function PatientDashboard() {
   // Live updates and cache keys follow the person chosen under "Who is this for?".
   const pid = useActivePatientId();
   const person = useActivePatient();
+  const overview = useHealthOverview();
+  const banner = verifyBanner(person.family);
   useEffect(() => {
     if (!pid) return;
     const channels = [
@@ -57,12 +67,6 @@ export default function PatientDashboard() {
   const nextAppt = upcomingAppts.length > 0 ? upcomingAppts[0] : null;
   const activeRx = prescriptions.filter(p => p.status === "active");
 
-  const cards = [
-    { label: "Upcoming Appointments", value: apptsError ? "—" : upcomingAppts.length, icon: Calendar, color: "text-info", bg: "bg-info/10" },
-    { label: "Active Prescriptions", value: rxError ? "—" : activeRx.length, icon: Pill, color: "text-success", bg: "bg-success/10" },
-    { label: "Lab Results", value: labsError ? "—" : labs.length, icon: FlaskConical, color: "text-warning", bg: "bg-warning/10" },
-    { label: "Medical Entries", value: emrError ? "—" : emr.length, icon: FileText, color: "text-primary", bg: "bg-primary/10" },
-  ];
 
   return (
     <PatientLayout>
@@ -70,6 +74,14 @@ export default function PatientDashboard() {
         <h1 className="text-2xl font-heading font-bold mb-1">Welcome back{profile?.first_name ? `, ${profile.first_name}` : ""}</h1>
         <p className="text-muted-foreground">{person.isMe ? "Here's a quick overview of your health journey" : `Showing ${person.firstName}'s visits, prescriptions, results and records`}</p>
       </div>
+
+      {/* Family verification: shown while anyone still needs a document. */}
+      {banner && (
+        <div role="alert" className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${banner.locked ? "border-destructive/40 bg-destructive/5" : "border-warning/40 bg-warning/5"}`}>
+          <p className="flex items-start gap-2 text-sm font-medium"><ShieldAlert className={`mt-0.5 h-4 w-4 shrink-0 ${banner.locked ? "text-destructive" : "text-warning"}`} aria-hidden />{banner.text}</p>
+          <Button size="sm" variant="outline" asChild><Link to={`/patient/settings?verify=${banner.patientId}#family`}>Verify</Link></Button>
+        </div>
+      )}
 
       <div className="bg-gradient-to-r from-primary/15 to-info/15 border border-primary/20 rounded-xl p-5 mb-6 flex items-center justify-between flex-wrap gap-3 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "50ms" }}>
         <div className="flex items-center gap-3">
@@ -94,15 +106,36 @@ export default function PatientDashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {cards.map((s, i) => (
-              <div key={s.label} className={`bg-card border border-border rounded-xl p-5 animate-fade-in transition-all hover:scale-105 hover:shadow-lg`} style={{ animationDelay: `${100 + i * 80}ms` }}>
-                <div className={`w-10 h-10 rounded-lg ${s.bg} ${s.color} flex items-center justify-center mb-3 transition-transform`}><s.icon className="w-5 h-5" /></div>
-                <div className="text-2xl font-heading font-bold">{s.value}</div>
-                <div className="text-xs text-muted-foreground">{s.label}</div>
+          {/* Your health: the same four cards as the app's Home, from patient_health_overview. */}
+          <section aria-labelledby="your-health" className="mb-6">
+            <h2 id="your-health" className="mb-3 font-heading text-lg font-bold">{person.isMe ? "Your health" : `${person.firstName}'s health`}</h2>
+            {overview.data ? (
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                {overviewCards(overview.data).map((card) => {
+                  const Icon = CARD_ICON[card.id];
+                  return (
+                    <Link key={card.id} to={CARD_LINK[card.id]} aria-label={`${cardSpoken(card)}. Open ${card.title.toLowerCase()}`}
+                      className="rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><Icon className="h-5 w-5" aria-hidden /></span>
+                        {card.count !== null && (
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${card.highlight ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"}`}>
+                            {card.highlight ? `${card.count} new` : card.count}
+                          </span>
+                        )}
+                      </div>
+                      <p className="font-heading font-bold">{card.title}</p>
+                      <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{card.status}</p>
+                    </Link>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            ) : overview.isError ? (
+              <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">We couldn't load your health summary. <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={() => overview.refetch()}>Try again</button></p>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-busy="true" aria-label="Loading your health summary">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
+            )}
+          </section>
 
           <div className="grid lg:grid-cols-2 gap-6">
             <div className="bg-card border border-border rounded-xl p-5 animate-fade-in transition-all hover:shadow-lg" style={{ animationDelay: "100ms" }}>

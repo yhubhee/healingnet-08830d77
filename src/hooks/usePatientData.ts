@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useActivePersonId } from "./useActivePerson";
 import { useAuth } from "./useAuth";
+import { OVERVIEW_REFRESH_MS, parseOverview, type HealthOverview } from "@/lib/overview";
 
 export function usePatientProfile() {
   const { user } = useAuth();
@@ -26,6 +27,46 @@ export function useActivePatientId(): string | undefined {
   const { data: profile } = usePatientProfile();
   const activeId = useActivePersonId();
   return profile?.id ? (activeId ?? profile.id) : undefined;
+}
+
+/**
+ * The server's own answer to "is my profile complete?" (my_profile_status). The local
+ * check routes at once; if the server says incomplete, the person goes to Complete profile.
+ */
+export function useProfileStatus() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["patient-profile", "status", user?.id],
+    enabled: !!user,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("my_profile_status");
+      if (error) throw error;
+      const s = (data ?? {}) as { is_patient?: unknown; complete?: unknown };
+      return { isPatient: s.is_patient === true, complete: s.complete === true };
+    },
+  });
+}
+
+/**
+ * Dashboard "Your health": prescriptions, lab results, records and letters at a glance for
+ * the person on screen (patient_health_overview). Refreshed when the tab is looked at
+ * again, at most every 30 seconds.
+ */
+export function useHealthOverview() {
+  const pid = useActivePatientId();
+  return useQuery({
+    queryKey: ["patient-health-overview", pid],
+    enabled: !!pid,
+    staleTime: OVERVIEW_REFRESH_MS,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    queryFn: async (): Promise<HealthOverview> => {
+      const { data, error } = await supabase.rpc("patient_health_overview", { p_patient_id: pid! });
+      if (error) throw error;
+      return parseOverview(data);
+    },
+  });
 }
 
 export function usePatientAppointments() {
