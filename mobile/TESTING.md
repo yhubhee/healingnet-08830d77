@@ -79,6 +79,100 @@ New live-check steps, all against the real database as the test patient: `my_fam
 - *A push names the family member only when "Show details on the lock screen" is on.* With details off the database sends its generic text, so "Tobi:" is not on the lock screen. Inside the app the title always starts with the name. Tapping a push still switches to the right person, by reading who the notification is about.
 - *Website: a family member's health card is edited in a dialog* (Settings → Family, or Profile), not the Complete profile page, because that page requires a phone number and address a child does not have. The app uses its profile form with only the health-card fields.
 
+## Fifth round: 0.4, 14 November
+
+Version 0.4 needs a **new development build** (and the preview build): it adds two native
+modules, `react-native-mmkv` (with `react-native-nitro-modules`) for the saved data and
+`expo-document-picker` for family documents, and the camera and photo permission wording
+changed. An older development build will not open this code.
+
+### What was checked here (no phone was connected)
+
+- `tsc --noEmit` in `mobile/`: 0 errors. `expo-doctor`: 20 of 20 checks passed.
+- Unit tests: 17 suites, 280 tests, all pass. New in 0.4: `perf.test.ts` (names without ids
+  or query strings, batches of 50, the 300 cap, nothing recorded when switched off,
+  `log_perf_events` never timed), `visits.test.ts` (no duplicates when "Show older" loads),
+  `overview.test.ts` (the card status lines), `verification.test.ts` (every status and its
+  wording with the deadline's day and time, documents per relationship against the
+  database's table, photo size and type checks, family notifications), the cache tests
+  (one entry per query, no signatures saved, the move from the 0.3 blob), and the start-up
+  tests (no path reaches the tabs with an incomplete profile, `profile_incomplete` routing).
+- Website: `tsc -p tsconfig.app.json` 0 errors, `npm run build` passes.
+- Live check (`node scripts/live-check.mjs`): 41 steps, all pass, including the upload of a
+  test PDF, `pending` in `my_family`, and removal of the child and the file.
+
+### Speed: what was measured, and what still has to be measured on the phone
+
+Measured from this PC as the test patient (164 visits, 36 prescription documents), median of 5:
+
+| | 0.3 | 0.4 |
+| --- | --- | --- |
+| Visits data | 4 requests, 81 KB, 1,226 ms | 1 request (`my_visits`), 428 ms |
+| Prescriptions data | 37 requests, 256 KB (219 KB of it signature images), 1,483 ms | 1 request (`my_rx_documents`), 36 KB, 424 ms |
+| Saved data written when any list refreshes | everything: one 341 KB blob (683 KB once hex-encoded), encrypted in JavaScript | only the list that changed (Visits is about 100 KB), encrypted natively |
+| That write, on this PC | 115 ms under Node | not measurable here (native) |
+
+The 115 ms is on a desktop with a JIT compiler. The phone runs the same JavaScript loop
+without one, typically many times slower, which fits a freeze of a few seconds, but **that
+is an estimate until it is read off the phone**. The tab-switch and cold-start times
+themselves (Home to Visits, Home to Health, Visits to Home, cold start) could not be taken
+here. To take them:
+
+1. Install the new development build, run `npm start`, open the app and sign in.
+2. Switch tabs a few times. Slow events print one line each in the terminal, for example
+   `[speed] slow screen /(tabs)/visits 3412 ms on wifi`, and every save of the offline data
+   over 50 ms prints `[speed] cache save of appointments, 98 KB, took 12 ms`.
+3. For "before" numbers on the same phone: check out commit `0ebcc19` (0.3 behaviour with
+   the timer added) in the old development build. It prints the same lines, including
+   `[speed] cache save, 683 KB, took … ms` for the old blob.
+4. After a day of use the same numbers are on the website at `/admin/performance`.
+
+Targets: tab switch to content under 300 ms with data saved; cold start to Home under 2 s.
+
+### Phone checklist for 0.4 (about 30 minutes)
+
+Tab speed
+- [ ] Home → Visits → Health → Home, several times: each feels instant, with no frozen taps.
+- [ ] Open Visits, pull to refresh, then tap another tab straight away: the tap is taken at once.
+- [ ] Visits → Past → scroll to the end → "Show older visits" loads more, with no visit shown twice.
+- [ ] Close the app, turn on flight mode, open it: Home, Visits, Health and Prescriptions still show (the first start after updating from 0.3 too).
+- [ ] Sign out, turn on flight mode, sign in is refused and nothing of the old account shows.
+
+Home cards
+- [ ] "Your health" sits under the next appointment with four cards: Prescriptions, Lab results, Records, Letters.
+- [ ] Each card shows a line of status and a count, and opens its screen.
+- [ ] A new lab result shows "1 new result" and a "1 new" badge; opening the result clears it when you return to Home.
+- [ ] Switch to a family member: the cards change to theirs, and the heading says whose they are.
+
+Verify a family member with a photo
+- [ ] Add a child: the app goes straight to "Verify …". "Later" returns to Home.
+- [ ] Home shows the banner "Verify … by <day> to keep managing their care." with a Verify button.
+- [ ] Verify lists only the documents for that relationship (a spouse: marriage certificate and affidavit only).
+- [ ] Take a photo: a preview shows before sending. "Send for checking" works; the status becomes "Being checked".
+- [ ] Choose a PDF over 5 MB: refused with "That file is over 5 MB…".
+- [ ] The status shows in words with an icon in the switcher sheet, the Family list and the member's profile.
+
+Admin approves on the website
+- [ ] On the website, sign in as an admin → Verifications → Family documents: the document is in the queue with the member's name, date of birth and age, the relationship, the guardian's name, email and phone, the type and when it was sent.
+- [ ] "Open the document" shows the photo. Approve.
+- [ ] On the phone a notification arrives; tapping it opens Family, and the badge now says "Verified". The Home banner is gone.
+
+A rejection shows the reason
+- [ ] Add another member, send a document, and on the website Reject it with "The document is unclear or cut off".
+- [ ] On the phone: "Not accepted: The document is unclear or cut off" with "Upload another". The member is locked: choosing them in the switcher opens Verify, and if they were on screen the app says so and shows Me.
+- [ ] Remove that member: they go from the list.
+
+A new account must complete its profile
+- [ ] Sign up with a new email, confirm from the email link: the app shows "Complete your profile" with "0 of 8 done", not the tabs.
+- [ ] Android back does nothing there. Close and reopen the app: still Complete profile. The only way out is Sign out.
+- [ ] Sign in to the same account on the website: also Complete profile. `/patient` and `/patient/settings` both lead back to it.
+- [ ] Fill it in (try a non-Nigerian phone number: refused). The count goes up as fields are filled; after saving, Home opens.
+- [ ] The keyboard never covers the field being typed in or the Save button.
+
+Performance page and the switch
+- [ ] Me → Settings shows "Share speed data" (on). Turn it off and on again.
+- [ ] After using the app for a few minutes with it on, the website's `/admin/performance` shows rows (a name needs 5 samples to appear). Screens over 0.5 s and requests over 1 s are labelled "Slow". Selecting a row shows the chart per day.
+
 ## Combined checklist for 0.2 and 0.3 (about an hour)
 
 One pass over both versions, grouped by screen. Install the **preview** APK for this (not the development build: speed and offline behaviour only count on a preview build). Sign in as a patient with a visit, a prescription and a lab result. Have the website open on a PC as the same patient, and as a doctor if you can. The longer 0.2 checklist below has more detail on any step.
@@ -270,6 +364,8 @@ Install the preview APK over 0.1 (or uninstall 0.1 first). Sign in as a patient 
 26. Book, cancel and reschedule a visit; open a prescription offline and show the QR (it is now drawn by the app's own code, so check a pharmacist's scanner or the phone camera still reads it); share a prescription PDF; change the profile photo; the app switcher still shows the cover; push notifications still arrive and open the right screen, including the lab results one.
 
 ## Records created in the live project
+
+The fifth-round live check on 14 November (0.4) created 2 cancelled appointments, 1 pending letter request, 1 message, 1 triage session, 2 share codes, 2 notifications, 1 speed event named `e2e:check`, one withdrawn family document, and one `[E2E]` child patient row that the hospital keeps after removal. The test PDF it uploaded was deleted again. The test patient's profile was already complete, so it was not changed. The ids are in `e2e/cleanup.md` under "Mobile app 0.4 live check".
 
 The fourth-round live check on 13 November (family) created 2 cancelled appointments (one for the test patient, one for the `[E2E]` child), 1 pending letter request, 1 message, 1 triage session, 2 share codes, 2 notifications, and one `[E2E]` child patient row that the hospital keeps after removal. The ids are in `e2e/cleanup.md` under "Mobile app 0.3 live check".
 

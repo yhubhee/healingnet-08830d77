@@ -541,3 +541,71 @@ Two for the test patient about the `[E2E]` child (`subject_patient_id` was c8303
 
 One for the test patient and one for the `[E2E]` child; both expire by themselves after 15 minutes.
 
+## Mobile app 0.4 live check (2026-11-14)
+
+One run of `mobile/scripts/live-check.mjs` as the test patient, with the 0.4 steps.
+
+**Test patient's profile.** Booking and adding family members now need a complete profile
+(the database refuses with hint `profile_incomplete`). The live check calls
+`my_profile_status()` first and, only if the profile is incomplete, fills the empty required
+fields once with `[E2E]`-safe values (phone `08000000000`, date of birth `1990-01-01`, gender
+`other`, state `Lagos`, city `[E2E] City`, address `[E2E] test address`, emergency contact
+`[E2E] Contact` / `08000000001`). On this run the test patient's profile was **already
+complete, so nothing was changed**. No other account is touched. The Playwright tests in
+`e2e/` use the same test patient, so their booking tests keep working.
+
+### patients (1)
+
+| id | note |
+| --- | --- |
+| c72d71c9-dc4b-4804-951f-45c17d2e1e30 | Family member `E2E-Child [E2E] mwh7p7nm`, added and then removed. Removal answered `held_by_hospitals: true` (one cancelled booking), so the row is kept for the hospital and is no longer linked to the test patient. Its `allergies` are `[E2E] Peanuts` and blood group `O+`. |
+
+### family_documents (1)
+
+| id | note |
+| --- | --- |
+| 92a215cc-604e-48f9-90f3-b2ebdea35283 | `birth_certificate` for the `[E2E]` child above, submitted as `pending`, then `withdrawn` by the database when the child was removed. It stays because the patient row stays; deleting the patient row deletes it. |
+
+### storage: family-documents (0 left)
+
+One tiny test PDF (a single empty page, 190 bytes) was uploaded to the test patient's folder
+for the child and deleted again after the child was removed. The folder was checked and is
+empty.
+
+### perf_events (1)
+
+One row named `e2e:check` (kind `screen`, platform `android`, version `0.4.0`, 1 ms). It
+has no user id and is removed by itself after 30 days. It shows on `/admin/performance`
+only if at least 5 samples exist for that name.
+
+### patient_appointments (2)
+
+| id | note |
+| --- | --- |
+| 89b1e91f-2f73-4a9b-b1a8-4a621de83f90 | Test patient's own, cancelled; reason `[E2E] mobile app check mwh7ovnw`. |
+| e9900fd9-1120-4af4-afdd-830d3cadb77a | For the `[E2E]` child (patient c72d71c9…), cancelled; reason `[E2E] mobile app check, family mwh7panm`. |
+
+### patient_letters (1)
+
+| id | note |
+| --- | --- |
+| 7495a1d8-4982-4df5-a49f-7ff46cf7c036 | A pending letter request; body `[E2E] mobile app check mwh7oxmt`. |
+
+### patient_messages (1)
+
+| id | note |
+| --- | --- |
+| be59e42b-c716-482e-b86d-c03ecc1ecf90 | Body `[E2E] mobile app check mwh7oxmt`. |
+
+### triage_sessions (1)
+
+One session for the test patient whose `symptoms` are `["[E2E] mobile app check mwh7oxmt"]`.
+
+### user_notifications (2 or more)
+
+Two for the test patient about the `[E2E]` child, titles starting `E2E-Child: `. The hospital
+may also have notifications for the two bookings.
+
+### patient_share_codes (2)
+
+One for the test patient and one for the `[E2E]` child; both expire by themselves after 15 minutes.
