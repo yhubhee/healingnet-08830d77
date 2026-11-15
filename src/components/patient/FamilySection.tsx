@@ -2,7 +2,7 @@
 // Same rules and wording as the app (mobile/app/family/*).
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,9 @@ import { QueryState } from "@/components/common/QueryState";
 import { activePerson, useActivePatient, useAddFamilyMember, useFamily, useRemoveFamilyMember } from "@/hooks/useFamily";
 import { ALLOWED, pick } from "@/lib/allowed";
 import { lagosToday } from "@/lib/dates";
-import { dbMessage, friendlyError } from "@/lib/errors";
+import { dbMessage, friendlyError, profileIncompleteRoute } from "@/lib/errors";
+import { verifyState } from "@/lib/verification";
+import { VerifyBadge, VerifyFamilyDialog } from "./VerifyFamily";
 import {
   ageText, EMPTY_FAMILY_FORM, MAX_FAMILY, needsPermission, permissionLabel, RELATIONSHIPS, relationshipLabel, removeExplanation, turning18Note,
   validateFamilyForm, type FamilyForm, type FamilyMember,
@@ -44,8 +46,10 @@ function FieldRow({ label, error, children, htmlFor }: { label: string; error?: 
 }
 
 // ---- Add ---------------------------------------------------------------------------------
-function AddFamilyDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+function AddFamilyDialog({ open, onOpenChange, onAdded }: { open: boolean; onOpenChange: (v: boolean) => void; onAdded: (patientId: string) => void }) {
   const add = useAddFamilyMember();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
   const [form, setForm] = useState<FamilyForm>(EMPTY_FAMILY_FORM);
   const [tried, setTried] = useState(false);
   useEffect(() => { if (open) { setForm(EMPTY_FAMILY_FORM); setTried(false); } }, [open]);
@@ -63,7 +67,17 @@ function AddFamilyDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
       toast.success(`${form.first_name.trim()} added`);
       activePerson.set(id);
       onOpenChange(false);
+      // Straight to "Verify": the next step is proving the relationship ("Later" skips it).
+      onAdded(id);
     } catch (e) {
+      const unfinished = profileIncompleteRoute(e);
+      if (unfinished) {
+        // The database refuses adding family until the account holder's own profile is complete.
+        toast.info(unfinished.toast);
+        qc.invalidateQueries({ queryKey: ["patient-profile"] });
+        navigate(unfinished.route, { replace: true });
+        return;
+      }
       // The database's own message, as written.
       toast.error(dbMessage(e));
     }
@@ -239,7 +253,9 @@ export function FamilySection() {
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<FamilyMember | null>(null);
   const [removing, setRemoving] = useState<FamilyMember | null>(null);
+  const [verifying, setVerifying] = useState<{ id: string; justAdded: boolean } | null>(null);
   const list = q.data ?? [];
+  const verifyMember = verifying ? list.find((m) => m.patient_id === verifying.id) ?? null : null;
   const today = lagosToday();
 
   // "Add family member" in the header switcher lands here with the form open.
@@ -247,6 +263,17 @@ export function FamilySection() {
     if (params.get("add-family") !== "1") return;
     setAdding(true);
     params.delete("add-family");
+    setParams(params, { replace: true });
+    document.getElementById("family")?.scrollIntoView({ behavior: "smooth" });
+  }, [params, setParams]);
+
+  // A locked member chosen in the header switcher, the dashboard banner and family
+  // notifications land here with Verify open (?verify=<member id>).
+  useEffect(() => {
+    const id = params.get("verify");
+    if (!id) return;
+    setVerifying({ id, justAdded: false });
+    params.delete("verify");
     setParams(params, { replace: true });
     document.getElementById("family")?.scrollIntoView({ behavior: "smooth" });
   }, [params, setParams]);
@@ -282,16 +309,19 @@ export function FamilySection() {
             {list.map((m) => {
               const showing = !person.isMe && person.patientId === m.patient_id;
               const note = turning18Note(m, today);
+              const verify = verifyState(m);
               return (
                 <li key={m.patient_id} className="py-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-medium">{m.first_name} {m.last_name}{showing && <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">Showing now</span>}</p>
                       <p className="text-sm text-muted-foreground">{[ageText(m.age) ? `Age ${ageText(m.age)}` : "", relationshipLabel(m.relationship)].filter(Boolean).join(" · ")}</p>
+                      <VerifyBadge member={m} className="mt-1" />
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {!showing && <Button size="sm" variant="outline" onClick={() => { activePerson.set(m.patient_id); toast.info(`Showing ${m.first_name}`); }}>Show {m.first_name}</Button>}
-                      <Button size="sm" variant="outline" onClick={() => setEditing(m)}><Pencil className="mr-1.5 h-3.5 w-3.5" />Health card</Button>
+                      {verify.action && <Button size="sm" variant={verify.canUpload ? "default" : "outline"} onClick={() => setVerifying({ id: m.patient_id, justAdded: false })} aria-label={`${verify.action}: ${m.first_name}`}>{verify.action}</Button>}
+                      {!showing && !verify.locked && <Button size="sm" variant="outline" onClick={() => { activePerson.set(m.patient_id); toast.info(`Showing ${m.first_name}`); }}>Show {m.first_name}</Button>}
+                      {!verify.locked && <Button size="sm" variant="outline" onClick={() => setEditing(m)}><Pencil className="mr-1.5 h-3.5 w-3.5" />Health card</Button>}
                       <Button size="sm" variant="outline" className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setRemoving(m)} aria-label={`Remove ${m.first_name}`}>
                         <Trash2 className="mr-1.5 h-3.5 w-3.5" />Remove
                       </Button>
@@ -306,7 +336,8 @@ export function FamilySection() {
       </QueryState>
       {list.length >= MAX_FAMILY && <p className="mt-3 text-xs text-muted-foreground">You can add up to {MAX_FAMILY} family members.</p>}
 
-      <AddFamilyDialog open={adding} onOpenChange={setAdding} />
+      <AddFamilyDialog open={adding} onOpenChange={setAdding} onAdded={(id) => setVerifying({ id, justAdded: true })} />
+      <VerifyFamilyDialog member={verifyMember} justAdded={verifying?.justAdded} onClose={() => setVerifying(null)} />
       <EditHealthCardDialog patientId={editing?.patient_id ?? null} firstName={editing?.first_name ?? ""} open={!!editing} onOpenChange={(v) => { if (!v) setEditing(null); }} />
       <AlertDialog open={!!removing} onOpenChange={(v) => { if (!v) setRemoving(null); }}>
         <AlertDialogContent>

@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lagosToday } from "@/lib/dates";
 import { addFamilyArgs, personForNotification, resolveActive, type FamilyForm, type FamilyMember } from "@/lib/family";
+import { removeMemberDocuments } from "@/lib/familyDocuments";
+import { lockedToast, unlockedActive } from "@/lib/verification";
 import { activePerson, useActivePersonId } from "./useActivePerson";
 import { usePatientProfile } from "./usePatientData";
 
@@ -68,14 +70,23 @@ export function useActivePatient() {
   };
 }
 
-/** Mounted once in the patient header: someone removed from the family falls back to Me. */
+/**
+ * Mounted once in the patient header: someone removed from the family falls back to Me, and
+ * so does someone who has become locked (no document sent in time, or not accepted).
+ */
 export function useKeepActivePersonValid() {
   const activeId = useActivePersonId();
   const family = useFamily();
   useEffect(() => {
     if (!family.isSuccess) return;
-    const next = resolveActive(activeId, family.data);
-    if (next !== activeId) activePerson.set(next);
+    const present = resolveActive(activeId, family.data);
+    const next = unlockedActive(present, family.data);
+    if (next === activeId) return;
+    if (present && next === null) {
+      const name = family.data.find((m) => m.patient_id === present)?.first_name;
+      toast.info(lockedToast(name ?? "This family member"));
+    }
+    activePerson.set(next);
   }, [activeId, family.isSuccess, family.data]);
 }
 
@@ -101,6 +112,8 @@ export function useRemoveFamilyMember() {
     },
     onSuccess: (_result, patientId) => {
       if (activePerson.get() === patientId) activePerson.set(null);
+      // Their verification documents go too (ones under review are kept by the database).
+      removeMemberDocuments(patientId);
       qc.removeQueries({ predicate: (q) => q.queryKey.includes(patientId) });
       qc.invalidateQueries({ queryKey: familyKey });
     },
@@ -122,7 +135,8 @@ export function useShowPersonFor() {
       if (subjectId !== ownId && !family?.some((m) => m.patient_id === subjectId)) {
         family = await qc.fetchQuery({ queryKey: familyKey, queryFn: fetchFamily });
       }
-      const next = personForNotification(subjectId, activePerson.get(), ownId, (family ?? []).map((m) => m.patient_id));
+      // A locked member's records cannot be opened: stay with the person on screen.
+      const next = personForNotification(subjectId, activePerson.get(), ownId, (family ?? []).filter((m) => m.access_ok !== false).map((m) => m.patient_id));
       if (next === undefined) return;
       activePerson.set(next);
       const name = next === null ? null : family?.find((m) => m.patient_id === next)?.first_name;

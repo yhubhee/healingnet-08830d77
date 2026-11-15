@@ -1,9 +1,11 @@
-// /admin/verifications: admin_verification_queue() and admin_pharmacy_queue(), oldest first.
+// /admin/verifications: admin_verification_queue(), admin_pharmacy_queue() and the family
+// documents queue (admin_family_documents), oldest first.
 import { useState } from "react";
-import { BadgeCheck, Clock, Hospital as HospitalIcon, PartyPopper, Pill, Stethoscope } from "lucide-react";
+import { BadgeCheck, Clock, Hospital as HospitalIcon, PartyPopper, Pill, Stethoscope, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useVerificationQueue, type QueueDoctor, type QueueHospital } from "../api";
+import { useOverview, useVerificationQueue, type QueueDoctor, type QueueHospital } from "../api";
+import { FamilyDocumentsPanel } from "../components/FamilyDocuments";
 import { usePharmacyQueue, type QueuePharmacist, type QueuePharmacy } from "../pharmacy-api";
 import { daysSince, fmtDate, fmtNum, times } from "../format";
 import { EmptyState, ErrorState, Fact, RelTime } from "../components/bits";
@@ -129,11 +131,12 @@ function PharmacistCard({ m, onRemoved }: { m: QueuePharmacist; onRemoved: (id: 
   );
 }
 
-const TABS = ["hospitals", "doctors", "pharmacies", "pharmacists"] as const;
+const TABS = ["hospitals", "doctors", "pharmacies", "pharmacists", "family"] as const;
 
 export default function Verifications() {
   const q = useVerificationQueue();
   const ph = usePharmacyQueue();
+  const familyPending = useOverview().data?.inbox.family_documents_pending;
   const { get, set } = useUrlState();
   const raw = get("tab", "hospitals");
   const tab = (TABS as readonly string[]).includes(raw) ? raw : "hospitals";
@@ -147,8 +150,9 @@ export default function Verifications() {
   const pharmacies = (ph.data?.pharmacies ?? []).filter((p) => !hidden.has(p.id));
   const pharmacists = (ph.data?.members ?? []).filter((m) => !hidden.has(m.id));
   const isPharmacyTab = tab === "pharmacies" || tab === "pharmacists";
-  const loading = isPharmacyTab ? ph.isLoading : q.isLoading;
-  const failed = isPharmacyTab ? ph.isError : q.isError;
+  // The family tab loads and reports errors by itself.
+  const loading = tab === "family" ? false : isPharmacyTab ? ph.isLoading : q.isLoading;
+  const failed = tab === "family" ? false : isPharmacyTab ? ph.isError : q.isError;
 
   return (
     <Tabs value={tab} onValueChange={(v) => set({ tab: v === "hospitals" ? null : v })}>
@@ -157,6 +161,7 @@ export default function Verifications() {
         <TabsTrigger value="doctors" className="gap-2"><Stethoscope className="h-4 w-4" aria-hidden />Doctors <span className="tabular-nums">({q.data ? doctors.length : "…"})</span></TabsTrigger>
         <TabsTrigger value="pharmacies" className="gap-2"><Pill className="h-4 w-4" aria-hidden />Pharmacies <span className="tabular-nums">({ph.data ? pharmacies.length : "…"})</span></TabsTrigger>
         <TabsTrigger value="pharmacists" className="gap-2"><BadgeCheck className="h-4 w-4" aria-hidden />Pharmacists <span className="tabular-nums">({ph.data ? pharmacists.length : "…"})</span></TabsTrigger>
+        <TabsTrigger value="family" className="gap-2"><Users className="h-4 w-4" aria-hidden />Family documents <span className="tabular-nums" aria-label={`${familyPending ?? 0} waiting`}>({familyPending ?? "…"})</span></TabsTrigger>
       </TabsList>
       {loading ? (
         <div className="space-y-4" aria-busy="true" aria-label="Loading queue">
@@ -179,6 +184,7 @@ export default function Verifications() {
               ? <EmptyState icon={PartyPopper} text="No pharmacies waiting for review." />
               : pharmacies.map((p) => <PharmacyCard key={p.id} p={p} onRemoved={hide} />)}
           </TabsContent>
+          <TabsContent value="family">{tab === "family" && <FamilyDocumentsPanel />}</TabsContent>
           <TabsContent value="pharmacists" className="space-y-4">
             {pharmacists.length === 0
               ? <EmptyState icon={PartyPopper} text="No pharmacists waiting for review." />

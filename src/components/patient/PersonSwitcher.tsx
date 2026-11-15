@@ -7,7 +7,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { activePerson, useActivePatient, useKeepActivePersonValid } from "@/hooks/useFamily";
 import { ageText, MAX_FAMILY, relationshipLabel } from "@/lib/family";
+import { verifyState } from "@/lib/verification";
 import { cn } from "@/lib/utils";
+import { VerifyBadge } from "./VerifyFamily";
 
 export function PersonSwitcher() {
   const navigate = useNavigate();
@@ -37,10 +39,13 @@ export function PersonSwitcher() {
           {person.isMe && <Check className="h-4 w-4 text-primary" />}
         </DropdownMenuItem>
         {person.family.map((m) => (
-          <DropdownMenuItem key={m.patient_id} className="cursor-pointer justify-between" onClick={() => activePerson.set(m.patient_id)}>
+          // A locked member opens Verify instead of being switched to.
+          <DropdownMenuItem key={m.patient_id} className="cursor-pointer justify-between"
+            onClick={() => (verifyState(m).locked ? navigate(`/patient/settings?verify=${m.patient_id}#family`) : activePerson.set(m.patient_id))}>
             <span className="min-w-0">
               <span className="block truncate font-medium">{m.first_name}</span>
               <span className="block text-xs text-muted-foreground">{[ageText(m.age), relationshipLabel(m.relationship)].filter(Boolean).join(" · ")}</span>
+              <VerifyBadge member={m} className="text-xs" />
             </span>
             {!person.isMe && person.patientId === m.patient_id && <Check className="h-4 w-4 shrink-0 text-primary" />}
           </DropdownMenuItem>

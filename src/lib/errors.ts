@@ -59,6 +59,18 @@ export function friendlyError(e: unknown, fallback = "Something went wrong. Plea
  * For database functions that raise plain-English messages (family members, booking):
  * the database's own message, except for network failures.
  */
+export const FINISH_PROFILE_FIRST = "Finish your profile first.";
+
+/**
+ * The database refuses booking and adding family members while the account holder's own
+ * profile is incomplete (hint profile_incomplete). The page then goes to Complete profile
+ * with a toast, instead of showing the error.
+ */
+export function profileIncompleteRoute(e: unknown): { route: "/patient/complete-profile"; toast: string } | null {
+  const hint = (typeof e === "object" && e ? (e as { hint?: unknown }).hint : null);
+  return hint === "profile_incomplete" ? { route: "/patient/complete-profile", toast: FINISH_PROFILE_FIRST } : null;
+}
+
 export function dbMessage(e: unknown): string {
   const msg = (e as { message?: unknown } | null | undefined)?.message;
   if (typeof msg === "string" && msg && !/failed to fetch|network/i.test(msg)) return msg;

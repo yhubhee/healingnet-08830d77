@@ -176,6 +176,8 @@ const App = () => (
           <Route path="/patient/profile" element={<ProtectedRoute><PatientProfile /></ProtectedRoute>} />
           <Route path="/patient/notifications" element={<ProtectedRoute><PatientNotifications /></ProtectedRoute>} />
           <Route path="/patient/settings" element={<ProtectedRoute><PatientSettings /></ProtectedRoute>} />
+          {/* Family document notifications link here. */}
+          <Route path="/patient/settings/family" element={<Navigate to="/patient/settings#family" replace />} />
           <Route path="/patient/triage" element={<ProtectedRoute><PatientTriage /></ProtectedRoute>} />
           <Route path="/patient/book" element={<ProtectedRoute><PatientBook /></ProtectedRoute>} />
           <Route path="/patient/complete-profile" element={<ProtectedRoute><PatientCompleteProfile /></ProtectedRoute>} />
