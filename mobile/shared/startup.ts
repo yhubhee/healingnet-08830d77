@@ -60,34 +60,59 @@ export interface GateState {
 /**
  * Where to go from here, or null to stay. Used for the very first screen (from stored
  * data) and again whenever a background check changes what is known.
- *   no session                     -> Welcome
- *   stored session                 -> the tabs, at once
- *   check says: new account        -> Finish sign-up
- *   check says: not a patient      -> "This app is for patients"
- *   check says: profile incomplete -> Complete profile
+ *   no session                          -> Welcome
+ *   saved check: patient, complete      -> the tabs, at once
+ *   nothing known yet                   -> stay and wait for the check (never the tabs)
+ *   check says: new account             -> Finish sign-up
+ *   check says: not a patient           -> "This app is for patients"
+ *   check says: profile incomplete      -> Complete profile
+ * No path reaches the tabs until the profile is known to be complete: not a fresh sign-in,
+ * not a second device, not a deep link, and not a restart in the middle of signing up
+ * (a stored session with no saved check waits like a fresh sign-in).
  */
-export function gateTarget({ signedIn, returning, kind, profileComplete, first }: GateState): StartScreen | null {
+export function gateTarget({ signedIn, kind, profileComplete, first }: GateState): StartScreen | null {
   if (OPEN_ROUTES.includes(first)) return null;
   if (!signedIn) return first === "(auth)" ? null : "/(auth)";
-  const toTabs = OUTSIDE_APP.includes(first) ? "/(tabs)" : null;
-  // Nothing known yet: a returning person goes straight in; a fresh sign-in waits for the check.
-  if (kind === undefined) return returning ? toTabs : null;
+  // Nothing known yet: wait where we are (behind the loading screen), whoever it is.
+  if (kind === undefined) return null;
   if (kind === "new") return first === "finish-signup" ? null : "/finish-signup";
   if (kind !== "patient") return first === "not-patient" ? null : "/not-patient";
   if (profileComplete === false) return first === "complete-profile" ? null : "/complete-profile";
-  if (profileComplete === undefined && !returning) return null;
-  return toTabs;
+  if (profileComplete === undefined) return null;
+  // Complete: leave the sign-in screens. (Complete profile moves on by itself after saving.)
+  return OUTSIDE_APP.includes(first) ? "/(tabs)" : null;
 }
 
-/** True while a fresh sign-in is still waiting for its first role and profile check. */
-export function waitingForCheck({ signedIn, returning, kind, profileComplete }: Omit<GateState, "first">): boolean {
-  if (!signedIn || returning) return false;
+/**
+ * True while the role and profile check has not answered and nothing is saved from last
+ * time: a fresh sign-in, or a stored session with no saved check. The loading screen covers
+ * whatever is underneath, so the tabs are never seen with an incomplete profile.
+ */
+export function waitingForCheck({ signedIn, kind, profileComplete }: Omit<GateState, "first">): boolean {
+  if (!signedIn) return false;
   return kind === undefined || (kind === "patient" && profileComplete === undefined);
 }
 
-/** The first screen for a cold start, from stored data alone. */
-export function firstScreen(userId: string | null, check: AccountCheck | null): StartScreen {
+/**
+ * The profile answer the gate uses: the local check (instant, from the saved profile) and
+ * the server's my_profile_status(). If the server says incomplete, it is incomplete. A
+ * fresh sign-in waits for the server's answer; if that cannot be had, the local one stands.
+ */
+export function combineProfileChecks(
+  local: boolean | undefined, server: { complete: boolean; isPatient: boolean } | undefined,
+  opts: { waitForServer: boolean; serverFailed: boolean },
+): boolean | undefined {
+  if (server?.isPatient && !server.complete) return false;
+  if (local === undefined) return undefined;
+  if (opts.waitForServer && !server && !opts.serverFailed) return undefined;
+  return local;
+}
+
+/** The first screen for a cold start, from stored data alone; null means wait for the check behind the loading screen. */
+export function firstScreen(userId: string | null, check: AccountCheck | null): StartScreen | null {
+  if (!userId) return "/(auth)";
+  if (!check) return null;
   return gateTarget({
-    signedIn: !!userId, returning: !!userId, kind: check?.kind, profileComplete: check ? check.profileComplete : undefined, first: "",
+    signedIn: true, returning: true, kind: check.kind, profileComplete: check.profileComplete, first: "",
   }) ?? "/(tabs)";
 }

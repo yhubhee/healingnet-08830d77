@@ -3,9 +3,9 @@
 // src/pages/patient/CompleteProfile.tsx.
 import { Camera, ImageIcon, ShieldCheck } from "@/components/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { BackHandler, View } from "react-native";
 import { Avatar } from "@/components/Avatar";
 import { DateField, Field, SelectField } from "@/components/form";
 import { Screen } from "@/components/Screen";
@@ -18,7 +18,7 @@ import { supabase } from "@/lib/supabase";
 import { lagosToday } from "@/shared/dates";
 import { friendlyError } from "@/shared/errors";
 import {
-  BLOOD_GROUPS, compactPhone, GENOTYPES, HEALTH_NOTE_MAX, isNigerianPhone, missingPatientFields, NIGERIAN_STATES, PATIENT_UPDATE_COLUMNS, pick, validateProfile,
+  BLOOD_GROUPS, compactPhone, GENOTYPES, HEALTH_NOTE_MAX, isNigerianPhone, NIGERIAN_STATES, PATIENT_UPDATE_COLUMNS, pick, profileProgress, validateProfile,
   type ProfileErrors, type ProfileForm,
 } from "@/shared/patientProfile";
 import { space, useTheme } from "@/theme";
@@ -28,7 +28,7 @@ const NOT_SURE = { value: "", label: "Not sure" };
 
 export default function CompleteProfile() {
   const { colors } = useTheme();
-  const { profile: own, signOut } = useSession();
+  const { profile: own, profileComplete, signOut } = useSession();
   const params = useLocalSearchParams<{ edit?: string; person?: string }>();
   // ?person=<patient id>: a family member's health card. The guardian edits it through
   // the same form; only the health card and emergency contact are asked for.
@@ -36,7 +36,6 @@ export default function CompleteProfile() {
   const member = useMemberProfile(memberId);
   const p = memberId ? member.data : own;
   const forMember = !!memberId;
-  const editing = params.edit === "1" || forMember;
   const qc = useQueryClient();
   const toast = useToast();
   const online = useOnline();
@@ -44,6 +43,16 @@ export default function CompleteProfile() {
   const [tried, setTried] = useState(false);
   const [saving, setSaving] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
+  // Shown first, with no way out except Sign out, until the required details are saved.
+  // The session decides (the local check and the server's my_profile_status).
+  const firstTime = !memberId && profileComplete === false;
+
+  // Android's back button does nothing here while the profile is incomplete.
+  useFocusEffect(useCallback(() => {
+    if (!firstTime) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => true);
+    return () => sub.remove();
+  }, [firstTime]));
 
   useEffect(() => {
     if (!p || form) return;
@@ -72,8 +81,8 @@ export default function CompleteProfile() {
   };
   const errors = tried ? validate(form) : {};
   const set = (k: keyof ProfileForm) => (v: string) => setForm((f) => (f ? { ...f, [k]: v } : f));
-  const firstTime = !forMember && !editing && missingPatientFields(p).length > 0;
-  const refresh = () => qc.invalidateQueries({ queryKey: ["profile"] });
+  const progress = profileProgress(form, today);
+  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ["profile"] }), qc.invalidateQueries({ queryKey: ["profile-status"] })]);
 
   async function changePhoto(source: "camera" | "gallery") {
     try {
@@ -141,6 +150,16 @@ export default function CompleteProfile() {
           : forMember ? `Doctors treating ${p.first_name} see this. Keep it up to date.`
           : "Keep your details up to date so hospitals can reach you."}
       </Body>
+
+      {firstTime ? (
+        <View accessible accessibilityRole="progressbar" accessibilityLabel={`${progress.text}. Required details`}
+          accessibilityValue={{ min: 0, max: progress.total, now: progress.done }} style={{ gap: space.xs }}>
+          <Small muted={false}>{progress.text}</Small>
+          <View style={{ height: 8, borderRadius: 4, backgroundColor: colors.surface, overflow: "hidden" }}>
+            <View style={{ width: `${(progress.done / progress.total) * 100}%`, height: 8, borderRadius: 4, backgroundColor: colors.primary }} />
+          </View>
+        </View>
+      ) : null}
 
       {forMember ? null : (
       <>

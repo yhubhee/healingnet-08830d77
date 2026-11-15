@@ -58,6 +58,14 @@ export const NONE_KNOWN = "None known";
 export const healthNote = (v: string | null | undefined) => (v ?? "").trim() || NONE_KNOWN;
 export type ProfileErrors = Partial<Record<keyof ProfileForm, string>>;
 
+/** "3 of 8 done": how many of the required details are filled in and valid so far. */
+export function profileProgress(f: ProfileForm, today: string): { done: number; total: number; text: string } {
+  const errors = validateProfile(f, today);
+  const total = PATIENT_REQUIRED.length;
+  const done = PATIENT_REQUIRED.filter((k) => !errors[k]).length;
+  return { done, total, text: `${done} of ${total} done` };
+}
+
 /** The same checks and messages as the website's Complete profile page. */
 export function validateProfile(f: ProfileForm, today: string): ProfileErrors {
   const e: ProfileErrors = {};

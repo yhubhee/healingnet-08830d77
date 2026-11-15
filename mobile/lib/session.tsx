@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Tables } from "@/shared/database";
 import { missingPatientFields } from "@/shared/patientProfile";
-import type { AccountCheck } from "@/shared/startup";
+import { combineProfileChecks, type AccountCheck } from "@/shared/startup";
 import { personKeys } from "@/shared/keys";
 import { useActivePersonId } from "./activePerson";
 import { saveAccountCheck, type Boot } from "./boot";
@@ -39,6 +39,7 @@ interface SessionValue {
 const SessionContext = createContext<SessionValue | null>(null);
 
 export const profileKey = (userId: string | null | undefined) => ["profile", userId ?? "none"] as const;
+export const profileStatusKey = (userId: string | null | undefined) => ["profile-status", userId ?? "none"] as const;
 
 export function SessionProvider({ children, boot }: { children: ReactNode; boot: Boot }) {
   const qc = useQueryClient();
@@ -97,17 +98,35 @@ export function SessionProvider({ children, boot }: { children: ReactNode; boot:
     },
   });
   const profile = profileQuery.data;
-  const profileComplete = profile !== undefined ? profile !== null && missingPatientFields(profile).length === 0 : saved?.profileComplete;
   const patientId = profile?.id ?? saved?.patientId ?? null;
+
+  // The server's own answer (my_profile_status). The local check routes at once; if the
+  // server says the profile is incomplete, the person goes to Complete profile.
+  const statusQuery = useQuery({
+    queryKey: profileStatusKey(userId),
+    enabled: !!userId && kind === "patient",
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("my_profile_status");
+      if (error) throw error;
+      const s = (data ?? {}) as { is_patient?: unknown; complete?: unknown };
+      return { isPatient: s.is_patient === true, complete: s.complete === true };
+    },
+  });
+  const localComplete = profile !== undefined ? profile !== null && missingPatientFields(profile).length === 0 : saved?.profileComplete;
+  const profileComplete = combineProfileChecks(localComplete, statusQuery.data, {
+    waitForServer: !returning || !saved, serverFailed: statusQuery.isError || statusQuery.fetchStatus === "paused",
+  });
 
   // Keep the saved check in step with the latest answers.
   const freshKind = kindQuery.data;
   useEffect(() => {
     if (!userId || freshKind === undefined) return;
     if (freshKind === "patient" && profile === undefined) return;
+    if (freshKind === "patient" && profileComplete === undefined) return;
     const next: AccountCheck = {
       userId, kind: freshKind,
-      profileComplete: freshKind === "patient" && profile != null && missingPatientFields(profile).length === 0,
+      profileComplete: freshKind === "patient" && profileComplete === true,
       patientId: freshKind === "patient" ? profile?.id ?? null : null,
     };
     setCheck((old) => {
@@ -115,7 +134,7 @@ export function SessionProvider({ children, boot }: { children: ReactNode; boot:
       saveAccountCheck(next);
       return next;
     });
-  }, [userId, freshKind, profile]);
+  }, [userId, freshKind, profile, profileComplete]);
 
   const signOut = useCallback(async () => {
     await wipe();
@@ -126,6 +145,7 @@ export function SessionProvider({ children, boot }: { children: ReactNode; boot:
   const retry = useCallback(() => {
     qc.invalidateQueries({ queryKey: ["role"] });
     qc.invalidateQueries({ queryKey: ["profile"] });
+    qc.invalidateQueries({ queryKey: ["profile-status"] });
   }, [qc]);
 
   const value = useMemo<SessionValue>(() => ({

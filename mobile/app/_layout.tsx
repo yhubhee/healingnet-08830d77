@@ -54,7 +54,8 @@ function Gate({ appLock }: { appLock: boolean }) {
   const state = { signedIn, returning, kind, profileComplete };
   const target = gateTarget({ ...state, first });
   const waiting = waitingForCheck(state);
-  const inApp = signedIn && kind === "patient" && (profileComplete === true || (returning && profileComplete === undefined));
+  // Nothing of the app runs (prefetch, reminders, push taps) until the profile is known to be complete.
+  const inApp = signedIn && kind === "patient" && profileComplete === true;
 
   useEffect(() => { if (target) router.replace(target); }, [target]);
 
@@ -95,7 +96,8 @@ function Gate({ appLock }: { appLock: boolean }) {
     return stop;
   }, [inApp, showPersonFor]);
 
-  // Only a fresh sign-in waits for its first check; a returning patient never sees this.
+  // Shown only while nothing is known about the account (a fresh sign-in, or a stored
+  // session with no saved check); a returning patient with a saved check never sees this.
   const loadError = waiting ? (kindError ?? profileError) : null;
   const open = OPEN_ROUTES.includes(first);
 
@@ -105,6 +107,8 @@ function Gate({ appLock }: { appLock: boolean }) {
         {/* No slide when the app opens or the account changes: the first screen is simply there. */}
         <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
         <Stack.Screen name="(auth)" options={{ animation: "none" }} />
+        {/* While the profile is incomplete there is no swiping back out of Complete profile. */}
+        <Stack.Screen name="complete-profile" options={{ gestureEnabled: profileComplete !== false }} />
       </Stack>
       {waiting && !open && !loadError && online ? (
         <FullScreen>

@@ -22,7 +22,7 @@ import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { addDays, DAY_NAMES, dayChip, dayOfWeek, DEFAULT_SLOTS, fmt12, fmtLongDate, halfHours, lagosNowTime, lagosToday } from "@/shared/dates";
-import { dbMessage } from "@/shared/errors";
+import { dbMessage, profileIncompleteRoute } from "@/shared/errors";
 import { forPerson, personWithAge } from "@/shared/family";
 import { ratingLabel, ratingSpoken } from "@/shared/reviews";
 import { fonts, MIN_TOUCH, radius, space, useTheme } from "@/theme";
@@ -127,6 +127,14 @@ export default function Book() {
       p_reason: reason.trim().slice(0, 500) || undefined,
     }, person.isMe ? null : person.patientId, ownId));
     setBooking(false);
+    const unfinished = profileIncompleteRoute(error);
+    if (unfinished) {
+      // The database refuses booking until the account holder's own profile is complete.
+      toast.info(unfinished.toast);
+      qc.invalidateQueries({ queryKey: ["profile"] });
+      qc.invalidateQueries({ queryKey: ["profile-status"] });
+      return router.replace(unfinished.route);
+    }
     if (error) return toast.error(`Couldn't book the appointment. ${dbMessage(error)}`);
     qc.invalidateQueries({ queryKey: ["appointments"] });
     qc.invalidateQueries({ queryKey: ["family-next"] });

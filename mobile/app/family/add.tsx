@@ -1,6 +1,7 @@
 // Add a family member: name, date of birth, sex and relationship. Someone 18 or over needs
 // the tick box saying the guardian has their permission. The database makes the same checks
 // and its own messages are shown as written. After adding, the next screen is "Verify".
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -13,7 +14,7 @@ import { activePerson } from "@/lib/activePerson";
 import { useAddFamilyMember } from "@/lib/family";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { lagosToday } from "@/shared/dates";
-import { dbMessage } from "@/shared/errors";
+import { dbMessage, profileIncompleteRoute } from "@/shared/errors";
 import { EMPTY_FAMILY_FORM, needsPermission, permissionLabel, RELATIONSHIPS, validateFamilyForm, type FamilyForm } from "@/shared/family";
 import { MIN_TOUCH, space, useTheme } from "@/theme";
 
@@ -24,6 +25,7 @@ export default function AddFamilyMember() {
   const toast = useToast();
   const online = useOnline();
   const add = useAddFamilyMember();
+  const qc = useQueryClient();
   const [form, setForm] = useState<FamilyForm>(EMPTY_FAMILY_FORM);
   const [tried, setTried] = useState(false);
 
@@ -44,6 +46,14 @@ export default function AddFamilyMember() {
       activePerson.set(id);
       router.replace({ pathname: "/family/verify", params: { id, added: "1" } });
     } catch (e) {
+      const unfinished = profileIncompleteRoute(e);
+      if (unfinished) {
+        // The database refuses adding family until the account holder's own profile is complete.
+        toast.info(unfinished.toast);
+        qc.invalidateQueries({ queryKey: ["profile"] });
+        qc.invalidateQueries({ queryKey: ["profile-status"] });
+        return router.replace(unfinished.route);
+      }
       toast.error(dbMessage(e));
     }
   }

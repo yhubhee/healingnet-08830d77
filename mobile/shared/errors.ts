@@ -58,6 +58,18 @@ export function friendlyError(e: unknown, fallback = "Something went wrong. Plea
   return fallback;
 }
 
+export const FINISH_PROFILE_FIRST = "Finish your profile first.";
+
+/**
+ * The database refuses booking and adding family members while the account holder's own
+ * profile is incomplete (hint profile_incomplete). When a call fails that way the app goes
+ * to Complete profile with a toast, instead of showing the error.
+ */
+export function profileIncompleteRoute(e: unknown): { route: "/complete-profile"; toast: string } | null {
+  const o = (typeof e === "object" ? e : null) as ErrorLike;
+  return o?.hint === "profile_incomplete" ? { route: "/complete-profile", toast: FINISH_PROFILE_FIRST } : null;
+}
+
 /**
  * For database functions that raise plain-English messages (booking, appointments, account
  * deletion): the database's own message, except for network failures. Same as the website's
