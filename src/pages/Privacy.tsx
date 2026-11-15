@@ -11,7 +11,11 @@ import { SUPPORT_EMAIL } from "@/components/marketing/content";
  *   - how long each kind of record is kept (only described in general terms below);
  *   - the name of the email delivery provider (emails are sent over SMTP; the provider is
  *     set in the server's settings, so it is not named here);
- *   - whether guardians need anything more than the tick box for adult family members.
+ *   - whether guardians need anything more than the tick box for adult family members;
+ *   - family verification documents (birth and marriage certificates, court orders): the
+ *     lawful basis for asking, how long an approved document is kept, and who on the
+ *     team may open them;
+ *   - speed data: whether sharing it by default (with a switch to turn it off) is acceptable.
  * It makes no claim of certification or compliance. Keep it that way unless that changes.
  * The Play Store listing links to this page, and to /delete-account.
  */
@@ -21,7 +25,7 @@ export default function Privacy() {
     <LegalPage
       title="Privacy policy"
       description="How HealingNet collects, uses and protects your personal and health information, on the website and in the app."
-      updated="13 November 2026"
+      updated="14 November 2026"
     >
       <p>This policy explains what information HealingNet collects, why, who handles it, and the choices you have. It covers the HealingNet website and the HealingNet patient app for Android.</p>
 
@@ -41,7 +45,7 @@ export default function Privacy() {
         <li><strong>For hospitals and pharmacies:</strong> organisation details, staff accounts and subscription information.</li>
         <li><strong>Payment records.</strong> Card details are entered with our payment provider, Paystack, and are not stored by HealingNet.</li>
       </ul>
-      <p>The app asks for the camera and photos only to set a profile picture, and for the calendar only when you ask it to add an appointment.</p>
+      <p>The app asks for the camera and photos only to set a profile picture and to send a document that proves a family relationship, and for the calendar only when you ask it to add an appointment.</p>
 
       <h2>Family profiles</h2>
       <p>A patient can add family members, such as children or elderly parents, and manage their health care from their own account. If you do this:</p>
@@ -53,6 +57,16 @@ export default function Privacy() {
         <li>You can remove a family member at any time in Settings. Their open appointments are cancelled. If a hospital has treated them, that hospital keeps its medical records.</li>
       </ul>
 
+      <h3>Proving a family relationship</h3>
+      <p>A family member's health records are sensitive, so we ask you to show that you are who you say you are to them. For each family member you add, we ask for one legal document that proves the relationship: for example a birth certificate, a marriage certificate, an adoption or guardianship order, or a sworn affidavit.</p>
+      <ul>
+        <li><strong>Why we ask.</strong> To stop someone adding a person they have no right to act for and then reading or changing that person's health records.</li>
+        <li><strong>Who sees it.</strong> Only you and HealingNet's verification team. Hospitals, doctors and pharmacies never see it. A team member opens it only to check it, through a link that stops working after 5 minutes, and every decision is recorded.</li>
+        <li><strong>How it is stored.</strong> Privately, in storage that is not open to the public, in a folder that only your account and the verification team can read.</li>
+        <li><strong>What happens if you do not send one.</strong> You have 3 days after adding a family member. After that, or if a document is not accepted, that family member is locked: you cannot see or change their records or book for them until a document is accepted. We tell you the reason when a document is not accepted.</li>
+        <li><strong>When it is deleted.</strong> When you remove the family member, their documents are deleted, except one that is still being checked or has been approved, which is kept as the record of that check.</li>
+      </ul>
+
       <h2>How we use it</h2>
       <ul>
         <li>To provide the service: bookings, consultations, prescriptions, records, reminders and billing.</li>
@@ -60,6 +74,15 @@ export default function Privacy() {
         <li>To contact you about your account, bookings, results and payments, by email, in the app and by push notification.</li>
       </ul>
       <p>We do not sell your information, and we do not use your health information for advertising.</p>
+
+      <h2>Speed data</h2>
+      <p>To find and fix slow screens, the app and the website measure how long screens, requests and start-up take, and send us those measurements.</p>
+      <ul>
+        <li><strong>What it is.</strong> The kind of screen or request (for example "Visits" or "load prescriptions", never which visit or which prescription), how long it took, whether it worked, the app version, whether it was Android, iPhone or the website, and whether the phone was on Wi-Fi or mobile data.</li>
+        <li><strong>What it is not.</strong> It has no personal or health information: no name, no account or record number, no address of a page with an id in it, and nothing you typed. It is not stored against your account.</li>
+        <li><strong>How long we keep it.</strong> 30 days, then it is removed.</li>
+        <li><strong>Turning it off.</strong> In the app, go to Me, then Settings, and turn off "Share speed data". On the website, go to Settings, then Privacy. When it is off, nothing is measured or sent.</li>
+      </ul>
 
       <h2>Push notifications</h2>
       <p>If you allow notifications, the app tells you about things like a confirmed appointment or a ready lab result. By default the text on your lock screen is general (for example "Open HealingNet to see the details") and does not show health details. You can choose to show details, choose which kinds of alerts you get, or turn notifications off, in the app's settings. Notifications about a family member come to you; inside the app, and on the lock screen only if you chose to show details, they begin with their first name.</p>
@@ -95,7 +118,7 @@ export default function Privacy() {
       <p>The Nigeria Data Protection Act 2023 gives you rights over your personal information, including to see it, to have it corrected or deleted, to object to some uses of it, and to withdraw permission you have given. You can also complain to the Nigeria Data Protection Commission. To use your rights, email {mail} and we will respond as the law requires.</p>
 
       <h2>How long we keep information</h2>
-      <p>We keep account information while your account is open. Hospitals keep medical records for as long as the law and their own obligations require. Push notification records are removed after about 30 days.</p>
+      <p>We keep account information while your account is open. Hospitals keep medical records for as long as the law and their own obligations require. Push notification records are removed after about 30 days. Speed data is removed after 30 days. Family verification documents are kept as described under "Proving a family relationship".</p>
 
       <h2>Children</h2>
       <p>HealingNet is for adults aged 18 and over. Information about a child is only held when a parent or guardian adds the child as a family member, or when a hospital treats the child.</p>
