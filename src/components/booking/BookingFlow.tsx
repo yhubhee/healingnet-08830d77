@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { addDays, dayOfWeek, fmtLongDate, lagosNowTime, lagosToday } from "@/lib/dates";
 import { activePerson, useActivePatient } from "@/hooks/useFamily";
-import { friendlyError } from "@/lib/errors";
+import { friendlyError, profileIncompleteRoute } from "@/lib/errors";
 import { ageText, forPerson, personWithAge, relationshipLabel } from "@/lib/family";
 import { cn } from "@/lib/utils";
 
@@ -124,7 +124,16 @@ export function BookingFlow({
       p_reason: reason.trim().slice(0, 500) || undefined,
     }, person.isMe ? null : person.patientId, person.ownPatientId));
     setBooking(false);
+    const unfinished = profileIncompleteRoute(error);
+    if (unfinished) {
+      // The database refuses booking until the account holder's own profile is complete.
+      toast.info(unfinished.toast);
+      qc.invalidateQueries({ queryKey: ["patient-profile"] });
+      navigate(unfinished.route, { replace: true });
+      return;
+    }
     if (error) { toast.error("Couldn't book the appointment", { description: dbMessage(error) }); return; }
+    qc.invalidateQueries({ queryKey: ["patient-health-overview"] });
     qc.invalidateQueries({ queryKey: ["patient-appointments"] });
     qc.invalidateQueries({ queryKey: ["patient", "appointments"] });
     toast.success("Appointment requested", { description: `${hospital.name} will confirm ${person.isMe ? "your" : `${person.firstName}'s`} ${fmtLongDate(date)} ${fmt12(time)} visit. We'll notify you.` });

@@ -13,11 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePatientProfile } from "@/hooks/usePatientData";
+import { usePatientProfile, useProfileStatus } from "@/hooks/usePatientData";
 import { ALLOWED, pick } from "@/lib/allowed";
 import { friendlyError } from "@/lib/errors";
 import { lagosToday } from "@/lib/dates";
-import { compactPhone, isNigerianPhone, missingPatientFields, NIGERIAN_STATES } from "@/lib/patientProfile";
+import { compactPhone, isNigerianPhone, missingPatientFields, NIGERIAN_STATES, profileProgressText } from "@/lib/patientProfile";
 
 const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const GENOTYPES = ["AA", "AS", "AC", "SS", "SC", "CC"];
@@ -52,6 +52,7 @@ const selectCls = "flex h-10 w-full rounded-md border border-input bg-background
 
 export default function CompleteProfile() {
   const { data: p, isLoading } = usePatientProfile();
+  const status = useProfileStatus();
   const [params] = useSearchParams();
   const editing = params.get("edit") === "1";
   const navigate = useNavigate();
@@ -79,7 +80,9 @@ export default function CompleteProfile() {
 
   const errors = tried ? validate(form) : {};
   const set = (k: keyof Form) => (v: string) => setForm((f) => ({ ...f!, [k]: v }));
-  const firstTime = !editing && missingPatientFields(p).length > 0;
+  // First time: the local check, or the server saying the profile is incomplete.
+  const firstTime = missingPatientFields(p).length > 0 || (!editing && status.data?.isPatient === true && !status.data.complete);
+  const progress = profileProgressText(validate(form));
 
   const save = async () => {
     setTried(true);
@@ -122,6 +125,13 @@ export default function CompleteProfile() {
         <p className="text-sm text-muted-foreground mb-5">
           {firstTime ? "Hospitals need these details to book and treat you. It takes about 2 minutes." : "Keep your details up to date so hospitals can reach you."}
         </p>
+
+        {firstTime && (
+          <div className="mb-5" role="progressbar" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.done} aria-label={`${progress.text}. Required details`}>
+            <p className="mb-1 text-sm font-medium">{progress.text}</p>
+            <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${(progress.done / progress.total) * 100}%` }} /></div>
+          </div>
+        )}
 
         <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); save(); }} noValidate>
           <section className="bg-card border border-border rounded-xl p-4 sm:p-6 space-y-4">

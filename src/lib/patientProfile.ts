@@ -23,6 +23,13 @@ export function missingPatientFields(p: PatientLike): PatientRequired[] {
   return PATIENT_REQUIRED.filter((k) => !String(p[k] ?? "").trim());
 }
 
+/** "3 of 8 done": how many of the required details are filled in and valid so far. */
+export function profileProgressText(errors: Partial<Record<string, string>>): { done: number; total: number; text: string } {
+  const total = PATIENT_REQUIRED.length;
+  const done = PATIENT_REQUIRED.filter((k) => !errors[k]).length;
+  return { done, total, text: `${done} of ${total} done` };
+}
+
 /** Share of required fields filled in, 0–100. */
 export function patientCompleteness(p: PatientLike): number {
   const missing = missingPatientFields(p).length;
