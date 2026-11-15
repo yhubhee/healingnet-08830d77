@@ -41,6 +41,9 @@ const RequirePharmacy = lazy(() => import("./pharmacy/RequirePharmacy").then((m)
 // Public pages load with a light placeholder instead of the dark app one.
 const Public = ({ children }: { children: ReactNode }) => <Suspense fallback={<MarketingFallback />}>{children}</Suspense>;
 
+// Page timing loads with the signed-in code, never on the public pages.
+const PerfRoutes = lazy(() => import("./lib/perf").then((m) => ({ default: m.PerfRoutes })));
+
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 const PharmacyApp = lazy(() => import("./pharmacy/PharmacyApp"));
 
@@ -122,6 +125,13 @@ function AppThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Times pages in the signed-in areas only (speed data needs a signed-in person). */
+function SignedInPerf() {
+  const { pathname } = useLocation();
+  const inApp = /^\/(patient|doctor|hospital|admin|pharmacy|consult)(\/|$)/.test(pathname);
+  return inApp ? <Suspense fallback={null}><PerfRoutes /></Suspense> : null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -129,6 +139,7 @@ const App = () => (
         <AppThemeProvider>
         <Toaster />
         <Sonner />
+        <SignedInPerf />
         <Suspense fallback={<PageLoadingFallback />}>
         <Routes>
           <Route path="/" element={<Landing />} />

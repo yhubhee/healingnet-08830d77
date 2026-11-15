@@ -1,12 +1,13 @@
 import { PatientLayout } from "@/layouts/PatientLayout";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bell, Lock, Globe, Shield, Mail, Loader2 } from "lucide-react";
+import { Bell, Lock, Globe, Shield, Mail, Loader2, Gauge } from "lucide-react";
 import { toast } from "sonner";
 import { useNotificationPrefs, useSaveNotificationPrefs } from "@/hooks/useUserNotifications";
 import { QueryState } from "@/components/common/QueryState";
 import { FamilySection } from "@/components/patient/FamilySection";
 import { friendlyError } from "@/lib/errors";
+import { setSpeedDataEnabled, speedDataEnabled } from "@/lib/perf";
 
 export default function PatientSettings() {
   const { data: prefs, isLoading, isError, error, refetch } = useNotificationPrefs();
@@ -34,6 +35,8 @@ export default function PatientSettings() {
       });
     }
   }, [prefs]);
+
+  const [speedData, setSpeedData] = useState(speedDataEnabled());
 
   function update(patch: Partial<typeof form>) {
     const next = { ...form, ...patch };
@@ -86,6 +89,8 @@ export default function PatientSettings() {
         <Card title="Privacy" icon={Shield}>
           <Toggle label="Allow doctors to message me" Icon={Mail} checked={true} onChange={() => {}} />
           <Toggle label="Share anonymized data for research" Icon={Mail} checked={false} onChange={() => {}} />
+          <Toggle label="Share speed data" Icon={Gauge} checked={speedData} onChange={(v) => { setSpeedDataEnabled(v); setSpeedData(v); }} />
+          <p className="text-xs text-muted-foreground">Helps us find slow pages. No health or personal information is sent. This switch is for this browser.</p>
         </Card>
 
         <Card title="Security" icon={Lock}>

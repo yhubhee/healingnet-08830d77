@@ -31,6 +31,8 @@ export interface Overview {
     verifications_pending: number; refunds_needed: number; contact_unhandled: number;
     // Added in the browser from admin_pharmacy_queue() (0 if that call fails).
     pharmacies_pending: number; pharmacists_pending: number; medicine_reports_open: number;
+    // Added in the browser from admin_family_documents() (0 if that call fails).
+    family_documents_pending: number;
   };
 }
 
@@ -164,6 +166,8 @@ export const keys = {
   emailQueue: ["admin", "email-queue"] as const,
   messages: ["admin", "messages"] as const,
   audit: ["admin", "audit"] as const,
+  perf: ["admin", "perf"] as const,
+  familyDocuments: ["admin", "family-documents"] as const,
 };
 
 const live = { refetchInterval: 60_000, refetchOnWindowFocus: true } as const;
@@ -172,9 +176,10 @@ export function useOverview() {
   return useQuery({
     queryKey: keys.overview,
     queryFn: async () => {
-      const [o, ph] = await Promise.all([
+      const [o, ph, fam] = await Promise.all([
         call<Overview>("admin_overview"),
         call<{ pharmacies: unknown[]; members: unknown[]; open_reports: number }>("admin_pharmacy_queue").catch(() => null),
+        call<{ total_count: number | string }[]>("admin_family_documents", { p_status: "pending", p_limit: 1, p_offset: 0 }).catch(() => null),
       ]);
       return {
         ...o,
@@ -183,6 +188,7 @@ export function useOverview() {
           pharmacies_pending: ph?.pharmacies?.length ?? 0,
           pharmacists_pending: ph?.members?.length ?? 0,
           medicine_reports_open: Number(ph?.open_reports ?? 0),
+          family_documents_pending: Number(fam?.[0]?.total_count ?? 0),
         },
       } as Overview;
     },
@@ -361,6 +367,89 @@ export function useMarkContactHandled() {
 // doctor-credentials bucket (its policy allows platform admins).
 export async function signedCredentialUrl(path: string): Promise<string> {
   const { data, error } = await supabase.storage.from("doctor-credentials").createSignedUrl(path, 60);
+  if (error || !data) throw error ?? new Error("Could not open the document");
+  return data.signedUrl;
+}
+
+// ---------------------------------------------------------------------------
+// Performance (speed data from the app and the website; no user ids, no health data)
+// ---------------------------------------------------------------------------
+export type PerfKind = "screen" | "request" | "startup";
+export interface PerfRow {
+  kind: PerfKind; name: string; samples: number; p50_ms: number; p90_ms: number; max_ms: number;
+  slow_ms: number; slow_share: number; error_share: number; last_seen: string; versions: string[] | null;
+}
+export interface PerfTrendPoint { day: string; app_version: string | null; platform: string; samples: number; p50_ms: number; p90_ms: number }
+
+export function usePerfSummary(f: { days: number; platform: string; kind: string }) {
+  return useQuery({
+    queryKey: [...keys.perf, "summary", f],
+    queryFn: async () => {
+      const rows = await call<PerfRow[]>("admin_perf_summary", { p_days: f.days, p_platform: nul(f.platform), p_kind: nul(f.kind), p_min_samples: 5 });
+      return (rows ?? []).map((r) => ({
+        ...r, samples: Number(r.samples) || 0, slow_share: Number(r.slow_share) || 0, error_share: Number(r.error_share) || 0,
+      })).sort((a, b) => b.p90_ms - a.p90_ms);
+    },
+    meta,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function usePerfTrend(row: { kind: string; name: string } | null, days: number) {
+  return useQuery({
+    queryKey: [...keys.perf, "trend", row?.kind, row?.name, days],
+    enabled: !!row,
+    queryFn: async () => {
+      const rows = await call<PerfTrendPoint[]>("admin_perf_trend", { p_kind: row!.kind, p_name: row!.name, p_days: days });
+      return (rows ?? []).map((r) => ({ ...r, samples: Number(r.samples) || 0 }));
+    },
+    meta,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Family documents (proof of relationship, uploaded by guardians)
+// ---------------------------------------------------------------------------
+export interface FamilyDocument {
+  id: string; patient_id: string; member_first_name: string; member_last_name: string; member_date_of_birth: string | null;
+  member_gender: string | null; relationship: string; document_type: string; storage_path: string; status: string;
+  reject_reason: string | null; submitted_at: string; reviewed_at: string | null; guardian_user_id: string;
+  guardian_first_name: string | null; guardian_last_name: string | null; guardian_email: string | null; guardian_phone: string | null;
+  previous_rejections: number; total_count: number;
+}
+export type FamilyDocumentStatus = "pending" | "approved" | "rejected";
+
+export function useFamilyDocuments(f: { status: FamilyDocumentStatus; page: number }) {
+  return useQuery({
+    queryKey: [...keys.familyDocuments, f],
+    queryFn: async (): Promise<Paged<FamilyDocument>> => {
+      const rows = await call<FamilyDocument[]>("admin_family_documents", { p_status: f.status, p_limit: PAGE_SIZE, p_offset: (f.page - 1) * PAGE_SIZE });
+      return { total: Number(rows?.[0]?.total_count ?? 0), rows: rows ?? [] };
+    },
+    meta,
+    placeholderData: keepPreviousData,
+    ...(f.status === "pending" ? live : {}),
+  });
+}
+
+export function useReviewFamilyDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; approve: boolean; reason?: string }) =>
+      call("admin_review_family_document", { p_document_id: v.id, p_approve: v.approve, p_reason: v.reason ?? null }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: keys.familyDocuments });
+      qc.invalidateQueries({ queryKey: keys.overview });
+      qc.invalidateQueries({ queryKey: keys.audit });
+    },
+  });
+}
+
+// The only access to a family document: a 5-minute signed URL from the private bucket (its
+// policy allows platform admins). The file is shown in the browser; it is never downloaded
+// to a server or saved anywhere else.
+export async function signedFamilyDocumentUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from("family-documents").createSignedUrl(path, 300);
   if (error || !data) throw error ?? new Error("Could not open the document");
   return data.signedUrl;
 }

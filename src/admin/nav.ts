@@ -1,5 +1,5 @@
 import {
-  Activity, CreditCard, Gauge, HeartPulse, Hospital, LayoutDashboard, Mail, Pill, ScrollText, ShieldAlert, ShieldCheck, Stethoscope,
+  Activity, CreditCard, Gauge, HeartPulse, Timer, Hospital, LayoutDashboard, Mail, Pill, ScrollText, ShieldAlert, ShieldCheck, Stethoscope,
   type LucideIcon,
 } from "lucide-react";
 import type { Overview } from "./api";
@@ -16,7 +16,7 @@ export const NAV: NavItem[] = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
   {
     to: "/admin/verifications", label: "Verifications", short: "Verify", icon: ShieldCheck,
-    badge: (o) => o.inbox.verifications_pending + (o.inbox.pharmacies_pending ?? 0) + (o.inbox.pharmacists_pending ?? 0),
+    badge: (o) => o.inbox.verifications_pending + (o.inbox.pharmacies_pending ?? 0) + (o.inbox.pharmacists_pending ?? 0) + (o.inbox.family_documents_pending ?? 0),
   },
   { to: "/admin/hospitals", label: "Hospitals", icon: Hospital },
   { to: "/admin/doctors", label: "Doctors", icon: Stethoscope },
@@ -25,6 +25,7 @@ export const NAV: NavItem[] = [
   { to: "/admin/payments", label: "Payments", icon: CreditCard, badge: (o) => o.inbox.refunds_needed },
   { to: "/admin/activity", label: "Activity", icon: Activity },
   { to: "/admin/health", label: "System health", icon: HeartPulse },
+  { to: "/admin/performance", label: "Performance", short: "Speed", icon: Timer },
   { to: "/admin/messages", label: "Messages", icon: Mail, badge: (o) => o.inbox.contact_unhandled },
   { to: "/admin/audit", label: "Audit log", icon: ScrollText },
 ];

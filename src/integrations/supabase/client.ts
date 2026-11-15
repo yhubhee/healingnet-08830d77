@@ -2,6 +2,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
+import { attachPerf, timedFetch } from '@/lib/perf';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -14,5 +15,19 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: brokeredPreviewStorage(),
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
+  // Times each request by type and target (src/lib/perf.ts); the request itself is untouched.
+  global: { fetch: timedFetch },
 });
+
+// Speed data: sent only for a signed-in person (the database function requires it).
+attachPerf(
+  async (events) => {
+    const { error } = await supabase.rpc('log_perf_events', { p_events: events as unknown as never });
+    return !error;
+  },
+  (listener) => {
+    supabase.auth.getSession().then(({ data }) => listener(!!data.session)).catch(() => {});
+    supabase.auth.onAuthStateChange((_event, session) => listener(!!session));
+  },
+);

@@ -14,6 +14,7 @@ const MedicineReports = lazy(() => import("./pages/MedicineReports"));
 const Payments = lazy(() => import("./pages/Payments"));
 const ActivityPage = lazy(() => import("./pages/Activity"));
 const Health = lazy(() => import("./pages/Health"));
+const Performance = lazy(() => import("./pages/Performance"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Audit = lazy(() => import("./pages/Audit"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -44,6 +45,7 @@ export default function AdminApp() {
           <Route path="payments" element={<Payments />} />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="health" element={<Health />} />
+          <Route path="performance" element={<Performance />} />
           <Route path="messages" element={<Messages />} />
           <Route path="audit" element={<Audit />} />
           <Route path="*" element={<NotFound />} />
