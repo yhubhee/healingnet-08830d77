@@ -1,10 +1,11 @@
 import { ReactNode, useState } from "react";
+import { BrandMark } from "@/components/common/BrandMark";
 import { DoctorSidebar } from "@/components/doctor/DoctorSidebar";
 import { DoctorHeader } from "@/components/doctor/DoctorHeader";
 import { VerificationGate } from "@/components/doctor/VerificationGate";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu, Heart } from "lucide-react";
+import { Menu } from "lucide-react";
 import { DataErrorBanner } from "@/components/ui/data-error-banner";
 
 export function DoctorLayout({ children }: { children: ReactNode }) {
@@ -26,9 +27,7 @@ export function DoctorLayout({ children }: { children: ReactNode }) {
             </SheetContent>
           </Sheet>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-info flex items-center justify-center">
-              <Heart className="w-3.5 h-3.5 text-primary-foreground" fill="currentColor" />
-            </div>
+            <BrandMark className="h-7 w-7" />
             <span className="font-heading font-bold text-sm">HealingNet</span>
           </div>
         </header>

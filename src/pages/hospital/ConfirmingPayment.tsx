@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { BrandMark } from "@/components/common/BrandMark";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { getStaffHospitalId } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, Clock, Heart } from "lucide-react";
+import { Loader2, CheckCircle2, Clock } from "lucide-react";
 
 /**
  * Payment is confirmed by the Paystack webhook — never by this redirect.
@@ -59,9 +60,7 @@ export default function ConfirmingPayment() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-card to-background">
       <div className="w-full max-w-md text-center">
         <Link to="/" className="flex items-center gap-2 justify-center mb-8 font-heading font-bold text-2xl">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
-            <Heart className="w-5 h-5 text-primary-foreground" fill="currentColor" />
-          </div>
+          <BrandMark className="h-10 w-10" />
           HealingNet
         </Link>
         <div className="bg-card border border-border rounded-2xl p-10">

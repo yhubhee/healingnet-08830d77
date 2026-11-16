@@ -1,5 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Calendar, Users, Pill, FlaskConical, MessageSquare, User, LogOut, Heart, Settings, Mail, Bell, Building2 } from "lucide-react";
+import { BrandMark } from "@/components/common/BrandMark";
+import { LayoutDashboard, Calendar, Users, Pill, FlaskConical, MessageSquare, User, LogOut, Settings, Mail, Bell, Building2 } from "lucide-react";
 import { signOut } from "@/hooks/useAuth";
 import { useDoctor, useDoctorBadges } from "@/hooks/useDoctor";
 import { cn } from "@/lib/utils";
@@ -26,9 +27,7 @@ export function DoctorSidebar() {
   return (
     <aside className="w-64 h-screen md:h-auto md:min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col">
       <div className="p-5 flex items-center gap-2 border-b border-sidebar-border">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
-          <Heart className="w-4 h-4 text-primary-foreground" fill="currentColor" />
-        </div>
+        <BrandMark className="h-9 w-9" />
         <div><div className="font-heading font-bold text-sm">HealingNet</div><div className="text-xs text-muted-foreground">Doctor Portal</div></div>
       </div>
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">

@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { BrandMark } from "@/components/common/BrandMark";
 import { NavLink, useLocation, Link } from "react-router-dom";
-import { LayoutDashboard, Calendar, Pill, FlaskConical, FileText, MessageSquare, User, Settings, Bell, LogOut, Menu, X, Heart, Stethoscope, Award, CalendarPlus, HeartPulse } from "lucide-react";
+import { LayoutDashboard, Calendar, Pill, FlaskConical, FileText, MessageSquare, User, Settings, Bell, LogOut, Menu, X, Stethoscope, Award, CalendarPlus, HeartPulse } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { signOut } from "@/hooks/useAuth";
@@ -35,9 +36,7 @@ export function PatientSidebar() {
         open ? "translate-x-0" : "-translate-x-full"
       )}>
         <Link to="/patient" className="flex items-center gap-3 px-6 py-5 border-b border-sidebar-border">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
-            <Heart className="w-5 h-5 text-primary-foreground" fill="currentColor" />
-          </div>
+          <BrandMark className="h-10 w-10" />
           <div>
             <h1 className="font-heading font-bold">HealingNet</h1>
             <p className="text-xs text-muted-foreground">Patient Portal</p>

@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { BrandMark } from "@/components/common/BrandMark";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, ClipboardList, Heart, History, Home, LogOut, Menu, Receipt, ScanLine, Settings, Users } from "lucide-react";
+import { Bell, ClipboardList, History, Home, LogOut, Menu, Receipt, ScanLine, Settings, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { signOut } from "@/hooks/useAuth";
 import { useUserNotifications, useRealtimeUserNotifications } from "@/hooks/useUserNotifications";
@@ -77,9 +78,7 @@ export function PharmacyLayout({ children, banner = true }: { children: ReactNod
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex">
         <Link to="/pharmacy" className="flex items-center gap-2 border-b border-sidebar-border p-5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-info">
-            <Heart className="h-4 w-4 text-primary-foreground" fill="currentColor" aria-hidden />
-          </span>
+          <BrandMark className="h-9 w-9" />
           <span className="min-w-0">
             <span className="block font-heading text-sm font-bold">HealingNet</span>
             <span className="block truncate text-xs text-muted-foreground">{me?.pharmacy.name ?? "Pharmacy"}</span>
@@ -94,9 +93,7 @@ export function PharmacyLayout({ children, banner = true }: { children: ReactNod
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar */}
         <header className="flex items-center gap-2 border-b border-border bg-sidebar px-4 py-3 md:hidden">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-info">
-            <Heart className="h-3.5 w-3.5 text-primary-foreground" fill="currentColor" aria-hidden />
-          </span>
+          <BrandMark className="h-7 w-7" />
           <span className="min-w-0 flex-1 truncate font-heading text-sm font-bold">{me?.pharmacy.name ?? "Pharmacy"}</span>
           <Link to="/pharmacy/notifications" className="relative flex h-11 w-11 items-center justify-center" aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`}>
             <Bell className="h-5 w-5" aria-hidden />

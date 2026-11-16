@@ -1,10 +1,7 @@
-// Builds the social sharing image and the icons from public/logo.png (the logo is not redesigned,
-// only the cross mark is cropped out of it):
+// Builds the social sharing image from the HealingNet logo (scripts/brand/healingnet-logo.png):
 //   public/og-image.png          1200x630 Open Graph / Twitter card
-//   public/favicon.svg           the cross mark, wrapped in SVG
-//   public/apple-touch-icon.png  180x180
-//   public/icon-192.png, public/icon-512.png + public/site.webmanifest
-//   public/images/logo-mark.png  96x96 mark for the website header
+//   public/site.webmanifest
+// The favicon, the icons and the header mark are made by scripts/make-brand.mjs.
 //
 // Usage: npm run images   (or: node scripts/make-og.mjs)
 import { mkdir, writeFile } from "node:fs/promises";
@@ -22,35 +19,18 @@ const SAND = "#F4EFE6";
 const OFFWHITE = "#FBFAF7";
 const CORAL = "#EE6C4D";
 
-// The cross mark sits in the top half of the 512x512 logo, above the wordmark.
-const markArea = await sharp(pub("logo.png")).extract({ left: 170, top: 120, width: 175, height: 175 }).toBuffer();
-const mark = await sharp(markArea).trim().toBuffer();
-
-/** The mark centred on a square background with some breathing room. */
-async function squareIcon(size, background, padding = 0.18) {
-  const inner = Math.round(size * (1 - padding * 2));
-  const resized = await sharp(mark).resize(inner, inner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).toBuffer();
-  return sharp({ create: { width: size, height: size, channels: 4, background } })
-    .composite([{ input: resized, gravity: "center" }])
-    .png({ compressionLevel: 9 })
-    .toBuffer();
+// The "H" mark, cut from the HealingNet logo (the same way scripts/make-brand.mjs does it,
+// which also writes the favicon, the icons and the header mark).
+const { data, info } = await sharp(path.join(root, "scripts/brand/healingnet-logo.png")).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+for (let i = 0; i < info.width * info.height; i++) {
+  const cover = Math.max(0, Math.min(1, (255 - data[i * 4]) / 253));
+  data[i * 4] = 2; data[i * 4 + 1] = 92; data[i * 4 + 2] = 95;
+  data[i * 4 + 3] = Math.round(cover * data[i * 4 + 3]);
 }
+const clean = await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
+const mark = await sharp(await sharp(clean).extract({ left: 0, top: 0, width: Math.round(info.width * 0.24), height: info.height }).toBuffer()).trim().toBuffer();
 
 await mkdir(pub("images"), { recursive: true });
-
-// Header mark (transparent).
-await sharp(mark).resize(96, 96, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ compressionLevel: 9 }).toFile(pub("images/logo-mark.png"));
-
-// Icons.
-await writeFile(pub("apple-touch-icon.png"), await squareIcon(180, "#ffffff"));
-await writeFile(pub("icon-192.png"), await squareIcon(192, "#ffffff"));
-await writeFile(pub("icon-512.png"), await squareIcon(512, "#ffffff"));
-
-const favPng = await sharp(mark).resize(64, 64, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ compressionLevel: 9 }).toBuffer();
-await writeFile(
-  pub("favicon.svg"),
-  `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 64 64" width="64" height="64"><image width="64" height="64" xlink:href="data:image/png;base64,${favPng.toString("base64")}"/></svg>\n`,
-);
 
 await writeFile(
   pub("site.webmanifest"),
@@ -96,4 +76,4 @@ await sharp(Buffer.from(og))
   .png({ compressionLevel: 9 })
   .toFile(pub("og-image.png"));
 
-console.log("og-image.png, favicon.svg, apple-touch-icon.png, icon-192/512.png, site.webmanifest, images/logo-mark.png written.");
+console.log("og-image.png and site.webmanifest written.");

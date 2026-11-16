@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { BrandMark } from "@/components/common/BrandMark";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, User, Building2, Stethoscope, Pill, BadgeCheck } from "lucide-react";
+import { User, Building2, Stethoscope, Pill, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -67,9 +68,7 @@ export default function CompleteSignup() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-card to-background">
       <div className="w-full max-w-lg">
         <Link to="/" className="flex items-center gap-2 justify-center mb-8 font-heading font-bold text-2xl">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
-            <Heart className="w-5 h-5 text-primary-foreground" fill="currentColor" />
-          </div>
+          <BrandMark className="h-10 w-10" />
           HealingNet
         </Link>
         <div className="bg-card border border-border rounded-2xl p-8">

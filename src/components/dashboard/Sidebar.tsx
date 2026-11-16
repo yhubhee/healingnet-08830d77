@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrandMark } from "@/components/common/BrandMark";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,7 +14,6 @@ import {
   LogOut,
   Menu,
   X,
-  Heart,
   Bell,
   User,
   Stethoscope,
@@ -74,9 +74,7 @@ export function Sidebar() {
           {/* Logo */}
           <div className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border">
             <div className="relative">
-              <div className="w-10 h-10 rounded-xl gradient-info flex items-center justify-center animate-pulse-glow">
-                <Heart className="h-5 w-5 text-foreground" />
-              </div>
+              <BrandMark className="h-10 w-10" />
             </div>
             <div>
               <h1 className="text-xl font-heading font-bold text-foreground">

@@ -1,11 +1,12 @@
 // Public prescription check: /verify and /verify/:code. No sign-in needed; the QR on
+import { BrandMark } from "@/components/common/BrandMark";
 // every prescription links here. Only rx_verify's own answer is shown: drugs and
 // patient details appear only when the database returns full === true (a verified
 // pharmacist who may dispense, or the patient). The code is never logged.
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Camera, Heart, Loader2, Search } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,9 +84,7 @@ export default function Verify() {
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-3 border-b border-border bg-sidebar px-4 py-3">
         <Link to={isMember ? "/pharmacy" : "/"} className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-info">
-            <Heart className="h-4 w-4 text-primary-foreground" fill="currentColor" aria-hidden />
-          </span>
+          <BrandMark className="h-8 w-8" />
           <span className="font-heading text-sm font-bold">HealingNet</span>
         </Link>
         {isMember && (
