@@ -116,6 +116,84 @@ export type Database = {
           },
         ]
       }
+      care_plan_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          details: string | null
+          done_at: string | null
+          done_by_patient: boolean
+          due_at: string | null
+          hospital_id: string
+          id: string
+          kind: string
+          patient_id: string
+          remind: boolean
+          reminder_24h_sent_at: string | null
+          reminder_due_sent_at: string | null
+          source_id: string
+          source_type: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          details?: string | null
+          done_at?: string | null
+          done_by_patient?: boolean
+          due_at?: string | null
+          hospital_id: string
+          id?: string
+          kind?: string
+          patient_id: string
+          remind?: boolean
+          reminder_24h_sent_at?: string | null
+          reminder_due_sent_at?: string | null
+          source_id: string
+          source_type: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          details?: string | null
+          done_at?: string | null
+          done_by_patient?: boolean
+          due_at?: string | null
+          hospital_id?: string
+          id?: string
+          kind?: string
+          patient_id?: string
+          remind?: boolean
+          reminder_24h_sent_at?: string | null
+          reminder_due_sent_at?: string | null
+          source_id?: string
+          source_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "care_plan_items_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "care_plan_items_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultation_addenda: {
         Row: {
           author_id: string
@@ -1928,6 +2006,7 @@ export type Database = {
           lat: number | null
           license_number: string | null
           lng: number | null
+          location_updated_at: string | null
           logo_url: string | null
           name: string
           phone: string | null
@@ -1951,6 +2030,7 @@ export type Database = {
           lat?: number | null
           license_number?: string | null
           lng?: number | null
+          location_updated_at?: string | null
           logo_url?: string | null
           name: string
           phone?: string | null
@@ -1974,6 +2054,7 @@ export type Database = {
           lat?: number | null
           license_number?: string | null
           lng?: number | null
+          location_updated_at?: string | null
           logo_url?: string | null
           name?: string
           phone?: string | null
@@ -2284,6 +2365,7 @@ export type Database = {
           notes: string | null
           para: number | null
           patient_id: string
+          patient_notes: string | null
           risk_level: string | null
           status: string | null
           updated_at: string
@@ -2308,6 +2390,7 @@ export type Database = {
           notes?: string | null
           para?: number | null
           patient_id: string
+          patient_notes?: string | null
           risk_level?: string | null
           status?: string | null
           updated_at?: string
@@ -2332,6 +2415,7 @@ export type Database = {
           notes?: string | null
           para?: number | null
           patient_id?: string
+          patient_notes?: string | null
           risk_level?: string | null
           status?: string | null
           updated_at?: string
@@ -2360,6 +2444,94 @@ export type Database = {
           },
           {
             foreignKeyName: "maternity_records_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maternity_visits: {
+        Row: {
+          bp_diastolic: number | null
+          bp_systolic: number | null
+          created_at: string
+          fetal_heart_rate: number | null
+          fundal_height_cm: number | null
+          gestational_weeks: number | null
+          hospital_id: string
+          id: string
+          maternity_record_id: string
+          next_visit_date: string | null
+          notes: string | null
+          oedema: boolean | null
+          patient_id: string
+          presentation: string | null
+          recorded_by: string | null
+          updated_at: string
+          urine_protein: string | null
+          visit_date: string
+          weight_kg: number | null
+        }
+        Insert: {
+          bp_diastolic?: number | null
+          bp_systolic?: number | null
+          created_at?: string
+          fetal_heart_rate?: number | null
+          fundal_height_cm?: number | null
+          gestational_weeks?: number | null
+          hospital_id: string
+          id?: string
+          maternity_record_id: string
+          next_visit_date?: string | null
+          notes?: string | null
+          oedema?: boolean | null
+          patient_id: string
+          presentation?: string | null
+          recorded_by?: string | null
+          updated_at?: string
+          urine_protein?: string | null
+          visit_date?: string
+          weight_kg?: number | null
+        }
+        Update: {
+          bp_diastolic?: number | null
+          bp_systolic?: number | null
+          created_at?: string
+          fetal_heart_rate?: number | null
+          fundal_height_cm?: number | null
+          gestational_weeks?: number | null
+          hospital_id?: string
+          id?: string
+          maternity_record_id?: string
+          next_visit_date?: string | null
+          notes?: string | null
+          oedema?: boolean | null
+          patient_id?: string
+          presentation?: string | null
+          recorded_by?: string | null
+          updated_at?: string
+          urine_protein?: string | null
+          visit_date?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maternity_visits_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maternity_visits_maternity_record_id_fkey"
+            columns: ["maternity_record_id"]
+            isOneToOne: false
+            referencedRelation: "maternity_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maternity_visits_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
@@ -4027,22 +4199,28 @@ export type Database = {
         Row: {
           actual_end: string | null
           actual_start: string | null
+          admit_at: string | null
           anaesthesia_type: string | null
           anaesthetist_id: string | null
           blood_loss_ml: number | null
           complications: string | null
+          consent_signed_at: string | null
           created_at: string
           duration_minutes: number | null
+          fasting_from: string | null
+          fasting_reminder_sent_at: string | null
           hospital_id: string
           id: string
           notes: string | null
           operative_findings: string | null
           patient_id: string
+          patient_instructions: string | null
           post_op_diagnosis: string | null
           post_op_instructions: string | null
           pre_op_diagnosis: string | null
           procedure_name: string
           procedure_type: string | null
+          reminder_24h_sent_at: string | null
           scheduled_date: string
           scheduled_time: string
           status: string | null
@@ -4053,22 +4231,28 @@ export type Database = {
         Insert: {
           actual_end?: string | null
           actual_start?: string | null
+          admit_at?: string | null
           anaesthesia_type?: string | null
           anaesthetist_id?: string | null
           blood_loss_ml?: number | null
           complications?: string | null
+          consent_signed_at?: string | null
           created_at?: string
           duration_minutes?: number | null
+          fasting_from?: string | null
+          fasting_reminder_sent_at?: string | null
           hospital_id: string
           id?: string
           notes?: string | null
           operative_findings?: string | null
           patient_id: string
+          patient_instructions?: string | null
           post_op_diagnosis?: string | null
           post_op_instructions?: string | null
           pre_op_diagnosis?: string | null
           procedure_name: string
           procedure_type?: string | null
+          reminder_24h_sent_at?: string | null
           scheduled_date: string
           scheduled_time: string
           status?: string | null
@@ -4079,22 +4263,28 @@ export type Database = {
         Update: {
           actual_end?: string | null
           actual_start?: string | null
+          admit_at?: string | null
           anaesthesia_type?: string | null
           anaesthetist_id?: string | null
           blood_loss_ml?: number | null
           complications?: string | null
+          consent_signed_at?: string | null
           created_at?: string
           duration_minutes?: number | null
+          fasting_from?: string | null
+          fasting_reminder_sent_at?: string | null
           hospital_id?: string
           id?: string
           notes?: string | null
           operative_findings?: string | null
           patient_id?: string
+          patient_instructions?: string | null
           post_op_diagnosis?: string | null
           post_op_instructions?: string | null
           pre_op_diagnosis?: string | null
           procedure_name?: string
           procedure_type?: string | null
+          reminder_24h_sent_at?: string | null
           scheduled_date?: string
           scheduled_time?: string
           status?: string | null
@@ -4386,6 +4576,10 @@ export type Database = {
         }
         Returns: string
       }
+      add_standard_anc_schedule: {
+        Args: { p_maternity_record_id: string }
+        Returns: number
+      }
       adjust_stock: {
         Args: { p_delta: number; p_drug_id: string }
         Returns: number
@@ -4626,6 +4820,8 @@ export type Database = {
           doctors_in_specialty: number
           doctors_total: number
           id: string
+          lat: number
+          lng: number
           logo_url: string
           name: string
           offers_telemedicine: boolean
@@ -4633,7 +4829,12 @@ export type Database = {
         }[]
       }
       can_join_call: { Args: { _id: string; _kind: string }; Returns: boolean }
+      cancel_my_checkin: { Args: { p_checkin_id: string }; Returns: undefined }
       cancel_staff_invite: { Args: { _invite_id: string }; Returns: undefined }
+      checkin_lookup: {
+        Args: { p_patient_id?: string; p_token: string }
+        Returns: Json
+      }
       complete_signup: {
         Args: { p_data?: Json; p_role: string }
         Returns: string
@@ -4722,6 +4923,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      hospital_checkin_code: {
+        Args: { p_hospital_id: string }
+        Returns: string
+      }
       hospital_seat_usage: {
         Args: { _hospital_id: string }
         Returns: {
@@ -4750,6 +4955,8 @@ export type Database = {
         Args: { p_lab_result_id: string }
         Returns: string
       }
+      my_care: { Args: { p_patient_id?: string }; Returns: Json }
+      my_checkin_status: { Args: { p_patient_id?: string }; Returns: Json }
       my_doctor_id: { Args: never; Returns: string }
       my_family: {
         Args: never
@@ -4859,6 +5066,10 @@ export type Database = {
         Returns: undefined
       }
       remove_family_member: { Args: { p_patient_id: string }; Returns: Json }
+      reset_hospital_checkin_code: {
+        Args: { p_hospital_id: string }
+        Returns: string
+      }
       respond_to_invitation: {
         Args: { p_accept: boolean; p_link_id: string }
         Returns: undefined
@@ -4896,6 +5107,14 @@ export type Database = {
       rx_verify: { Args: { p_code: string }; Returns: Json }
       save_doctor_availability: {
         Args: { p_global: boolean; p_hospital_ids: string[]; p_slots: Json }
+        Returns: undefined
+      }
+      self_check_in: {
+        Args: { p_patient_id?: string; p_reason?: string; p_token: string }
+        Returns: Json
+      }
+      set_care_item_done: {
+        Args: { p_done?: boolean; p_item_id: string }
         Returns: undefined
       }
       start_consultation: {
