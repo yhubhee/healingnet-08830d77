@@ -1,14 +1,11 @@
 // Before a video visit: say what is about to happen and why the camera and microphone are
-// needed, show "Joining…" while the call page opens, and refresh the visit on the way back.
-//
-// The call itself stays in the phone's browser, opened inside the app (a Chrome Custom Tab
-// on Android). A native video SDK would add tens of MB to the app. The camera and
-// microphone permission therefore belongs to the browser, not to this app: the app cannot
-// read or grant it, so it explains it instead.
-import { Camera, Mic, Video, Wifi } from "./icons";
+// needed. "Join now" opens the call inside the app (app/call/[appointmentId].tsx), which
+// asks for the camera and microphone at that moment. The 0.4 way, the website's call page
+// in the phone's browser, stays available as "Open in browser instead".
+import { Camera, Globe, Mic, Video, Wifi } from "./icons";
 import type { LucideIcon } from "./icons";
-import { useEffect, useRef, useState } from "react";
-import { AppState, Platform, View } from "react-native";
+import { router } from "expo-router";
+import { View } from "react-native";
 import { WEB_URL } from "@/lib/env";
 import { OFFLINE_ACTION, useOnline } from "@/lib/net";
 import { openUrl } from "@/lib/web";
@@ -34,57 +31,42 @@ function Point({ icon: Icon, title, text }: { icon: LucideIcon; title: string; t
 export function JoinCallSheet({ appointment, onClose, onReturned }: {
   appointment: Appointment | null;
   onClose: () => void;
-  /** Called when the patient comes back from the call, to refresh the visit. */
+  /** Called when the patient comes back from a call opened in the browser, to refresh the visit. */
   onReturned: () => void;
 }) {
   const online = useOnline();
-  const [joining, setJoining] = useState(false);
-  const cleanup = useRef<(() => void) | null>(null);
-  useEffect(() => () => cleanup.current?.(), []);
-  useEffect(() => { if (!appointment) setJoining(false); }, [appointment]);
 
-  async function join() {
-    if (!appointment || joining) return;
-    setJoining(true);
-    let away = false;
-    let finished = false;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      cleanup.current?.();
-      cleanup.current = null;
-      setJoining(false);
-      onReturned();
-      onClose();
-    };
-    // Android: the browser opens over the app, so "came back" is the app becoming active again.
-    const sub = AppState.addEventListener("change", (state) => {
-      if (state !== "active") away = true;
-      else if (away) finish();
-    });
-    const giveUp = setTimeout(() => { if (!away) finish(); }, 8000);
-    cleanup.current = () => { sub.remove(); clearTimeout(giveUp); };
-    await openUrl(consultUrl(WEB_URL, appointment.id));
-    // iPhone: the promise itself resolves when the browser sheet is closed.
-    if (Platform.OS === "ios") finish();
+  function join() {
+    if (!appointment) return;
+    const a = appointment;
+    onClose();
+    router.push({ pathname: "/call/[appointmentId]", params: { appointmentId: a.id, with: a.doctors ? doctorOrPending(a) : "" } });
+  }
+
+  async function inBrowser() {
+    if (!appointment) return;
+    const id = appointment.id;
+    onClose();
+    await openUrl(consultUrl(WEB_URL, id));
+    onReturned();
   }
 
   return (
-    <Sheet visible={!!appointment} onClose={joining ? () => {} : onClose} title="Join your video visit"
+    <Sheet visible={!!appointment} onClose={onClose} title="Join your video visit"
       footer={
         <>
           {!online ? <Notice tone="warning" text={OFFLINE_ACTION} /> : null}
-          <Button label={joining ? "Joining…" : "Join now"} icon={Video} onPress={join} loading={joining} disabled={!online} disabledReason={OFFLINE_ACTION} />
-          {!joining ? <Button label="Not now" variant="ghost" onPress={onClose} /> : null}
+          <Button label="Join now" icon={Video} onPress={join} disabled={!online} disabledReason={OFFLINE_ACTION} />
+          <Button label="Open in browser instead" variant="ghost" icon={Globe} onPress={inBrowser} disabled={!online} disabledReason={OFFLINE_ACTION} />
+          <Button label="Not now" variant="ghost" onPress={onClose} />
         </>
       }>
       <View style={{ gap: space.lg }}>
-        <Body>{appointment ? `With ${doctorOrPending(appointment)}. ` : ""}The call opens in your phone's browser, inside the app.</Body>
-        <Point icon={Camera} title="Allow the camera" text="Your browser will ask to use the camera. Choose Allow, so the doctor can see you." />
+        <Body>{appointment ? `With ${doctorOrPending(appointment)}. ` : ""}The call opens here, inside the app.</Body>
+        <Point icon={Camera} title="Allow the camera" text="HealingNet will ask to use the camera. Choose Allow, so the doctor can see you." />
         <Point icon={Mic} title="Allow the microphone" text="Choose Allow for the microphone too, so the doctor can hear you." />
         <Point icon={Wifi} title="Find a good connection" text="Wi-Fi or strong mobile data, somewhere quiet and private." />
-        <Small>If you tapped Block before, open your browser's settings, find Site settings, and allow the camera and microphone for HealingNet.</Small>
-        {joining ? <Small accessibilityLiveRegion="polite" muted={false}>Joining… When the call ends, close the browser to come back here.</Small> : null}
+        <Small>The camera and microphone are used only during the call. Nothing is recorded.</Small>
       </View>
     </Sheet>
   );
