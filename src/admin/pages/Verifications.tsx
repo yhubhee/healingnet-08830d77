@@ -1,7 +1,11 @@
 // /admin/verifications: admin_verification_queue(), admin_pharmacy_queue() and the family
 // documents queue (admin_family_documents), oldest first.
 import { useState } from "react";
-import { BadgeCheck, Clock, Hospital as HospitalIcon, PartyPopper, Pill, Stethoscope, Users } from "lucide-react";
+import { BadgeCheck, Clock, Hospital as HospitalIcon, MapPinOff, PartyPopper, Pill, Stethoscope, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { MapView } from "@/components/maps/MapView";
+import { addressLine, directionsUrl, validPin } from "@/lib/geo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOverview, useVerificationQueue, type QueueDoctor, type QueueHospital } from "../api";
@@ -26,6 +30,40 @@ function Waiting({ since }: { since: string | null }) {
   );
 }
 
+/** Where the hospital pinned itself: a small map, the address and when it was set. A missing pin is a warning in words; approval is still possible. */
+function HospitalLocation({ hospitalId, name }: { hospitalId: string; name: string }) {
+  const q = useQuery({
+    queryKey: ["admin", "hospital-location", hospitalId],
+    meta: { inlineError: true },
+    queryFn: async () => {
+      const { data, error } = await supabase.from("hospitals").select("lat, lng, address, city, state, location_updated_at").eq("id", hospitalId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  if (q.isLoading) return <div className="mt-4 h-10 animate-pulse rounded-lg bg-muted" aria-label="Loading the location" />;
+  const pin = validPin(q.data?.lat, q.data?.lng);
+  if (!pin) {
+    return (
+      <p role="status" className="mt-4 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm font-medium">
+        <MapPinOff className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
+        <span>Warning: no location yet. This hospital has not pinned itself on the map, so patients will see "Distance unknown". You can still approve it.</span>
+      </p>
+    );
+  }
+  return (
+    <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <MapView height={180} pin={pin} still label={`Map showing where ${name} is`} />
+      <dl className="space-y-2 text-sm">
+        <div><dt className="text-xs uppercase tracking-wider text-muted-foreground">Pinned address</dt><dd>{addressLine(q.data ?? {}) || "No address"}</dd></div>
+        <div><dt className="text-xs uppercase tracking-wider text-muted-foreground">Pin set</dt><dd>{q.data?.location_updated_at ? fmtDate(q.data.location_updated_at) : "Not recorded"}</dd></div>
+        <div><dt className="text-xs uppercase tracking-wider text-muted-foreground">Coordinates</dt><dd className="tabular-nums">{pin.lat.toFixed(5)}, {pin.lng.toFixed(5)}</dd></div>
+        <a className="inline-block text-primary underline-offset-2 hover:underline" href={directionsUrl(pin.lat, pin.lng)} target="_blank" rel="noreferrer">Open in Google Maps</a>
+      </dl>
+    </div>
+  );
+}
+
 function HospitalCard({ h, onRemoved }: { h: QueueHospital; onRemoved: (id: string, removed: boolean) => void }) {
   const { open } = useDetail();
   return (
@@ -45,6 +83,7 @@ function HospitalCard({ h, onRemoved }: { h: QueueHospital; onRemoved: (id: stri
         <Fact label="Email">{(h.contact?.email ?? h.email) && <a className="text-primary underline-offset-2 hover:underline" href={`mailto:${h.contact?.email ?? h.email}`}>{h.contact?.email ?? h.email}</a>}</Fact>
         <Fact label="Phone">{(h.contact?.phone ?? h.phone) && <a href={`tel:${h.contact?.phone ?? h.phone}`}>{h.contact?.phone ?? h.phone}</a>}</Fact>
       </dl>
+      <HospitalLocation hospitalId={h.id} name={h.name} />
       <div className="mt-4"><ReviewActions kind="hospital" id={h.id} name={h.name} onOptimistic={(r) => onRemoved(h.id, r)} /></div>
     </article>
   );

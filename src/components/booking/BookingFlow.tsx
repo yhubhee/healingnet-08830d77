@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Building2, CalendarDays, Check, ChevronRight, Loader2, MapPin, Search, Stethoscope, User, Users, Video, X,
+  ArrowLeft, Building2, CalendarDays, Check, ChevronRight, List as ListIcon, Loader2, Map as MapIcon, MapPin, Search, Stethoscope, User, Users, Video, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,16 @@ import { activePerson, useActivePatient } from "@/hooks/useFamily";
 import { friendlyError, profileIncompleteRoute } from "@/lib/errors";
 import { ageText, forPerson, personWithAge, relationshipLabel } from "@/lib/family";
 import { cn } from "@/lib/utils";
+import { MapView } from "@/components/maps/MapView";
+import { addressLine, distanceText, roundedPosition, validPin } from "@/lib/geo";
 
 export interface Coords { lat: number; lng: number }
 
 interface Hospital {
   id: string; name: string; address: string | null; city: string | null; state: string | null; logo_url: string | null;
   offers_telemedicine: boolean; doctors_total: number; doctors_in_specialty: number; distance_km: number | null;
+  /** The hospital's map pin; null until the hospital sets it. */
+  lat: number | null; lng: number | null;
 }
 interface Doctor {
   id: string; first_name: string; last_name: string; specialty: string | null; years_experience: number | null;
@@ -85,6 +89,7 @@ export function BookingFlow({
   const [step, setStep] = useState(0);
   const [specialty, setSpecialty] = useState<string | null>(initialSpecialty?.trim() || null);
   const [coords, setCoords] = useState<Coords | null>(initialCoords);
+  const [locationOff, setLocationOff] = useState(false);
   const [hospital, setHospital] = useState<Hospital | null>(null);
   const [doctor, setDoctor] = useState<Doctor | null | "any">(null);
   const [visit, setVisit] = useState<Visit>("in_person");
@@ -99,10 +104,11 @@ export function BookingFlow({
 
   // Ask for the location once; everything works without it.
   useEffect(() => {
-    if (coords || !navigator.geolocation) return;
+    if (coords) return;
+    if (!navigator.geolocation) { setLocationOff(true); return; }
     navigator.geolocation.getCurrentPosition(
       (p) => setCoords({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => {},
+      () => setLocationOff(true),
       { timeout: 6000, maximumAge: 10 * 60_000 },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -192,7 +198,7 @@ export function BookingFlow({
       )}
 
       {step === 0 && (
-        <HospitalStep specialty={specialty} onClearSpecialty={() => setSpecialty(null)} coords={coords}
+        <HospitalStep specialty={specialty} onClearSpecialty={() => setSpecialty(null)} coords={coords} locationOff={locationOff}
           onPick={(h) => { setHospital(h); setDoctor(null); setVisit("in_person"); setTime(""); go(1); }} />
       )}
       {step === 1 && hospital && (
@@ -258,16 +264,21 @@ function ErrorBox({ error, onRetry }: { error: unknown; onRetry: () => void }) {
 // ---------------------------------------------------------------------------
 // 1. Hospital
 // ---------------------------------------------------------------------------
-function HospitalStep({ specialty, onClearSpecialty, coords, onPick }: {
-  specialty: string | null; onClearSpecialty: () => void; coords: Coords | null; onPick: (h: Hospital) => void;
+function HospitalStep({ specialty, onClearSpecialty, coords, locationOff, onPick }: {
+  specialty: string | null; onClearSpecialty: () => void; coords: Coords | null; locationOff: boolean; onPick: (h: Hospital) => void;
 }) {
   const [text, setText] = useState("");
+  const [view, setView] = useState<"list" | "map">("list");
+  const [selected, setSelected] = useState<string | null>(null);
   const search = useDebounced(text.trim());
+  // The patient's position stays in this browser. The database is only ever sent it rounded
+  // to 2 decimal places (about 1 km), to work out distances, and it is never stored.
+  const near = coords ? roundedPosition(coords) : null;
   const q = useQuery({
-    queryKey: ["booking", "hospitals", specialty, coords?.lat ?? null, coords?.lng ?? null, search],
+    queryKey: ["booking", "hospitals", specialty, near?.lat ?? null, near?.lng ?? null, search],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("bookable_hospitals", {
-        p_specialty: specialty ?? undefined, p_lat: coords?.lat, p_lng: coords?.lng, p_search: search || undefined,
+        p_specialty: specialty ?? undefined, p_lat: near?.lat, p_lng: near?.lng, p_search: search || undefined,
       });
       if (error) throw error;
       return (data ?? []) as Hospital[];
@@ -290,9 +301,46 @@ function HospitalStep({ specialty, onClearSpecialty, coords, onPick }: {
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input type="search" value={text} onChange={(e) => setText(e.target.value)} placeholder="Search by name, city or state" aria-label="Search hospitals" className="pl-9" />
       </div>
-      {!coords && <p className="text-xs text-muted-foreground"><MapPin className="inline w-3 h-3 mr-0.5" aria-hidden />Allow location access to see distances.</p>}
+      {!coords && (
+        <p className="text-xs text-muted-foreground"><MapPin className="inline w-3 h-3 mr-0.5" aria-hidden />
+          {locationOff ? "Your location is off, so distances aren't shown. Search by city or state above to find hospitals near you." : "Allow location access to see distances."}
+        </p>
+      )}
+      <div role="group" aria-label="How to show hospitals" className="inline-flex rounded-lg border border-border p-0.5">
+        {(["list", "map"] as const).map((v) => (
+          <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}
+            className={cn("inline-flex min-h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors", view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>
+            {v === "list" ? <ListIcon className="h-4 w-4" aria-hidden /> : <MapIcon className="h-4 w-4" aria-hidden />}{v === "list" ? "List" : "Map"}
+          </button>
+        ))}
+      </div>
 
-      {q.isLoading ? <ListSkeleton /> : q.isError ? <ErrorBox error={q.error} onRetry={() => q.refetch()} /> : (q.data ?? []).length === 0 ? (
+      {view === "map" && !q.isLoading && !q.isError && (() => {
+        const pinned = (q.data ?? []).map((h) => ({ h, pin: validPin(h.lat, h.lng) })).filter((x) => x.pin);
+        const chosen = (q.data ?? []).find((h) => h.id === selected) ?? null;
+        const unpinned = (q.data ?? []).length - pinned.length;
+        return (
+          <div className="space-y-3">
+            <MapView height={360} me={coords} selectedId={selected} onMarkerSelect={setSelected}
+              markers={pinned.map(({ h, pin }) => ({ id: h.id, lat: pin!.lat, lng: pin!.lng, label: `${h.name}. ${distanceText(h.distance_km)}. Show details` }))}
+              label="Map of hospitals you can book" failedText="The map couldn't load. Use the list instead: it shows the same hospitals." />
+            <p className="text-xs text-muted-foreground">
+              {coords ? "The blue dot is about where you are. " : ""}{pinned.length === 0 ? "No hospital here has set its place on the map yet. Use the list." : "Tap a pin to see the hospital."}
+              {unpinned > 0 && pinned.length > 0 ? ` ${unpinned} more ${unpinned === 1 ? "hospital has" : "hospitals have"} no pin yet: see the list.` : ""}
+            </p>
+            {chosen && (
+              <div className="rounded-xl border border-primary bg-card p-4" aria-live="polite">
+                <p className="font-heading font-bold">{chosen.name}</p>
+                <p className="text-sm text-muted-foreground">{addressLine(chosen) || "Address not set"}</p>
+                <p className="mt-1 text-sm">{distanceText(chosen.distance_km)} · {chosen.doctors_total} doctor{chosen.doctors_total === 1 ? "" : "s"}</p>
+                <Button className="mt-3" onClick={() => onPick(chosen)}>Book here</Button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {view === "map" && !q.isLoading && !q.isError ? null : q.isLoading ? <ListSkeleton /> : q.isError ? <ErrorBox error={q.error} onRetry={() => q.refetch()} /> : (q.data ?? []).length === 0 ? (
         <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
           <Building2 className="w-8 h-8 mx-auto mb-2" aria-hidden />
           {search ? `No hospitals match "${search}".` : "No hospitals are taking bookings on HealingNet yet."}
@@ -310,7 +358,7 @@ function HospitalStep({ specialty, onClearSpecialty, coords, onPick }: {
                   <p className="font-medium truncate">{h.name}</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {[h.city, h.state].filter(Boolean).join(", ") || "Location not set"}
-                    {h.distance_km != null && <> · {Number(h.distance_km).toLocaleString("en-NG", { maximumFractionDigits: 1 })} km away</>}
+                    {(coords || h.distance_km != null) && <> · {distanceText(h.distance_km)}</>}
                   </p>
                   <div className="mt-1.5 flex flex-wrap gap-1.5 text-xs">
                     <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5", specialty && h.doctors_in_specialty > 0 ? "bg-success/10 text-success" : "bg-muted text-muted-foreground")}>

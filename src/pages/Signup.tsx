@@ -46,6 +46,8 @@ export default function Signup() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { data: prices } = usePlanPrices();
+  // A hospital must be pinned on the map before it can sign up.
+  const hasPin = details.hospital_lat !== null && details.hospital_lng !== null;
 
   // ?next= (validated) is kept for the first sign-in; auth redirect URLs stay unchanged.
   useEffect(() => saveNext(params.get("next")), []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -53,6 +55,7 @@ export default function Signup() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!role) return;
+    if (role === "hospital" && !hasPin) return;
     if (role === "pharmacist" && !joinOk) {
       return toast({ title: "Check the pharmacy code", description: "Enter the code from your pharmacy owner. We show the pharmacy's name when it matches.", variant: "destructive" });
     }
@@ -187,7 +190,8 @@ export default function Signup() {
               </div>
             </fieldset>
           )}
-          <Button type="submit" className={authPrimary} disabled={loading || (role === "pharmacist" && !joinOk)}>{loading ? "Creating account…" : role === "hospital" && plan === "telemedicine" ? "Create Account & Pay" : role === "hospital" ? "Start free trial" : "Create Account"}</Button>
+          {role === "hospital" && !hasPin && <p role="status" className="text-sm font-medium text-muted-foreground">Pin your hospital on the map above to continue.</p>}
+          <Button type="submit" className={authPrimary} disabled={loading || (role === "pharmacist" && !joinOk) || (role === "hospital" && !hasPin)}>{loading ? "Creating account…" : role === "hospital" && plan === "telemedicine" ? "Create Account & Pay" : role === "hospital" ? "Start free trial" : "Create Account"}</Button>
         </form>
         <p className="mt-6 text-center text-base text-muted-foreground">
           Already have an account? <Link to="/login" className="font-semibold text-primary underline-offset-4 hover:underline">Sign in</Link>

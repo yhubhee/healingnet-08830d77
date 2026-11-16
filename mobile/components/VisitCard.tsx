@@ -1,11 +1,12 @@
 // One visit in the Visits list. Memoised: a card only redraws when its own visit changes.
-import { CalendarPlus, RotateCcw, Star, Video } from "./icons";
+import { CalendarPlus, Navigation, RotateCcw, Star, Video } from "./icons";
 import { router } from "expo-router";
 import { memo } from "react";
-import { View } from "react-native";
+import { Linking, View } from "react-native";
 import { OFFLINE_ACTION } from "@/lib/net";
 import { canCancel, canJoinCall, doctorIsInCall, doctorOrPending, isUpcoming, statusText, statusTone, type Appointment } from "@/shared/appointments";
 import { canRateVisit, stars, type VisitReview } from "@/shared/reviews";
+import { addressLine, directionsUrl, validPin } from "@/shared/geo";
 import { space } from "@/theme";
 import { Body, Button, Card, Chip, Heading, Notice, Small } from "./ui";
 import { VisitFacts } from "./VisitBits";
@@ -23,6 +24,10 @@ export const VisitCard = memo(function VisitCard({ a, review, online, cancelling
   onRate: (a: Appointment) => void;
 }) {
   const upcoming = isUpcoming(a);
+  // In-person visits: the hospital's address, and Directions when the hospital has a pin.
+  const inPerson = a.is_telemedicine !== true;
+  const where = inPerson && a.hospitals ? addressLine(a.hospitals) : "";
+  const pin = inPerson && upcoming ? validPin(a.hospitals?.lat, a.hospitals?.lng) : null;
   return (
     <Card style={{ gap: space.md }}>
       <Chip label={statusText(a)} tone={statusTone(a.status)} />
@@ -31,6 +36,11 @@ export const VisitCard = memo(function VisitCard({ a, review, online, cancelling
         {a.doctors?.specialty ? <Small>{a.doctors.specialty}</Small> : null}
       </View>
       <VisitFacts a={a} />
+      {where ? <Small>{where}</Small> : null}
+      {pin ? (
+        <Button small variant="secondary" icon={Navigation} label="Directions" accessibilityLabel={`Directions to ${a.hospitals?.name ?? "the hospital"}. Opens your maps app`}
+          onPress={() => { Linking.openURL(directionsUrl(pin.lat, pin.lng)).catch(() => {}); }} />
+      ) : null}
       {a.reason ? <Body>{a.reason}</Body> : null}
       {upcoming ? <Small>We'll remind you 24 hours and 1 hour before.</Small> : null}
 

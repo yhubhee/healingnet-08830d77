@@ -4,7 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useActivePatientId } from "@/hooks/usePatientData";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Calendar, Clock, MapPin, User, Plus, Stethoscope, Video, CalendarPlus, RotateCcw } from "lucide-react";
+import { Calendar, Clock, MapPin, Navigation, User, Plus, Stethoscope, Video, CalendarPlus, RotateCcw } from "lucide-react";
+import { MapView } from "@/components/maps/MapView";
+import { addressLine, directionsUrl, validPin } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { RescheduleAppointmentDialog } from "@/components/dialogs/RescheduleAppointmentDialog";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,33 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useCancelAppointment, appointmentError } from "@/hooks/useAppointmentActions";
+
+/** In-person visits: the hospital's address, a small map on request, and Directions. Nothing for a hospital without a pin. */
+function VisitPlace({ hospital }: { hospital: { name?: string; address?: string | null; city?: string | null; state?: string | null; lat?: number | null; lng?: number | null } | null | undefined }) {
+  const [showMap, setShowMap] = useState(false);
+  if (!hospital) return null;
+  const where = addressLine(hospital);
+  const pin = validPin(hospital.lat, hospital.lng);
+  if (!where && !pin) return null;
+  return (
+    <div className="mt-2 space-y-2">
+      {where && <p className="text-xs text-muted-foreground">{where}</p>}
+      {pin && (
+        <div className="flex flex-wrap gap-2">
+          <a href={directionsUrl(pin.lat, pin.lng)} target="_blank" rel="noreferrer"
+            className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20">
+            <Navigation className="h-3 w-3" aria-hidden />Directions
+          </a>
+          <button type="button" aria-expanded={showMap} onClick={() => setShowMap((s) => !s)}
+            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted">
+            <MapPin className="h-3 w-3" aria-hidden />{showMap ? "Hide map" : "Show map"}
+          </button>
+        </div>
+      )}
+      {pin && showMap && <MapView height={180} pin={pin} still label={`Map showing where ${hospital.name ?? "the hospital"} is`} />}
+    </div>
+  );
+}
 
 const tabs = ["upcoming", "past", "cancelled"] as const;
 const tabLabels: Record<typeof tabs[number], string> = { upcoming: "Upcoming", past: "Past", cancelled: "Cancelled and declined" };
@@ -76,7 +105,7 @@ export default function PatientAppointments() {
             ? supabase.from("doctors").select("id, first_name, last_name, specialty").in("id", doctorIds)
             : Promise.resolve({ data: [] }),
           hospitalIds.length > 0
-            ? supabase.from("hospitals").select("id, name").in("id", hospitalIds)
+            ? supabase.from("hospitals").select("id, name, address, city, state, lat, lng").in("id", hospitalIds)
             : Promise.resolve({ data: [] }),
         ]);
 
@@ -170,6 +199,7 @@ export default function PatientAppointments() {
                     <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{new Date(a.requested_date).toDateString()}</span>
                     {a.requested_time && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{a.requested_time}</span>}
                   </div>
+                  {!isTelemedicine && <VisitPlace hospital={a.hospitals} />}
                   {isTelemedicine && ["accepted", "confirmed"].includes(a.status) && (
                     <div className="mt-3 flex gap-2">
                       <Link

@@ -1,9 +1,12 @@
-import { useEffect, useId, useState } from "react";
+import { lazy, Suspense, useEffect, useId, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { NIGERIAN_STATES } from "@/lib/pharmacy";
 import { cn } from "@/lib/utils";
+
+// The map is only loaded for a hospital signing up.
+const LocationPicker = lazy(() => import("@/components/maps/LocationPicker").then((m) => ({ default: m.LocationPicker })));
 
 export type Role = "patient" | "hospital" | "doctor" | "pharmacy" | "pharmacist";
 
@@ -15,6 +18,11 @@ export interface SignupDetails {
   hospital_name: string;
   hospital_address: string;
   hospital_phone: string;
+  /** "Where is your hospital?": the pin (required) and the address it gave. */
+  hospital_city: string;
+  hospital_state: string;
+  hospital_lat: number | null;
+  hospital_lng: number | null;
   // Pharmacy (owner) sign-up
   pharmacy_name: string;
   pharmacy_address: string;
@@ -38,6 +46,10 @@ export const emptyDetails = (): SignupDetails => ({
   hospital_name: "",
   hospital_address: "",
   hospital_phone: "",
+  hospital_city: "",
+  hospital_state: "",
+  hospital_lat: null,
+  hospital_lng: null,
   pharmacy_name: "",
   pharmacy_address: "",
   pharmacy_city: "",
@@ -54,7 +66,8 @@ export const emptyDetails = (): SignupDetails => ({
 /**
  * The profile data the signup trigger (and complete_signup) reads:
  * everyone: first_name, last_name, phone. Doctors also: specialty.
- * Hospitals also: hospital_name, hospital_address, hospital_phone.
+ * Hospitals also: hospital_name, hospital_address, hospital_phone, hospital_city, hospital_state,
+ *   hospital_lat, hospital_lng (the map pin; the database drops a pin outside Nigeria).
  * Pharmacies also: pharmacy_name, pharmacy_address, pharmacy_city, pharmacy_state,
  *   pharmacy_phone, premises_licence_no, plus pcn_reg_no and licence_expiry when the owner is a pharmacist.
  * Pharmacists also: join_code, member_role ('assistant' or 'pharmacist'), pcn_reg_no, licence_expiry.
@@ -70,6 +83,12 @@ export function detailsToData(role: Role, d: SignupDetails): Record<string, stri
     base.hospital_name = d.hospital_name.trim();
     base.hospital_address = d.hospital_address.trim();
     base.hospital_phone = d.hospital_phone.trim();
+    base.hospital_city = d.hospital_city.trim();
+    base.hospital_state = d.hospital_state.trim();
+    if (d.hospital_lat !== null && d.hospital_lng !== null) {
+      base.hospital_lat = String(d.hospital_lat);
+      base.hospital_lng = String(d.hospital_lng);
+    }
   }
   if (role === "pharmacy") {
     base.pharmacy_name = d.pharmacy_name.trim();
@@ -133,7 +152,7 @@ export function RoleFields({ role, value, onChange, onJoinCodeChecked }: {
   const uid = useId();
   // Ties each label to its input, so screen readers announce the field name.
   const fid = (k: keyof SignupDetails) => `${uid}-${k}`;
-  const set = (k: keyof SignupDetails) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => onChange({ ...value, [k]: e.target.value });
+  const set = (k: Exclude<keyof SignupDetails, "hospital_lat" | "hospital_lng" | "is_pharmacist">) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => onChange({ ...value, [k]: e.target.value });
   const join = useJoinCode(role === "pharmacist" ? value.join_code : "");
   useEffect(() => {
     onJoinCodeChecked?.(join.status === "ok");
@@ -180,8 +199,17 @@ export function RoleFields({ role, value, onChange, onJoinCodeChecked }: {
           <h3 className="font-heading font-bold mb-3 text-sm">Hospital details</h3>
           <div className="space-y-3">
             <div><Label htmlFor={fid("hospital_name")}>Hospital name</Label><Input id={fid("hospital_name")} value={value.hospital_name} onChange={set("hospital_name")} required /></div>
-            <div><Label htmlFor={fid("hospital_address")}>Address</Label><Input id={fid("hospital_address")} value={value.hospital_address} onChange={set("hospital_address")} /></div>
             <div><Label htmlFor={fid("hospital_phone")}>Hospital phone</Label><Input id={fid("hospital_phone")} value={value.hospital_phone} onChange={set("hospital_phone")} /></div>
+          </div>
+          <div className="mt-5 border-t border-border pt-4">
+            <h3 className="font-heading font-bold text-sm">Where is your hospital?</h3>
+            <p className="mb-3 text-sm text-muted-foreground">Pin it on the map so patients can find you and see how far away you are. You need a pin to continue.</p>
+            <Suspense fallback={<div className="h-[300px] animate-pulse rounded-xl bg-muted" aria-label="Loading the map" />}>
+              <LocationPicker
+                value={{ lat: value.hospital_lat, lng: value.hospital_lng, address: value.hospital_address, city: value.hospital_city, state: value.hospital_state }}
+                onChange={(p) => onChange({ ...value, hospital_lat: p.lat, hospital_lng: p.lng, hospital_address: p.address, hospital_city: p.city, hospital_state: p.state })}
+              />
+            </Suspense>
           </div>
         </div>
       )}

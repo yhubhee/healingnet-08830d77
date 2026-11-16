@@ -1,14 +1,25 @@
 import { Link } from "react-router-dom";
-import { AlertTriangle, Clock, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Clock, MapPin, ShieldCheck } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useHospitalInfo } from "@/hooks/useHospitalData";
 
 /** Trial / expired plan banner and hospital verification banner, shown at the top of hospital pages. */
 export function HospitalStatusBanners() {
   const { data: sub } = useSubscription();
+  const { data: hospital } = useHospitalInfo();
   if (!sub) return null;
+  // Until the hospital has a pin, patients can't see where it is or how far away.
+  const noPin = !!hospital && (hospital.lat === null || hospital.lng === null);
 
   return (
     <div className="space-y-3 mb-4">
+      {noPin && (
+        <div className="flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/10 px-4 py-2.5 text-sm">
+          <MapPin className="w-4 h-4 text-warning shrink-0" />
+          <span>Pin your hospital on the map so patients can find you.</span>
+          <Link to="/hospital/settings" className="ml-auto text-primary hover:underline whitespace-nowrap">Set the pin</Link>
+        </div>
+      )}
       {sub.state === "trialing" && (
         <div className="flex items-center gap-3 rounded-lg border border-info/30 bg-info/10 px-4 py-2.5 text-sm">
           <Clock className="w-4 h-4 text-info shrink-0" />

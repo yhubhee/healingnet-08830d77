@@ -19,6 +19,8 @@ import { usePlanPrices, priceNaira, formatNaira, type BillingCycle, type PlanNam
 import { paystackService } from "@/services/paystack";
 import { pick, ALLOWED } from "@/lib/allowed";
 import { friendlyError } from "@/lib/errors";
+import { LocationPicker } from "@/components/maps/LocationPicker";
+import { OUTSIDE_NIGERIA } from "@/lib/geo";
 
 const NOTIF_KEYS = [
   { key: "checkins", label: "Patient check-ins" },
@@ -81,25 +83,14 @@ export default function HospitalSettings() {
     const { error } = await supabase.from("hospitals").update(pick({
       name: form.name, phone: form.phone, email: form.email, address: form.address,
       license_number: form.license_number, city: form.city || null, state: form.state || null,
-      lat: form.lat === "" || form.lat == null ? null : Number(form.lat),
-      lng: form.lng === "" || form.lng == null ? null : Number(form.lng),
+      // The pin, address, city and state are saved together (both coordinates or neither).
+      lat: form.lat === "" || form.lat == null || form.lng === "" || form.lng == null ? null : Number(form.lat),
+      lng: form.lat === "" || form.lat == null || form.lng === "" || form.lng == null ? null : Number(form.lng),
     }, ALLOWED.hospitalUpdate) as any).eq("id", hospital.id);
     setSavingInfo(false);
-    if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
+    if (error) return toast({ title: "Failed", description: /nigeria|lat|lng|check constraint/i.test(error.message ?? "") ? OUTSIDE_NIGERIA : friendlyError(error), variant: "destructive" });
     toast({ title: "Hospital info saved" });
     qc.invalidateQueries({ queryKey: ["hospital-info"] });
-  }
-
-  function useMyLocation() {
-    if (!navigator.geolocation) return toast({ title: "Geolocation not supported", variant: "destructive" });
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setForm((f: any) => ({ ...f, lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }));
-        toast({ title: "Location captured", description: "Don't forget to save." });
-      },
-      (err) => toast({ title: "Could not get location", description: "Check that location access is allowed in your browser.", variant: "destructive" }),
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
   }
 
   async function savePrefs(next: Record<string, boolean>) {
@@ -157,21 +148,13 @@ export default function HospitalSettings() {
                 <div><Label>Phone</Label><Input value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
                 <div><Label>Email</Label><Input value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
               </div>
-              <div><Label>Address</Label><Input value={form.address || ""} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><Label>City</Label><Input value={form.city || ""} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
-                <div><Label>State</Label><Input value={form.state || ""} onChange={(e) => setForm({ ...form, state: e.target.value })} /></div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <Label>Location (latitude / longitude)</Label>
-                  <Button type="button" size="sm" variant="outline" onClick={useMyLocation}>Use my current location</Button>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Input type="number" step="any" placeholder="Latitude" value={form.lat ?? ""} onChange={(e) => setForm({ ...form, lat: e.target.value })} />
-                  <Input type="number" step="any" placeholder="Longitude" value={form.lng ?? ""} onChange={(e) => setForm({ ...form, lng: e.target.value })} />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">Used to match nearby patients during AI triage.</p>
+              <div className="rounded-xl border border-border p-4">
+                <h4 className="font-heading font-bold">Where is your hospital?</h4>
+                <p className="mb-3 text-sm text-muted-foreground">Patients choosing a hospital see this pin on a map and how far away you are.{hospital?.location_updated_at ? ` Pin last set ${new Date(hospital.location_updated_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}.` : ""}</p>
+                <LocationPicker
+                  value={{ lat: form.lat == null || form.lat === "" ? null : Number(form.lat), lng: form.lng == null || form.lng === "" ? null : Number(form.lng), address: form.address || "", city: form.city || "", state: form.state || "" }}
+                  onChange={(p) => setForm((f: any) => ({ ...f, lat: p.lat, lng: p.lng, address: p.address, city: p.city, state: p.state }))}
+                />
               </div>
               <div><Label>License Number</Label><Input value={form.license_number || ""} onChange={(e) => setForm({ ...form, license_number: e.target.value })} /></div>
               <Button onClick={saveInfo} disabled={savingInfo}>{savingInfo ? "Saving..." : "Save Changes"}</Button>

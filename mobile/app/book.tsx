@@ -9,10 +9,10 @@ import type { LucideIcon } from "@/components/icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { BackHandler, Pressable, ScrollView, Text, View } from "react-native";
 import { Avatar } from "@/components/Avatar";
-import { DateField, Field } from "@/components/form";
+import { DateField, Field, Segmented } from "@/components/form";
 import { PersonSheet } from "@/components/PersonSwitcher";
 import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
@@ -24,12 +24,18 @@ import { supabase } from "@/lib/supabase";
 import { addDays, DAY_NAMES, dayChip, dayOfWeek, DEFAULT_SLOTS, fmt12, fmtLongDate, halfHours, lagosNowTime, lagosToday } from "@/shared/dates";
 import { dbMessage, profileIncompleteRoute } from "@/shared/errors";
 import { forPerson, personWithAge } from "@/shared/family";
+import { addressLine, distanceText, roundedPosition, validPin } from "@/shared/geo";
 import { ratingLabel, ratingSpoken } from "@/shared/reviews";
+
+// The map (and the WebView under it) is only loaded when Map is chosen.
+const HospitalMap = lazy(() => import("@/components/HospitalMap"));
 import { fonts, MIN_TOUCH, radius, space, useTheme } from "@/theme";
 
 interface Hospital {
   id: string; name: string; address: string | null; city: string | null; state: string | null; logo_url: string | null;
   offers_telemedicine: boolean; doctors_total: number; doctors_in_specialty: number; distance_km: number | null;
+  /** The hospital's map pin; null until the hospital sets it. */
+  lat: number | null; lng: number | null;
 }
 interface Doctor {
   id: string; first_name: string; last_name: string; specialty: string | null; years_experience: number | null;
@@ -259,11 +265,19 @@ function HospitalStep({ specialty, onClearSpecialty, coords, onCoords, onPick }:
   const toast = useToast();
   const [text, setText] = useState("");
   const [locating, setLocating] = useState(false);
+  const [locationOff, setLocationOff] = useState(false);
+  const [view, setView] = useState<"list" | "map">("list");
+  const [mapFailed, setMapFailed] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const online = useOnline();
   const search = useDebounced(text.trim());
+  // The patient's position stays on the phone. The database is only ever sent it rounded to
+  // 2 decimal places (about 1 km), to work out distances, and it is never stored.
+  const near = coords ? roundedPosition(coords) : null;
   const q = useQuery({
-    queryKey: ["booking", "hospitals", specialty, coords?.lat ?? null, coords?.lng ?? null, search],
+    queryKey: ["booking", "hospitals", specialty, near?.lat ?? null, near?.lng ?? null, search],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("bookable_hospitals", { p_specialty: specialty ?? undefined, p_lat: coords?.lat, p_lng: coords?.lng, p_search: search || undefined });
+      const { data, error } = await supabase.rpc("bookable_hospitals", { p_specialty: specialty ?? undefined, p_lat: near?.lat, p_lng: near?.lng, p_search: search || undefined });
       if (error) throw error;
       return (data ?? []) as Hospital[];
     },
@@ -275,7 +289,7 @@ function HospitalStep({ specialty, onClearSpecialty, coords, onCoords, onPick }:
     setLocating(true);
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
-      if (!permission.granted) { toast.info("Location is off. Hospitals are listed without distances."); return; }
+      if (!permission.granted) { setLocationOff(true); toast.info("Location is off. Hospitals are listed without distances."); return; }
       const pos = (await Location.getLastKnownPositionAsync()) ?? (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
       onCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
     } catch {
@@ -297,7 +311,34 @@ function HospitalStep({ specialty, onClearSpecialty, coords, onCoords, onPick }:
       ) : null}
       <Field label="Search hospitals" value={text} onChangeText={setText} placeholder="Name, city or state" returnKeyType="search" autoCorrect={false} />
       {!coords ? <Button small variant="secondary" icon={MapPin} label="Show how far each one is" onPress={locate} loading={locating} /> : null}
-      {q.data === undefined ? (q.isError || q.fetchStatus === "paused"
+      {locationOff && !coords ? <Small>Your location is off. The list still works: search by city or state above to find hospitals near you.</Small> : null}
+      <Segmented label="How to show hospitals" value={view} onChange={(v) => { setView(v); setMapFailed(false); }} options={[{ value: "list", label: "List" }, { value: "map", label: "Map" }]} />
+      {view === "map" && q.data !== undefined && q.data.length > 0 ? (() => {
+        if (!online || mapFailed) return <Notice tone="warning" text={online ? "The map couldn't load. Here is the list instead." : "The map needs the internet. Here is the list instead."} />;
+        const pins = q.data.map((h) => ({ id: h.id, pin: validPin(h.lat, h.lng) })).filter((x) => x.pin).map((x) => ({ id: x.id, lat: x.pin!.lat, lng: x.pin!.lng }));
+        const chosen = q.data.find((h) => h.id === selected) ?? null;
+        const unpinned = q.data.length - pins.length;
+        return (
+          <>
+            <Suspense fallback={<ListSkeleton rows={1} height={340} />}>
+              <HospitalMap pins={pins} me={coords} selectedId={selected} onSelect={setSelected} onFailed={() => setMapFailed(true)} />
+            </Suspense>
+            <Small>
+              {coords ? "The blue dot is about where you are. " : ""}{pins.length === 0 ? "No hospital here has set its place on the map yet. Use the list." : "Tap a pin to see the hospital."}
+              {unpinned > 0 && pins.length > 0 ? ` ${unpinned} more ${unpinned === 1 ? "hospital has" : "hospitals have"} no pin yet: see the list.` : ""}
+            </Small>
+            {chosen ? (
+              <Card style={{ gap: space.sm }}>
+                <Strong>{chosen.name}</Strong>
+                <Small>{addressLine(chosen) || "Address not set"}</Small>
+                <Small muted={false}>{distanceText(chosen.distance_km)} · {chosen.doctors_total} doctor{chosen.doctors_total === 1 ? "" : "s"}</Small>
+                <Button label="Book here" onPress={() => onPick(chosen)} />
+              </Card>
+            ) : null}
+          </>
+        );
+      })() : null}
+      {view === "map" && online && !mapFailed && q.data !== undefined && q.data.length > 0 ? null : q.data === undefined ? (q.isError || q.fetchStatus === "paused"
         ? <ErrorState offline={q.fetchStatus === "paused"} message={dbMessage(q.error)} onRetry={() => q.refetch()} />
         : <ListSkeleton />
       ) : q.data.length === 0 ? (
@@ -305,7 +346,7 @@ function HospitalStep({ specialty, onClearSpecialty, coords, onCoords, onPick }:
           text={search ? "Try a different name, city or state." : undefined} actionLabel={search ? "Clear search" : undefined} onAction={() => setText("")} />
       ) : q.data.map((h) => (
         <Choice key={h.id} icon={Building2} title={h.name} onPress={() => onPick(h)}
-          text={`${[h.city, h.state].filter(Boolean).join(", ") || "Location not set"}${h.distance_km != null ? ` · ${Number(h.distance_km).toFixed(1)} km away` : ""}`}>
+          text={`${[h.city, h.state].filter(Boolean).join(", ") || "Location not set"}${coords || h.distance_km != null ? ` · ${distanceText(h.distance_km)}` : ""}`}>
           <Small>
             {specialty
               ? h.doctors_in_specialty > 0 ? `${h.doctors_in_specialty} ${specialty} doctor${h.doctors_in_specialty === 1 ? "" : "s"}` : "General doctors"
