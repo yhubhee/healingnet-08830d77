@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Baby, Heart, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useMaternityRecords } from "@/hooks/useHospitalData";
 import { RegisterAncDialog } from "@/components/hospital/dialogs/RegisterAncDialog";
 import { QueryState } from "@/components/common/QueryState";
@@ -11,6 +12,7 @@ const tabs = ["ANC Register", "Labour Ward", "Delivered", "Postnatal"];
 const riskColors: Record<string, string> = { low: "bg-success/15 text-success", moderate: "bg-warning/15 text-warning", high: "bg-destructive/15 text-destructive" };
 
 export default function HospitalMaternity() {
+  const navigate = useNavigate();
   const { data: records = [], isLoading, isError, error, refetch } = useMaternityRecords();
   const [activeTab, setActiveTab] = useState("ANC Register");
 
@@ -61,7 +63,7 @@ export default function HospitalMaternity() {
             {filtered.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">No records in this category</div>
             ) : filtered.map((r: any) => (
-              <div key={r.id} className="p-4 space-y-2">
+              <Link key={r.id} to={`/hospital/maternity/${r.id}`} className="block p-4 space-y-2 transition-colors hover:bg-sidebar-accent focus-visible:bg-sidebar-accent focus-visible:outline-none">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{r.patients?.first_name} {r.patients?.last_name}</p>
@@ -76,7 +78,7 @@ export default function HospitalMaternity() {
                   <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0", riskColors[r.risk_level || "low"])}>{r.risk_level || "low"}</span>
                 </div>
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/15 text-primary inline-block">{(r.status || "").replace(/_/g, " ")}</span>
-              </div>
+              </Link>
             ))}
           </div>
 
@@ -93,7 +95,10 @@ export default function HospitalMaternity() {
                 {filtered.length === 0 ? (
                   <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No records in this category</td></tr>
                 ) : filtered.map((r: any) => (
-                  <tr key={r.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
+                  <tr key={r.id} tabIndex={0} role="link" aria-label={`Open the record of ${r.patients?.first_name ?? ""} ${r.patients?.last_name ?? ""}`}
+                    onClick={() => navigate(`/hospital/maternity/${r.id}`)}
+                    onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate(`/hospital/maternity/${r.id}`); } }}
+                    className="cursor-pointer border-b border-border/50 transition-colors hover:bg-sidebar-accent focus-visible:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
                     <td className="p-4 font-medium">{r.patients?.first_name} {r.patients?.last_name}</td>
                     <td className="p-4 text-sm">{r.edd ? new Date(r.edd).toLocaleDateString() : "—"}</td>
                     <td className="p-4 font-heading font-bold">{r.gestational_age_weeks || "—"}</td>
@@ -102,7 +107,7 @@ export default function HospitalMaternity() {
                     <td className="p-4"><span className={cn("text-xs font-semibold px-3 py-1 rounded-full", riskColors[r.risk_level || "low"])}>{r.risk_level || "low"}</span></td>
                     <td className="p-4 text-sm">{r.doctors ? `Dr. ${r.doctors.first_name} ${r.doctors.last_name}` : "—"}</td>
                     <td className="p-4"><span className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/15 text-primary">{(r.status || "").replace(/_/g, " ")}</span></td>
-                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+                    <td className="p-4"><Button variant="outline" size="sm" asChild><Link to={`/hospital/maternity/${r.id}`} onClick={(e) => e.stopPropagation()}>View</Link></Button></td>
                   </tr>
                 ))}
               </tbody>

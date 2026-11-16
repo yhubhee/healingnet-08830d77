@@ -60,6 +60,8 @@ const HospitalLab = lazy(() => import("./pages/hospital/Lab"));
 const HospitalPharmacy = lazy(() => import("./pages/hospital/Pharmacy"));
 const HospitalSurgery = lazy(() => import("./pages/hospital/Surgery"));
 const HospitalMaternity = lazy(() => import("./pages/hospital/Maternity"));
+const HospitalMaternityRecord = lazy(() => import("./pages/hospital/MaternityRecord"));
+const HospitalSurgeryRecord = lazy(() => import("./pages/hospital/SurgeryRecord"));
 const HospitalReferrals = lazy(() => import("./pages/hospital/Referrals"));
 const HospitalInsurance = lazy(() => import("./pages/hospital/Insurance"));
 const HospitalAnalytics = lazy(() => import("./pages/hospital/Analytics"));
@@ -227,6 +229,8 @@ const App = () => (
           <Route path="/hospital/prescriptions/:documentId/print" element={<ProtectedRoute><RxPrint /></ProtectedRoute>} />
           <Route path="/hospital/surgery" element={<ProtectedRoute><HospitalSurgery /></ProtectedRoute>} />
           <Route path="/hospital/maternity" element={<ProtectedRoute><HospitalMaternity /></ProtectedRoute>} />
+          <Route path="/hospital/surgery/:id" element={<ProtectedRoute><HospitalSurgeryRecord /></ProtectedRoute>} />
+          <Route path="/hospital/maternity/:id" element={<ProtectedRoute><HospitalMaternityRecord /></ProtectedRoute>} />
           <Route path="/hospital/referrals" element={<ProtectedRoute><HospitalReferrals /></ProtectedRoute>} />
           <Route path="/hospital/insurance" element={<ProtectedRoute><HospitalInsurance /></ProtectedRoute>} />
           <Route path="/hospital/analytics" element={<ProtectedRoute><HospitalAnalytics /></ProtectedRoute>} />

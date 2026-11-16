@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Scissors, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useSurgeryRecords } from "@/hooks/useHospitalData";
 import { ScheduleSurgeryDialog } from "@/components/hospital/dialogs/ScheduleSurgeryDialog";
 import { QueryState } from "@/components/common/QueryState";
@@ -10,6 +11,7 @@ import { QueryState } from "@/components/common/QueryState";
 const tabs = ["All", "Scheduled", "In Progress", "Completed"];
 
 export default function HospitalSurgery() {
+  const navigate = useNavigate();
   const { data: surgeries = [], isLoading, isError, error, refetch } = useSurgeryRecords();
   const [activeTab, setActiveTab] = useState("All");
 
@@ -58,7 +60,7 @@ export default function HospitalSurgery() {
             {filtered.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">No surgery records</div>
             ) : filtered.map((s: any) => (
-              <div key={s.id} className="p-4 space-y-2">
+              <Link key={s.id} to={`/hospital/surgery/${s.id}`} className="block p-4 space-y-2 transition-colors hover:bg-sidebar-accent focus-visible:bg-sidebar-accent focus-visible:outline-none">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{s.patients?.first_name} {s.patients?.last_name}</p>
@@ -72,7 +74,7 @@ export default function HospitalSurgery() {
                   )}>{(s.status || "scheduled").replace(/_/g, " ")}</span>
                 </div>
                 <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full inline-block", s.procedure_type === "emergency" ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary")}>{s.procedure_type}</span>
-              </div>
+              </Link>
             ))}
           </div>
 
@@ -89,7 +91,10 @@ export default function HospitalSurgery() {
                 {filtered.length === 0 ? (
                   <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No surgery records</td></tr>
                 ) : filtered.map((s: any) => (
-                  <tr key={s.id} className="border-b border-border/50 hover:bg-sidebar-accent transition-colors">
+                  <tr key={s.id} tabIndex={0} role="link" aria-label={`Open the record of ${s.patients?.first_name ?? ""} ${s.patients?.last_name ?? ""}`}
+                    onClick={() => navigate(`/hospital/surgery/${s.id}`)}
+                    onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); navigate(`/hospital/surgery/${s.id}`); } }}
+                    className="cursor-pointer border-b border-border/50 transition-colors hover:bg-sidebar-accent focus-visible:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
                     <td className="p-4 font-medium">{s.patients?.first_name} {s.patients?.last_name}</td>
                     <td className="p-4 text-sm">{s.procedure_name}</td>
                     <td className="p-4"><span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", s.procedure_type === "emergency" ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary")}>{s.procedure_type}</span></td>
@@ -102,7 +107,7 @@ export default function HospitalSurgery() {
                         s.status === "completed" ? "bg-success/15 text-success" : s.status === "in_progress" ? "bg-primary/15 text-primary" : "bg-warning/15 text-warning"
                       )}>{(s.status || "scheduled").replace(/_/g, " ")}</span>
                     </td>
-                    <td className="p-4"><Button variant="outline" size="sm">View</Button></td>
+                    <td className="p-4"><Button variant="outline" size="sm" asChild><Link to={`/hospital/surgery/${s.id}`} onClick={(e) => e.stopPropagation()}>View</Link></Button></td>
                   </tr>
                 ))}
               </tbody>

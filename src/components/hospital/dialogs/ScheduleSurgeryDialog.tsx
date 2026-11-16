@@ -50,7 +50,7 @@ export function ScheduleSurgeryDialog() {
             <div><Label>Type</Label>
               <Select value={f.procedure_type} onValueChange={(v) => setF({ ...f, procedure_type: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="elective">Elective</SelectItem><SelectItem value="emergency">Emergency</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="elective">Elective</SelectItem><SelectItem value="emergency">Emergency</SelectItem><SelectItem value="day_case">Day case</SelectItem></SelectContent>
               </Select></div>
             <div><Label>Anaesthesia</Label>
               <Select value={f.anaesthesia_type} onValueChange={(v) => setF({ ...f, anaesthesia_type: v })}>
