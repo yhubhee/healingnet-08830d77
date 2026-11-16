@@ -14,7 +14,10 @@ module.exports = function withCalendarQueries(config) {
     const has = manifest.queries.some((q) => (q.intent ?? []).some((i) =>
       (i.action ?? []).some((a) => a.$?.["android:name"] === ACTION) && (i.data ?? []).some((d) => d.$?.["android:mimeType"] === MIME)));
     if (!has) {
-      manifest.queries.push({ intent: [{ action: [{ $: { "android:name": ACTION } }], data: [{ $: { "android:mimeType": MIME } }] }] });
+      const intent = { action: [{ $: { "android:name": ACTION } }], data: [{ $: { "android:mimeType": MIME } }] };
+      // One <queries> element: add to the one that is already there, or make it.
+      if (manifest.queries.length === 0) manifest.queries.push({ intent: [intent] });
+      else manifest.queries[0].intent = [...(manifest.queries[0].intent ?? []), intent];
     }
     return cfg;
   });
