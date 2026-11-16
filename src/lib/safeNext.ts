@@ -58,5 +58,7 @@ export function destinationAfterLogin(home: string): string {
   if (path === "/verify" || path.startsWith("/verify/")) return next;
   // The public account-deletion page: a patient signs in from it and comes back to confirm.
   if (path === "/delete-account" && home === "/patient") return next;
+  // A hospital's check-in QR code, opened by a phone camera: sign in, then back to it.
+  if (path.startsWith("/checkin/") && home === "/patient") return next;
   return path === home || path.startsWith(`${home}/`) ? next : home;
 }

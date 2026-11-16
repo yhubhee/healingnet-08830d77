@@ -41,14 +41,12 @@ export function CheckInDialog() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!hospitalId || !patientId || !assignedDoctor) return;
-    // Get next queue number
-    const { data: existing } = await supabase.from("patient_checkins").select("queue_number").eq("hospital_id", hospitalId).order("queue_number", { ascending: false }).limit(1);
-    const nextNum = ((existing?.[0]?.queue_number as number) || 0) + 1;
-    const { error } = await supabase.from("patient_checkins").insert({
-      patient_id: patientId, hospital_id: hospitalId, checkin_type: checkinType, urgency, department, notes, queue_number: nextNum, status: "checked_in", assigned_doctor_id: assignedDoctor,
-    });
+    // The database gives the queue number (1, 2, 3… per hospital per day); the insert returns it.
+    const { data: created, error } = await supabase.from("patient_checkins").insert({
+      patient_id: patientId, hospital_id: hospitalId, checkin_type: checkinType, urgency, department, notes, status: "checked_in", assigned_doctor_id: assignedDoctor,
+    }).select("queue_number").single();
     if (error) return toast({ title: "Failed", description: friendlyError(error), variant: "destructive" });
-    toast({ title: "Patient checked in", description: `Queue #${nextNum}` });
+    toast({ title: "Patient checked in", description: created?.queue_number ? `Queue #${created.queue_number}` : undefined });
     resetForm();
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["patient-checkins"] });

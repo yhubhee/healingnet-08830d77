@@ -269,6 +269,9 @@ export function useNotificationArrivals(active: boolean) {
           qc.invalidateQueries({ queryKey: ["notifications"] });
           qc.invalidateQueries({ queryKey: ["home-summary"] });
           qc.invalidateQueries({ queryKey: ["health-overview"] });
+          // "It's your turn" (the front desk called) and care-plan changes.
+          qc.invalidateQueries({ queryKey: ["checkin-status"] });
+          qc.invalidateQueries({ queryKey: ["care"] });
           if ((change.new as { type?: unknown } | null)?.type === "family") qc.invalidateQueries({ queryKey: ["family"] });
         })
         .subscribe();

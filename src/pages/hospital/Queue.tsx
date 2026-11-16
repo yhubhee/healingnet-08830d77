@@ -1,10 +1,13 @@
 import { HospitalLayout } from "@/layouts/HospitalLayout";
 import { useState } from "react";
-import { Clock, Users, Stethoscope, CheckCircle, AlertTriangle } from "lucide-react";
+import { Clock, Users, Stethoscope, CheckCircle, AlertTriangle, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePatientCheckins, useRealtimeCheckins, useUpdateCheckin } from "@/hooks/useHospitalData";
 import { CheckInDialog } from "@/components/hospital/dialogs/CheckInDialog";
+import { CheckinQrDialog } from "@/components/hospital/dialogs/CheckinQrDialog";
+import { parseCheckinNotes } from "@/lib/checkin";
+import { lagosToday } from "@/lib/dates";
 import { QueryState } from "@/components/common/QueryState";
 
 const filters = ["All", "Waiting", "Called", "In Consultation", "Checked In", "Completed"];
@@ -24,9 +27,26 @@ const priorityBorder: Record<string, string> = {
   emergency: "border-l-destructive",
 };
 
+const lagosDay = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos", year: "numeric", month: "2-digit", day: "2-digit" });
+
+/** "Checked in with app" and the patient's own reason, for check-ins made by scanning the QR code. */
+function AppCheckinNote({ notes }: { notes: string | null }) {
+  const { viaApp, reason } = parseCheckinNotes(notes);
+  if (!viaApp) return null;
+  return (
+    <div className="mt-1 space-y-0.5">
+      <span className="inline-flex items-center gap-1 rounded-full bg-info/15 px-2 py-0.5 text-xs font-semibold text-info"><Smartphone className="h-3 w-3" aria-hidden />Checked in with app</span>
+      {reason && <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">Reason:</span> {reason}</p>}
+    </div>
+  );
+}
+
 export default function HospitalQueue() {
   useRealtimeCheckins();
-  const { data: checkins = [], isLoading, isError, error, refetch } = usePatientCheckins();
+  const { data: allCheckins = [], isLoading, isError, error, refetch } = usePatientCheckins();
+  // Queue numbers restart every day (the database gives them out), so the queue is today's.
+  const today = lagosToday();
+  const checkins = allCheckins.filter((q: any) => q.checkin_time && lagosDay.format(new Date(q.checkin_time)) === today);
   const updateCheckin = useUpdateCheckin();
   const [activeFilter, setActiveFilter] = useState("All");
 
@@ -57,9 +77,12 @@ export default function HospitalQueue() {
       <div className="mb-6 flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-heading font-bold mb-1">Patient Queue</h1>
-          <p className="text-muted-foreground">Real-time patient queue and wait time management</p>
+          <p className="text-muted-foreground">Today's queue, updated live. Queue numbers start again at 1 each day.</p>
         </div>
-        <CheckInDialog />
+        <div className="flex flex-wrap justify-end gap-2">
+          <CheckinQrDialog />
+          <CheckInDialog />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -85,7 +108,7 @@ export default function HospitalQueue() {
           {/* Mobile / tablet cards */}
           <div className="lg:hidden divide-y divide-border/50">
             {filtered.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">No patients in queue</div>
+              <div className="p-8 text-center text-muted-foreground">No patients in the queue today</div>
             ) : filtered.map((q: any) => (
               <div key={q.id} className={cn("p-4 space-y-2 border-l-4", priorityBorder[q.urgency || "routine"])}>
                 <div className="flex items-start justify-between gap-3">
@@ -100,6 +123,7 @@ export default function HospitalQueue() {
                     <p className="text-xs text-muted-foreground capitalize">
                       {q.checkin_type === "walk_in" ? "Walk-in" : "Booked"} • {q.urgency || "routine"} • waited {getWaitTime(q.checkin_time)}
                     </p>
+                    <AppCheckinNote notes={q.notes} />
                   </div>
                   <span className={cn("text-xs font-semibold px-2.5 py-1 rounded-full shrink-0", statusColors[q.status] || "bg-muted text-muted-foreground")}>
                     {q.status.replace(/_/g, " ")}
@@ -131,13 +155,14 @@ export default function HospitalQueue() {
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No patients in queue</td></tr>
+                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No patients in the queue today</td></tr>
                 ) : filtered.map((q: any) => (
                   <tr key={q.id} className={cn("border-b border-border/50 hover:bg-sidebar-accent transition-colors border-l-4", priorityBorder[q.urgency || "routine"])}>
                     <td className="p-4 font-heading font-bold text-muted-foreground">{q.queue_number || "—"}</td>
                     <td className="p-4">
                       <div className="font-medium">{q.patients?.first_name} {q.patients?.last_name}</div>
-                      <div className="text-xs text-muted-foreground">{getAge(q.patients?.date_of_birth)}y • {q.patients?.gender || "—"} • {q.patients?.id || "—"}</div>
+                      <div className="text-xs text-muted-foreground">{getAge(q.patients?.date_of_birth)}y • {q.patients?.gender || "—"}</div>
+                      <AppCheckinNote notes={q.notes} />
                     </td>
                     <td className="p-4 text-sm">{q.department || "—"}</td>
                     <td className="p-4 text-sm">{q.doctors ? `Dr. ${q.doctors.first_name} ${q.doctors.last_name}` : "—"}</td>

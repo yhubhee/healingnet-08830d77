@@ -6,11 +6,11 @@
 // only the few cards on screen, and the saved list shows before the network answers.
 // One request (my_visits) brings the open visits and the latest 30 past ones; "Show older
 // visits" loads 30 more at a time. A sheet is only mounted while it is open.
-import { CalendarDays, CalendarPlus } from "@/components/icons";
+import { CalendarDays, CalendarPlus, QrCode } from "@/components/icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, View, type ListRenderItem } from "react-native";
-import { Segmented } from "@/components/form";
+import { NavRow, Segmented } from "@/components/form";
 import { JoinCallSheet } from "@/components/JoinCallSheet";
 import { loadState } from "@/components/QueryState";
 import { RateVisitSheet } from "@/components/RateVisitSheet";
@@ -20,7 +20,7 @@ import { useToast } from "@/components/toast";
 import { Button, EmptyState, ErrorState, IconButton, ListSkeleton, Notice } from "@/components/ui";
 import { VisitCard } from "@/components/VisitCard";
 import { visitWhen } from "@/components/VisitBits";
-import { addToCalendar } from "@/lib/calendar";
+import { addToCalendarWithToast, visitEvent } from "@/lib/calendar";
 import { appointmentsKey, fetchVisits, useCancelAppointment, useRealtime, useVisits } from "@/lib/data";
 import { useOnline } from "@/lib/net";
 import { useScreenReady } from "@/lib/perf";
@@ -111,9 +111,7 @@ export default function Visits() {
   }, [cancelVisit, toast]);
 
   const calendar = useCallback(async (a: Appointment) => {
-    const result = await addToCalendar(a);
-    if (result === "saved") toast.success("Added to your calendar");
-    else if (result === "failed") toast.error("We couldn't open your calendar.");
+    await addToCalendarWithToast(visitEvent(a), toast);
   }, [toast]);
 
 
@@ -126,6 +124,7 @@ export default function Visits() {
   const header = (
     <View style={{ gap: space.lg }}>
       <Segmented label="Visits" value={tab} onChange={setTab} options={[{ value: "upcoming", label: "Upcoming" }, { value: "past", label: "Past" }]} />
+      <NavRow icon={QrCode} label="Check in at a hospital" hint="Scan the code at the front desk to join today's queue." onPress={() => router.push("/checkin")} />
       {!online ? <Notice tone="warning" text="You're offline. Booking, cancelling and rescheduling need the internet." /> : null}
     </View>
   );

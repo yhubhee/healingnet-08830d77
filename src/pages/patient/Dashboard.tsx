@@ -10,6 +10,7 @@ import { cardSpoken, overviewCards, type OverviewCardId } from "@/lib/overview";
 import { verifyBanner } from "@/lib/verification";
 import { Button } from "@/components/ui/button";
 import { ShareRecordsCard } from "@/components/patient/ShareRecordsCard";
+import { CheckInCard } from "@/components/patient/CheckInCard";
 import { useActivePatient } from "@/hooks/useFamily";
 import { QueryState } from "@/components/common/QueryState";
 
@@ -96,6 +97,8 @@ export default function PatientDashboard() {
           <Link to="/patient/triage" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center justify-center gap-1 hover:opacity-90 transition-opacity">Start triage <ArrowRight className="w-4 h-4" /></Link>
         </div>
       </div>
+
+      <CheckInCard />
 
       <ShareRecordsCard />
 

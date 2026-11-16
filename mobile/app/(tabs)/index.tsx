@@ -2,7 +2,7 @@
 // health" (prescriptions, lab results, records and letters at a glance), the two main
 // actions, today's medicines (from reminders kept on this phone), the latest unread updates
 // and the family row. Each section draws from its own saved data: none waits for another.
-import { Award, Bell, CalendarPlus, Check, ChevronRight, FileText, FlaskConical, Pill, Stethoscope, Users } from "@/components/icons";
+import { Award, Bell, CalendarPlus, Check, ChevronRight, FileText, FlaskConical, Pill, QrCode, Stethoscope, Users } from "@/components/icons";
 import type { LucideIcon } from "@/components/icons";
 import { router } from "expo-router";
 import { Pressable, View } from "react-native";
@@ -12,7 +12,8 @@ import { Screen } from "@/components/Screen";
 import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, Heading, IconButton, Label, LinkText, Skeleton, Small, Strong, Title } from "@/components/ui";
 import { VisitFacts } from "@/components/VisitBits";
-import { addToCalendar } from "@/lib/calendar";
+import { addToCalendarWithToast, visitEvent } from "@/lib/calendar";
+import { useMyCheckins } from "@/lib/checkin";
 import { useHealthOverview, useHomeSummary, useMarkNotificationRead, useVisits } from "@/lib/data";
 import { activePerson } from "@/lib/activePerson";
 import { useActivePerson, useFamilyNext, useShowPersonFor } from "@/lib/family";
@@ -21,6 +22,7 @@ import { useScreenReady } from "@/lib/perf";
 import { setTaken, useReminders } from "@/lib/reminders";
 import { useSession } from "@/lib/session";
 import { doctorOrPending, sortUpcoming, statusText } from "@/shared/appointments";
+import { currentCheckin, queueLine } from "@/shared/checkin";
 import { fmt12, fmtDayDate, timeAgo } from "@/shared/dates";
 import { ageText } from "@/shared/family";
 import { notificationTarget } from "@/shared/links";
@@ -92,6 +94,9 @@ export default function Home() {
   const overview = useHealthOverview();
   const summary = useHomeSummary();
   const markRead = useMarkNotificationRead();
+  // Today's place in a hospital's queue, while a check-in is open.
+  const checkins = useMyCheckins();
+  const checkin = currentCheckin(checkins.data ?? []);
   const { reminders, taken } = useReminders();
   // Each person's medicines are kept apart: only the active person's show here.
   const doses = todaysDoses(remindersFor(reminders, person.isMe ? null : person.patientId), new Date());
@@ -107,16 +112,14 @@ export default function Home() {
   const banner = verifyBanner(person.family);
   const next = sortUpcoming(appts.data?.upcoming ?? [])[0] ?? null;
   const refreshing = appts.isRefetching || overview.isRefetching || summary.isRefetching;
-  const refresh = () => { appts.refetch(); overview.refetch(); summary.refetch(); if (person.family.length) familyNext.refetch(); };
+  const refresh = () => { appts.refetch(); overview.refetch(); summary.refetch(); checkins.refetch(); if (person.family.length) familyNext.refetch(); };
   const updatedAt = Math.max(appts.dataUpdatedAt, overview.dataUpdatedAt, summary.dataUpdatedAt) || undefined;
 
   useScreenReady("/(tabs)/index", appts.data !== undefined || appts.isError || appts.fetchStatus === "paused");
 
   async function calendar() {
     if (!next) return;
-    const result = await addToCalendar(next);
-    if (result === "saved") toast.success("Added to your calendar");
-    else if (result === "failed") toast.error("We couldn't open your calendar.");
+    await addToCalendarWithToast(visitEvent(next), toast);
   }
 
   return (
@@ -138,6 +141,20 @@ export default function Home() {
           <Button small label="Verify" variant="secondary" accessibilityLabel={banner.text + " Verify"}
             onPress={() => router.push({ pathname: "/family/verify", params: { id: banner.patientId } })} />
         </View>
+      ) : null}
+
+      {/* In a hospital's queue today: the number and how many are ahead; "It's your turn" when called. */}
+      {checkin ? (
+        <Pressable accessibilityRole="button" accessibilityLiveRegion="polite"
+          accessibilityLabel={`${checkin.status === "called" ? "It's your turn. " : ""}${queueLine(checkin)}. Open your place in the queue`}
+          onPress={() => router.push("/checkin/status")}
+          style={({ pressed }) => ({
+            borderRadius: radius.card, padding: space.lg, gap: space.xs, opacity: pressed ? 0.85 : 1,
+            backgroundColor: checkin.status === "called" ? colors.hero : colors.primarySoft,
+          })}>
+          {checkin.status === "called" ? <Heading color={colors.onHero} style={{ fontSize: 24, lineHeight: 30 }}>It's your turn</Heading> : <Label color={colors.primaryText}>{person.isMe ? "You're checked in" : `${person.firstName} is checked in`}</Label>}
+          <Strong color={checkin.status === "called" ? colors.onHero : colors.text}>{checkin.status === "called" ? `Please go to the front desk at ${checkin.hospital_name}.` : queueLine(checkin)}</Strong>
+        </Pressable>
       ) : null}
 
       {/* Next appointment */}
@@ -187,6 +204,9 @@ export default function Home() {
       <View style={{ flexDirection: "row", gap: space.md }}>
         <Tile icon={Stethoscope} title="Check symptoms" text="Answer a few questions and see what to do next." onPress={() => router.push("/triage")} />
         <Tile icon={CalendarPlus} title="Book a doctor" text="Choose a hospital, doctor and time." onPress={() => router.push("/book")} />
+      </View>
+      <View style={{ flexDirection: "row", gap: space.md }}>
+        <Tile icon={QrCode} title="Check in" text="At the hospital? Scan the code at the front desk to join the queue." onPress={() => router.push(checkin ? "/checkin/status" : "/checkin")} />
       </View>
 
       {/* Today's medicines: the day's reminder doses, each with a Taken tick. Kept on this phone. */}

@@ -18,7 +18,8 @@ export interface Appointment {
   call_started_at?: string | null;
   call_ended_at?: string | null;
   doctors: { id?: string; first_name: string; last_name: string; specialty: string | null } | null;
-  hospitals: { id?: string; name: string } | null;
+  /** my_visits also sends the hospital's address and map pin (0.5), for Directions. */
+  hospitals: { id?: string; name: string; address?: string | null; city?: string | null; state?: string | null; lat?: number | null; lng?: number | null } | null;
   /** The patient's own rating of this visit (from my_visits); null when not rated. */
   review?: { rating: number; comment: string | null } | null;
 }
