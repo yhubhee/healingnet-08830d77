@@ -15,7 +15,15 @@ import { SUPPORT_EMAIL } from "@/components/marketing/content";
  *   - family verification documents (birth and marriage certificates, court orders): the
  *     lawful basis for asking, how long an approved document is kept, and who on the
  *     team may open them;
- *   - speed data: whether sharing it by default (with a switch to turn it off) is acceptable.
+ *   - speed data: whether sharing it by default (with a switch to turn it off) is acceptable;
+ *   - check-in (0.5): scanning a hospital's code links that hospital to the patient's profile
+ *     and health card. The app says so before the Check in button; confirm that is enough;
+ *   - care plans (0.5): what a hospital may share with a patient about pregnancy and surgery,
+ *     and the reminders sent about them;
+ *   - location (0.5): the map and address search come from OpenStreetMap-based services
+ *     (OpenFreeMap for map tiles, Nominatim for address search, MapLibre from the unpkg CDN in
+ *     the app). They see the device's internet address and the part of the map or the address
+ *     being looked at. Confirm they should be listed as below.
  * It makes no claim of certification or compliance. Keep it that way unless that changes.
  * The Play Store listing links to this page, and to /delete-account.
  */
@@ -25,7 +33,7 @@ export default function Privacy() {
     <LegalPage
       title="Privacy policy"
       description="How HealingNet collects, uses and protects your personal and health information, on the website and in the app."
-      updated="14 November 2026"
+      updated="17 November 2026"
     >
       <p>This policy explains what information HealingNet collects, why, who handles it, and the choices you have. It covers the HealingNet website and the HealingNet patient app for Android.</p>
 
@@ -99,12 +107,27 @@ export default function Privacy() {
       <h2>Who can see your health records</h2>
       <p>Your records can be seen by you, by the hospitals and doctors caring for you, and by a pharmacy you send a prescription to (that prescription only). To share your records with another hospital, you create a one-time code that expires after 15 minutes. Information travels between your device and our servers over encrypted connections.</p>
 
+      <h2>Checking in at a hospital</h2>
+      <p>When you scan a hospital's check-in code and choose Check in, you join that hospital's queue for the day, and the hospital is linked to your profile: its front desk and doctors can then see your profile and health card (the same information you would give at the desk), so they can care for you. The app tells you this before you check in. If you check in a family member, it is their profile that is linked. The reason you type for your visit is shown to the front desk. The camera is used only to read the code; no photo is taken or saved.</p>
+
+      <h2>Care plans for pregnancy and surgery</h2>
+      <p>If a hospital is caring for you during a pregnancy or for an operation, it can share a care plan with you. You see: your due date and how far along you are, your antenatal visits (date, blood pressure, weight and your baby's heart rate), the date and time of a procedure, when to arrive, when to stop eating and drinking, whether the consent form is signed, the instructions and messages your doctor writes for you, and a to-do list. You can tick items as done, and the hospital sees that. We send reminders before each item; the app also keeps these reminders on your phone so they work without the internet, and the lock screen says only "Care plan reminder" unless you turn details on.</p>
+      <p>Some things stay with the hospital and are not shown in the app: the clinical notes, complications, findings, diagnoses and risk level it records.</p>
+
+      <h2>Location and maps</h2>
+      <ul>
+        <li><strong>Hospitals:</strong> a hospital pins its building on a map when it signs up. That pin, with its address, is shown to signed-in patients who are choosing a hospital.</li>
+        <li><strong>Your own location:</strong> we ask for it only when you choose a hospital, and only if you allow it. It is used on your phone or in your browser to sort hospitals by distance and to draw you on the map. When it is sent to our database to work out distances, it is first rounded to about 1 km, and it is never stored. If you say no, the list still works and you can search by city or state.</li>
+        <li><strong>The map and address search</strong> come from services built on OpenStreetMap (OpenFreeMap for the map, and Nominatim for address search, which only hospitals use when setting their pin). Like any website they receive your device's internet address and the part of the map being shown; they are not sent your name, your account or your health information. Directions opens Google Maps or your phone's maps app with the hospital's position.</li>
+      </ul>
+
       <h2>Companies that process data for us</h2>
       <ul>
         <li><strong>Supabase:</strong> the database, sign-in and file storage where HealingNet's information is kept.</li>
         <li><strong>Vercel:</strong> hosts the website.</li>
         <li><strong>Expo and Google Firebase:</strong> deliver push notifications to the app. They receive the phone's push token and the notification text.</li>
-        <li><strong>Daily:</strong> carries video calls between you and your doctor.</li>
+        <li><strong>Daily:</strong> carries video calls between you and your doctor. In the app, the call opens inside the app and uses your camera and microphone only during the call.</li>
+        <li><strong>OpenFreeMap and OpenStreetMap (Nominatim):</strong> draw the maps and find addresses, as described under "Location and maps".</li>
         <li><strong>Paystack:</strong> handles payments made by hospitals.</li>
         <li><strong>Google:</strong> if you choose "Continue with Google" to sign in.</li>
         <li>An email delivery provider, to send account and appointment emails.</li>

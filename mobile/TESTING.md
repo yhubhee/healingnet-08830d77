@@ -79,6 +79,151 @@ New live-check steps, all against the real database as the test patient: `my_fam
 - *A push names the family member only when "Show details on the lock screen" is on.* With details off the database sends its generic text, so "Tobi:" is not on the lock screen. Inside the app the title always starts with the name. Tapping a push still switches to the right person, by reading who the notification is about.
 - *Website: a family member's health card is edited in a dialog* (Settings → Family, or Profile), not the Complete profile page, because that page requires a phone number and address a child does not have. The app uses its profile form with only the health-card fields.
 
+## Sixth round: 0.5, 16 November
+
+Version 0.5 is tested on the **preview app only** (the APK from the link in the summary). It adds
+three native modules (`expo-camera` for the check-in scanner, `react-native-webview` for the
+video call and the map, `expo-keep-awake`), so an older build will not open this code. Install
+the new APK over the old one; you stay signed in.
+
+### What was checked here (no phone was connected)
+
+- `tsc --noEmit` in `mobile/`: 0 errors. `expo-doctor`: 20 of 20 checks passed.
+- Unit tests: 21 suites, 348 tests, all pass (the 280 from 0.4 plus 68 new). New in 0.5:
+  `checkin.test.ts` (only our check-in links are accepted, from both the https and
+  `healingnet://` forms; queue wording), `care.test.ts` (EDD and LMP, weeks and days, the
+  High BP flag, grouping into Upcoming / No date / Done, the reminder times for each kind, the
+  60 cap shared with medicines, the lock-screen wording, dropping an alert the server already
+  sent), `calendar.test.ts` (the order of the calendar fallbacks, and which addresses the call
+  screen may open), `geo.test.ts` (the Nigeria bounds, state names, one address search a second
+  with a cache, rounding the patient's position, the Directions link, "Distance unknown" last).
+- Website: `tsc -p tsconfig.app.json` 0 errors, `npm run build` passes. The map code is a
+  separate file that only loads on pages that show a map.
+- Live check (`node scripts/live-check.mjs`): 55 steps, all pass. New: the hospital's check-in
+  code as staff, `checkin_lookup`, `self_check_in` (same place on a second scan), the front desk
+  seeing it with the app tag and the reason, `my_checkin_status`, `cancel_my_checkin`, `my_care`,
+  an `[E2E]` surgery and care item made by staff and ticked by the patient, and
+  `bookable_hospitals` near Uyo returning `lat`, `lng` and `distance_km`.
+  **The test hospital had no pin, so the check set one in Uyo (5.0377, 7.9128).**
+
+### What could not be checked without a phone
+
+- The camera scanner, the torch, and the calendar fallbacks on a real phone.
+- **The video call inside the app.** Daily's page inside an Android WebView has not been run on
+  a phone. If it does not work, use "Open in browser instead" (the 0.4 way, still there) and
+  say so: the browser can then be made the default again.
+- The map inside the app (it loads in a WebView and needs the internet).
+- Care reminders ringing at the right time with the app closed.
+
+### Why "Add to calendar" failed in 0.4
+
+Since Expo SDK 58 the function the app called (`createEventInCalendarAsync` imported from
+`expo-calendar`) throws an error every time, on every phone; it now has to be imported from
+`expo-calendar/legacy`. That is the cause of "We couldn't open your calendar". 0.5 fixes the
+import, declares the calendar "insert" request in the Android manifest (needed on Android 11+),
+and adds two fallbacks: writing the event straight into your calendar (it asks for calendar
+permission then), and sharing a calendar file.
+
+### Phone checklist for 0.5 (about 45 minutes)
+
+You need: the preview app on your phone, and the hospital website open on a computer, signed in
+as a hospital admin. A second phone or browser signed in as a doctor helps for the video call.
+
+**1. Scan to check in**
+
+1. Website, as the hospital: Queue, **Check-in QR code**. The hospital's name is above the code.
+   Tap **Print poster** and check the A4 page (name, code, 3 steps, "No app? Scan with your
+   phone camera"). Leave the code on screen.
+2. App: Home, **Check in**. It explains why it needs the camera; allow it. Scan the code on the
+   computer screen. Try the torch button.
+3. The confirm screen shows the hospital's name, address and city. Type a reason, tap **Check in**.
+4. "You're checked in" shows a big queue number and how many people are ahead.
+5. Website: the Queue shows you, with "Checked in with app" and your reason.
+6. Website: set your status to **Called**. The phone gets "It's your turn"; the app's status
+   screen and the Home card say "It's your turn".
+7. Scan again: you get the same place, not a second one.
+8. Check in a family member: on the confirm screen change "For: Me" to them, check in, and see
+   them in the Queue. A locked family member cannot be chosen.
+9. Scan a different QR code (any product): "This isn't a HealingNet check-in code."
+10. Tap **Type the code instead** and try a wrong code: the database's message is shown.
+11. Check in, then **Leave the queue**: it asks first, then you disappear from the Queue.
+12. Turn on flight mode and open Check in: it says checking in needs the internet.
+13. With the phone's own camera app (not HealingNet), scan the poster: the website opens the
+    same confirm screen, with "Open in the app".
+14. Hospital admin only: **Reset code**, confirm. The old code now says it is not valid.
+15. "Share my records" (Health) still works as before.
+
+**2. Add to calendar**
+
+1. Visits, an upcoming visit, **Add to calendar**. Your calendar app should open with the visit
+   filled in. Save it.
+2. If no calendar app opens, the app asks for calendar permission and then says "Added to your
+   calendar". Tap again: "This is already in your calendar".
+3. If you refuse the permission, a share sheet opens with a calendar file.
+4. Please tell me which of the three you saw on your phone.
+
+**3. Surgery care plan**
+
+1. Website, as the hospital: Surgery, **Schedule** one for your patient, about 3 days ahead.
+   The phone gets "Procedure booked".
+2. Click the row (or View). Set the admission time; under Fasting from tap **Use this**; save.
+   Tick **Consent form signed**. Write Instructions for the patient and save.
+3. Care plan, **Add item**: tap the "Blood test" template, add a date and time about 10 minutes
+   from now, leave "Remind the patient" on, add it.
+4. App: Home now has a **Care plan** card. Open it: the procedure, admission, "Fasting from…",
+   "Consent signed", your instructions and the to-do list are there.
+5. Tick the blood test. On the website it shows "Done by patient".
+6. Untick it and wait for the time: a reminder arrives. With the screen locked it says only
+   "Care plan reminder" (unless "Show details on the lock screen" is on in Settings).
+7. Tap **Add to calendar** on the item and on the procedure.
+8. On the website change the surgery's date (Edit): the phone gets "Procedure date changed".
+9. Website: **Start now**, then **End now**: the duration is worked out and the status moves on.
+
+**4. Maternity**
+
+1. Website: Maternity, **Register ANC** for a patient, then click the row.
+2. **Edit**: type the LMP; the EDD fills itself (and the other way round). Save. The header shows
+   "Today: … weeks … days".
+3. **Record visit**: weeks are filled in from the LMP. Type BP 150/95: it says **High BP** in
+   words. Add a weight and a next visit date; save. It offers **Add to care plan?**; accept.
+4. Record a second visit: the BP and weight chart appears.
+5. **Add standard antenatal schedule**: it says how many visits were added. Tap it again: none
+   are added twice.
+6. Write a Message for the patient and save.
+7. App: Care shows the weeks and days, the due date with a progress bar, the next visit, the
+   message, the last visits and the to-do list. Visits say "The hospital will mark this".
+8. Website (patient): Care plan in the menu shows the same.
+
+**5. Video call inside the app**
+
+1. Book a video visit and accept it as the doctor. Start the call as the doctor on a computer.
+2. App: the "Your doctor is ready" notification, or Visits, **Join call**, **Join now**. Allow the
+   camera and microphone when HealingNet asks.
+3. Check: both sides see and hear each other; the loudspeaker works; turn the screen off for a
+   few seconds and on again and the call is still there.
+4. Press the phone's back button: it asks "Leave the call?".
+5. **End call** (red): it asks, closes, and Visits refreshes.
+6. If the call does not start or you cannot be seen or heard, tap **Open in browser instead**
+   and tell me exactly what you saw.
+
+**6. Hospital on the map**
+
+1. Website: sign up a test hospital. Under "Where is your hospital?" search for an address,
+   pick a result, then zoom in and drag the pin onto the building. The address, city and state
+   fill in. The sign-up button stays off until there is a pin.
+2. Try **Use my current location**: it first asks "Are you at the hospital right now?".
+3. As that hospital: Settings, move the pin, save. (A hospital without a pin sees a banner on
+   every hospital page until it sets one.)
+4. As the HealingNet admin: Verifications shows a small map, the address and when the pin was
+   set; a hospital without one shows "Warning: no location yet".
+5. App, as a patient: Book, **Show how far each one is**, allow location. The list says
+   "about 3.2 km away", or "Distance unknown" for a hospital with no pin.
+6. Tap **Map**: the blue dot is you, the pins are hospitals. Tap a pin, then **Book here**.
+7. Turn on flight mode and tap Map: it says the map needs the internet and shows the list.
+8. Visits: an in-person visit at a pinned hospital shows the address and **Directions**
+   (opens Google Maps). A video visit shows neither.
+9. The same on the website: Book (List / Map) and Appointments (Directions, Show map).
+
 ## Fifth round: 0.4, 14 November
 
 Version 0.4 needs a **new development build** (and the preview build): it adds two native

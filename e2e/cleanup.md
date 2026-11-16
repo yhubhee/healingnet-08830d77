@@ -609,3 +609,58 @@ may also have notifications for the two bookings.
 ### patient_share_codes (2)
 
 One for the test patient and one for the `[E2E]` child; both expire by themselves after 15 minutes.
+
+## Mobile app 0.5 live check (2026-11-16)
+
+Run of `mobile/scripts/live-check.mjs` with the 0.5 steps (55 steps, all passed). The usual rows
+from the earlier steps were created again (one cancelled `[E2E]` appointment for the test patient
+and one for the `[E2E]` child, one letter request, one message, one triage session, one speed
+event, two share codes, two notifications about the child); they are listed by id below.
+
+### hospitals (1 changed, not created)
+
+| id | note |
+| --- | --- |
+| 597f4239-b371-4755-a2fb-0fe736bbc334 | The test hospital had **no map pin**. The check set `lat` 5.0377, `lng` 7.9128 (Uyo). Move it in Hospital Settings if that is the wrong place; do not delete the hospital. |
+
+### patient_checkins (1)
+
+| id | note |
+| --- | --- |
+| a9055827-8013-4a18-9352-f49c4081de6a | App check-in by the test patient, status `cancelled` (left the queue); notes end `Reason: [E2E] mobile app check mwjkpy1l`. The front desk got one "New patient check-in" notification. The test patient was already linked to this hospital. |
+
+### surgery_records (1)
+
+| id | note |
+| --- | --- |
+| 77b0ecc2-ac41-45c2-900d-731ebad6eccf | Procedure `[E2E] check …`, status `cancelled` (the app cannot delete a surgery record). The test patient got one "Procedure booked" notification (type `care`). |
+
+### care_plan_items (0 left)
+
+One `[E2E] Blood test` item was created on that surgery, ticked by the patient, then deleted by staff.
+
+### private.hospital_checkin_codes (1)
+
+The test hospital's check-in code was made on first use. It is not test data: leave it.
+
+### patient_appointments (2)
+
+| id | note |
+| --- | --- |
+| b81b23cc-996a-48ff-8464-2d5861797079 | Test patient's own, cancelled; reason `[E2E] mobile app check mwjkpvu8`. |
+| 0f49246c-ab5e-4ae3-af69-4f689931ef89 | For the `[E2E]` child, cancelled; reason `[E2E] mobile app check, family mwjkqbte`. |
+
+### patients (1) and family_documents (1)
+
+| id | note |
+| --- | --- |
+| 6b72555d-6c28-4e43-976f-dab735111bc1 | `E2E-Child [E2E] mwjkq8mh`: removed from the account, kept for the hospital (`held_by_hospitals`). |
+| 9e5ae6f6-8c7b-42f5-ad4c-1f7ff0c5d9af | `family_documents`: the child's test birth certificate (the file itself was deleted). |
+
+### patient_letters (1), patient_messages (1), triage_sessions (1)
+
+| id | note |
+| --- | --- |
+| 460c2c2b-d21f-44c9-af79-409acf0a333b | Letter request; body `[E2E] mobile app check mwjkpy1l`. |
+| 4b411803-896d-43f7-a685-fce935149be9 | Message; body `[E2E] mobile app check mwjkpy1l`. |
+| (no id printed) | Triage session whose `symptoms` are `["[E2E] mobile app check mwjkpy1l"]`. |

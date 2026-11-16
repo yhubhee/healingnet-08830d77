@@ -15,6 +15,13 @@
 // is incomplete, because booking now needs a complete profile), one speed event named
 // e2e:check, and for the child: a tiny test PDF is uploaded and submitted for verification,
 // my_family must say "pending", then the child and the file are removed.
+// Version 0.5: with the test hospital's staff login (E2E_HOSPITAL_*, skipped and noted when it
+// is missing or is not staff): the hospital's check-in code, then as the patient
+// checkin_lookup, self_check_in, my_checkin_status and cancel_my_checkin; my_care; one "[E2E]"
+// surgery record and one care item made by staff, seen and ticked by the patient, then the
+// item is deleted and the surgery cancelled. Maps: bookable_hospitals near Uyo must return
+// lat, lng and distance_km; the test hospital gets a pin in Uyo only if it has none.
+// The check-in code is never printed.
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -552,6 +559,185 @@ await step("family 0.4: the child's test PDF is deleted after removal", async ()
   if ((left ?? []).length) throw new Error(`${left.length} file(s) still in the child's folder`);
   return "folder empty";
 });
+
+// ---- Version 0.5: scan to check in, care plans, hospital locations --------------------------
+await step("my_care refuses a signed-out caller", async () => {
+  const anon = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  const { error } = await anon.rpc("my_care");
+  if (!error || !/permission denied/i.test(error.message)) throw new Error("expected permission denied");
+});
+
+const staff = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+let staffHospitalId = null;
+let checkinToken = null;
+let checkedIn = null;
+let surgeryId = null;
+let careItemId = null;
+const skip = (why) => `SKIPPED: ${why}`;
+
+await step("0.5 staff: sign in as the test hospital", async () => {
+  if (!test.E2E_HOSPITAL_EMAIL || !test.E2E_HOSPITAL_PASSWORD) return skip("no E2E_HOSPITAL_* in .env.test");
+  const { error } = await staff.auth.signInWithPassword({ email: test.E2E_HOSPITAL_EMAIL, password: test.E2E_HOSPITAL_PASSWORD });
+  if (error) throw new Error("staff sign-in failed");
+  const mine = must(await staff.rpc("my_hospital_ids")) ?? [];
+  staffHospitalId = mine.find((r) => r.membership === "staff")?.hospital_id ?? null;
+  if (!staffHospitalId) return skip("the test hospital account is not hospital staff");
+  return "signed in as hospital staff";
+});
+
+await step("0.5 staff: the hospital's check-in code (made on first use)", async () => {
+  if (!staffHospitalId) return skip("no staff hospital");
+  const token = must(await staff.rpc("hospital_checkin_code", { p_hospital_id: staffHospitalId }));
+  if (typeof token !== "string" || !/^[a-z0-9]{8,64}$/.test(token)) throw new Error("the code does not look like a check-in code");
+  const again = must(await staff.rpc("hospital_checkin_code", { p_hospital_id: staffHospitalId }));
+  if (again !== token) throw new Error("the code changed on a second call");
+  checkinToken = token;
+  const asPatient = await supabase.rpc("hospital_checkin_code", { p_hospital_id: staffHospitalId });
+  if (!asPatient.error) throw new Error("a patient could read the hospital's check-in code");
+  return `${token.length} characters, the same on a second call; a patient is refused`;
+});
+
+await step("0.5 check-in: a wrong code is refused with the database's message", async () => {
+  const { error } = await supabase.rpc("checkin_lookup", { p_token: "zzzzzzzzzzzzzzzz", p_patient_id: patient.id });
+  if (!error || !/check-in code is not valid/i.test(error.message)) throw new Error("expected 'This check-in code is not valid…'");
+});
+
+await step("0.5 check-in: checkin_lookup as the test patient", async () => {
+  if (!checkinToken) return skip("no check-in code");
+  const l = must(await supabase.rpc("checkin_lookup", { p_token: checkinToken, p_patient_id: patient.id }));
+  if (l?.hospital_id !== staffHospitalId || !l?.name) throw new Error("the lookup did not return the test hospital");
+  for (const k of ["city", "state", "logo_url", "appointment_today", "already_checked_in", "already_linked"]) if (!(k in l)) throw new Error(`missing ${k}`);
+  return `hospital found; already linked: ${l.already_linked}; visit today: ${l.appointment_today ? "yes" : "no"}; already in the queue: ${l.already_checked_in ? "yes" : "no"}`;
+});
+
+await step("0.5 check-in: self_check_in, the same place on a second scan", async () => {
+  if (!checkinToken) return skip("no check-in code");
+  const r = must(await supabase.rpc("self_check_in", { p_token: checkinToken, p_patient_id: patient.id, p_reason: E2E_NOTE }));
+  if (!r?.checkin_id || typeof r.queue_number !== "number" || r.queue_number < 1) throw new Error("no queue number came back");
+  checkedIn = r;
+  if (!r.already) created.push(`patient_checkins ${r.checkin_id} (app check-in, notes end "Reason: ${E2E_NOTE}"; left the queue below). The test patient is now linked to hospital ${staffHospitalId} (patient_hospital link) and the front desk got a "New patient check-in" notification`);
+  const again = must(await supabase.rpc("self_check_in", { p_token: checkinToken, p_patient_id: patient.id }));
+  if (again.checkin_id !== r.checkin_id || again.already !== true || again.queue_number !== r.queue_number) throw new Error("a second scan did not return the same place");
+  return `queue number given by the database, ${r.ahead} ahead, type and status "${r.status}"; second scan says already: true`;
+});
+
+await step("0.5 check-in: the front desk sees it, tagged as an app check-in with the reason", async () => {
+  if (!checkedIn) return skip("not checked in");
+  const row = must(await staff.from("patient_checkins").select("id, queue_number, notes, checkin_type, status, patients(first_name)").eq("id", checkedIn.checkin_id).maybeSingle());
+  if (!row) throw new Error("staff cannot see the check-in");
+  if (!String(row.notes ?? "").startsWith("Checked in with the HealingNet app")) throw new Error("the notes do not start with the app's tag");
+  if (!String(row.notes).includes(`Reason: ${E2E_NOTE}`)) throw new Error("the reason is not in the notes");
+  if (!row.patients) throw new Error("staff cannot read the patient's profile after check-in");
+  return `staff see it (${row.checkin_type}), and can read the patient's profile`;
+});
+
+await step("0.5 check-in: my_checkin_status, then cancel_my_checkin", async () => {
+  if (!checkedIn) return skip("not checked in");
+  const list = must(await supabase.rpc("my_checkin_status", { p_patient_id: patient.id })) ?? [];
+  const mine = list.find((c) => c.checkin_id === checkedIn.checkin_id);
+  if (!mine) throw new Error("today's check-in is not in my_checkin_status");
+  for (const k of ["hospital_name", "queue_number", "status", "ahead", "doctor_name", "checkin_time"]) if (!(k in mine)) throw new Error(`missing ${k}`);
+  must(await supabase.rpc("cancel_my_checkin", { p_checkin_id: checkedIn.checkin_id }));
+  const after = must(await supabase.rpc("my_checkin_status", { p_patient_id: patient.id })) ?? [];
+  if (after.some((c) => c.checkin_id === checkedIn.checkin_id)) throw new Error("the cancelled check-in is still listed");
+  const twice = await supabase.rpc("cancel_my_checkin", { p_checkin_id: checkedIn.checkin_id });
+  if (!twice.error) throw new Error("leaving the queue twice was accepted");
+  return `${list.length} check-in(s) today; left the queue; a second leave is refused`;
+});
+
+await step("0.5 care: my_care as the test patient", async () => {
+  const c = must(await supabase.rpc("my_care", { p_patient_id: patient.id }));
+  if (!Array.isArray(c?.pregnancies) || !Array.isArray(c?.surgeries)) throw new Error("my_care did not return pregnancies and surgeries");
+  return `${c.pregnancies.length} pregnancies, ${c.surgeries.length} procedures`;
+});
+
+await step("0.5 care: staff make an [E2E] surgery record and one care item", async () => {
+  if (!staffHospitalId) return skip("no staff hospital");
+  const docs = must(await staff.from("hospital_doctors").select("doctor_id, status, is_active").eq("hospital_id", staffHospitalId).limit(20)) ?? [];
+  const surgeon = docs.find((d) => d.status === "active" && d.is_active !== false)?.doctor_id ?? docs[0]?.doctor_id;
+  if (!surgeon) return skip("the test hospital has no doctor to name as surgeon");
+  const made = await staff.from("surgery_records").insert({
+    hospital_id: staffHospitalId, patient_id: patient.id, surgeon_id: surgeon, procedure_name: `[E2E] check ${E2E_NOTE.slice(-8)}`, procedure_type: "day_case",
+    scheduled_date: lagosDate(7), scheduled_time: "09:00", status: "scheduled", patient_instructions: "[E2E] instructions",
+  }).select("id").single();
+  if (made.error) {
+    if (/row-level security|permission/i.test(made.error.message)) return skip("staff may not create a surgery record for the test patient (not linked to this hospital: check-in was skipped)");
+    throw made.error;
+  }
+  surgeryId = made.data.id;
+  created.push(`surgery_records ${surgeryId} (procedure "[E2E] check …"; set to cancelled below, it cannot be deleted by the app). The patient got a "Procedure booked" notification`);
+  const due = new Date(Date.now() + 3 * 86_400_000).toISOString();
+  const item = must(await staff.from("care_plan_items").insert({ source_type: "surgery", source_id: surgeryId, kind: "test", title: "[E2E] Blood test", details: "[E2E] check", due_at: due, remind: false }).select("id, hospital_id, patient_id").single());
+  careItemId = item.id;
+  if (item.hospital_id !== staffHospitalId || item.patient_id !== patient.id) throw new Error("the database did not fill in the hospital and patient");
+  return "surgery and care item created; hospital and patient filled in by the database";
+});
+
+await step("0.5 care: the patient sees them, and ticks the item", async () => {
+  if (!surgeryId || !careItemId) return skip("nothing was created");
+  const c = must(await supabase.rpc("my_care", { p_patient_id: patient.id }));
+  const s = (c.surgeries ?? []).find((x) => x.id === surgeryId);
+  if (!s) throw new Error("the patient does not see the surgery");
+  for (const k of ["procedure_name", "scheduled_date", "scheduled_time", "admit_at", "fasting_from", "consent_signed", "patient_instructions", "post_op_instructions", "items"]) if (!(k in s)) throw new Error(`missing ${k}`);
+  for (const hidden of ["complications", "operative_findings", "pre_op_diagnosis", "post_op_diagnosis", "notes", "blood_loss_ml"]) if (hidden in s) throw new Error(`${hidden} must not be sent to the patient`);
+  if (!(s.items ?? []).some((i) => i.id === careItemId && i.status === "open")) throw new Error("the patient does not see the care item");
+  must(await supabase.rpc("set_care_item_done", { p_item_id: careItemId, p_done: true }));
+  const row = must(await staff.from("care_plan_items").select("status, done_by_patient").eq("id", careItemId).single());
+  if (row.status !== "done" || row.done_by_patient !== true) throw new Error("staff do not see it as done by the patient");
+  const direct = await supabase.from("care_plan_items").update({ title: "changed by the patient" }).eq("id", careItemId).select("id");
+  if (!direct.error && (direct.data ?? []).length) throw new Error("the patient could edit a care item directly");
+  return "seen with the patient's fields only; ticked; staff see \"Done by patient\"; the patient cannot edit it";
+});
+
+await step("0.5 care: clean up (delete the item, cancel the surgery)", async () => {
+  if (!surgeryId) return skip("nothing was created");
+  if (careItemId) {
+    must(await staff.from("care_plan_items").delete().eq("id", careItemId));
+    const left = must(await staff.from("care_plan_items").select("id").eq("id", careItemId));
+    if (left.length) created.push(`care_plan_items ${careItemId} ([E2E] Blood test): could NOT be deleted`);
+  }
+  must(await staff.from("surgery_records").update({ status: "cancelled" }).eq("id", surgeryId));
+  return "item deleted; surgery set to cancelled";
+});
+
+await step("0.5 maps: bookable_hospitals near Uyo returns lat, lng and distance_km", async () => {
+  const UYO = { p_lat: 5.04, p_lng: 7.91 }; // already rounded to 2 decimal places, as the app sends it
+  let rows = must(await supabase.rpc("bookable_hospitals", UYO)) ?? [];
+  if (!rows.length) throw new Error("no bookable hospitals");
+  for (const k of ["lat", "lng", "distance_km"]) if (!(k in rows[0])) throw new Error(`bookable_hospitals has no ${k} column`);
+  const notes = [`${rows.length} hospital(s), ${rows.filter((h) => h.lat != null && h.lng != null).length} with a pin`];
+  let mine = staffHospitalId ? rows.find((h) => h.id === staffHospitalId) : null;
+  if (mine && (mine.lat == null || mine.lng == null)) {
+    // The test hospital has no pin: set one in Uyo as staff, if this account may.
+    const set = await staff.from("hospitals").update({ lat: 5.0377, lng: 7.9128 }).eq("id", staffHospitalId).select("lat, lng");
+    if (set.error || !(set.data ?? []).length) notes.push("the test hospital has no pin and this staff account may not set it (only a hospital admin can): set it in Settings");
+    else {
+      created.push(`hospitals ${staffHospitalId}: the test hospital had no map pin; set to 5.0377, 7.9128 (Uyo). Move it in Hospital Settings if that is wrong`);
+      rows = must(await supabase.rpc("bookable_hospitals", UYO)) ?? [];
+      mine = rows.find((h) => h.id === staffHospitalId);
+    }
+  }
+  if (mine && mine.lat != null) {
+    if (mine.distance_km == null) throw new Error("the test hospital has a pin but no distance_km");
+    notes.push(`the test hospital has a pin and is ${mine.distance_km} km from the centre of Uyo`);
+    const outside = await staff.from("hospitals").update({ lat: 51.5, lng: -0.12 }).eq("id", staffHospitalId).select("id");
+    if (!outside.error && (outside.data ?? []).length) throw new Error("a pin outside Nigeria was accepted");
+    notes.push("a pin outside Nigeria is refused");
+  } else if (!mine) notes.push("the test hospital is not in the bookable list (not approved, or no plan), so its pin could not be checked");
+  const unknownLast = rows.map((h) => h.distance_km == null);
+  if (unknownLast.some((u, i) => u && unknownLast.slice(i + 1).some((v) => !v) && rows[i].doctors_in_specialty === rows[i + 1]?.doctors_in_specialty)) notes.push("note: a hospital without a distance is listed before one with a distance");
+  return notes.join("; ");
+});
+
+await step("0.5 maps: my_visits includes the hospital's address and pin", async () => {
+  const v = must(await supabase.rpc("my_visits", { p_patient_id: patient.id }));
+  const one = [...(v.upcoming ?? []), ...(v.past ?? [])].find((a) => a.hospitals);
+  if (!one) return "no visit with a hospital to check";
+  for (const k of ["address", "city", "state", "lat", "lng"]) if (!(k in one.hospitals)) throw new Error(`a visit's hospital has no ${k}`);
+  return "address, city, state, lat and lng are there";
+});
+
+await staff.auth.signOut().catch(() => {});
 
 if (childId && !childRemoved) console.log(`NOTE  the [E2E] child ${childId} was NOT removed: remove it in the app (Me, Family) or add it to e2e/cleanup.md`);
 
