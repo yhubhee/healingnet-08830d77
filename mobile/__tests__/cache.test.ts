@@ -30,7 +30,7 @@ function makeStorage() {
 
 describe("what is saved for offline use", () => {
   it("saves only the profile, the family list, visits, prescription documents, the home summary, the health overview, lab results and records", () => {
-    expect([...PERSISTED_QUERIES].sort()).toEqual(["appointments", "emr", "family", "health-overview", "home-summary", "lab-results", "profile", "role", "rx-documents"]);
+    expect([...PERSISTED_QUERIES].sort()).toEqual(["appointments", "care", "emr", "family", "health-overview", "home-summary", "lab-results", "profile", "role", "rx-documents"]);
     expect(shouldPersistQuery(["health-overview", "p1"], "success")).toBe(true);
     expect(shouldPersistQuery(["lab-results", "p1"], "success")).toBe(true);
     expect(shouldPersistQuery(["emr", "p1"], "success")).toBe(true);

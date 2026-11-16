@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Calendar, Pill, FlaskConical, FileText, ArrowRight, Stethoscope, Loader2, Clock, AlertCircle, Plus, CalendarPlus, Award, ShieldAlert } from "lucide-react";
+import { Calendar, Pill, FlaskConical, FileText, ArrowRight, Stethoscope, Loader2, Clock, AlertCircle, Plus, CalendarPlus, Award, ShieldAlert, HeartPulse } from "lucide-react";
 import { useActivePatientId, useHealthOverview, usePatientProfile, usePatientAppointments, usePatientPrescriptions, usePatientLabResults, usePatientEmr } from "@/hooks/usePatientData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cardSpoken, overviewCards, type OverviewCardId } from "@/lib/overview";
@@ -11,6 +11,8 @@ import { verifyBanner } from "@/lib/verification";
 import { Button } from "@/components/ui/button";
 import { ShareRecordsCard } from "@/components/patient/ShareRecordsCard";
 import { CheckInCard } from "@/components/patient/CheckInCard";
+import { useMyCare } from "./Care";
+import { hasActiveCare, nextCareLine } from "@/lib/care";
 import { useActivePatient } from "@/hooks/useFamily";
 import { QueryState } from "@/components/common/QueryState";
 
@@ -31,6 +33,7 @@ export default function PatientDashboard() {
   const pid = useActivePatientId();
   const person = useActivePatient();
   const overview = useHealthOverview();
+  const care = useMyCare();
   const banner = verifyBanner(person.family);
   useEffect(() => {
     if (!pid) return;
@@ -132,6 +135,17 @@ export default function PatientDashboard() {
                     </Link>
                   );
                 })}
+                {/* A fifth card, only for an active pregnancy or an upcoming procedure. */}
+                {hasActiveCare(care.data) && (
+                  <Link to="/patient/care" aria-label={`Care plan. ${nextCareLine(care.data!, new Date())}. Open care plan`}
+                    className="rounded-xl border border-primary/40 bg-primary/5 p-4 transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><HeartPulse className="h-5 w-5" aria-hidden /></span>
+                    </div>
+                    <p className="font-heading font-bold">Care plan</p>
+                    <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{nextCareLine(care.data!, new Date())}</p>
+                  </Link>
+                )}
               </div>
             ) : overview.isError ? (
               <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">We couldn't load your health summary. <button type="button" className="text-primary underline-offset-2 hover:underline" onClick={() => overview.refetch()}>Try again</button></p>

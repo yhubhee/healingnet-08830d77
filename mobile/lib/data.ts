@@ -9,6 +9,7 @@ import type { CheckResult, PatientRequest, RxPayload } from "@/shared/pharmacy";
 import { personKeys } from "@/shared/keys";
 import { overviewIsDue, parseOverview, type HealthOverview } from "@/shared/overview";
 import { parseVisits, type VisitsData } from "@/shared/visits";
+import { careNotificationArrived } from "./reminders";
 import { usePatient, useSession } from "./session";
 import { supabase } from "./supabase";
 
@@ -272,7 +273,10 @@ export function useNotificationArrivals(active: boolean) {
           // "It's your turn" (the front desk called) and care-plan changes.
           qc.invalidateQueries({ queryKey: ["checkin-status"] });
           qc.invalidateQueries({ queryKey: ["care"] });
-          if ((change.new as { type?: unknown } | null)?.type === "family") qc.invalidateQueries({ queryKey: ["family"] });
+          const row = change.new as { type?: unknown; reference_id?: unknown } | null;
+          if (row?.type === "family") qc.invalidateQueries({ queryKey: ["family"] });
+          // The server has just reminded about this care item: the phone's own copy is dropped.
+          if (row?.type === "care" && typeof row.reference_id === "string") careNotificationArrived(row.reference_id).catch(() => {});
         })
         .subscribe();
     });

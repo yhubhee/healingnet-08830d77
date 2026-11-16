@@ -7,7 +7,7 @@ import { router } from "expo-router";
 import { Platform } from "react-native";
 import { notificationTarget } from "@/shared/links";
 import { APP_VERSION } from "./env";
-import { handleReminderResponse } from "./reminders";
+import { careReminderPerson, handleReminderResponse } from "./reminders";
 import { DEVICE_KEYS, getFlag, setFlag } from "./storage";
 import { supabase } from "./supabase";
 
@@ -98,6 +98,13 @@ async function openFromNotification(response: Notifications.NotificationResponse
   if (!response) return;
   // A medicine reminder (or its Taken / Snooze button): Home shows "Today's medicines".
   if (handleReminderResponse(response)) { router.navigate("/(tabs)"); return; }
+  // A care-plan reminder kept on this phone: Care, for the person it is about.
+  const carePerson = careReminderPerson(response);
+  if (carePerson !== undefined) {
+    try { await beforeOpen?.({ subjectId: carePerson ?? "me" }); } catch { /* open the screen anyway */ }
+    router.navigate("/care");
+    return;
+  }
   const data = (response.notification.request.content.data ?? {}) as
     { url?: unknown; type?: unknown; reference_id?: unknown; notification_id?: unknown; subject_patient_id?: unknown };
   // The push carries the notification's id; who it is about is read from that row.

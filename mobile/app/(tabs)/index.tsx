@@ -2,7 +2,7 @@
 // health" (prescriptions, lab results, records and letters at a glance), the two main
 // actions, today's medicines (from reminders kept on this phone), the latest unread updates
 // and the family row. Each section draws from its own saved data: none waits for another.
-import { Award, Bell, CalendarPlus, Check, ChevronRight, FileText, FlaskConical, Pill, QrCode, Stethoscope, Users } from "@/components/icons";
+import { Award, Bell, CalendarPlus, Check, ChevronRight, FileText, FlaskConical, HeartPulse, Pill, QrCode, Stethoscope, Users } from "@/components/icons";
 import type { LucideIcon } from "@/components/icons";
 import { router } from "expo-router";
 import { Pressable, View } from "react-native";
@@ -13,6 +13,7 @@ import { useToast } from "@/components/toast";
 import { Body, Button, Card, Chip, Heading, IconButton, Label, LinkText, Skeleton, Small, Strong, Title } from "@/components/ui";
 import { VisitFacts } from "@/components/VisitBits";
 import { addToCalendarWithToast, visitEvent } from "@/lib/calendar";
+import { useCare } from "@/lib/care";
 import { useMyCheckins } from "@/lib/checkin";
 import { useHealthOverview, useHomeSummary, useMarkNotificationRead, useVisits } from "@/lib/data";
 import { activePerson } from "@/lib/activePerson";
@@ -22,6 +23,7 @@ import { useScreenReady } from "@/lib/perf";
 import { setTaken, useReminders } from "@/lib/reminders";
 import { useSession } from "@/lib/session";
 import { doctorOrPending, sortUpcoming, statusText } from "@/shared/appointments";
+import { hasActiveCare, nextCareLine } from "@/shared/care";
 import { currentCheckin, queueLine } from "@/shared/checkin";
 import { fmt12, fmtDayDate, timeAgo } from "@/shared/dates";
 import { ageText } from "@/shared/family";
@@ -97,6 +99,9 @@ export default function Home() {
   // Today's place in a hospital's queue, while a check-in is open.
   const checkins = useMyCheckins();
   const checkin = currentCheckin(checkins.data ?? []);
+  // The fifth "Your health" card: only for an active pregnancy or an upcoming procedure.
+  const care = useCare();
+  const careLine = hasActiveCare(care.data) ? nextCareLine(care.data!, new Date()) : null;
   const { reminders, taken } = useReminders();
   // Each person's medicines are kept apart: only the active person's show here.
   const doses = todaysDoses(remindersFor(reminders, person.isMe ? null : person.patientId), new Date());
@@ -112,7 +117,7 @@ export default function Home() {
   const banner = verifyBanner(person.family);
   const next = sortUpcoming(appts.data?.upcoming ?? [])[0] ?? null;
   const refreshing = appts.isRefetching || overview.isRefetching || summary.isRefetching;
-  const refresh = () => { appts.refetch(); overview.refetch(); summary.refetch(); checkins.refetch(); if (person.family.length) familyNext.refetch(); };
+  const refresh = () => { appts.refetch(); overview.refetch(); summary.refetch(); checkins.refetch(); care.refetch(); if (person.family.length) familyNext.refetch(); };
   const updatedAt = Math.max(appts.dataUpdatedAt, overview.dataUpdatedAt, summary.dataUpdatedAt) || undefined;
 
   useScreenReady("/(tabs)/index", appts.data !== undefined || appts.isError || appts.fetchStatus === "paused");
@@ -187,6 +192,22 @@ export default function Home() {
         {overview.data ? (
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: space.md }}>
             {overviewCards(overview.data).map((card) => <HealthCard key={card.id} card={card} />)}
+            {careLine ? (
+              <Pressable accessibilityRole="button" accessibilityLabel={`Care plan. ${careLine}. Open care plan`} onPress={() => router.push("/care")}
+                style={({ pressed }) => ({
+                  flexBasis: "100%", minHeight: 76, borderRadius: radius.card, borderWidth: 1, borderColor: colors.primaryText, backgroundColor: colors.primarySoft,
+                  padding: space.md, flexDirection: "row", alignItems: "center", gap: space.md, opacity: pressed ? 0.85 : 1,
+                })}>
+                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" }}>
+                  <HeartPulse size={22} color={colors.primaryText} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Strong numberOfLines={1}>Care plan</Strong>
+                  <Small numberOfLines={2} muted={false}>{careLine}</Small>
+                </View>
+                <ChevronRight size={20} color={colors.primaryText} />
+              </Pressable>
+            ) : null}
           </View>
         ) : overview.isError || overview.fetchStatus === "paused" ? (
           <Card style={{ gap: space.sm }}>

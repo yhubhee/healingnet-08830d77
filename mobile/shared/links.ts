@@ -3,7 +3,7 @@
 
 /** App routes a notification can open. */
 export type AppScreen =
-  | "/(tabs)" | "/(tabs)/visits" | "/(tabs)/messages" | "/prescriptions" | "/lab-results" | "/records" | "/letters" | "/family";
+  | "/(tabs)" | "/(tabs)/visits" | "/(tabs)/messages" | "/prescriptions" | "/lab-results" | "/records" | "/letters" | "/family" | "/care" | "/checkin/status";
 
 const SCREENS: [string, AppScreen][] = [
   ["/patient/appointments", "/(tabs)/visits"],
@@ -14,6 +14,8 @@ const SCREENS: [string, AppScreen][] = [
   ["/patient/letters", "/letters"],
   ["/patient/messages", "/(tabs)/messages"],
   ["/patient/settings/family", "/family"], // a family document was approved or not accepted
+  ["/patient/care", "/care"], // care plan: a new item, a procedure booked or moved, a reminder
+  ["/patient/checkin", "/checkin/status"],
 ];
 
 /**
@@ -45,6 +47,7 @@ export interface NotificationTarget {
  *   'call_in' ("Your doctor is ready") -> Visits, with the Join call sheet open for that visit
  *   'message'                          -> Messages
  *   'family' (a document decision)     -> Family
+ *   'care' (care plan and its reminders) -> Care
  *   anything else                      -> the screen for its link (screenForUrl)
  * `referenceId` is the appointment for a call; a push does not carry it, so "ready" is used.
  */
@@ -55,6 +58,7 @@ export function notificationTarget(n: { url?: unknown; type?: unknown; reference
   }
   if (n.type === "message") return { pathname: "/(tabs)/messages" };
   if (n.type === "family") return { pathname: "/family" };
+  if (n.type === "care") return { pathname: "/care" };
   return { pathname: screenForUrl(n.url) };
 }
 

@@ -85,6 +85,7 @@ const PatientNotifications = lazy(() => import("./pages/patient/Notifications"))
 const PatientTriage = lazy(() => import("./pages/patient/Triage"));
 const PatientCompleteProfile = lazy(() => import("./pages/patient/CompleteProfile"));
 const PatientBook = lazy(() => import("./pages/patient/Book"));
+const PatientCare = lazy(() => import("./pages/patient/Care"));
 const PatientCheckIn = lazy(() => import("./pages/patient/CheckIn"));
 
 const DoctorDashboard = lazy(() => import("./pages/doctor/Dashboard"));
@@ -183,6 +184,7 @@ const App = () => (
           <Route path="/patient/settings/family" element={<Navigate to="/patient/settings#family" replace />} />
           <Route path="/patient/triage" element={<ProtectedRoute><PatientTriage /></ProtectedRoute>} />
           <Route path="/patient/book" element={<ProtectedRoute><PatientBook /></ProtectedRoute>} />
+          <Route path="/patient/care" element={<ProtectedRoute><PatientCare /></ProtectedRoute>} />
           <Route path="/patient/checkin" element={<ProtectedRoute><PatientCheckIn /></ProtectedRoute>} />
           {/* What the hospital's check-in QR code holds. Signed-out visitors sign in and come back. */}
           <Route path="/checkin/:token" element={<PatientCheckIn />} />

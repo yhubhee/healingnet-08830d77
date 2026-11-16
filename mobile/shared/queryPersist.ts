@@ -40,7 +40,7 @@ export const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
  * the patient id in their key (shared/keys.ts), so each person's saved data is kept apart;
  * sign-out removes all of it.
  */
-export const PERSISTED_QUERIES = ["role", "profile", "family", "appointments", "rx-documents", "home-summary", "health-overview", "lab-results", "emr"] as const;
+export const PERSISTED_QUERIES = ["role", "profile", "family", "appointments", "rx-documents", "home-summary", "health-overview", "lab-results", "emr", "care"] as const;
 
 export function shouldPersistQuery(queryKey: SavedKey, status: string): boolean {
   return status === "success" && (PERSISTED_QUERIES as readonly string[]).includes(String(queryKey[0]));

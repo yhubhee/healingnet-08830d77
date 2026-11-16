@@ -1,7 +1,7 @@
 // Health: my health card (allergies, long-term conditions, blood group, genotype and
 // emergency contact, from src/pages/patient/Profile.tsx), prescriptions, share my records,
 // lab results, medical records and letters.
-import { Award, ChevronRight, FileText, FlaskConical, Pencil, Pill, ShieldCheck } from "@/components/icons";
+import { Award, ChevronRight, FileText, FlaskConical, HeartPulse, Pencil, Pill, ShieldCheck } from "@/components/icons";
 import type { LucideIcon } from "@/components/icons";
 import { router } from "expo-router";
 import { View } from "react-native";
@@ -87,6 +87,7 @@ export default function Health() {
 
       <Row icon={Pill} title="Prescriptions" onPress={() => router.push("/prescriptions")}
         text={rx.data ? (valid > 0 ? `${valid} valid now. Show the code or QR at a pharmacy.` : PRESCRIPTIONS_TEXT) : PRESCRIPTIONS_TEXT} />
+      <Row icon={HeartPulse} title="Care plan" text="Pregnancy and procedure plans from your hospital, with what to do and when." onPress={() => router.push("/care")} />
       <Row icon={ShieldCheck} title={isMe ? "Share my records" : `Share ${person.firstName}'s records`} text="A one-time code to show at a hospital's front desk." onPress={() => router.push("/share-records")} />
 
       <Heading>More</Heading>

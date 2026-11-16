@@ -156,6 +156,9 @@ export function useShowPersonFor() {
         subject = data?.subject_patient_id;
       }
       if (!subject) return;
+      // A reminder kept on the phone for the signed-in patient's own plan.
+      if (subject === "me") subject = own;
+      if (!subject) return;
       let family = qc.getQueryData<FamilyMember[]>(familyKey(uid));
       // Someone added on another device is not in the saved list yet: read the list again.
       if (subject !== own && !family?.some((m) => m.patient_id === subject)) {

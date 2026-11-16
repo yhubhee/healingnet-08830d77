@@ -18,6 +18,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ToastProvider } from "@/components/toast";
 import { Body, Button, Title } from "@/components/ui";
 import { boot as bootRead, type Boot } from "@/lib/boot";
+import { useCareSync } from "@/lib/care";
 import { useNotificationArrivals, usePrefetchTabs } from "@/lib/data";
 import { isConfigured } from "@/lib/env";
 import { useKeepActivePersonValid, useShowPersonFor } from "@/lib/family";
@@ -78,6 +79,8 @@ function Gate({ appLock }: { appLock: boolean }) {
   useNotificationArrivals(inApp);
   // Medicine reminders: top the phone's list back up whenever the app opens.
   useReminderSync(inApp);
+  // Care-plan reminders: worked out from each plan in the family, kept on the phone.
+  useCareSync(inApp);
   // "Who is this for?": someone removed from the family falls back to Me.
   useKeepActivePersonValid(inApp);
   const showPersonFor = useShowPersonFor();
